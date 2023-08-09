@@ -121,6 +121,12 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+            }
+        });
+
         $('.date_picker').datepicker({
             autoclose: true,
             format: 'yyyy-mm-dd',
