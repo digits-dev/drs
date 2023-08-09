@@ -71,7 +71,7 @@
                 * Do not upload items with decimal value in sold quantity.<br/>
                 * Do not upload the file with blank row in between records.<br/>
                 * Do not double click upload sales button.<br/>
-                * Please limit your file size to "<b class="highlight-ltr">20kmb/b>" per upload.<br/>
+                * Please limit your file size to "<b class="highlight-ltr">20kmb</b>" per upload.<br/>
 
                 </div>
 
