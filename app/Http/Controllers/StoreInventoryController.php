@@ -118,7 +118,7 @@ class StoreInventoryController extends Controller
         HeadingRowFormatter::default('none');
         $headings = (new HeadingRowImport)->toArray($path);
         //check headings
-        $header = config('excel-template-headers.store-sales');
+        $header = config('excel-template-headers.store-inventory');
 
         for ($i=0; $i < sizeof($headings[0][0]); $i++) {
             if (!in_array($headings[0][0][$i], $header)) {
