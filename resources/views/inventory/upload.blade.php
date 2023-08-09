@@ -68,10 +68,10 @@
                 * Refence number should be unique.<br/>
                 * Kindly <b class="highlight-ltr">trim()</b> value in sold quantity.<br/>
                 * Date format should be "<b class="highlight-ltr">YYYYMMDD</b>".<br/>
-                * Do not upload items with decimal value in sold quantity.<br/>
+                * Do not upload items with decimal value in inventory quantity.<br/>
                 * Do not upload the file with blank row in between records.<br/>
-                * Do not double click upload sales button.<br/>
-                * Please limit your items to "<b class="highlight-ltr">20k</b>" records per upload.<br/>
+                * Do not double click upload inventory button.<br/>
+                * Please limit your file size to "<b class="highlight-ltr">20mb</b>" per upload.<br/>
 
                 </div>
 
@@ -110,7 +110,7 @@
     </div>
     <div class='panel-footer'>
         <a href='#' class='btn btn-default'>Cancel</a>
-        <input type='submit' id="btnUpload" class='btn btn-primary pull-right' value='Upload' />
+        <input type='submit' id="btnUpload" class='btn btn-primary pull-right' value='Upload Inventory' />
     </div>
     </form>
 </div>
@@ -126,6 +126,13 @@
             format: 'yyyy-mm-dd',
             todayHighlight: true,
             endDate: '+0d'
+        });
+
+        $("#btnUpload").on("click", function(event) {
+            event.preventDefault();
+
+            $("#btnUpload").prop("disabled", true);
+            $("#form").submit();
         });
 
     });

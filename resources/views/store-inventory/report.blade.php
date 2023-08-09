@@ -241,8 +241,16 @@
 @push('bottom')
     <script>
         $(document).ready(function(){
-            $('.search').on("click", function() {
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();                 }
             });
+
+            $('.search').on("click", function() {
+
+            });
+
             $("#inventory-report-table").dataTable({
                 responsive: true,
             });

@@ -26,7 +26,6 @@ class StoreInventory extends Model
         'employees_id',
         'customers_id',
         'customer_location',
-        'receipt_number',
         'inventory_date',
         'item_code',
         'digits_code',
