@@ -35,7 +35,7 @@ return [
         'ITEM DESCRIPTION',
         'INVENTORY QTY',
         'STORE COST',
-        'STORE COST ECOM',
+        'STORE COST ECOMM',
         'LANDED COST'
     ],
 
@@ -74,6 +74,7 @@ return [
         'ITEM DESCRIPTION',
         'INVENTORY QTY',
         'STORE COST',
+        'STORE COST ECOMM',
         'LANDED COST'
     ],
 ];

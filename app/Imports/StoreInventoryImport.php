@@ -106,7 +106,6 @@ class StoreInventoryImport implements ToModel,
             // '*.org' => ['required'],
             // '*.channel_code' => ['required'],
             // '*.customer_location' => ['required'],
-            // '*.receipt_number' => ['required']
         ];
     }
 

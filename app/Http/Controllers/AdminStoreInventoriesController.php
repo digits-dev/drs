@@ -1,8 +1,8 @@
 <?php namespace App\Http\Controllers;
 
     use App\Models\Channel;
-use App\Models\System;
-use Session;
+    use App\Models\System;
+    use Session;
     use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
@@ -116,7 +116,7 @@ use Session;
                         "color"=>"success",
                         "url"=>route('store-inventory.upload-view')];
                 }
-				$this->index_button[] = ['label'=>'Export Order','url'=>"javascript:showOrderExport()",'icon'=>'fa fa-download'];
+				$this->index_button[] = ['label'=>'Export Order','url'=>"javascript:showInventoryExport()",'icon'=>'fa fa-download'];
             }
 
 
