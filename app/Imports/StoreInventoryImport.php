@@ -103,11 +103,11 @@ class StoreInventoryImport implements ToModel,
     public function rules(): array
     {
         return [
-            '*.system' => ['required'],
-            '*.org' => ['required'],
-            '*.channel_code' => ['required'],
-            '*.customer_location' => ['required'],
-            '*.receipt_number' => ['required']
+            // '*.system' => ['required'],
+            // '*.org' => ['required'],
+            // '*.channel_code' => ['required'],
+            // '*.customer_location' => ['required'],
+            // '*.receipt_number' => ['required']
         ];
     }
 
