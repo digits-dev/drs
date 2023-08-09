@@ -71,7 +71,7 @@
                 * Do not upload items with decimal value in sold quantity.<br/>
                 * Do not upload the file with blank row in between records.<br/>
                 * Do not double click upload sales button.<br/>
-                * Please limit your items to "<b class="highlight-ltr">20k</b>" records per upload.<br/>
+                * Please limit your file size to "<b class="highlight-ltr">20kmb/b>" per upload.<br/>
 
                 </div>
 
@@ -110,7 +110,7 @@
     </div>
     <div class='panel-footer'>
         <a href='#' class='btn btn-default'>Cancel</a>
-        <input type='submit' id="btnUpload" class='btn btn-primary pull-right' value='Upload' />
+        <input type='submit' id="btnUpload" class='btn btn-primary pull-right' value='Upload Sales' />
     </div>
     </form>
 </div>
@@ -120,6 +120,12 @@
 @push('bottom')
 <script type="text/javascript">
     $(document).ready(function() {
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+            }
+        });
 
         $('.date_picker').daterangepicker({
             maxDate: new Date(),
@@ -135,6 +141,13 @@
 
         $('#datepicker').on('cancel.daterangepicker', function(ev, picker) {
             $(this).val('');
+        });
+
+        $("#btnUpload").on("click", function(event) {
+            event.preventDefault();
+
+            $("#btnUpload").prop("disabled", true);
+            $("#form").submit();
         });
 
     });
