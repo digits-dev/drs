@@ -65,13 +65,13 @@
                 <h4>Welcome to Data Importer Tool</h4>
                 Before uploading a file, please read below instructions : <br/>
                 * File format should be : XLSX file format<br/>
-                * Refence number should be unique.<br/>
+                * Reference number should be unique.<br/>
                 * Kindly <b class="highlight-ltr">trim()</b> value in sold quantity.<br/>
-                * Date format should be "<b class="highlight-ltr">YYYYMMDD</b>".<br/>
+                * Date format should be "<b class="highlight-ltr">MM/DD/YYYY</b>".<br/>
                 * Do not upload items with decimal value in sold quantity.<br/>
                 * Do not upload the file with blank row in between records.<br/>
                 * Do not double click upload sales button.<br/>
-                * Please limit your file size to "<b class="highlight-ltr">20kmb</b>" per upload.<br/>
+                * Please limit your file size to "<b class="highlight-ltr">20mb</b>" per upload.<br/>
 
                 </div>
 
