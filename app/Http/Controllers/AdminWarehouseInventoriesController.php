@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers;
 
+    use App\Models\Channel;
+    use App\Models\System;
 	use Session;
-	use Request;
+	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
 
@@ -91,7 +93,7 @@
 	        | @type    = warning,success,danger,info
 	        |
 	        */
-	        $this->alert        = array();
+	        $this->alert = array();
 
 
 
@@ -105,7 +107,17 @@
 	        |
 	        */
 	        $this->index_button = array();
-
+            if(CRUDBooster::getCurrentMethod() == 'getIndex') {
+                if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
+                    $this->index_button[] = [
+                        "title"=>"Upload Inventory",
+                        "label"=>"Upload Inventory",
+                        "icon"=>"fa fa-upload",
+                        "color"=>"success",
+                        "url"=>route('warehouse-inventory.upload-view')];
+                }
+				$this->index_button[] = ['label'=>'Export Order','url'=>"javascript:showInventoryExport()",'icon'=>'fa fa-download'];
+            }
 
 
 	        /*
@@ -312,9 +324,20 @@
 
 	    }
 
+        public function getIndex() {
 
+            if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 
-	    //By the way, you can still create your own method in here... :)
+            $data = [];
+            $data['page_title'] = 'Warehouse Inventory';
+            $data['channels'] = Channel::active();
+            $data['systems'] = System::active();
+            $data['result'] = DB::table('warehouse_inventories_report')
+                ->limit(50)
+                ->get();
+
+            return view('warehouse-inventory.report',$data);
+        }
 
 
 	}

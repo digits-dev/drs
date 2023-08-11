@@ -4,6 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\WarehouseInventory;
 use Illuminate\Http\Request;
+use App\Exports\ExcelTemplate;
+use App\Exports\WarehouseInventoryExport;
+use App\Imports\WarehouseInventoryImport;
+use App\Models\ReportType;
+use App\Rules\ExcelFileValidationRule;
+use Carbon\Carbon;
+use CRUDBooster;
+use Maatwebsite\Excel\HeadingRowImport;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
+use Maatwebsite\Excel\Facades\Excel;
 
 class WarehouseInventoryController extends Controller
 {
@@ -81,5 +91,72 @@ class WarehouseInventoryController extends Controller
     public function destroy(WarehouseInventory $warehouseInventory)
     {
         //
+    }
+
+    public function warehouseInventoryUploadView()
+    {
+        if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+
+        $data = [];
+        $data['page_title'] = 'Upload Warehouse Inventory';
+        $data['uploadRoute'] = route('warehouse-inventory.upload');
+        $data['uploadTemplate'] = route('warehouse-inventory.template');
+        $data['nextSeries'] = WarehouseInventory::getNextReference();
+        return view('inventory.upload',$data);
+    }
+
+    public function warehouseInventoryUpload(Request $request)
+    {
+        $errors = array();
+        $request->validate([
+            'import_file' => ['required', 'file', new ExcelFileValidationRule(20)],
+        ]);
+        $path_excel = $request->file('import_file')
+            ->storeAs('temp',$request->import_file->getClientOriginalName(),'local');
+
+        $path = storage_path('app').'/'.$path_excel;
+        HeadingRowFormatter::default('none');
+        $headings = (new HeadingRowImport)->toArray($path);
+        //check headings
+        $header = config('excel-template-headers.warehouse-inventory');
+
+        for ($i=0; $i < sizeof($headings[0][0]); $i++) {
+            if (!in_array($headings[0][0][$i], $header)) {
+                $unMatch[] = $headings[0][0][$i];
+            }
+        }
+
+        $batchNumber = time();
+        // $reportType = $request->report_type;
+
+        if(!empty($unMatch)) {
+            return redirect(route('warehouse-inventory.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.aler_mismatched_headers")]);
+        }
+        HeadingRowFormatter::default('slug');
+
+        // if(!empty($errors)){
+        //     return redirect()->back()->with(['message_type' => 'danger', 'message' => 'Failed ! Please check '.implode(", ",$errors)]);
+        // }
+        ini_set('memory_limit',-1);
+        $warehouseInventory = new WarehouseInventoryImport($batchNumber);
+        $warehouseInventory->import($path);
+
+        if($warehouseInventory->failures()->isNotEmpty()){
+            return back()->withFailures($warehouseInventory->failures());
+        }
+
+        return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
+    }
+
+    public function uploadTemplate()
+    {
+        $header = config('excel-template-headers.warehouse-inventory');
+        $export = new ExcelTemplate([$header]);
+        return Excel::download($export, 'warehouse-inventory-'.date("Ymd").'-'.date("h.i.sa").'.xlsx');
+    }
+
+    public function exportInventory(Request $request) {
+        $filename = $request->input('filename');
+        return Excel::download(new WarehouseInventoryExport, $filename.'.xlsx');
     }
 }
