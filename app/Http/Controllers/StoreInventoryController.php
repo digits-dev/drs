@@ -145,7 +145,7 @@ class StoreInventoryController extends Controller
             return back()->withFailures($storeInventory->failures());
         }
 
-        return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!']);
+        return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
     }
 
     public function uploadTemplate()
