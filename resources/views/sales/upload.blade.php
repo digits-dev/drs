@@ -2,6 +2,7 @@
 @extends('crudbooster::admin_template')
 
 @push('head')
+<link href="{{ asset('/css/spinner.css') }}" rel="stylesheet">
 <style>
     .highlight-ltr{
         color: yellow;
@@ -10,6 +11,20 @@
 @endpush
 
 @section('content')
+
+<div class="sk-chase-position" style="display: none;">
+    <div class="sk-chase">
+        <div class="sk-chase-dot"></div>
+        <div class="sk-chase-dot"></div>
+        <div class="sk-chase-dot"></div>
+        <div class="sk-chase-dot"></div>
+        <div class="sk-chase-dot"></div>
+        <div class="sk-chase-dot"></div>
+    </div>
+    <div class="sk-chase-text">
+        <p>Please wait, upload is on process...</p>
+    </div>
+</div>
 
 <div class='panel panel-default'>
     <div class='panel-body'>
@@ -118,6 +133,7 @@
 @endsection
 
 @push('bottom')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script type="text/javascript">
     $(document).ready(function() {
 
@@ -143,11 +159,12 @@
             $(this).val('');
         });
 
-        $("#btnUpload").on("click", function(event) {
+        $('#btnUpload').on('click', function(event) {
             event.preventDefault();
 
-            $("#btnUpload").prop("disabled", true);
-            $("#form").submit();
+            $('#btnUpload').prop('disabled', true);
+            $('.sk-chase-position').show();
+            $('#form').submit();
         });
 
     });
