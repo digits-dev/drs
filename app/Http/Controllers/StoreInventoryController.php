@@ -7,13 +7,19 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreInventoryExport;
 use App\Imports\StoreInventoryImport;
+use App\Models\Channel;
+use App\Models\InventoryTransactionType;
+use App\Models\Organization;
 use App\Models\ReportType;
+use App\Models\System;
 use App\Rules\ExcelFileValidationRule;
 use Carbon\Carbon;
 use CRUDBooster;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\File;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class StoreInventoryController extends Controller
 {
@@ -133,10 +139,59 @@ class StoreInventoryController extends Controller
             return redirect(route('store-inventory.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.aler_mismatched_headers")]);
         }
         HeadingRowFormatter::default('slug');
+        $excelData = Excel::toArray(new StoreInventoryImport($batchNumber), $path);
 
-        // if(!empty($errors)){
-        //     return redirect()->back()->with(['message_type' => 'danger', 'message' => 'Failed ! Please check '.implode(", ",$errors)]);
-        // }
+        $systems = System::active();
+        $organizations = Organization::active();
+        $inventoryTypes = InventoryTransactionType::active();
+        $channels = Channel::active();
+
+        //data checking ----
+        $excelInventoryDate = array_unique(array_column($excelData[0], "inventory_as_of_date"));
+        foreach ($excelInventoryDate as $keyDate => $valueDate) {
+
+            if(Carbon::parse($this->transformDate($valueDate))->format('Y-m-d') != $request->inventory_date){
+                array_push($errors, 'inventory as of date mismatched!');
+            }
+        }
+
+        $excelSystems = array_unique(array_column($excelData[0], "system"));
+        foreach ($excelSystems as $keySystem => $valueSystem) {
+            $existingSystem = $systems->where('system_name',$valueSystem)->first();
+            if(is_null($existingSystem)){
+                array_push($errors, 'system "'.$valueSystem.'" not found!');
+            }
+        }
+
+        $excelOrg = array_unique(array_column($excelData[0], "org"));
+        foreach ($excelOrg as $keyOrg => $valueOrg) {
+            $existingOrg = $organizations->where('organization_name',$valueOrg)->first();
+            if(is_null($existingOrg)){
+                array_push($errors, 'organization "'.$valueOrg.'" not found!');
+            }
+        }
+
+        $excelChannel = array_unique(array_column($excelData[0], "channel_code"));
+        foreach ($excelChannel as $keyChannel => $valueChannel) {
+            $existingChannel = $channels->where('channel_code',$valueChannel)->first();
+            if(is_null($existingChannel)){
+                array_push($errors, 'channel code "'.$valueChannel.'" not found!');
+            }
+        }
+
+        $excelInvType = array_unique(array_column($excelData[0], "inventory_type"));
+        foreach ($excelInvType as $keyInvType => $valueInvType) {
+            $existingInvType = $inventoryTypes->where('inventory_transaction_type',$valueInvType)->first();
+            if(is_null($existingInvType)){
+                array_push($errors, 'inventory type "'.$valueInvType.'" not found!');
+            }
+        }
+        //end of data checking ----
+
+        if(!empty($errors)){
+            File::delete($path);
+            return redirect()->back()->withErrors(['msg' => $errors]);
+        }
         ini_set('memory_limit',-1);
         $storeInventory = new StoreInventoryImport($batchNumber);
         $storeInventory->import($path);
@@ -158,5 +213,14 @@ class StoreInventoryController extends Controller
     public function exportInventory(Request $request) {
         $filename = $request->input('filename');
         return Excel::download(new StoreInventoryExport, $filename.'.xlsx');
+    }
+
+    public function transformDate($value, $format = 'Y-m-d')
+    {
+        try {
+            return Carbon::instance(Date::excelToDateTimeObject(intval($value)));
+        } catch (\ErrorException $e) {
+            return Carbon::createFromFormat($format, $value);
+        }
     }
 }
