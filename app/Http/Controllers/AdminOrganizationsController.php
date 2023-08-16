@@ -40,7 +40,7 @@
 
 			# START FORM DO NOT REMOVE THIS LINE
 			$this->form = [];
-			$this->form[] = ['label'=>'Organization Name','name'=>'organization_name','type'=>'text','validation'=>'required|min:1|max:150','width'=>'col-sm-6'];
+			$this->form[] = ['label'=>'Organization Name','name'=>'organization_name','type'=>'text','validation'=>'required|min:1|max:150|unique:organizations,organization_name','width'=>'col-sm-6'];
 			if(in_array(CRUDBooster::getCurrentMethod(),['getEdit','postEditSave','getDetail'])) {
 				$this->form[] = ['label'=>'Status','name'=>'status','type'=>'select','validation'=>'required','width'=>'col-sm-6','dataenum'=>'ACTIVE;INACTIVE'];
 			}

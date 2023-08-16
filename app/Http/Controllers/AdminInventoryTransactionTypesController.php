@@ -40,7 +40,7 @@
 
 			# START FORM DO NOT REMOVE THIS LINE
 			$this->form = [];
-			$this->form[] = ['label'=>'Inventory Transaction Type','name'=>'inventory_transaction_type','type'=>'text','validation'=>'required|min:1|max:150','width'=>'col-sm-6'];
+			$this->form[] = ['label'=>'Inventory Transaction Type','name'=>'inventory_transaction_type','type'=>'text','validation'=>'required|min:1|max:150|unique:inventory_transaction_types,inventory_transaction_type','width'=>'col-sm-6'];
 			if(in_array(CRUDBooster::getCurrentMethod(),['getEdit','postEditSave','getDetail'])) {
 				$this->form[] = ['label'=>'Status','name'=>'status','type'=>'select','validation'=>'required','width'=>'col-sm-6','dataenum'=>'ACTIVE;INACTIVE'];
 			}
