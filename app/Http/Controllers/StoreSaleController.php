@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreSalesExport;
 use App\Imports\StoreSalesImport;
+use App\Jobs\StoreSalesImportJob;
 use App\Models\ReportType;
 use App\Rules\ExcelFileValidationRule;
 use Carbon\Carbon;
@@ -17,6 +18,11 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class StoreSaleController extends Controller
 {
+    private $reportType;
+
+    public function __construct(){
+        $this->reportType = ['STORE SALES'];
+    }
     /**
      * Display a listing of the resource.
      *
@@ -130,13 +136,23 @@ class StoreSaleController extends Controller
         // $reportType = $request->report_type;
 
         if(!empty($unMatch)) {
-            return redirect(route('store-sales.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.aler_mismatched_headers")]);
+            return redirect(route('store-sales.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
         }
         HeadingRowFormatter::default('slug');
+        $excelData = Excel::toArray(new StoreSalesImport($batchNumber), $path);
 
-        // if(!empty($errors)){
-        //     return redirect()->back()->with(['message_type' => 'danger', 'message' => 'Failed ! Please check '.implode(", ",$errors)]);
-        // }
+        $excelReportType = array_unique(array_column($excelData[0], "report_type"));
+        foreach ($excelReportType as $keyReportType => $valueReportType) {
+            if(!in_array($valueReportType,$this->reportType)){
+                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
+            }
+        }
+
+        if(!empty($errors)){
+            File::delete($path);
+            return redirect()->back()->withErrors(['msg' => $errors]);
+        }
+
         ini_set('memory_limit',-1);
         $storeSales = new StoreSalesImport($batchNumber);
         $storeSales->import($path);
@@ -145,7 +161,9 @@ class StoreSaleController extends Controller
             return back()->withFailures($storeSales->failures());
         }
 
-        return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!']);
+        // StoreSalesImportJob::dispatch($path);
+
+        return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
     }
 
     public function uploadTemplate()

@@ -76,7 +76,7 @@ return [
     'alert_error_ajax' => 'Okay, It is embarasing, something went wrong, we will fix it soon !',
     'alert_validation_error' => 'Please fill out the form correctly : :error',
     'alert_select_a_data' => 'Please select at least one data!',
-    'aler_mismatched_headers' => 'Failed ! Please check template headers, mismatched detected.',
+    'alert_mismatched_headers' => 'Failed ! Please check template headers, mismatched detected.',
 
     'add_data_page_title' => 'Add :module',
     'edit_data_page_title' => 'Edit :module',

@@ -134,7 +134,7 @@ class StoreInventoryController extends Controller
         // $reportType = $request->report_type;
 
         if(!empty($unMatch)) {
-            return redirect(route('store-inventory.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.aler_mismatched_headers")]);
+            return redirect(route('store-inventory.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
         }
         HeadingRowFormatter::default('slug');
         $excelData = Excel::toArray(new StoreInventoryImport($batchNumber), $path);
