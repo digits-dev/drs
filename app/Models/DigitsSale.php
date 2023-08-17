@@ -58,6 +58,14 @@ class DigitsSale extends Model
         'updated_by',
     ];
 
+    public function scopeGetNextReference($query) {
+        $digitsSales = $query->orderBy('id','DESC')
+            ->orderBy('reference_number','DESC')
+            ->select('reference_number')->first();
+
+        return $digitsSales->reference_number + 1;
+    }
+
     public static function boot()
     {
         parent::boot();

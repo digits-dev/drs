@@ -31,8 +31,8 @@ Route::get('store_sales/import',[StoreSaleController::class, 'storeSalesUploadVi
 Route::get('store_sales/template',[StoreSaleController::class, 'uploadTemplate'])->name('store-sales.template');
 Route::post('store_sales/export',[StoreSaleController::class, 'exportSales'])->name('store-sales.export');
 
-Route::post('digits_sales/import-upload',[DigitsSaleController::class, 'storeSalesUpload'])->name('digits-sales.upload');
-Route::get('digits_sales/import',[DigitsSaleController::class, 'storeSalesUploadView'])->name('digits-sales.upload-view');
+Route::post('digits_sales/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
+Route::get('digits_sales/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
 Route::get('digits_sales/template',[DigitsSaleController::class, 'uploadTemplate'])->name('digits-sales.template');
 Route::post('digits_sales/export',[DigitsSaleController::class, 'exportSales'])->name('digits-sales.export');
 

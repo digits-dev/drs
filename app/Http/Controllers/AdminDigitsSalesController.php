@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
-	use Session;
+use App\Models\Channel;
+use Session;
 	use Request;
 	use DB;
 	use CRUDBooster;
@@ -313,9 +314,19 @@
 
 	    }
 
+        public function getIndex() {
 
+            if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 
-	    //By the way, you can still create your own method in here... :)
+            $data = [];
+            $data['page_title'] = 'Digits Sales';
+            $data['channels'] = Channel::active();
+            $data['result'] = DB::table('digits_sales_report')
+                ->limit(50)
+                ->get();
+
+            return view('digits-sales.report',$data);
+        }
 
 
 	}

@@ -6,6 +6,7 @@ use App\Models\Channel;
 use App\Models\Customer;
 use App\Models\DigitsSale;
 use App\Models\Organization;
+use App\Models\ReportType;
 use App\Models\System;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,14 +41,14 @@ class DigitsSalesImport implements ToModel,
     private $batch_number;
     private $report_type;
 
-    public function __construct($batch_number,$report_type)
+    public function __construct($batch_number)
     {
         $this->system = System::active();
         $this->organization = Organization::active();
         $this->channel = Channel::active();
         $this->customer = Customer::active();
         $this->batch_number = $batch_number;
-        $this->report_type = $report_type ?? 1;
+        $this->report_type = ReportType::byName("DIGITS SALES");
     }
 
     /**
@@ -97,17 +98,17 @@ class DigitsSalesImport implements ToModel,
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 2000;
     }
 
     public function rules(): array
     {
         return [
-            '*.system' => ['required'],
-            '*.org' => ['required'],
-            '*.channel_code' => ['required'],
-            '*.customer_location' => ['required'],
-            '*.receipt_number' => ['required']
+            // '*.system' => ['required'],
+            // '*.org' => ['required'],
+            // '*.channel_code' => ['required'],
+            // '*.customer_location' => ['required'],
+            // '*.receipt_number' => ['required']
         ];
     }
 
@@ -119,7 +120,7 @@ class DigitsSalesImport implements ToModel,
     public static function afterImport(AfterImport $event)
     {
         $config['content'] = "Your import job is complete!";
-        $config['to'] = CRUDBooster::adminPath('financial_reports');
+        $config['to'] = CRUDBooster::adminPath('digits_sales');
         $config['id_cms_users'] = [CRUDBooster::myid()];
         CRUDBooster::sendNotification($config);
     }
