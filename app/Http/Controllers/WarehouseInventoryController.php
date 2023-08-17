@@ -7,16 +7,20 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\WarehouseInventoryExport;
 use App\Imports\WarehouseInventoryImport;
-use App\Models\ReportType;
 use App\Rules\ExcelFileValidationRule;
-use Carbon\Carbon;
 use CRUDBooster;
+use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
 
 class WarehouseInventoryController extends Controller
 {
+    private $reportType;
+
+    public function __construct(){
+        $this->reportType = ['WAREHOUSE INVENTORY','WAREHOUSE INTRANSIT'];
+    }
     /**
      * Display a listing of the resource.
      *
@@ -133,10 +137,21 @@ class WarehouseInventoryController extends Controller
             return redirect(route('warehouse-inventory.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.aler_mismatched_headers")]);
         }
         HeadingRowFormatter::default('slug');
+        $excelData = Excel::toArray(new WarehouseInventoryImport($batchNumber), $path);
 
-        // if(!empty($errors)){
-        //     return redirect()->back()->with(['message_type' => 'danger', 'message' => 'Failed ! Please check '.implode(", ",$errors)]);
-        // }
+        $errors = app(InventoryUploadCheckerController::class)->check($excelData, $request->inventory_date);
+        $excelReportType = array_unique(array_column($excelData[0], "report_type"));
+        foreach ($excelReportType as $keyReportType => $valueReportType) {
+            if(!in_array($valueReportType,$this->reportType)){
+                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
+            }
+        }
+
+        if(!empty($errors)){
+            File::delete($path);
+            return redirect()->back()->withErrors(['msg' => $errors]);
+        }
+
         ini_set('memory_limit',-1);
         $warehouseInventory = new WarehouseInventoryImport($batchNumber);
         $warehouseInventory->import($path);
