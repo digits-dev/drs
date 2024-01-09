@@ -9,12 +9,17 @@ use App\Exports\StoreSalesExport;
 use App\Imports\StoreSalesImport;
 use App\Jobs\StoreSalesImportJob;
 use App\Models\ReportType;
+use App\Models\StoreSalesUpload;
+use App\Models\StoreSalesUploadLine;
 use App\Rules\ExcelFileValidationRule;
 use Carbon\Carbon;
+use crocodicstudio\crudbooster\helpers\CRUDBooster as HelpersCRUDBooster;
 use CRUDBooster;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
 
 class StoreSaleController extends Controller
 {
@@ -117,31 +122,63 @@ class StoreSaleController extends Controller
         $request->validate([
             'import_file' => ['required', 'file', new ExcelFileValidationRule(20)],
         ]);
-        $path_excel = $request->file('import_file')
-            ->storeAs('temp',$request->import_file->getClientOriginalName(),'local');
+        $time = time();
+        $folder_name = "$time-" . Str::random(5);
+        $folder_path = storage_path('app') . '/' . $folder_name;
+        $excel_file_name = $request->import_file->getClientOriginalName();
+        $excel_relative_path = $request->file('import_file')
+            ->storeAs("sales-upload/$folder_name", $excel_file_name, 'local');
 
-        $path = storage_path('app').'/'.$path_excel;
+        $excel_path = storage_path('app') . '/' . $excel_relative_path;
         HeadingRowFormatter::default('none');
-        $headings = (new HeadingRowImport)->toArray($path);
+        $headings = (new HeadingRowImport)->toArray($excel_path)[0][0];
         //check headings
         $header = config('excel-template-headers.store-sales');
 
-        for ($i=0; $i < sizeof($headings[0][0]); $i++) {
-            if (!in_array($headings[0][0][$i], $header)) {
-                $unMatch[] = $headings[0][0][$i];
+        for ($i = 0; $i < sizeof($headings); $i++) {
+            if (!in_array($headings[$i], $header)) {
+                $unMatch[] = $headings[$i];
             }
         }
 
-        $batchNumber = time();
+        $batchNumber = $time;
         // $reportType = $request->report_type;
 
         if(!empty($unMatch)) {
             return redirect(route('store-sales.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
         }
         HeadingRowFormatter::default('slug');
-        $excelData = Excel::toArray(new StoreSalesImport($batchNumber), $path);
+        $excel_data = Excel::toArray(new StoreSalesImport($batchNumber), $excel_path)[0];
+        $snaked_headings = array_keys($excel_data[0]);
+        $row_count = count($excel_data);
+        $chunk_count = 10;
+        $chunks = array_chunk($excel_data, $chunk_count);
 
-        $excelReportType = array_unique(array_column($excelData[0], "report_type"));
+        $store_sales_upload = new StoreSalesUpload([
+            'batch' => $time,
+            'folder_name' => $folder_name,
+            'file_name' => $excel_file_name,
+            'row_count' => $row_count,
+            'chunk_count' => $chunk_count,
+            'headings' => json_encode($snaked_headings),
+            'created_by' => CRUDBooster::myId(),
+        ]);
+
+        $store_sales_upload->save();
+        
+        foreach ($chunks as $key => $chunk) {
+            $json = json_encode($chunk);
+            $store_sales_upload_line = StoreSalesUploadLine::create([
+                'store_sales_uploads_id' => $store_sales_upload->id,
+                'chunk_index' => $key,
+                'chunk_data' => $json,
+            ]);
+        }
+
+        dd('doneee :))');
+
+
+        $excelReportType = array_unique(array_column($excel_data[0], "report_type"));
         foreach ($excelReportType as $keyReportType => $valueReportType) {
             if(!in_array($valueReportType,$this->reportType)){
                 array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
@@ -149,19 +186,19 @@ class StoreSaleController extends Controller
         }
 
         if(!empty($errors)){
-            File::delete($path);
+            File::delete($excel_path);
             return redirect()->back()->withErrors(['msg' => $errors]);
         }
 
         ini_set('memory_limit',-1);
         $storeSales = new StoreSalesImport($batchNumber);
-        $storeSales->import($path);
+        $storeSales->import($excel_path);
 
         if($storeSales->failures()->isNotEmpty()){
             return back()->withFailures($storeSales->failures());
         }
 
-        // StoreSalesImportJob::dispatch($path);
+        // StoreSalesImportJob::dispatch($excel_path);
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
     }

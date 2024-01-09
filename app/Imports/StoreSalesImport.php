@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -32,7 +33,8 @@ class StoreSalesImport implements ToModel,
     WithChunkReading,
     WithValidation,
     WithEvents,
-    ShouldQueue
+    ShouldQueue,
+    WithBatchInserts
 {
 
     use Importable, RegistersEventListeners, Queueable, InteractsWithQueue, SkipsFailures;
@@ -118,7 +120,12 @@ class StoreSalesImport implements ToModel,
 
     public function chunkSize(): int
     {
-        return 2000;
+        return 50;
+    }
+
+    public function batchSize(): int
+    {
+        return 50;
     }
 
     public function rules(): array
