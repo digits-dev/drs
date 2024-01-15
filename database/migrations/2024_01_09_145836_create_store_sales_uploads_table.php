@@ -19,6 +19,7 @@ class CreateStoreSalesUploadsTable extends Migration
             $table->string('job_batches_id')->length(255)->nullable();
             $table->string('folder_name')->nullable();
             $table->string('file_name')->nullable();
+            $table->text('file_path')->nullable();
             $table->mediumInteger('row_count')->nullable()->unsigned();
             $table->mediumInteger('chunk_count')->nullable()->unsigned();
             $table->json('headings')->nullable();
