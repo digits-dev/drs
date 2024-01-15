@@ -2,8 +2,8 @@
 
     use App\Models\Channel;
     use Session;
-	use DB;
-	use CRUDBooster;
+    use DB;
+    use CRUDBooster;
     use Illuminate\Http\Request;
 
 	class AdminStoreSalesController extends \crocodicstudio\crudbooster\controllers\CBController {

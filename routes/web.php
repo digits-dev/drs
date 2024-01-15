@@ -3,10 +3,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminReportPrivilegesController;
+use App\Http\Controllers\AdminStoreSalesUploadsController;
 use App\Http\Controllers\DigitsSaleController;
 use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
 use App\Http\Controllers\WarehouseInventoryController;
+use crocodicstudio\crudbooster\helpers\CRUDBooster;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +34,7 @@ Route::get('store_sales/template',[StoreSaleController::class, 'uploadTemplate']
 Route::post('store_sales/export',[StoreSaleController::class, 'exportSales'])->name('store-sales.export');
 Route::get('store_sales/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
 Route::get('sales_upload/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
+Route::get('sales_upload/export-batch/{id}',[AdminStoreSalesUploadsController::class, 'exportBatch']);
 
 Route::post('store_sales/filter',[StoreSaleController::class, 'filterStoreSales'])->name('store-sales.filter');
 
