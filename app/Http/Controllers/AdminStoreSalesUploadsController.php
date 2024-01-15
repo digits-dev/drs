@@ -35,7 +35,10 @@ use Maatwebsite\Excel\Facades\Excel;
 			# START COLUMNS DO NOT REMOVE THIS LINE
 			$this->col = [];
 			$this->col[] = ["label"=>"Batch","name"=>"batch"];
-			$this->col[] = ["label"=>"File Name","name"=>"file_name"];
+			$this->col[] = ["label"=>"Uploaded File","name"=>"file_name","callback"=>function($row) {
+				$main_path = CRUDBooster::mainPath();
+				return "<a href='$main_path/download-uploaded-file/$row->id' target='_blank'/>$row->file_name</a>";
+			}];
 			$this->col[] = ["label"=>"Import Progress","name"=>"job_batches_id","callback"=>function($row){
 				return "
 					<div class='import-progress' id='$row->job_batches_id'>
@@ -275,6 +278,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        $query
 				->leftJoin('job_batches', 'job_batches.id', 'store_sales_uploads.job_batches_id')
 				->addSelect(
+					'store_sales_uploads.file_path',
 					'job_batches.created_at as importing_started_at',
 					'job_batches.finished_at as importing_finished_at',
 				);
@@ -367,8 +371,17 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function exportBatch($id) {
 			$batch = StoreSalesUpload::find($id);
-
 			return Excel::download(new SalesUploadBatchExport($batch->batch), "$batch->batch.xlsx");
+		}
+
+		public function downloadUploadedFile($id) {
+			$batch = StoreSalesUpload::find($id);
+
+			if (file_exists($batch->file_path)) {
+				return response()->download($batch->file_path);
+			} else {
+				abort(404, 'File not found');
+			}
 		}
 
 	}

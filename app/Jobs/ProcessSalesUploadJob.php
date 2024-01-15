@@ -6,7 +6,6 @@ use App\Imports\StoreSalesImport;
 use App\Models\StoreSalesUpload;
 use App\Models\StoreSalesUploadLine;
 use App\Jobs\StoreSalesImportJob;
-use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use Exception;
 use Facade\FlareClient\Stacktrace\File;
 use Illuminate\Bus\Queueable;
@@ -83,7 +82,7 @@ class ProcessSalesUploadJob implements ShouldQueue
     
             $snaked_headings = array_keys($excel_data[0]);
             $row_count = count($excel_data);
-            $chunk_count = 500;
+            $chunk_count = 1000;
             $chunks = array_chunk($excel_data, $chunk_count);
             $batch = Bus::batch([])->dispatch();
 
