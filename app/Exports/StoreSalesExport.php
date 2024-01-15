@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use CRUDBooster;
 
 class StoreSalesExport implements FromQuery, WithHeadings, WithMapping
@@ -16,7 +17,7 @@ class StoreSalesExport implements FromQuery, WithHeadings, WithMapping
     private $userReport;
 
     public function __construct() {
-        $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+        $this->userReport = ReportPrivilege::myReport(1,3);
     }
 
     public function headings(): array {
@@ -38,7 +39,15 @@ class StoreSalesExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $salesReport = StoreSalesReport::selectRaw("`".$this->userReport->report_query."`")->limit(2)->get();
+        // dd(request()->receipt_number);
+        if ( request()->receipt_number == null) {
+            $salesReport = StoreSalesReport::selectRaw("`".$this->userReport->report_query."`");
+        }else {
+            $salesReport = StoreSalesReport::selectRaw("`".$this->userReport->report_query."`")->where('channel_name', request()->channel)
+            ->where('receipt_number', request()->receipt_number)->whereBetween('sales_date', [request()->datefrom, request()->dateto]);
+        }
+    
+        
         // if (request()->has('filter_column')) {
         //     $filter_column = request()->filter_column;
 
@@ -99,7 +108,6 @@ class StoreSalesExport implements FromQuery, WithHeadings, WithMapping
         //     }
         // }
 
-        //query()->
 
         return $salesReport;
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StoreSale;
+use App\Models\StoreSalesReport;
 use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreSalesExport;
@@ -185,5 +186,19 @@ class StoreSaleController extends Controller
     public function exportSales(Request $request) {
         $filename = $request->input('filename');
         return Excel::download(new StoreSalesExport, $filename.'.xlsx');
+    }
+
+    public function filterStoreSales(Request $request) {
+    
+        $data['result'] = StoreSalesReport::where('channel_name', $request->channel)
+        ->where('receipt_number', $request->receipt_number)
+        ->whereBetween('sales_date', [$request->datefrom, $request->dateto])->get();
+        
+        $data['receipt_number'] = $request->receipt_number;
+        $data['channel'] = $request->channel;
+        $data['datefrom'] = $request->datefrom;
+        $data['dateto'] = $request->dateto;
+        return view('store-sales.filtered-report',$data);
+
     }
 }

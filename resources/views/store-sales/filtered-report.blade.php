@@ -41,17 +41,12 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <a href="{{ route('store-sales.upload-view') }}" id="upload-sales" class="btn btn-success btn-sm">
-                <i class="fa fa-upload"></i> Upload Sales
-            </a>
-
-            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
+   
+            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download"></i> Export Sales
             </a>
 
-            <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
-                <i class="fa fa-search"></i> Search Filter
-            </a>
+  
         </div>
         <div class="panel-body">
             <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
@@ -81,12 +76,7 @@
                     <td>{{ $row->store_concept_name }}</td>
                     <td>{{ $row->receipt_number }}</td>
                     <td>{{ $row->sales_date }}</td>
-
                     <td>
-
-                        @if(CRUDBooster::isRead())
-                        <a class='btn-detail' title="Detail" href='{{CRUDBooster::mainpath("detail/$row->id")}}'><i class='fa fa-eye'></i></a>
-                        @endif
                     </td>
                     </tr>
                 @endforeach
@@ -130,85 +120,6 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-filter">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
-                    <span aria-hidden='true'>×</span></button>
-                <h4 class='modal-title'><i class='fa fa-search'></i> Filter</h4>
-            </div>
-            <form method='post' target='_blank' action="{{ route('store-sales.filter') }}"autocomplete="off">
-
-            <input type='hidden' name='_token' value="{{ csrf_token() }}">
-
-            <div class="modal-body">
-                <div class="row">
-
-                    <div class='col-sm-6'>
-                        Date From
-                        <div class="form-group">
-                            <div class='input-group date' id='datefrom'>
-                                <input type='text' name="datefrom" class="form-control date_picker" />
-                                <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class='col-sm-6'>
-                        Date To
-                        <div class="form-group">
-                            <div class='input-group date' id='dateto'>
-                                <input type='text' name="dateto" class="form-control date_picker" />
-                                <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="row">
-
-                    <div class="col-md-6">
-                        Channel
-                        <div class="form-group">
-                        <select name="channel" id="channel" class="form-control channel" title="Channel">
-                            <option value="">Please select channel</option>
-                            @foreach ($channels as $channel)
-                                <option value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
-                            @endforeach
-                        </select>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="row">
-
-                    <div class="col-md-6">
-                        Receipt #
-                        <div class="form-group">
-                        <input type="text" class="form-control" name="receipt_number" id="receipt_number">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit'>Search</button>
-
-            </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <div class='modal fade' tabindex='-1' role='dialog' id='modal-order-export'>
     <div class='modal-dialog'>
         <div class='modal-content'>
@@ -218,8 +129,12 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
+            <form method='post' target='_blank' action="{{ route('store-sales.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
+            <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
+            <input type='hidden' name='channel' value="{{ $channel }}">
+            <input type='hidden' name='datefrom' value="{{ $datefrom }}">
+            <input type='hidden' name='dateto' value="{{ $dateto }}">
             {{ CRUDBooster::getUrlParameters()}}
             <div class='modal-body'>
                 <div class='form-group'>
@@ -246,14 +161,6 @@
                 responsive: true,
             });
         });
-
-        $('.date_picker').datepicker({
-                    format: "yyyy-mm-dd",
-        });
-
-        function showFilter() {
-            $('#modal-filter').modal('show');
-        }
 
         function showSalesReportExport() {
             $('#modal-order-export').modal('show');
