@@ -7,14 +7,16 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreSalesExport;
 use App\Imports\StoreSalesImport;
+use App\Jobs\ProcessSalesUploadJob;
 use App\Jobs\StoreSalesImportJob;
 use App\Models\ReportType;
 use App\Models\StoreSalesUpload;
 use App\Models\StoreSalesUploadLine;
 use App\Rules\ExcelFileValidationRule;
 use Carbon\Carbon;
-use crocodicstudio\crudbooster\helpers\CRUDBooster as HelpersCRUDBooster;
 use CRUDBooster;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
@@ -23,10 +25,10 @@ use Illuminate\Support\Str;
 
 class StoreSaleController extends Controller
 {
-    private $reportType;
+    private $report_type;
 
     public function __construct(){
-        $this->reportType = ['STORE SALES'];
+        $this->report_type = ['STORE SALES'];
     }
     /**
      * Display a listing of the resource.
@@ -141,66 +143,36 @@ class StoreSaleController extends Controller
             }
         }
 
-        $batchNumber = $time;
-        // $reportType = $request->report_type;
+        $batch_number = $time;
 
-        if(!empty($unMatch)) {
+        if (!empty($unMatch)) {
             return redirect(route('store-sales.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
         }
-        HeadingRowFormatter::default('slug');
-        $excel_data = Excel::toArray(new StoreSalesImport($batchNumber), $excel_path)[0];
-        $snaked_headings = array_keys($excel_data[0]);
-        $row_count = count($excel_data);
-        $chunk_count = 10;
-        $chunks = array_chunk($excel_data, $chunk_count);
 
-        $store_sales_upload = new StoreSalesUpload([
-            'batch' => $time,
+        $args = [
+            'batch_number' => $batch_number,
+            'excel_path' => $excel_path,
+            'report_type' => $this->report_type,
             'folder_name' => $folder_name,
             'file_name' => $excel_file_name,
-            'row_count' => $row_count,
-            'chunk_count' => $chunk_count,
-            'headings' => json_encode($snaked_headings),
             'created_by' => CRUDBooster::myId(),
-        ]);
+        ];
 
-        $store_sales_upload->save();
-        
-        foreach ($chunks as $key => $chunk) {
-            $json = json_encode($chunk);
-            $store_sales_upload_line = StoreSalesUploadLine::create([
-                'store_sales_uploads_id' => $store_sales_upload->id,
-                'chunk_index' => $key,
-                'chunk_data' => $json,
-            ]);
-        }
-
-        dd('doneee :))');
-
-
-        $excelReportType = array_unique(array_column($excel_data[0], "report_type"));
-        foreach ($excelReportType as $keyReportType => $valueReportType) {
-            if(!in_array($valueReportType,$this->reportType)){
-                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
-            }
-        }
-
-        if(!empty($errors)){
-            File::delete($excel_path);
-            return redirect()->back()->withErrors(['msg' => $errors]);
-        }
-
-        ini_set('memory_limit',-1);
-        $storeSales = new StoreSalesImport($batchNumber);
-        $storeSales->import($excel_path);
-
-        if($storeSales->failures()->isNotEmpty()){
-            return back()->withFailures($storeSales->failures());
-        }
-
-        // StoreSalesImportJob::dispatch($excel_path);
+        ProcessSalesUploadJob::dispatch($args);
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
+    }
+
+    public function getBatchDetails($batch_id) {
+
+        $batch_details = Bus::findBatch($batch_id);
+        $upload_details = StoreSalesUpload::where('job_batches_id', $batch_id)->first();
+        $count = StoreSale::where('batch_number', $upload_details->batch)->count();
+        return [
+            'batch_details' => $batch_details,
+            'upload_details' => $upload_details,
+            'count' => $count,
+        ];
     }
 
     public function uploadTemplate()

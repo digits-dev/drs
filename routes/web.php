@@ -30,6 +30,9 @@ Route::post('store_sales/import-upload',[StoreSaleController::class, 'storeSales
 Route::get('store_sales/import',[StoreSaleController::class, 'storeSalesUploadView'])->name('store-sales.upload-view');
 Route::get('store_sales/template',[StoreSaleController::class, 'uploadTemplate'])->name('store-sales.template');
 Route::post('store_sales/export',[StoreSaleController::class, 'exportSales'])->name('store-sales.export');
+Route::get('store_sales/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
+Route::get('sales_upload/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
+
 
 Route::post('digits_sales/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
 Route::get('digits_sales/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
