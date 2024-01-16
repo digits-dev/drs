@@ -426,6 +426,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$store_sales = StoreSalesReport::filter(['search' => $search_term])
 				->selectRaw("`$user_report->report_query`")
 				->where('batch_number', $store_sale_upload->batch)
+				->orderBy('reference_number', 'ASC')
 				->paginate(10)
 				->appends(['search' => $search_term]);
 

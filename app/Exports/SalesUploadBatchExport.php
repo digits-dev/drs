@@ -42,6 +42,7 @@ class SalesUploadBatchExport implements FromQuery, WithHeadings, WithMapping
     public function query()
     {
         return StoreSalesReport::selectRaw("`".$this->userReport->report_query."`")
+            ->orderBy('reference_number', 'ASC')
             ->where('batch_number', $this->batch);
     }
 }
