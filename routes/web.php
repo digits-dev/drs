@@ -3,6 +3,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminReportPrivilegesController;
+use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\DigitsSaleController;
 use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
@@ -39,7 +40,7 @@ Route::post('digits_sales/import-upload',[DigitsSaleController::class, 'digitsSa
 Route::get('digits_sales/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
 Route::get('digits_sales/template',[DigitsSaleController::class, 'uploadTemplate'])->name('digits-sales.template');
 Route::post('digits_sales/export',[DigitsSaleController::class, 'exportSales'])->name('digits-sales.export');
-
+Route::get('store_sales/search',[AdminStoreSalesController::class, 'getIndex'])->name('store-sales.search');
 //import store inventory
 Route::post('store_inventories/import-upload',[StoreInventoryController::class, 'storeInventoryUpload'])->name('store-inventory.upload');
 Route::get('store_inventories/import',[StoreInventoryController::class, 'storeInventoryUploadView'])->name('store-inventory.upload-view');

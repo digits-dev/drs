@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
     use App\Models\Channel;
+    use App\Models\StoreSalesReport;
     use Session;
 	use DB;
 	use CRUDBooster;
@@ -325,19 +326,32 @@
 
 	    }
 
-        public function getIndex() {
+        // public function getIndex() {
 
-            if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+        //     if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 
-            $data = [];
-            $data['page_title'] = 'Store Sales';
-            $data['channels'] = Channel::active();
-            $data['result'] = DB::table('store_sales_report')
-                ->limit(50)
-                ->get();
+        //     $data = [];
+        //     $data['page_title'] = 'Store Sales';
+        //     $data['channels'] = Channel::active();
+        //     $data['result'] = DB::table('store_sales_report')
+		// 	->paginate(10);
 
-            return view('store-sales.report',$data);
-        }
+        //     return view('store-sales.report',$data);
+        // }
 
+		public function getIndex() {
+
+			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+			
+			$data = [];
+			$data['page_title'] = 'Store Sales';
+			$data['channels'] = Channel::active();
+	
+			$searchTerm = request('search');
+			$data['result'] = StoreSalesReport::filter(['search' => $searchTerm])->paginate(10);
+			$data['result']->appends(['search' => $searchTerm]);
+	
+			return view('store-sales.report',$data);
+		}
 
 	}
