@@ -82,7 +82,11 @@ class ProcessSalesUploadJob implements ShouldQueue
     
             $snaked_headings = array_keys($excel_data[0]);
             $row_count = count($excel_data);
-            $chunk_count = 1000;
+            $chunk_count = $row_count / 1000;
+            if ($row_count <= 10000) {
+                $chunk_count = 10;
+            }
+            $chunk_count = ceil($chunk_count);
             $chunks = array_chunk($excel_data, $chunk_count);
             $batch = Bus::batch([])->dispatch();
 
