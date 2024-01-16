@@ -13,6 +13,7 @@ use App\Models\ReportType;
 use App\Models\StoreSale;
 use App\Models\System;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -20,7 +21,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Facades\Log;
 use PhpParser\Node\Stmt\TryCatch;
 
@@ -83,7 +83,7 @@ class StoreSalesImportJob implements ShouldQueue
                 'employees_id'          => $v_employee->id,
                 'customers_id'          => $v_customer->id,
                 'receipt_number'		=> $row->receipt_number,
-                'sales_date'			=> Carbon::parse($this->transformDate($row->sold_date))->format("Y-m-d"),
+                'sales_date'			=> DateTime::createFromFormat('m/d/Y', $row->sold_date)->format('Y-m-d'),
                 'item_code'				=> $row->item_number,
                 'digits_code_rr_ref'    => $row->rr_ref,
                 'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row->item_description))),
@@ -103,14 +103,5 @@ class StoreSalesImportJob implements ShouldQueue
         }
         $columns = array_keys($insertable[0]);
         StoreSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
-    }
-
-    public function transformDate($value, $format = 'Y-m-d')
-    {
-        try {
-            return Carbon::instance(Date::excelToDateTimeObject(intval($value)));
-        } catch (\ErrorException $e) {
-            return Carbon::createFromFormat($format, $value);
-        }
     }
 }
