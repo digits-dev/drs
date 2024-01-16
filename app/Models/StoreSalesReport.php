@@ -56,15 +56,15 @@ class StoreSalesReport extends Model
 
     public function scopeFilter($query, array $filters) {
         if($filters['search'] ?? false) {
-            $query->where('reference_number', 'like', '%' . request('search') . '%')
-            ->orWhere('system_name', 'like', '%' . request('search') . '%')
-            ->orWhere('organization_name', 'like', '%' . request('search') . '%')
-            ->orWhere('report_type', 'like', '%' . request('search') . '%')
-            ->orWhere('channel_name', 'like', '%' . request('search') . '%')
-            ->orWhere('customer_location', 'like', '%' . request('search') . '%')
-            ->orWhere('store_concept_name', 'like', '%' . request('search') . '%')
-            ->orWhere('receipt_number', 'like', '%' . request('search') . '%')
-            ->orWhere('sales_date', 'like', '%' . request('search') . '%');
+            $query->where('reference_number', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('system_name', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('organization_name', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('report_type', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('channel_name', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('customer_location', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('store_concept_name', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('receipt_number', 'like', '%' . $filters['search'] . '%')
+            ->orWhere('sales_date', 'like', '%' . $filters['search'] . '%');
         }
     }
 

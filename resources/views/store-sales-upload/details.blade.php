@@ -47,19 +47,18 @@
             <hr>
         </div>
         <div class="row">
-            <div class="form-group">
-                <div class="col-sm-3 pull-right">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <div class="input-group-addon">
-                                <i class="fa fa-search"></i>
-                            </div>
-                            <input value="" type="text" class="form-control search-input" id="search-input">
+            <div class="col-md-12">
+                <form method="get" class="pull-right" style="display:inline-block;width: 260px;" action="{{ route('store_sales.detail', $item->id) }}">
+                    <div class="input-group">
+                        <input type="text" name="search" value="{{ $search_term }}" class="form-control input-sm pull-right" placeholder="Search">
+                        <div class="input-group-btn">
+                            <button type="submit" class="btn btn-sm btn-default"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
+        <br>
         <div class="table-responsive">
             <table class="table table-striped table-bordered" id="store-sales-table">
                 <thead>
