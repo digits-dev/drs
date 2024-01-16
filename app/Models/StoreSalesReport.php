@@ -53,4 +53,19 @@ class StoreSalesReport extends Model
         "non_apple_week_cutoff",
         "digits_code_rr_ref"
     ];
+
+    public function scopeFilter($query, array $filters) {
+        if($filters['search'] ?? false) {
+            $query->where('reference_number', 'like', '%' . request('search') . '%')
+            ->orWhere('system_name', 'like', '%' . request('search') . '%')
+            ->orWhere('organization_name', 'like', '%' . request('search') . '%')
+            ->orWhere('report_type', 'like', '%' . request('search') . '%')
+            ->orWhere('channel_name', 'like', '%' . request('search') . '%')
+            ->orWhere('customer_location', 'like', '%' . request('search') . '%')
+            ->orWhere('store_concept_name', 'like', '%' . request('search') . '%')
+            ->orWhere('receipt_number', 'like', '%' . request('search') . '%')
+            ->orWhere('sales_date', 'like', '%' . request('search') . '%');
+        }
+    }
+
 }

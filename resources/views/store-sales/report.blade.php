@@ -30,6 +30,21 @@
         label.error {
             color: red;
         }
+        .search-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 8px;
+        }
+        .search-bar {
+        padding: 5px 10px;
+        width: 400px;
+        outline: none;
+        margin-right: 8px;
+        border-radius: 5px;
+        border: 1px solid #919191;
+        }
+        
 
     </style>
 
@@ -50,10 +65,27 @@
             </a>
 
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
-                <i class="fa fa-search"></i> Search Filter
+                <i class="fa fa-filter" aria-hidden="true"></i> Search Filter
             </a>
         </div>
         <div class="panel-body">
+            <form action="{{ route('store-sales.search') }}">
+                <div class="search-container">
+                    <input
+                        class="search-bar"
+                        autofocus
+                        type="text"
+                        name="search"
+                        placeholder="Search"
+                    />
+                    <div class="search-btn-container">
+                        <button class="btn btn-info btn-sm pull-right" type="submit">
+                            <i class="fa fa-search"></i>  Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
             <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
                 <thead>
                     <tr>
@@ -92,6 +124,9 @@
                 @endforeach
                 </tbody>
             </table>
+           <div style="display: flex; justify-content: flex-end">
+            {{ $result->links() }}
+           </div>
         </div>
     </div>
 
@@ -244,6 +279,9 @@
             });
             $("#sales-report-table").dataTable({
                 responsive: true,
+                "bPaginate": false,
+                "bInfo": false,
+                "bFilter": false,
             });
         });
 
