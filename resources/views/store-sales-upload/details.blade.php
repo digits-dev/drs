@@ -17,25 +17,25 @@
     <div class="panel-body">
         <div class="row">
             <label class="col-md-2 label-control">Batch</label>
-            <div class="col-md-4">{{ $item->batch }}</div>
+            <div class="col-md-4"><p>{{ $item->batch }}</p></div>
             <label class="col-md-2 label-control">File Name</label>
-            <div class="col-md-4">{{ $item->file_name }}</div>
+            <div class="col-md-4"><p>{{ $item->file_name }}</p></div>
         </div>
         <div class="row">
             <label class="col-md-2 label-control">Created By</label>
-            <div class="col-md-4">{{ $item->name }}</div>
+            <div class="col-md-4"><p>{{ $item->name }}</p></div>
             <label class="col-md-2 label-control">Created At</label>
-            <div class="col-md-4">{{ $item->created_at }}</div>
+            <div class="col-md-4"><p>{{ $item->created_at }}</p></div>
         </div>
         <div class="row">
             <label class="col-md-2 label-control">Row Count</label>
-            <div class="col-md-4">{{ $item->row_count }}</div>
+            <div class="col-md-4"><p>{{ $item->row_count }}</p></div>
         </div>
         <div class="row">
             <label class="col-md-2 label-control">Importing Started</label>
-            <div class="col-md-4">{{ date('Y-m-d H:i:s', $item->started_at) }}</div>
+            <div class="col-md-4"><p>{{ date('Y-m-d H:i:s', $item->started_at) }}</p></div>
             <label class="col-md-2 label-control">Importing Finished</label>
-            <div class="col-md-4">{{ date('Y-m-d H:i:s', $item->finished_at) }}</div>
+            <div class="col-md-4"><p>{{ date('Y-m-d H:i:s', $item->finished_at) }}</p></div>
         </div>
         <hr>
         <div class="row">
