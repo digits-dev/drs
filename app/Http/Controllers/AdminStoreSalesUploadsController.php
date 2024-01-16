@@ -282,10 +282,19 @@ use Maatwebsite\Excel\Facades\Excel;
 					if (!$batch->finished_at) {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is still importing...", 'danger');
 					}
-					$batch->update(['is_final' => 1]);
+					if ($batch->is_final) {
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is already tagged as final.", 'danger');
+					}
+					$batch->update([
+						'is_final' => 1,
+						'tagged_as_final_at' => date('Y-m-d H:i:s'), 
+						'tagged_as_final_by' => CRUDBooster::myId(),
+					]);
 					$store_sales = StoreSale::where('batch_number', $batch->batch)->update(['is_final' => 1]);
 				}
 			}
+
+			return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully tagged as final.", 'success');
 
 	    }
 
