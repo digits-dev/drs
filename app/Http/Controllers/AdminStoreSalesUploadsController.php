@@ -37,7 +37,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$this->col[] = ["label"=>"Batch","name"=>"batch"];
 			$this->col[] = ["label"=>"Uploaded File","name"=>"file_name","callback"=>function($row) {
 				$main_path = CRUDBooster::mainPath();
-				return "$row->file_name <a class='pull-right' title='Download File' href='$main_path/download-uploaded-file/$row->id' target='_blank'/><i class='fa fa-download'></i></a>";
+				return "<div>$row->file_name</div> <a class='pull-right' title='Download File' href='$main_path/download-uploaded-file/$row->id' target='_blank'/><i class='fa fa-download'></i></a>";
 			}];
 			$this->col[] = ["label"=>"Import Progress","name"=>"job_batches_id","callback"=>function($row){
 				return "
