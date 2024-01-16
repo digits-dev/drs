@@ -11,8 +11,8 @@ class StoreSalesUpload extends Model
     protected $guarded = [];
 
 
-    public function getBatchDetails($id) {
-        return $this->where('store_sales_uploads.id', $id)
+    public function getBatchDetails($id = null) {
+        return $this->where('store_sales_uploads.id', $id ?? $this->id)
             ->select(
                 'store_sales_uploads.*',
                 'cms_users.name',

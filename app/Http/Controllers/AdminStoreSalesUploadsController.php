@@ -52,6 +52,15 @@ use Maatwebsite\Excel\Facades\Excel;
 				";
 			}];
 			$this->col[] = ["label"=>"Row Count","name"=>"row_count"];
+			$this->col[] = ["label"=>"Status","name"=>"is_final","callback"=>function($row) {
+				if ($row->is_final) {
+					return '<label class="label label-success">TAGGED AS FINAL</label>';
+				}
+				if (!$row->importing_finished_at) {
+					return '<label class="label label-warning">IMPORTING STARTED</label>';
+				}
+				return '<label class="label label-info">IMPORTING FINISHED</label>';
+			}];
 			$this->col[] = ["label"=>"Created By","name"=>"created_by","join"=>"cms_users,name"];
 			$this->col[] = ["label"=>"Created Date","name"=>"created_at"];
 			$this->col[] = ["label"=>"Importing Started","name"=>"id","callback"=>fn ($row) => $row->importing_started_at ? date('Y-m-d H:i:s', $row->importing_started_at) : null];
@@ -129,6 +138,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        |
 	        */
 	        $this->button_selected = array();
+			$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
 
 
 	        /*
@@ -265,7 +275,17 @@ use Maatwebsite\Excel\Facades\Excel;
 	    |
 	    */
 	    public function actionButtonSelected($id_selected,$button_name) {
-	        //Your code here
+	        if ($button_name == 'tag_as_final') {
+				foreach ($id_selected as $id) {
+					$batch = StoreSalesUpload::find($id);
+					$batch = $batch->getBatchDetails();
+					if (!$batch->finished_at) {
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is still importing...", 'danger');
+					}
+					$batch->update(['is_final' => 1]);
+					$store_sales = StoreSale::where('batch_number', $batch->batch)->update(['is_final' => 1]);
+				}
+			}
 
 	    }
 
@@ -401,7 +421,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$data['item'] = $store_sale_upload;
 			$data['user_report'] = $user_report;
 			$data['store_sales'] = $store_sales;
-			
+
 			return $this->view('store-sales-upload.details', $data);
 		}
 
