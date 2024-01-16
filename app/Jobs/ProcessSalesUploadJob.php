@@ -63,56 +63,47 @@ class ProcessSalesUploadJob implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            HeadingRowFormatter::default('slug');
-            $excel_data = Excel::toArray(new StoreSalesImport($this->batch_number), $this->excel_path)[0];
-            $errors = [];
-    
-            $excelReportType = array_unique(array_column($excel_data, "report_type"));
-            foreach ($excelReportType as $keyReportType => $valueReportType) {
-                if (!in_array($valueReportType, $this->report_type)) {
-                    array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
-                }
-            }
-    
-            if (!empty($errors)) {
-                // TODO: insert to db for error uploads
-                return;
-            }
-    
-            $snaked_headings = array_keys($excel_data[0]);
-            $row_count = count($excel_data);
-            $chunk_count = $row_count / 1000;
-            if ($row_count <= 10000) {
-                $chunk_count = 10;
-            }
-            $chunk_count = ceil($chunk_count);
-            $chunks = array_chunk($excel_data, $chunk_count);
-            $batch = Bus::batch([])->dispatch();
+        HeadingRowFormatter::default('slug');
+        $excel_data = Excel::toArray(new StoreSalesImport($this->batch_number), $this->excel_path)[0];
+        $errors = [];
 
-            $store_sales_upload = StoreSalesUpload::find($this->store_sales_upload_id);
-            $store_sales_upload->update([
-                'job_batches_id' => $batch->id,
-                'row_count' => $row_count,
-                'chunk_count' => $chunk_count,
-                'headings' => json_encode($snaked_headings),
+        $excelReportType = array_unique(array_column($excel_data, "report_type"));
+        foreach ($excelReportType as $keyReportType => $valueReportType) {
+            if (!in_array($valueReportType, $this->report_type)) {
+                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
+            }
+        }
+
+        if (!empty($errors)) {
+            // TODO: insert to db for error uploads
+            return;
+        }
+
+        $snaked_headings = array_keys($excel_data[0]);
+        $row_count = count($excel_data);
+        $chunk_count = 1000;
+        $chunks = array_chunk($excel_data, $chunk_count);
+        $batch = Bus::batch([])->dispatch();
+
+        $store_sales_upload = StoreSalesUpload::find($this->store_sales_upload_id);
+        $store_sales_upload->update([
+            'job_batches_id' => $batch->id,
+            'row_count' => $row_count,
+            'chunk_count' => $chunk_count,
+            'headings' => json_encode($snaked_headings),
+        ]);
+        
+        foreach ($chunks as $key => $chunk) {
+            $json = json_encode($chunk);
+            $store_sales_upload_line = new StoreSalesUploadLine([
+                'store_sales_uploads_id' => $store_sales_upload->id,
+                'chunk_index' => $key,
+                'chunk_data' => $json,
             ]);
-            
-            foreach ($chunks as $key => $chunk) {
-                $json = json_encode($chunk);
-                $store_sales_upload_line = new StoreSalesUploadLine([
-                    'store_sales_uploads_id' => $store_sales_upload->id,
-                    'chunk_index' => $key,
-                    'chunk_data' => $json,
-                ]);
-    
-                $store_sales_upload_line->save();
-    
-                $batch->add(new StoreSalesImportJob($store_sales_upload_line->id));
-            }
 
-        } catch (Exception $e) {
-            Log::error('Error processing the job: ' . $e->getMessage());
+            $store_sales_upload_line->save();
+
+            $batch->add(new StoreSalesImportJob($store_sales_upload_line->id));
         }
 
     }
