@@ -2,6 +2,7 @@
 SELECT
     `store_sales`.`id`,
     `store_sales`.`batch_number`,
+    `store_sales`.`is_final`,
     `store_sales`.`reference_number`, (
         CASE
             WHEN(`items`.`digits_code` IS NULL) THEN 0
