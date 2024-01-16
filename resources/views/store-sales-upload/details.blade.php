@@ -74,7 +74,8 @@
         {{ $store_sales->links() }}
     </div>
     <div class="panel-footer">
-        <a href='{{ CRUDBooster::mainpath() }}' class='btn btn-default'>Back</a>    </div>
+        <a href='{{ CRUDBooster::mainpath() }}' class='btn btn-default'>Back</a>
+    </div>
 </div>
 @endsection
 

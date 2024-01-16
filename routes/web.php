@@ -29,8 +29,8 @@ Route::get('/', function () {
 Route::group(['prefix'=>'admin'], function(){
 
     //import store sales
-    Route::post('store_sales/import-upload',[StoreSaleController::class, 'storeSalesUpload'])->name('store-sales.upload');
-    Route::get('store_sales/import',[StoreSaleController::class, 'storeSalesUploadView'])->name('store-sales.upload-view');
+    Route::post('sales_upload/import-upload',[StoreSaleController::class, 'storeSalesUpload'])->name('store-sales.upload');
+    Route::get('sales_upload/import',[StoreSaleController::class, 'storeSalesUploadView'])->name('store-sales.upload-view');
     Route::get('store_sales/template',[StoreSaleController::class, 'uploadTemplate'])->name('store-sales.template');
     Route::post('store_sales/export',[StoreSaleController::class, 'exportSales'])->name('store-sales.export');
     Route::get('store_sales/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);

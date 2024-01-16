@@ -163,6 +163,17 @@ use Maatwebsite\Excel\Facades\Excel;
 	        |
 	        */
 	        $this->index_button = array();
+			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
+				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
+					$this->index_button[] = [
+						"title"=>"Upload Sales",
+						"label"=>"Upload Sales",
+						"icon"=>"fa fa-upload",
+						"color"=>"success",
+						"url"=>route('store-sales.upload-view')
+					];
+				}
+			}
 
 
 
