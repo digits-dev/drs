@@ -1,6 +1,9 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exports\SalesUploadBatchExport;
+use App\Models\ReportPrivilege;
+use App\Models\StoreSale;
+use App\Models\StoreSalesReport;
 use App\Models\StoreSalesUpload;
 use App\Models\StoreSalesUploadLine;
 use Session;
@@ -382,6 +385,24 @@ use Maatwebsite\Excel\Facades\Excel;
 			} else {
 				abort(404, 'File not found');
 			}
+		}
+
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$store_sale_upload = (new StoreSalesUpload())->getBatchDetails($id);
+			$user_report = ReportPrivilege::myReport(1, 3);
+			$store_sales = StoreSalesReport::selectRaw("`$user_report->report_query`")
+				->where('batch_number', $store_sale_upload->batch)
+				->paginate(10);
+
+			$data = [];
+			$data['item'] = $store_sale_upload;
+			$data['user_report'] = $user_report;
+			$data['store_sales'] = $store_sales;
+			
+			return $this->view('store-sales-upload.details', $data);
 		}
 
 	}
