@@ -15,37 +15,29 @@
         <i class="fa fa-eye"></i><strong> Details {{CRUDBooster::getCurrentModule()->name}}</strong>
     </div>
     <div class="panel-body">
-        <h4 class="text-center text-bold">BATCH DETAILS</h4>
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <tbody>
-                    <tr>
-                        <th>Batch</th>
-                        <td>{{ $item->batch }}</td>
-                        <th>File Name</th>
-                        <td>{{ $item->file_name }}</td>
-                    </tr>
-                    <tr>
-                        <th>Row Count</th>
-                        <td>{{ $item->row_count }}</td>
-                        
-                    </tr>
-                    <tr>
-                        <th>Created By</th>
-                        <td>{{ $item->name }}</td>
-                        <th>Created Date</th>
-                        <td>{{ $item->created_at }}</td>
-                    </tr>
-                    <tr>
-                        <th>Importing Started At</th>
-                        <td>{{ date('Y-m-d H:i:s', $item->started_at) }}</td>
-                        <th>Importing Finished At</th>
-                        <td>{{ date('Y-m-d H:i:s', $item->finished_at) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <hr>
+        <div class="row">
+            <label class="col-md-2 label-control">Batch</label>
+            <div class="col-md-4">{{ $item->batch }}</div>
+            <label class="col-md-2 label-control">File Name</label>
+            <div class="col-md-4">{{ $item->file_name }}</div>
         </div>
+        <div class="row">
+            <label class="col-md-2 label-control">Created By</label>
+            <div class="col-md-4">{{ $item->name }}</div>
+            <label class="col-md-2 label-control">Created At</label>
+            <div class="col-md-4">{{ $item->created_at }}</div>
+        </div>
+        <div class="row">
+            <label class="col-md-2 label-control">Row Count</label>
+            <div class="col-md-4">{{ $item->row_count }}</div>
+        </div>
+        <div class="row">
+            <label class="col-md-2 label-control">Importing Started</label>
+            <div class="col-md-4">{{ date('Y-m-d H:i:s', $item->started_at) }}</div>
+            <label class="col-md-2 label-control">Importing Finished</label>
+            <div class="col-md-4">{{ date('Y-m-d H:i:s', $item->finished_at) }}</div>
+        </div>
+        <hr>
         <div class="row">
             <div class="col-md-12">
                 <form method="get" class="pull-right" style="display:inline-block;width: 260px;" action="{{ route('store_sales.detail', $item->id) }}">
