@@ -46,6 +46,20 @@
             </table>
             <hr>
         </div>
+        <div class="row">
+            <div class="form-group">
+                <div class="col-sm-3 pull-right">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-addon">
+                                <i class="fa fa-search"></i>
+                            </div>
+                            <input value="" type="text" class="form-control search-input" id="search-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-bordered" id="store-sales-table">
                 <thead>
