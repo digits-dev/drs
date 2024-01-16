@@ -56,10 +56,6 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <a href="{{ route('store-sales.upload-view') }}" id="upload-sales" class="btn btn-success btn-sm">
-                <i class="fa fa-upload"></i> Upload Sales
-            </a>
-
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
