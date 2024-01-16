@@ -39,6 +39,8 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_upload/download-uploaded-file/{id}',[AdminStoreSalesUploadsController::class, 'downloadUploadedFile']);
 
     Route::post('store_sales/filter',[StoreSaleController::class, 'filterStoreSales'])->name('store-sales.filter');
+    Route::get('store_sales/search',[AdminStoreSalesController::class, 'getIndex'])->name('store-sales.search');
+
 
     Route::post('digits_sales/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
     Route::get('digits_sales/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
