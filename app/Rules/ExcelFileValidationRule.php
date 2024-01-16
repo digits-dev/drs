@@ -31,10 +31,10 @@ class ExcelFileValidationRule implements Rule
     {
         // Check if the file has the correct extension (.xlsx)
 
-        $extension = $value->getClientOriginalExtension();
-        if ($extension !== 'xlsx') {
-            return false;
-        }
+        // $extension = $value->getClientOriginalExtension();
+        // if ($extension !== 'xlsx') {
+        //     return false;
+        // }
 
         // Check if the file size is less than or equal to 10MB (10 * 1024 KB)
         // 10MB in kilobytes
