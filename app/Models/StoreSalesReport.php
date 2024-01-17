@@ -64,4 +64,19 @@ class StoreSalesReport extends Model
         }
     }
 
+    public function scopeSearchFilter($query, array $filters) {
+        foreach($filters as $key => $value) {
+            if (in_array($key, $this->fillable)){
+                if (!empty($value)) {
+                    $query->where($key, $value);
+                }
+            }
+        }
+        if (isset($filters['datefrom']) && isset($filters['dateto'])) {
+            $query->whereBetween('sales_date', [$filters['datefrom'], $filters['dateto']]);
+        }
+
+        $query->where('is_final', 1);
+        return $query;
+    }
 }
