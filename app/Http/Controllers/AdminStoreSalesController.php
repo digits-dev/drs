@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
     use App\Models\Channel;
+    use App\Models\Concept;
     use App\Models\StoreSalesReport;
     use Session;
     use DB;
@@ -338,9 +339,11 @@
 			$data = [];
 			$data['page_title'] = 'Store Sales';
 			$data['channels'] = Channel::active();
+			$data['concepts'] = Concept::active();
 	
 			$searchTerm = request('search');
-			$data['result'] = StoreSalesReport::filter(['search' => $searchTerm])->paginate(10);
+			$data['searchval'] = $searchTerm;
+			$data['result'] = StoreSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
 			$data['result']->appends(['search' => $searchTerm]);
 	
 			return view('store-sales.report',$data);

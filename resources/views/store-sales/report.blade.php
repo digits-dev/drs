@@ -73,6 +73,7 @@
                         type="text"
                         name="search"
                         placeholder="Search"
+                        value="{{ $searchval }}"
                     />
                     <div class="search-btn-container">
                         <button class="btn btn-info btn-sm pull-right" type="submit">
@@ -216,8 +217,20 @@
                         </select>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        Concept
+                        <div class="form-group">
+                        <select name="concept" id="concept" class="form-control concept" title="Concept">
+                            <option value="">Please select Concept</option>
+                            @foreach ($concepts as $concept)
+                                <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
+                            @endforeach
+                        </select>
+                        </div>
+                    </div>
 
                 </div>
+
 
                 <div class="row">
 
