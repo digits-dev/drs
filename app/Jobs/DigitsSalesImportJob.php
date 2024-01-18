@@ -87,6 +87,7 @@ class DigitsSalesImportJob implements ShouldQueue
                 'landed_cost'			=> $row->landed_cost,
                 'qtysold_lc'			=> ($row->qty_sold)*($row->landed_cost),
                 'sale_memo_reference'	=> $row->sale_memo_ref,
+                'created_by'            => $chunk->created_by,
             ];
         }
 
