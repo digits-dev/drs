@@ -1,4 +1,5 @@
 function updateProgress() {
+    const urlWithoutParams = window.location.origin + window.location.pathname;
     const importProgresses = $('.import-progress').get();
     importProgresses.forEach(async (importProgress) => {
         const progress = $(importProgress);
@@ -8,7 +9,7 @@ function updateProgress() {
         const progressText = progress.find('.import-progress-text');
         const value = progressBar.val();
         if (value == 100) return;
-        const response = await fetch(`${window.location}/batch/${batchId}`);
+        const response = await fetch(`${urlWithoutParams}/batch/${batchId}`);
         const data = await response.json();
         const rowCount = data.upload_details.row_count;
         const currentCount = data.count;

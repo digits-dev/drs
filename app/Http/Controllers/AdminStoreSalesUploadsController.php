@@ -254,7 +254,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        |
 	        */
 	        $this->load_js = array();
-			$this->load_js[] = asset('js/sales-upload.js');
+			$this->load_js[] = asset('js/import-progress.js');
 
 
 

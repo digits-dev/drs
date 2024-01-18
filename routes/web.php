@@ -48,7 +48,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_digits_uploads/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
     Route::get('digits_sales/template',[DigitsSaleController::class, 'uploadTemplate'])->name('digits-sales.template');
     Route::post('digits_sales/export',[DigitsSaleController::class, 'exportSales'])->name('digits-sales.export');
-    Route::get('sales_digits_uploads/batch/{batch_id}',[AdminSalesDigitsUploadsController::class, 'getBatchDetails']);
+    Route::get('sales_digits_uploads/batch/{batch_id}',[DigitsSaleController::class, 'getBatchDetails']);
 
 
     //import store inventory

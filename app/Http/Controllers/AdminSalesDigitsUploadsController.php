@@ -260,6 +260,7 @@ use Session;
 	        |
 	        */
 	        $this->load_js = array();
+			$this->load_js[] = asset('js/import-progress.js');
 	        
 	        
 	        
