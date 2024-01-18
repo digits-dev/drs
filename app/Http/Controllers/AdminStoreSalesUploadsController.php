@@ -38,6 +38,26 @@ use Maatwebsite\Excel\Facades\Excel;
 			# START COLUMNS DO NOT REMOVE THIS LINE
 			$this->col = [];
 			$this->col[] = ["label"=>"Batch","name"=>"batch"];
+			$this->col[] = ["label"=>"Status","name"=>"status","callback"=>function($row) {
+				if ($row->is_final) {
+					return '<label class="label label-success">TAGGED AS FINAL</label>';
+				}
+				if ($row->importing_finished_at && !$row->importing_cancelled_at) {
+					return '<label class="label label-primary">IMPORT FINISHED</label>';
+				}
+				if ($row->importing_cancelled_at) {
+					return '<label class="label label-danger">IMPORT CANCELLED</label>';
+				}
+				if ($row->importing_started_at && !$row->importing_finished_at && !$row->importing_cancelled_at) {
+					return '<label class="label label-info">IMPORT ONGOING</label>';
+				}
+				if ($row->status == 'FILE UPLOADED') {
+					$class = 'warning';
+				} else if ($row->status == 'IMPORT FAILED') {
+					$class = 'danger';
+				}
+				return "<label class='label label-$class'>$row->status</label>";
+			}];
 			$this->col[] = ["label"=>"Uploaded File","name"=>"file_name","callback"=>function($row) {
 				$main_path = CRUDBooster::mainPath();
 				return "<div>$row->file_name</div> <a class='pull-right' title='Download File' href='$main_path/download-uploaded-file/$row->id' target='_blank'/><i class='fa fa-download'></i></a>";
@@ -52,15 +72,6 @@ use Maatwebsite\Excel\Facades\Excel;
 				";
 			}];
 			$this->col[] = ["label"=>"Row Count","name"=>"row_count"];
-			$this->col[] = ["label"=>"Status","name"=>"is_final","callback"=>function($row) {
-				if ($row->is_final) {
-					return '<label class="label label-success">TAGGED AS FINAL</label>';
-				}
-				if (!$row->importing_finished_at) {
-					return '<label class="label label-warning">IMPORTING STARTED</label>';
-				}
-				return '<label class="label label-info">IMPORTING FINISHED</label>';
-			}];
 			$this->col[] = ["label"=>"Created By","name"=>"created_by","join"=>"cms_users,name"];
 			$this->col[] = ["label"=>"Created Date","name"=>"created_at"];
 			$this->col[] = ["label"=>"Importing Started","name"=>"id","callback"=>fn ($row) => $row->importing_started_at ? date('Y-m-d H:i:s', $row->importing_started_at) : null];
@@ -321,9 +332,10 @@ use Maatwebsite\Excel\Facades\Excel;
 	        $query
 				->leftJoin('job_batches', 'job_batches.id', 'store_sales_uploads.job_batches_id')
 				->addSelect(
-					'store_sales_uploads.file_path',
+					'store_sales_uploads.*',
 					'job_batches.created_at as importing_started_at',
 					'job_batches.finished_at as importing_finished_at',
+					'job_batches.cancelled_at as importing_cancelled_at',
 				);
 
 

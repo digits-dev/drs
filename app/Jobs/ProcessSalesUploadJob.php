@@ -107,4 +107,9 @@ class ProcessSalesUploadJob implements ShouldQueue
         }
 
     }
+
+    public function failed() {
+        $store_sales_upload = StoreSalesUpload::find($this->store_sales_upload_id);
+        $store_sales_upload->update(['status' => 'IMPORT FAILED']);
+    }
 }
