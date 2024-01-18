@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreSalesExport;
 use App\Imports\StoreSalesImport;
-use App\Jobs\ProcessSalesUploadJob;
+use App\Jobs\ProcessStoreSalesUploadJob;
 use App\Jobs\StoreSalesImportJob;
 use App\Models\ReportType;
 use App\Models\StoreSalesUpload;
@@ -159,7 +159,7 @@ class StoreSaleController extends Controller
             'created_by' => CRUDBooster::myId(),
         ];
 
-        ProcessSalesUploadJob::dispatch($args);
+        ProcessStoreSalesUploadJob::dispatch($args);
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
     }

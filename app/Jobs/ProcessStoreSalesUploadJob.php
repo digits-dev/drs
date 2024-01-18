@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
-class ProcessSalesUploadJob implements ShouldQueue
+class ProcessStoreSalesUploadJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $batch_number;
