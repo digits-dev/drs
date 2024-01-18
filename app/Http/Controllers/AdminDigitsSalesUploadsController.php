@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\DigitsSale;
 use App\Models\DigitsSalesUpload;
 use Session;
 	use Request;
@@ -303,7 +304,26 @@ use Session;
 	    |
 	    */
 	    public function actionButtonSelected($id_selected,$button_name) {
-	        //Your code here
+	        if ($button_name == 'tag_as_final') {
+				foreach ($id_selected as $id) {
+					$batch = DigitsSalesUpload::find($id);
+					$batch = $batch->getBatchDetails();
+					if (!$batch->finished_at) {
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has not finished importing.", 'danger');
+					}
+					if ($batch->is_final) {
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is already tagged as final.", 'danger');
+					}
+					$batch->update([
+						'is_final' => 1,
+						'tagged_as_final_at' => date('Y-m-d H:i:s'), 
+						'tagged_as_final_by' => CRUDBooster::myId(),
+					]);
+					$digit_sales = DigitsSale::where('batch_number', $batch->batch)->update(['is_final' => 1]);
+				}
+			}
+
+			return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully tagged as final.", 'success');
 	            
 	    }
 
@@ -411,6 +431,7 @@ use Session;
 
 		public function exportBatch($id) {
 			$batch = DigitsSalesUpload::find($id);
+			dd($batch);
 		}
 
 	}
