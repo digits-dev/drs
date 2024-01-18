@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exports\SalesUploadBatchExport;
+use App\Exports\StoreSalesUploadBatchExport;
 use App\Models\ReportPrivilege;
 use App\Models\StoreSale;
 use App\Models\StoreSalesReport;
@@ -426,7 +426,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function exportBatch($id) {
 			$batch = StoreSalesUpload::find($id);
-			return Excel::download(new SalesUploadBatchExport($batch->batch), "$batch->batch.xlsx");
+			return Excel::download(new StoreSalesUploadBatchExport($batch->batch), "$batch->batch.xlsx");
 		}
 
 		public function downloadUploadedFile($id) {

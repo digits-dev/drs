@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use CRUDBooster;
 
-class SalesUploadBatchExport implements FromQuery, WithHeadings, WithMapping
+class StoreSalesUploadBatchExport implements FromQuery, WithHeadings, WithMapping
 {
     use Exportable;
     private $userReport;
