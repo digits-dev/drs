@@ -3,7 +3,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminReportPrivilegesController;
-use App\Http\Controllers\AdminSalesDigitsUploadsController;
+use App\Http\Controllers\AdminDigitsSalesUploadsController;
 use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesUploadsController;
 use App\Http\Controllers\DigitsSaleController;

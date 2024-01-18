@@ -6,7 +6,7 @@ use Session;
 	use DB;
 	use CRUDBooster;
 
-	class AdminSalesDigitsUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
+	class AdminDigitsSalesUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
 
