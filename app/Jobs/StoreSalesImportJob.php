@@ -11,6 +11,7 @@ use App\Models\NonAppleCutoff;
 use App\Models\Organization;
 use App\Models\ReportType;
 use App\Models\StoreSale;
+use App\Models\StoreSalesUpload;
 use App\Models\System;
 use Carbon\Carbon;
 use DateTime;
@@ -104,5 +105,11 @@ class StoreSalesImportJob implements ShouldQueue
         }
         $columns = array_keys($insertable[0]);
         StoreSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
+    }
+
+    public function failed() {
+        $chunk = StoreSalesUploadLine::getWithHeader($this->chunk_id);
+        $store_sales_upload = StoreSalesUpload::find($chunk->store_sales_uploads_id)
+            ->update(['status' => 'IMPORT FAILED']);
     }
 }

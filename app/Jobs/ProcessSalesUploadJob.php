@@ -29,7 +29,7 @@ class ProcessSalesUploadJob implements ShouldQueue
     public $file_name;
     public $created_by;
     public $timeout = 3600;
-    public $store_sales_upload_id;
+    public $store_sales_uploads_id;
 
     /**
      * Create a new job instance.
@@ -53,7 +53,7 @@ class ProcessSalesUploadJob implements ShouldQueue
             'file_path' => $this->excel_path,
             'created_by' => $this->created_by,
         ]);
-        $this->store_sales_upload_id = $store_sales_upload->id;
+        $this->store_sales_uploads_id = $store_sales_upload->id;
     }
 
     /**
@@ -85,7 +85,7 @@ class ProcessSalesUploadJob implements ShouldQueue
         $chunks = array_chunk($excel_data, $chunk_count);
         $batch = Bus::batch([])->dispatch();
 
-        $store_sales_upload = StoreSalesUpload::find($this->store_sales_upload_id);
+        $store_sales_upload = StoreSalesUpload::find($this->store_sales_uploads_id);
         $store_sales_upload->update([
             'job_batches_id' => $batch->id,
             'row_count' => $row_count,
@@ -109,7 +109,7 @@ class ProcessSalesUploadJob implements ShouldQueue
     }
 
     public function failed() {
-        $store_sales_upload = StoreSalesUpload::find($this->store_sales_upload_id);
+        $store_sales_upload = StoreSalesUpload::find($this->store_sales_uploads_id);
         $store_sales_upload->update(['status' => 'IMPORT FAILED']);
     }
 }

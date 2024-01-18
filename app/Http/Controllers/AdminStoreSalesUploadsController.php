@@ -45,7 +45,7 @@ use Maatwebsite\Excel\Facades\Excel;
 				if ($row->importing_finished_at && !$row->importing_cancelled_at) {
 					return '<label class="label label-primary">IMPORT FINISHED</label>';
 				}
-				if ($row->importing_cancelled_at) {
+				if ($row->importing_cancelled_at && !$row->importing_finished_at) {
 					return '<label class="label label-danger">IMPORT CANCELLED</label>';
 				}
 				if ($row->importing_started_at && !$row->importing_finished_at && !$row->importing_cancelled_at) {
