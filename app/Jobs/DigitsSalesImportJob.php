@@ -67,7 +67,7 @@ class DigitsSalesImportJob implements ShouldQueue
                 'reference_number'		=> $row->reference_number,
                 'systems_id'			=> $v_system->id,
                 'organizations_id'	    => $v_organization->id,
-                'report_types_id'		=> $this->report_type,
+                'report_types_id'		=> $report_type,
                 'channels_id'	        => $v_channel->id,
                 'customers_id'          => $v_customer->id,
                 'receipt_number'		=> $row->receipt_number,
