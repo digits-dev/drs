@@ -302,7 +302,7 @@ use Maatwebsite\Excel\Facades\Excel;
 					$batch = StoreSalesUpload::find($id);
 					$batch = $batch->getBatchDetails();
 					if (!$batch->finished_at) {
-						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is still importing...", 'danger');
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has not finished importing.", 'danger');
 					}
 					if ($batch->is_final) {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is already tagged as final.", 'danger');
