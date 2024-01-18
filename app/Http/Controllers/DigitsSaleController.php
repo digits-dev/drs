@@ -7,6 +7,7 @@ use App\Exports\ExcelTemplate;
 use App\Imports\DigitsSalesImport;
 use App\Jobs\ProcessDigitsSalesUploadJob;
 use App\Models\DigitsSale;
+use App\Models\DigitsSalesUpload;
 use Illuminate\Http\Request;
 use App\Rules\ExcelFileValidationRule;
 use CRUDBooster;
@@ -156,32 +157,20 @@ class DigitsSaleController extends Controller
             'created_by' => CRUDBooster::myId(),
         ];
 
-        ProcessDigitsSalesUploadJob::dispatchNow($args);
-
-        // HeadingRowFormatter::default('slug');
-        // $excelData = Excel::toArray(new DigitsSalesImport($batchNumber), $path);
-
-        // $excelReportType = array_unique(array_column($excelData[0], "report_type"));
-        // foreach ($excelReportType as $keyReportType => $valueReportType) {
-        //     if(!in_array($valueReportType,$this->reportType)){
-        //         array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
-        //     }
-        // }
-
-        // if(!empty($errors)){
-        //     File::delete($path);
-        //     return redirect()->back()->withErrors(['msg' => $errors]);
-        // }
-
-        // ini_set('memory_limit',-1);
-        // $digitsSales = new DigitsSalesImport($batchNumber);
-        // $digitsSales->import($path);
-
-        // if($digitsSales->failures()->isNotEmpty()){
-        //     return back()->withFailures($digitsSales->failures());
-        // }
+        ProcessDigitsSalesUploadJob::dispatch($args);
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
+    }
+
+    public function getBatchDetails($batch_id) {
+        $batch_details = Bus::findBatch($batch_id);
+        $upload_details = DigitsSalesUpload::where('job_batches_id', $batch_id)->first();
+        $count = DigitsSale::where('batch_number', $upload_details->batch)->count();
+        return [
+            'batch_details' => $batch_details,
+            'upload_details' => $upload_details,
+            'count' => $count,
+        ];
     }
 
     public function uploadTemplate()

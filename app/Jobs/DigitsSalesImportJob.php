@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Channel;
 use App\Models\Customer;
 use App\Models\DigitsSale;
+use App\Models\DigitsSalesUpload;
 use App\Models\DigitsSalesUploadLine;
 use App\Models\Organization;
 use App\Models\ReportType;
@@ -91,5 +92,11 @@ class DigitsSalesImportJob implements ShouldQueue
 
         $columns = array_keys($insertable[0]);
         DigitsSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
+    }
+
+    public function failed() {
+        $chunk = DigitsSalesUploadLine::getWithHeader($this->chunk_id);
+        $digits_sales_upload = DigitsSalesUpload::find($chunk->digits_sales_uploads_id)
+            ->update(['status' => 'IMPORT FAILED']);
     }
 }

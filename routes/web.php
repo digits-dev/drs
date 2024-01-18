@@ -3,6 +3,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminReportPrivilegesController;
+use App\Http\Controllers\AdminSalesDigitsUploadsController;
 use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesUploadsController;
 use App\Http\Controllers\DigitsSaleController;
@@ -43,10 +44,12 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('store_sales/search',[AdminStoreSalesController::class, 'getIndex'])->name('store-sales.search');
 
 
-    Route::post('digits_sales/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
-    Route::get('digits_sales/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
+    Route::post('sales_digits_uploads/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
+    Route::get('sales_digits_uploads/import',[DigitsSaleController::class, 'digitsSalesUploadView'])->name('digits-sales.upload-view');
     Route::get('digits_sales/template',[DigitsSaleController::class, 'uploadTemplate'])->name('digits-sales.template');
     Route::post('digits_sales/export',[DigitsSaleController::class, 'exportSales'])->name('digits-sales.export');
+    Route::get('sales_digits_uploads/batch/{batch_id}',[AdminSalesDigitsUploadsController::class, 'getBatchDetails']);
+
 
     //import store inventory
     Route::post('store_inventories/import-upload',[StoreInventoryController::class, 'storeInventoryUpload'])->name('store-inventory.upload');

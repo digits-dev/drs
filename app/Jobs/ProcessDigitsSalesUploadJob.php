@@ -28,7 +28,7 @@ class ProcessDigitsSalesUploadJob implements ShouldQueue
     public $file_name;
     public $created_by;
     public $timeout = 3600;
-    public $store_sales_upload_id;
+    public $digits_sales_uploads_id;
 
 
     /**
@@ -108,5 +108,10 @@ class ProcessDigitsSalesUploadJob implements ShouldQueue
             $batch->add(new DigitsSalesImportJob($digits_sales_upload_line->id));
         }
 
+    }
+
+    public function failed() {
+        $digits_sales_upload = DigitsSalesUpload::find($this->digits_sales_upload_id);
+        $digits_sales_upload->update(['status' => 'IMPORT FAILED']);
     }
 }
