@@ -1,11 +1,15 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exports\DigitsSalesUploadBatchExport;
 use App\Models\DigitsSale;
+use App\Models\DigitsSalesReport;
 use App\Models\DigitsSalesUpload;
+use App\Models\ReportPrivilege;
 use Session;
 	use Request;
 	use DB;
 	use CRUDBooster;
+use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminDigitsSalesUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -431,7 +435,32 @@ use Session;
 
 		public function exportBatch($id) {
 			$batch = DigitsSalesUpload::find($id);
-			dd($batch);
+			return Excel::download(new DigitsSalesUploadBatchExport($batch->batch), "$batch->batch.xlsx");
+		}
+
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+
+			$search_term = request('search');
+			$digits_sales_upload = (new DigitsSalesUpload())->getBatchDetails($id);
+			$user_report = ReportPrivilege::myReport(2, 3);
+			$digits_sales = DigitsSalesReport::filter(['search' => $search_term])
+				->selectRaw("`$user_report->report_query`")
+				->where('batch_number', $digits_sales_upload->batch)
+				->orderBy('reference_number', 'ASC')
+				->paginate(10)
+				->appends(['search' => $search_term]);
+
+			$data = [];
+			$data['item'] = $digits_sales_upload;
+			$data['user_report'] = $user_report;
+			$data['digits_sales'] = $digits_sales;
+			$data['search_term'] = $search_term;
+
+			return $this->view('digits-sales-upload.details', $data);
+
 		}
 
 	}
