@@ -438,6 +438,15 @@ use Maatwebsite\Excel\Facades\Excel;
 			return Excel::download(new DigitsSalesUploadBatchExport($batch->batch), "$batch->batch.xlsx");
 		}
 
+		public function downloadUploadedFile($id) {
+			$batch = DigitsSalesUpload::find($id);
+			if (file_exists($batch->file_path)) {
+				return response()->download($batch->file_path);
+			} else {
+				abort(404, 'File not found');
+			}
+		}
+
 		public function getDetail($id) {
 			if (!CRUDBooster::isRead()) {
 				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));

@@ -130,7 +130,7 @@ class StoreSaleController extends Controller
         $folder_path = storage_path('app') . '/' . $folder_name;
         $excel_file_name = $request->import_file->getClientOriginalName();
         $excel_relative_path = $request->file('import_file')
-            ->storeAs("sales-upload/$folder_name", $excel_file_name, 'local');
+            ->storeAs("store-sales-upload/$folder_name", $excel_file_name, 'local');
 
         $excel_path = storage_path('app') . '/' . $excel_relative_path;
         HeadingRowFormatter::default('none');
