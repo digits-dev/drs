@@ -30,6 +30,20 @@
         label.error {
             color: red;
         }
+        .search-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 8px;
+        }
+        .search-bar {
+        padding: 5px 10px;
+        width: 400px;
+        outline: none;
+        margin-right: 8px;
+        border-radius: 5px;
+        border: 1px solid #919191;
+        }
 
     </style>
 
@@ -49,6 +63,28 @@
   
         </div>
         <div class="panel-body">
+            <form action="{{ route('store-sales.search') }}">
+                <div class="search-container">
+                    <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
+                    <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+                    <input type='hidden' name='datefrom' value="{{ $datefrom }}">
+                    <input type='hidden' name='dateto' value="{{ $dateto }}">
+                    <input type='hidden' name='store_concept_name' value="{{ $store_concept_name }}">
+                    <input
+                        class="search-bar"
+                        autofocus
+                        type="text"
+                        name="search"
+                        placeholder="Search"
+                        value="{{ $searchval }}"
+                    />
+                    <div class="search-btn-container">
+                        <button class="btn btn-info btn-sm pull-right" type="submit">
+                            <i class="fa fa-search"></i>  Search
+                        </button>
+                    </div>
+                </div>
+            </form>
             <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
                 <thead>
                     <tr>
@@ -82,6 +118,9 @@
                 @endforeach
                 </tbody>
             </table>
+            <div style="display: flex; justify-content: flex-end">
+                {{ $result->links() }}
+               </div>
         </div>
     </div>
 
@@ -98,7 +137,7 @@
 
             <form method='post' target='_blank' action="{{ route('store-sales.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
-            {{ CRUDBooster::getUrlParameters() }}
+            {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))
                 @foreach ($filters as $keyfilter => $valuefilter )
                     <input type="hidden" name="{{ $keyfilter }}" value="{{ $valuefilter }}">
@@ -132,10 +171,11 @@
             <form method='post' target='_blank' action="{{ route('store-sales.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
-            <input type='hidden' name='channel' value="{{ $channel }}">
+            <input type='hidden' name='channel_name' value="{{ $channel_name }}">
             <input type='hidden' name='datefrom' value="{{ $datefrom }}">
             <input type='hidden' name='dateto' value="{{ $dateto }}">
-            {{ CRUDBooster::getUrlParameters()}}
+            <input type='hidden' name='store_concept_name' value="{{ $store_concept_name }}">
+            {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
                 <div class='form-group'>
                     <label>File Name</label>
@@ -159,6 +199,9 @@
             });
             $("#sales-report-table").dataTable({
                 responsive: true,
+                "bPaginate": false,
+                "bInfo": false,
+                "bFilter": false,
             });
         });
 

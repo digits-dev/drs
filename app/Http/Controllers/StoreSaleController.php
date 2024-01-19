@@ -189,16 +189,14 @@ class StoreSaleController extends Controller
     }
 
     public function filterStoreSales(Request $request) {
-        $data['result'] = StoreSalesReport::searchFilter($request->all())->get();;
- 
-        // $data['result'] = StoreSalesReport::final()->where('channel_name', $request->channel)
-        // ->where('receipt_number', $request->receipt_number)
-        // ->whereBetween('sales_date', [$request->datefrom, $request->dateto])->get();
-        
+        $data['result'] = StoreSalesReport::searchFilter($request->all())->paginate(10);
+        $data['result']->appends($request->except(['_token']));
+
         $data['receipt_number'] = $request->receipt_number;
-        $data['channel'] = $request->channel;
+        $data['channel_name'] = $request->channel_name;
         $data['datefrom'] = $request->datefrom;
         $data['dateto'] = $request->dateto;
+        $data['store_concept_name'] = $request->store_concept_name;
         
         return view('store-sales.filtered-report',$data);
 

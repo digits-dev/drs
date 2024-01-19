@@ -140,7 +140,7 @@
 
             <form method='post' target='_blank' action="{{ route('store-sales.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
-            {{ CRUDBooster::getUrlParameters() }}
+            {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))
                 @foreach ($filters as $keyfilter => $valuefilter )
                     <input type="hidden" name="{{ $keyfilter }}" value="{{ $valuefilter }}">
@@ -209,7 +209,7 @@
                     <div class="col-md-6">
                         Channel
                         <div class="form-group">
-                        <select name="channel" id="channel" class="form-control channel" title="Channel">
+                        <select name="channel_name" id="channel" class="form-control channel" title="Channel">
                             <option value="">Please select channel</option>
                             @foreach ($channels as $channel)
                                 <option value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
@@ -220,7 +220,7 @@
                     <div class="col-md-6">
                         Concept
                         <div class="form-group">
-                        <select name="concept" id="concept" class="form-control concept" title="Concept">
+                        <select name="store_concept_name" id="concept" class="form-control concept" title="Concept">
                             <option value="">Please select Concept</option>
                             @foreach ($concepts as $concept)
                                 <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
@@ -264,7 +264,7 @@
 
             <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
-            {{ CRUDBooster::getUrlParameters()}}
+            {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
                 <div class='form-group'>
                     <label>File Name</label>

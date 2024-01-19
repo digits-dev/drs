@@ -346,7 +346,13 @@
 			$data['result'] = StoreSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
 			$data['result']->appends(['search' => $searchTerm]);
 	
-			return view('store-sales.report',$data);
+			$inputData = request()->all();
+
+			if (count($inputData) > 1) {
+				return view('store-sales.filtered-report', $data);
+			} else {
+				return view('store-sales.report', $data);
+			}
 		}
 
 	}
