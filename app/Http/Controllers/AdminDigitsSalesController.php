@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Channel;
+use App\Models\Concept;
+use App\Models\DigitsSalesReport;
 use Session;
 	use Request;
 	use DB;
@@ -321,11 +323,21 @@ use Session;
             $data = [];
             $data['page_title'] = 'Digits Sales';
             $data['channels'] = Channel::active();
-            $data['result'] = DB::table('digits_sales_report')
-                ->limit(50)
-                ->get();
+			$data['concepts'] = Concept::active();
 
-            return view('digits-sales.report',$data);
+			$searchTerm = request('search');
+			$data['searchval'] = $searchTerm;
+			$data['result'] = DigitsSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
+			$data['result']->appends(['search' => $searchTerm]);
+			
+			$inputData = request()->all();
+
+			if (count($inputData) > 1) {
+				return view('digits-sales.filtered-report', $data);
+			} else {
+			    return view('digits-sales.report',$data);
+
+			}
         }
 
 

@@ -7,6 +7,7 @@ use App\Exports\ExcelTemplate;
 use App\Imports\DigitsSalesImport;
 use App\Jobs\ProcessDigitsSalesUploadJob;
 use App\Models\DigitsSale;
+use App\Models\DigitsSalesReport;
 use App\Models\DigitsSalesUpload;
 use Illuminate\Http\Request;
 use App\Rules\ExcelFileValidationRule;
@@ -184,5 +185,19 @@ class DigitsSaleController extends Controller
     public function exportSales(Request $request) {
         $filename = $request->input('filename');
         return Excel::download(new DigitsSalesExport, $filename.'.xlsx');
+    }
+
+    public function filterDigitsSales(Request $request) {
+        $data['result'] = DigitsSalesReport::searchFilter($request->all())->paginate(10);
+        $data['result']->appends($request->except(['_token']));
+
+        $data['receipt_number'] = $request->receipt_number;
+        $data['channel_name'] = $request->channel_name;
+        $data['datefrom'] = $request->datefrom;
+        $data['dateto'] = $request->dateto;
+        $data['store_concept_name'] = $request->store_concept_name;
+        
+        return view('digits-sales.filtered-report',$data);
+
     }
 }
