@@ -60,8 +60,8 @@ Route::group(['prefix'=>'admin'], function(){
 
 
     //import store inventory
-    Route::post('store_inventories/import-upload',[StoreInventoryController::class, 'storeInventoryUpload'])->name('store-inventory.upload');
-    Route::get('store_inventories/import',[StoreInventoryController::class, 'storeInventoryUploadView'])->name('store-inventory.upload-view');
+    Route::post('inventory_store_uploads/import-upload',[StoreInventoryController::class, 'storeInventoryUpload'])->name('store-inventory.upload');
+    Route::get('inventory_store_uploads/import',[StoreInventoryController::class, 'storeInventoryUploadView'])->name('store-inventory.upload-view');
     Route::get('store_inventories/template',[StoreInventoryController::class, 'uploadTemplate'])->name('store-inventory.template');
     Route::post('store_inventories/export',[StoreInventoryController::class, 'exportInventory'])->name('store-inventory.export');
     Route::get('inventory_store_uploads/batch/{batch_id}',[StoreInventoryController::class, 'getBatchDetails']);

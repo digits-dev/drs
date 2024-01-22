@@ -166,7 +166,7 @@ use Session;
 						"label"=>"Upload Sales",
 						"icon"=>"fa fa-upload",
 						"color"=>"success",
-						"url"=>route('store-sales.upload-view')
+						"url"=>route('store-inventory.upload-view')
 					];
 				}
 			}
