@@ -60,11 +60,15 @@ class StoreInventory extends Model
         parent::boot();
         static::creating(function($model)
         {
-            $model->created_by = CRUDBooster::myId();
+            if (CRUDBooster::myId()) {
+                $model->created_by = CRUDBooster::myId();
+            }
         });
         static::updating(function($model)
         {
-            $model->updated_by = CRUDBooster::myId();
+            if (CRUDBooster::myId()) {
+                $model->updated_by = CRUDBooster::myId();
+            }
         });
     }
 }

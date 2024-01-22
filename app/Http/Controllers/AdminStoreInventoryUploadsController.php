@@ -164,8 +164,8 @@ use Session;
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
 				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
 					$this->index_button[] = [
-						"title"=>"Upload Sales",
-						"label"=>"Upload Sales",
+						"title"=>"Upload Inventory",
+						"label"=>"Upload Inventory",
 						"icon"=>"fa fa-upload",
 						"color"=>"success",
 						"url"=>route('store-inventory.upload-view')

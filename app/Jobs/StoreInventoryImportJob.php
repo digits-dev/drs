@@ -91,6 +91,7 @@ class StoreInventoryImportJob implements ShouldQueue
                 'qtyinv_ecom'			=> ($row->inventory_qty)*($row->store_cost_ecomm),
                 'landed_cost'			=> $row->landed_cost,
                 'qtyinv_lc'			    => ($row->inventory_qty)*($row->landed_cost),
+                'created_by'            => $chunk->created_by,
             ];
         }
 
