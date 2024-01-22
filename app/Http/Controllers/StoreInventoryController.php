@@ -8,8 +8,10 @@ use App\Exports\ExcelTemplate;
 use App\Exports\StoreInventoryExport;
 use App\Imports\StoreInventoryImport;
 use App\Jobs\ProcessStoreInventoryUploadJob;
+use App\Models\StoreInventoryUpload;
 use App\Rules\ExcelFileValidationRule;
 use CRUDBooster;
+use Illuminate\Support\Facades\Bus;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
@@ -153,6 +155,18 @@ class StoreInventoryController extends Controller
         ProcessStoreInventoryUploadJob::dispatch($args);
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
+    }
+
+    public function getBatchDetails($batch_id) {
+
+        $batch_details = Bus::findBatch($batch_id);
+        $upload_details = StoreInventoryUpload::where('job_batches_id', $batch_id)->first();
+        $count = StoreInventory::where('batch_number', $upload_details->batch)->count();
+        return [
+            'batch_details' => $batch_details,
+            'upload_details' => $upload_details,
+            'count' => $count,
+        ];
     }
 
     public function uploadTemplate()
