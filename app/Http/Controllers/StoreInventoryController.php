@@ -7,19 +7,21 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreInventoryExport;
 use App\Imports\StoreInventoryImport;
+use App\Jobs\ProcessStoreInventoryUploadJob;
 use App\Rules\ExcelFileValidationRule;
 use CRUDBooster;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class StoreInventoryController extends Controller
 {
-    private $reportType;
+    private $report_type;
 
     public function __construct(){
-        $this->reportType = ['STORE INVENTORY','STORE INTRANSIT'];
+        $this->report_type = ['STORE INVENTORY','STORE INTRANSIT'];
     }
     /**
      * Display a listing of the resource.
@@ -115,49 +117,40 @@ class StoreInventoryController extends Controller
         $request->validate([
             'import_file' => ['required', 'file', new ExcelFileValidationRule(20)],
         ]);
-        $path_excel = $request->file('import_file')
-            ->storeAs('temp',$request->import_file->getClientOriginalName(),'local');
+        $time = time();
+        $folder_name = "$time-" . Str::random(5);
+        $folder_path = storage_path('app') . '/' . $folder_name;
+        $excel_file_name = $request->import_file->getClientOriginalName();
+        $excel_relative_path = $request->file('import_file')
+            ->storeAs("store-inventory-upload/$folder_name", $excel_file_name, 'local');
 
-        $path = storage_path('app').'/'.$path_excel;
+        $excel_path = storage_path('app') . '/' . $excel_relative_path;
         HeadingRowFormatter::default('none');
-        $headings = (new HeadingRowImport)->toArray($path);
+        $headings = (new HeadingRowImport)->toArray($excel_path)[0][0];
         //check headings
         $header = config('excel-template-headers.store-inventory');
 
-        for ($i=0; $i < sizeof($headings[0][0]); $i++) {
-            if (!in_array($headings[0][0][$i], $header)) {
-                $unMatch[] = $headings[0][0][$i];
+        for ($i = 0; $i < sizeof($headings); $i++) {
+            if (!in_array($headings[$i], $header)) {
+                $unMatch[] = $headings[$i];
             }
         }
 
-        $batchNumber = time();
-        // $reportType = $request->report_type;
+        $batch_number = $time;
 
         if(!empty($unMatch)) {
             return redirect(route('store-inventory.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
         }
-        HeadingRowFormatter::default('slug');
-        $excelData = Excel::toArray(new StoreInventoryImport($batchNumber), $path);
+        $args = [
+            'batch_number' => $batch_number,
+            'excel_path' => $excel_path,
+            'report_type' => $this->report_type,
+            'folder_name' => $folder_name,
+            'file_name' => $excel_file_name,
+            'created_by' => CRUDBooster::myId(),
+        ];
 
-        $errors = app(InventoryUploadCheckerController::class)->check($excelData, $request->inventory_date);
-        $excelReportType = array_unique(array_column($excelData[0], "report_type"));
-        foreach ($excelReportType as $keyReportType => $valueReportType) {
-            if(!in_array($valueReportType,$this->reportType)){
-                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
-            }
-        }
-
-        if(!empty($errors)){
-            File::delete($path);
-            return redirect()->back()->withErrors(['msg' => $errors]);
-        }
-        ini_set('memory_limit',-1);
-        $storeInventory = new StoreInventoryImport($batchNumber);
-        $storeInventory->import($path);
-
-        if($storeInventory->failures()->isNotEmpty()){
-            return back()->withFailures($storeInventory->failures());
-        }
+        ProcessStoreInventoryUploadJob::dispatch($args);
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
     }
