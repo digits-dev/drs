@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminReportPrivilegesController;
 use App\Http\Controllers\AdminDigitsSalesUploadsController;
 use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesUploadsController;
+use App\Http\Controllers\AdminDigitsSalesController;
 use App\Http\Controllers\DigitsSaleController;
 use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
@@ -52,6 +53,9 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_digits_uploads/export-batch/{id}',[AdminDigitsSalesUploadsController::class, 'exportBatch']);
     Route::get('sales_digits_uploads/download-uploaded-file/{id}',[AdminDigitsSalesUploadsController::class, 'downloadUploadedFile']);
     Route::get('sales_digits_uploads/detail/{id}', [AdminDigitsSalesUploadsController::class, 'getDetail'])->name('digits_sales.detail');
+    
+    Route::any('digits_sales/filter',[DigitsSaleController::class, 'filterDigitsSales'])->name('digits-sales.filter');
+    Route::get('digits_sales/search',[AdminDigitsSalesController::class, 'getIndex'])->name('digits-sales.search');
 
 
     //import store inventory
