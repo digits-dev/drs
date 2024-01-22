@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\ReportPrivilege;
+use App\Models\StoreInventoriesReport;
 use App\Models\StoreInventory;
 use App\Models\StoreInventoryUpload;
 use Session;
@@ -409,9 +411,30 @@ use Session;
 
 	    }
 
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$search_term = request('search');
+			$store_inventory_upload = (new StoreInventoryUpload())->getBatchDetails($id);
+			$user_report = ReportPrivilege::myReport(3, 3);
+			// dd($user_report);
+			$store_inventories = StoreInventoriesReport::filter(['search' => $search_term])
+				->selectRaw("`$user_report->report_query`")
+				->where('batch_number', $store_inventory_upload->batch)
+				->orderBy('reference_number', 'ASC')
+				->paginate(10)
+				->appends(['search' => $search_term]);
 
+			$data = [];
+			$data['item'] = $store_inventory_upload;
+			$data['user_report'] = $user_report;
+			$data['store_inventories'] = $store_inventories;
+			$data['search_term'] = $search_term;
 
-	    //By the way, you can still create your own method in here... :) 
+			return $this->view('store-inventory-upload.details', $data);
+		}
+
 
 
 	}
