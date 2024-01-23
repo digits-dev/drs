@@ -3,6 +3,7 @@
 use App\Exports\WarehouseInventoryUploadBatchExport;
 use App\Models\ReportPrivilege;
 use App\Models\WarehouseInventoriesReport;
+use App\Models\WarehouseInventory;
 use App\Models\WarehouseInventoryUpload;
 use Session;
 	use Request;
@@ -293,7 +294,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	    public function actionButtonSelected($id_selected,$button_name) {
 	        if ($button_name == 'tag_as_final') {
 				foreach ($id_selected as $id) {
-					$batch = StoreInventoryUpload::find($id);
+					$batch = WarehouseInventoryUpload::find($id);
 					$batch = $batch->getBatchDetails();
 					if (!$batch->finished_at) {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has not finished importing.", 'danger');
@@ -306,7 +307,7 @@ use Maatwebsite\Excel\Facades\Excel;
 						'tagged_as_final_at' => date('Y-m-d H:i:s'), 
 						'tagged_as_final_by' => CRUDBooster::myId(),
 					]);
-					$store_inventory = StoreInventory::where('batch_number', $batch->batch)->update(['is_final' => 1]);
+					$warehouse_inventory = WarehouseInventory::where('batch_number', $batch->batch)->update(['is_final' => 1]);
 				}
 			}
 
@@ -452,7 +453,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$data['search_term'] = $search_term;
 
 			return $this->view('warehouse-inventory-upload.details', $data);
-			
+
 		}
 
 
