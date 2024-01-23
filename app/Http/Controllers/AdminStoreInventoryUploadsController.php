@@ -418,6 +418,17 @@ use Maatwebsite\Excel\Facades\Excel;
 			return Excel::download(new StoreInventoryUploadBatchExport($batch->batch), "$batch->batch.xlsx");
 		}
 
+		public function downloadUploadedFile($id) {
+			$batch = StoreInventoryUpload::find($id);
+
+			if (file_exists($batch->file_path)) {
+				return response()->download($batch->file_path);
+			} else {
+				abort(404, 'File not found');
+			}
+		}
+
+
 		public function getDetail($id) {
 			if (!CRUDBooster::isRead()) {
 				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
@@ -425,7 +436,6 @@ use Maatwebsite\Excel\Facades\Excel;
 			$search_term = request('search');
 			$store_inventory_upload = (new StoreInventoryUpload())->getBatchDetails($id);
 			$user_report = ReportPrivilege::myReport(3, 3);
-			// dd($user_report);
 			$store_inventories = StoreInventoriesReport::filter(['search' => $search_term])
 				->selectRaw("`$user_report->report_query`")
 				->where('batch_number', $store_inventory_upload->batch)
