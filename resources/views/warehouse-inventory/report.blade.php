@@ -41,10 +41,6 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <a href="{{ route('warehouse-inventory.upload-view') }}" id="upload-inventory" class="btn btn-success btn-sm">
-                <i class="fa fa-upload"></i> Upload Inventory
-            </a>
-
             <a href="javascript:showInventoryReportExport()" id="export-inventory" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Inventory
             </a>
