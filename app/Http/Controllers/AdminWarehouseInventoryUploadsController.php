@@ -1,9 +1,12 @@
 <?php namespace App\Http\Controllers;
 
-	use Session;
+use App\Exports\WarehouseInventoryUploadBatchExport;
+use App\Models\WarehouseInventoryUpload;
+use Session;
 	use Request;
 	use DB;
 	use CRUDBooster;
+use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminWarehouseInventoryUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -411,9 +414,10 @@
 
 	    }
 
-
-
-	    //By the way, you can still create your own method in here... :) 
+		public function exportBatch($id) {
+			$batch = WarehouseInventoryUpload::find($id);
+			return Excel::download(new WarehouseInventoryUploadBatchExport($batch->batch), "$batch->batch.xlsx");
+		}
 
 
 	}
