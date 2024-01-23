@@ -118,6 +118,7 @@ class DigitsSaleController extends Controller
 
     public function digitsSalesUpload(Request $request)
     {
+        [$from_date, $to_date] = explode(' - ', $request->get('sales_date'));
         $errors = array();
         $request->validate([
             'import_file' => ['required', 'file', new ExcelFileValidationRule(20)],
@@ -157,6 +158,8 @@ class DigitsSaleController extends Controller
             'folder_name' => $folder_name,
             'file_name' => $excel_file_name,
             'created_by' => CRUDBooster::myId(),
+            'from_date' => $from_date,
+            'to_date' => $to_date,
         ];
 
         ProcessDigitsSalesUploadJob::dispatch($args);

@@ -29,6 +29,8 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
     public $file_name;
     public $created_by;
     public $timeout = 3600;
+    public $from_date;
+    public $to_date;
     public $store_sales_uploads_id;
 
     /**
@@ -46,12 +48,16 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
         $this->file_name = $args['file_name'];
         $this->file_path = $args['file_path'];
         $this->created_by = $args['created_by'];
+        $this->from_date = $args['from_date'];
+        $this->to_date = $args['to_date'];
         $store_sales_upload = StoreSalesUpload::create([
             'batch' => $this->batch_number,
             'folder_name' => $this->folder_name,
             'file_name' => $this->file_name,
             'file_path' => $this->excel_path,
             'created_by' => $this->created_by,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
         ]);
         $this->store_sales_uploads_id = $store_sales_upload->id;
     }

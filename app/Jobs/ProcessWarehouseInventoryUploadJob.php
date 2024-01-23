@@ -25,6 +25,7 @@ class ProcessWarehouseInventoryUploadJob implements ShouldQueue
     public $file_name;
     public $created_by;
     public $timeout = 3600;
+    public $from_date;
     public $warehouse_inventory_uploads_id;
 
     /**
@@ -42,12 +43,14 @@ class ProcessWarehouseInventoryUploadJob implements ShouldQueue
         $this->file_name = $args['file_name'];
         $this->file_path = $args['file_path'];
         $this->created_by = $args['created_by'];
+        $this->from_date = $args['from_date'];
         $warehouse_inventory_uploads = WarehouseInventoryUpload::create([
             'batch' => $this->batch_number,
             'folder_name' => $this->folder_name,
             'file_name' => $this->file_name,
             'file_path' => $this->excel_path,
             'created_by' => $this->created_by,
+            'from_date' => $this->from_date,
         ]);
         $this->warehouse_inventory_uploads_id = $warehouse_inventory_uploads->id;
     }

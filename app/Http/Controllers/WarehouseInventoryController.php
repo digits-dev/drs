@@ -116,6 +116,7 @@ class WarehouseInventoryController extends Controller
 
     public function warehouseInventoryUpload(Request $request)
     {
+        $from_date = $request->get('inventory_date');
         $errors = array();
         $request->validate([
             'import_file' => ['required', 'file', new ExcelFileValidationRule(20)],
@@ -151,6 +152,7 @@ class WarehouseInventoryController extends Controller
             'folder_name' => $folder_name,
             'file_name' => $excel_file_name,
             'created_by' => CRUDBooster::myId(),
+            'from_date' => $from_date,
         ];
 
         ProcessWarehouseInventoryUploadJob::dispatch($args);
