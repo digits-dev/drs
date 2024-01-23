@@ -2,6 +2,7 @@ SELECT
     `warehouse_inventories`.`id`,
     `warehouse_inventories`.`batch_number`,
     `warehouse_inventories`.`is_final`,
+    `warehouse_inventories`.`reference_number`,
     `systems`.`system_name` AS `system_name`,
     `organizations`.`organization_name` AS `organization_name`,
     `report_types`.`report_type` AS `report_type`,
