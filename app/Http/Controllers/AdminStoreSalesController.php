@@ -355,4 +355,14 @@
 			}
 		}
 
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$data = [];
+			$data['page_title'] = 'Store Sales Details';
+			$data['store_sales_details'] = StoreSalesReport::where('id', $id)->first();
+			return view('store-sales.details',$data);
+		}
+
 	}

@@ -2,6 +2,7 @@
 
     use App\Models\Channel;
     use App\Models\System;
+    use App\Models\StoreInventoriesReport;
     use Session;
     use Illuminate\Http\Request;
 	use DB;
@@ -324,6 +325,21 @@
 
 	    }
 
+        // public function getIndex() {
+
+        //     if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+
+        //     $data = [];
+        //     $data['page_title'] = 'Store Inventory';
+        //     $data['channels'] = Channel::active();
+        //     $data['systems'] = System::active();
+        //     $data['result'] = DB::table('store_inventories_report')
+        //         ->limit(50)
+        //         ->get();
+
+        //     return view('store-inventory.report',$data);
+        // }
+		
         public function getIndex() {
 
             if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
@@ -332,12 +348,30 @@
             $data['page_title'] = 'Store Inventory';
             $data['channels'] = Channel::active();
             $data['systems'] = System::active();
-            $data['result'] = DB::table('store_inventories_report')
-                ->limit(50)
-                ->get();
+     
+			$searchTerm = request('search');
+			$data['searchval'] = $searchTerm;
+			$data['result'] = StoreInventoriesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
+			$data['result']->appends(['search' => $searchTerm]);
 
-            return view('store-inventory.report',$data);
+			$inputData = request()->all();
+
+			if (count($inputData) > 1) {
+				return view('store-inventory.filtered-report', $data);
+			} else {
+			
+				return view('store-inventory.report',$data);
+			}
+
         }
 
-
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$data = [];
+			$data['page_title'] = 'Store Sales Details';
+			$data['store_inventory_details'] = StoreInventoriesReport::where('id', $id)->first();
+			return view('store-inventory.details',$data);
+		}
 	}

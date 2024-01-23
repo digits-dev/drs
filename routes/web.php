@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminDigitsSalesUploadsController;
 use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesUploadsController;
 use App\Http\Controllers\AdminDigitsSalesController;
+use App\Http\Controllers\AdminStoreInventoriesController;
 use App\Http\Controllers\AdminStoreInventoryUploadsController;
 use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
 use App\Http\Controllers\DigitsSaleController;
@@ -69,6 +70,10 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_store_uploads/export-batch/{id}',[AdminStoreInventoryUploadsController::class, 'exportBatch']);
     Route::get('inventory_store_uploads/download-uploaded-file/{id}',[AdminStoreInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('store-inventory.detail');
+    Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('digits_sales.detail');
+    Route::any('store_inventories/filter',[StoreInventoryController::class, 'filterStoreInventory'])->name('store-inventory.filter');
+    Route::get('store_inventories/search',[AdminStoreInventoriesController::class, 'getIndex'])->name('store-inventory.search');
+
 
     //import warehouse inventory
     Route::post('warehouse_inventories/import-upload',[WarehouseInventoryController::class, 'warehouseInventoryUpload'])->name('warehouse-inventory.upload');

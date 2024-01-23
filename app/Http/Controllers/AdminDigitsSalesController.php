@@ -340,5 +340,15 @@ use Session;
 			}
         }
 
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$data = [];
+			$data['page_title'] = 'Digits Sales Details';
+			$data['digits_sales_details'] = DigitsSalesReport::where('id', $id)->first();
+			return view('digits-sales.details',$data);
+		}
+
 
 	}
