@@ -101,7 +101,7 @@ class StoreInventoryImportJob implements ShouldQueue
 
     public function failed() {
         $chunk = StoreInventoryUploadLine::getWithHeader($this->chunk_id);
-        $inventory_sales_upload = StoreInventoryUpload::find($chunk->store_inventory_uploads_id)
+        $store_inventory_upload = StoreInventoryUpload::find($chunk->store_inventory_uploads_id)
             ->update(['status' => 'IMPORT FAILED']);
     }
 }
