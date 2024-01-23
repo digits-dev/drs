@@ -72,7 +72,7 @@ Route::group(['prefix'=>'admin'], function(){
 
     //import warehouse inventory
     Route::post('warehouse_inventories/import-upload',[WarehouseInventoryController::class, 'warehouseInventoryUpload'])->name('warehouse-inventory.upload');
-    Route::get('warehouse_inventories/import',[WarehouseInventoryController::class, 'warehouseInventoryUploadView'])->name('warehouse-inventory.upload-view');
+    Route::get('inventory_warehouse_uploads/import',[WarehouseInventoryController::class, 'warehouseInventoryUploadView'])->name('warehouse-inventory.upload-view');
     Route::get('warehouse_inventories/template',[WarehouseInventoryController::class, 'uploadTemplate'])->name('warehouse-inventory.template');
     Route::post('warehouse_inventories/export',[WarehouseInventoryController::class, 'exportInventory'])->name('warehouse-inventory.export');
     Route::get('inventory_warehouse_uploads/batch/{batch_id}',[WarehouseInventoryController::class, 'getBatchDetails']);

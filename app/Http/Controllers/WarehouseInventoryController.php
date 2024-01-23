@@ -8,8 +8,10 @@ use App\Exports\ExcelTemplate;
 use App\Exports\WarehouseInventoryExport;
 use App\Imports\WarehouseInventoryImport;
 use App\Jobs\ProcessWarehouseInventoryUploadJob;
+use App\Models\WarehouseInventoryUpload;
 use App\Rules\ExcelFileValidationRule;
 use CRUDBooster;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
@@ -155,6 +157,19 @@ class WarehouseInventoryController extends Controller
 
         return redirect()->back()->with(['message_type' => 'success', 'message' => 'Upload processing!'])->send();
     }
+
+    public function getBatchDetails($batch_id) {
+
+        $batch_details = Bus::findBatch($batch_id);
+        $upload_details = WarehouseInventoryUpload::where('job_batches_id', $batch_id)->first();
+        $count = WarehouseInventory::where('batch_number', $upload_details->batch)->count();
+        return [
+            'batch_details' => $batch_details,
+            'upload_details' => $upload_details,
+            'count' => $count,
+        ];
+    }
+
 
     public function uploadTemplate()
     {
