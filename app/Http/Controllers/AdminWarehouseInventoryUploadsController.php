@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exports\WarehouseInventoryUploadBatchExport;
+use App\Models\ReportPrivilege;
+use App\Models\WarehouseInventoriesReport;
 use App\Models\WarehouseInventoryUpload;
 use Session;
 	use Request;
@@ -418,6 +420,41 @@ use Maatwebsite\Excel\Facades\Excel;
 			$batch = WarehouseInventoryUpload::find($id);
 			return Excel::download(new WarehouseInventoryUploadBatchExport($batch->batch), "$batch->batch.xlsx");
 		}
+
+		public function downloadUploadedFile($id) {
+			$batch = WarehouseInventoryUpload::find($id);
+
+			if (file_exists($batch->file_path)) {
+				return response()->download($batch->file_path);
+			} else {
+				abort(404, 'File not found');
+			}
+		}
+
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$search_term = request('search');
+			$warehouse_inventory_upload = (new WarehouseInventoryUpload())->getBatchDetails($id);
+			$user_report = ReportPrivilege::myReport(4, 3);
+			$warehouse_inventories = WarehouseInventoriesReport::filter(['search' => $search_term])
+				->selectRaw("`$user_report->report_query`")
+				->where('batch_number', $warehouse_inventory_upload->batch)
+				->orderBy('reference_number', 'ASC')
+				->paginate(10)
+				->appends(['search' => $search_term]);
+
+			$data = [];
+			$data['item'] = $warehouse_inventory_upload;
+			$data['user_report'] = $user_report;
+			$data['warehouse_inventories'] = $warehouse_inventories;
+			$data['search_term'] = $search_term;
+
+			return $this->view('warehouse-inventory-upload.details', $data);
+			
+		}
+
 
 
 	}
