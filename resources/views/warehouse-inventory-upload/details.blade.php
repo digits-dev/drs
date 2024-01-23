@@ -50,7 +50,9 @@
                 </div>
                 <label class="col-md-2 label-control">Importing Finished</label>
                 <div class="col-md-4">
+                    @if ($item->finished_at)
                     <p>{{ date('Y-m-d H:i:s', $item->finished_at) }}</p>
+                    @endif
                 </div>
             </div>
             <hr>
