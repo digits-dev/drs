@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exports\StoreInventoryUploadBatchExport;
 use App\Models\ReportPrivilege;
 use App\Models\StoreInventoriesReport;
 use App\Models\StoreInventory;
@@ -8,6 +9,7 @@ use Session;
 	use Request;
 	use DB;
 	use CRUDBooster;
+use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminStoreInventoryUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -410,6 +412,11 @@ use Session;
 	        //Your code here
 
 	    }
+
+		public function exportBatch($id) {
+			$batch = StoreInventoryUpload::find($id);
+			return Excel::download(new StoreInventoryUploadBatchExport($batch->batch), "$batch->batch.xlsx");
+		}
 
 		public function getDetail($id) {
 			if (!CRUDBooster::isRead()) {
