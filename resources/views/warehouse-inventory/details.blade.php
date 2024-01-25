@@ -30,86 +30,86 @@
 </style>
 <div class='panel panel-default' style="width: 100%" >
     <div class='panel-heading'>
-        Store Inventory Details
+        Warehouse Inventory Details
     </div>
     <div class="panel-body">
         <table class="custom_table">
             <tbody>
                 <tr>
                     <td>REFERENCE #</td>
-                    <td>{{{$store_inventory_details->reference_number}}}</td>
+                    <td>{{{$warehouse_inventory_details->reference_number}}}</td>
                     <td>UPC CODE-3 (IMFS)</td>
-                    <td>{{{$store_inventory_details->upc_code3}}}</td>
+                    <td>{{{$warehouse_inventory_details->upc_code3}}}</td>
                 </tr>
                 <tr>
                     <td>SYSTEM</td>
-                    <td>{{{$store_inventory_details->system_name}}}</td>
+                    <td>{{{$warehouse_inventory_details->system_name}}}</td>
                     <td>UPC CODE-4 (IMFS)</td>
-                    <td>{{{$store_inventory_details->upc_code4}}}</td>
+                    <td>{{{$warehouse_inventory_details->upc_code4}}}</td>
                 </tr>
                 <tr>
                     <td>ORG</td>
-                    <td>{{{$store_inventory_details->organization_name}}}</td>
+                    <td>{{{$warehouse_inventory_details->organization_name}}}</td>
                     <td>UPC CODE-5 (IMFS)</td>
-                    <td>{{{$store_inventory_details->upc_code5}}}</td>
+                    <td>{{{$warehouse_inventory_details->upc_code5}}}</td>
                 </tr>
                 <tr>
                     <td>REPORT TYPE</td>
-                    <td>{{{$store_inventory_details->report_type}}}</td>
+                    <td>{{{$warehouse_inventory_details->report_type}}}</td>
                     <td>ITEM DESCRIPTION (IMFS)</td>
-                    <td>{{{$store_inventory_details->imfs_item_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->imfs_item_description}}}</td>
                 </tr>
                 <tr>
                     <td>CHANNEL NAME</td>
-                    <td>{{{$store_inventory_details->channel_name}}}</td>
+                    <td>{{{$warehouse_inventory_details->channel_name}}}</td>
                     <td>BRAND</td>
-                    <td>{{{$store_inventory_details->brand_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->brand_description}}}</td>
                 </tr>
                 <tr>
                     <td>CUSTOMER / LOCATION</td>
-                    <td>{{{$store_inventory_details->customer_location}}}</td>
+                    <td>{{{$warehouse_inventory_details->customer_location}}}</td>
                     <td>CATEGORY</td>
-                    <td>{{{$store_inventory_details->category_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->category_description}}}</td>
                 </tr>
                 <tr>
                     <td>STORE CONCEPT</td>
-                    <td>{{{$store_inventory_details->store_concept_name}}}</td>
+                    <td>{{{$warehouse_inventory_details->store_concept_name}}}</td>
                     <td>MARGIN CATEGORY</td>
-                    <td>{{{$store_inventory_details->margin_category_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->margin_category_description}}}</td>
                 </tr>
                 <tr>
                     <td>ITEM NUMBER</td>
-                    <td>{{{$store_inventory_details->item_code}}}</td>
+                    <td>{{{$warehouse_inventory_details->item_code}}}</td>
                     <td>VENDOR TYPE CODE</td>
-                    <td>{{{$store_inventory_details->vendor_type_code}}}</td>
+                    <td>{{{$warehouse_inventory_details->vendor_type_code}}}</td>
                 </tr>
                 <tr>
                     <td>ITEM DESCRIPTION</td>
-                    <td>{{{$store_inventory_details->item_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->item_description}}}</td>
                     <td>INVENTORY TYPE CODE</td>
-                    <td>{{{$store_inventory_details->inventory_type_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->inventory_type_description}}}</td>
                 </tr>
                 <tr>
                     <td>QTY INV</td>
-                    <td>{{{$store_inventory_details->quantity_inv}}}</td>
+                    <td>{{{$warehouse_inventory_details->quantity_inv}}}</td>
                     <td>SKU STATUS</td>
-                    <td>{{{$store_inventory_details->sku_status_description}}}</td>
+                    <td>{{{$warehouse_inventory_details->sku_status_description}}}</td>
                 </tr>
                 <tr>
                     <td>DIGITS CODE (REF)</td>
-                    <td>{{{$store_inventory_details->digits_code}}}</td>
+                    <td>{{{$warehouse_inventory_details->digits_code}}}</td>
                     <td>BRAND STATUS</td>
-                    <td>{{{$store_inventory_details->brand_status}}}</td>
+                    <td>{{{$warehouse_inventory_details->brand_status}}}</td>
                 </tr>
                 <tr>
                     <td>UPC CODE (IMFS)</td>
-                    <td>{{{$store_inventory_details->upc_code}}}</td>
+                    <td>{{{$warehouse_inventory_details->upc_code}}}</td>
                     <td>LANDED COST</td>
-                    <td>{{{$store_inventory_details->landed_cost}}}</td>
+                    <td>{{{$warehouse_inventory_details->landed_cost}}}</td>
                 </tr>
                 <tr>
                     <td>UPC CODE-2 (IMFS)</td>
-                    <td>{{{$store_inventory_details->upc_code2}}}</td>
+                    <td>{{{$warehouse_inventory_details->upc_code2}}}</td>
                     <td></td>
                     <td></td>
                 </tr>

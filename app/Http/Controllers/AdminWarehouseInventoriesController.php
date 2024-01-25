@@ -2,6 +2,7 @@
 
     use App\Models\Channel;
     use App\Models\System;
+    use App\Models\WarehouseInventoriesReport;
 	use Session;
 	use Illuminate\Http\Request;
 	use DB;
@@ -324,7 +325,22 @@
 
 	    }
 
-        public function getIndex() {
+        // public function getIndex() {
+
+        //     if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+
+        //     $data = [];
+        //     $data['page_title'] = 'Warehouse Inventory';
+        //     $data['channels'] = Channel::active();
+        //     $data['systems'] = System::active();
+        //     $data['result'] = DB::table('warehouse_inventories_report')
+        //         ->limit(50)
+        //         ->get();
+
+        //     return view('warehouse-inventory.report',$data);
+        // }
+		
+		public function getIndex() {
 
             if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 
@@ -332,12 +348,43 @@
             $data['page_title'] = 'Warehouse Inventory';
             $data['channels'] = Channel::active();
             $data['systems'] = System::active();
-            $data['result'] = DB::table('warehouse_inventories_report')
-                ->limit(50)
-                ->get();
+     
+			$data['result'] = WarehouseInventoriesReport::where('is_final', 1)->paginate(10);
 
-            return view('warehouse-inventory.report',$data);
+			return view('warehouse-inventory.report',$data);
         }
 
+		public function getDetail($id) {
+			if (!CRUDBooster::isRead()) {
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
+			}
+			$data = [];
+			$data['page_title'] = 'Warehouse Inventory Details';
+			$data['warehouse_inventory_details'] = WarehouseInventoriesReport::where('id', $id)->first();
+			return view('warehouse-inventory.details',$data);
+		}
 
+		public function filterWarehouseInventory(Request $request) {
+
+        
+			$data['searchval'] = $request->search;
+			$data['channel_name'] = $request->channel_name;
+			$data['datefrom'] = $request->datefrom;
+			$data['dateto'] = $request->dateto;
+			$data['system_name'] = $request->system_name;
+	
+			if(!$request->has('search')){
+	
+				$data['result'] = WarehouseInventoriesReport::searchFilter($request->all())->paginate(10);
+				$data['result']->appends($request->except(['_token']));
+				return view('warehouse-inventory.filtered-report',$data);
+			}else {
+				$searchTerm = $request->search;
+				$data['channels'] = Channel::active();
+				$data['systems'] = System::active();
+				$data['result'] = WarehouseInventoriesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
+				$data['result']->appends(['search' => $searchTerm]);
+				return view('warehouse-inventory.report',$data);
+			}
+		}
 	}

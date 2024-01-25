@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminDigitsSalesController;
 use App\Http\Controllers\AdminStoreInventoriesController;
 use App\Http\Controllers\AdminStoreInventoryUploadsController;
 use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
+use App\Http\Controllers\AdminWarehouseInventoriesController;
 use App\Http\Controllers\DigitsSaleController;
 use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
@@ -84,7 +85,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_warehouse_uploads/export-batch/{id}',[AdminWarehouseInventoryUploadsController::class, 'exportBatch']);
     Route::get('inventory_warehouse_uploads/download-uploaded-file/{id}',[AdminWarehouseInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_warehouse_uploads/detail/{id}', [AdminWarehouseInventoryUploadsController::class, 'getDetail'])->name('digits_sales.detail');
-
+    Route::any('warehouse_inventories/filter',[AdminWarehouseInventoriesController::class, 'filterWarehouseInventory'])->name('warehouse-inventory.filter');
 
     Route::post('report_privileges/get/table-columns',[AdminReportPrivilegesController::class, 'getTableColumns'])->name('report-privileges.getTableColumns');
     Route::post('report_privileges/create/save',[AdminReportPrivilegesController::class, 'saveReport'])->name('report-privileges.save');

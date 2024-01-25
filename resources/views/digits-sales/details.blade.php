@@ -30,7 +30,7 @@
 </style>
 <div class='panel panel-default' style="width: 100%" >
     <div class='panel-heading'>
-        Store Sales Details
+        Digits Sales Details
     </div>
     <div class="panel-body">
         <table class="custom_table">
