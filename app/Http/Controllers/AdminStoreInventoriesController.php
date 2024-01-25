@@ -349,19 +349,10 @@
             $data['channels'] = Channel::active();
             $data['systems'] = System::active();
      
-			$searchTerm = request('search');
-			$data['searchval'] = $searchTerm;
-			$data['result'] = StoreInventoriesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
-			$data['result']->appends(['search' => $searchTerm]);
+	
+			$data['result'] = StoreInventoriesReport::where('is_final', 1)->paginate(10);
 
-			$inputData = request()->all();
-
-			if (count($inputData) > 1) {
-				return view('store-inventory.filtered-report', $data);
-			} else {
-			
-				return view('store-inventory.report',$data);
-			}
+			return view('store-inventory.report',$data);
 
         }
 
@@ -373,5 +364,28 @@
 			$data['page_title'] = 'Store Sales Details';
 			$data['store_inventory_details'] = StoreInventoriesReport::where('id', $id)->first();
 			return view('store-inventory.details',$data);
+		}
+
+		public function filterStoreInventory(Request $request) {
+			
+			$data['searchval'] = $request->search;
+			$data['channel_name'] = $request->channel_name;
+			$data['datefrom'] = $request->datefrom;
+			$data['dateto'] = $request->dateto;
+			$data['system_name'] = $request->system_name;
+	
+			if(!$request->has('search')){
+				$data['result'] = StoreInventoriesReport::searchFilter($request->all())->paginate(10);
+				$data['result']->appends($request->except(['_token']));
+				return view('store-inventory.filtered-report',$data);
+			}else {
+				$searchTerm = $request->search;
+				$data['channels'] = Channel::active();
+				$data['systems'] = System::active();
+				$data['result'] = StoreInventoriesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
+				$data['result']->appends(['search' => $searchTerm]);
+				return view('store-inventory.report',$data);
+			}
+	
 		}
 	}

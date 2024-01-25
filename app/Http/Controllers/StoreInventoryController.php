@@ -184,16 +184,4 @@ class StoreInventoryController extends Controller
         return Excel::download(new StoreInventoryExport, $filename.'.xlsx');
     }
 
-    public function filterStoreInventory(Request $request) {
-        $data['result'] = StoreInventoriesReport::searchFilter($request->all())->paginate(10);
-        $data['result']->appends($request->except(['_token']));
-
-        $data['channel_name'] = $request->channel_name;
-        $data['datefrom'] = $request->datefrom;
-        $data['dateto'] = $request->dateto;
-        $data['system_name'] = $request->system_name;
-        
-        return view('store-inventory.filtered-report',$data);
-
-    }
 }

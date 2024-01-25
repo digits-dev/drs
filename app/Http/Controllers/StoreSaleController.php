@@ -190,18 +190,4 @@ class StoreSaleController extends Controller
         $filename = $request->input('filename');
         return Excel::download(new StoreSalesExport, $filename.'.xlsx');
     }
-
-    public function filterStoreSales(Request $request) {
-        $data['result'] = StoreSalesReport::searchFilter($request->all())->paginate(10);
-        $data['result']->appends($request->except(['_token']));
-
-        $data['receipt_number'] = $request->receipt_number;
-        $data['channel_name'] = $request->channel_name;
-        $data['datefrom'] = $request->datefrom;
-        $data['dateto'] = $request->dateto;
-        $data['store_concept_name'] = $request->store_concept_name;
-        
-        return view('store-sales.filtered-report',$data);
-
-    }
 }
