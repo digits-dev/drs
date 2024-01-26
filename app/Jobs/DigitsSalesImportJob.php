@@ -12,6 +12,7 @@ use App\Models\ReportType;
 use App\Models\System;
 use Carbon\Carbon;
 use DateTime;
+use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -61,6 +62,10 @@ class DigitsSalesImportJob implements ShouldQueue
             $v_organization = $organization->where('organization_name',$row->org)->first();
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_location)->first();
+            $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
+            if ($sales_date < $chunk->from_date || $sales_date > $chunk->to_date) {
+                throw new Exception("SALES DATE OUT OF RANGE FOR REF #$row->reference_number ($sales_date)");
+            }
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
@@ -95,9 +100,11 @@ class DigitsSalesImportJob implements ShouldQueue
         DigitsSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
     }
 
-    public function failed() {
+    public function failed($e) {
+        $error_message = $e->getMessage();
         $chunk = DigitsSalesUploadLine::getWithHeader($this->chunk_id);
-        $digits_sales_upload = DigitsSalesUpload::find($chunk->digits_sales_uploads_id)
-            ->update(['status' => 'IMPORT FAILED']);
+        $digits_sales_upload = DigitsSalesUpload::find($chunk->digits_sales_uploads_id);
+        $digits_sales_upload->update(['status' => 'IMPORT FAILED']);
+        $digits_sales_upload->appendNewError($error_message);
     }
 }

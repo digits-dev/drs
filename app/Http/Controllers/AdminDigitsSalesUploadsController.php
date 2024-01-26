@@ -143,7 +143,7 @@ use Maatwebsite\Excel\Facades\Excel;
 				'target'=>"_blank",
 				'icon'=>'fa fa-download',
 				'color' => 'success',
-				'showIf' => '[importing_finished_at]'
+				'showIf' => '([importing_finished_at] && [status] != "IMPORT FAILED")'
 			];
 
 

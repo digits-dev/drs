@@ -23,4 +23,11 @@ class DigitsSalesUpload extends Model
             ->first();
     }
 
+    public function appendNewError($error_message) {
+        $error_arr = json_decode($this->error) ?: [];
+        $error_arr[] = $error_message;
+        $this->errors = json_encode($error_arr);
+        $this->save();
+    }
+
 }

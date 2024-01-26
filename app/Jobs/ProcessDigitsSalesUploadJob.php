@@ -6,6 +6,7 @@ use App\Imports\DigitsSalesImport;
 use App\Models\DigitsSalesUpload;
 use App\Models\DigitsSalesUploadLine;
 use App\Jobs\DigitsSalesImportJob;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -71,20 +72,12 @@ class ProcessDigitsSalesUploadJob implements ShouldQueue
     {
         HeadingRowFormatter::default('slug');
         $excel_data = Excel::toArray(new DigitsSalesImport($this->batch_number), $this->excel_path)[0];
-        $errors = [];
 
         $excelReportType = array_unique(array_column($excel_data, "report_type"));
         foreach ($excelReportType as $keyReportType => $valueReportType) {
             if (!in_array($valueReportType, $this->report_type)) {
-                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
+                throw new Exception("INVALID REPORT TYPE: $valueReportType");
             }
-        }
-
-        if (!empty($errors)) {
-            Log::info('helloooooooooooooooooooooooo');
-            Log::info(json_encode($errors));
-            // TODO: insert to db for error uploads
-            return;
         }
 
         $snaked_headings = array_keys($excel_data[0]);
@@ -116,8 +109,10 @@ class ProcessDigitsSalesUploadJob implements ShouldQueue
 
     }
 
-    public function failed() {
-        $digits_sales_upload = DigitsSalesUpload::find($this->digits_sales_upload_id);
+    public function failed($e) {
+        $error_message = $e->getMessage();
+        $digits_sales_upload = DigitsSalesUpload::find($this->digits_sales_uploads_id);
         $digits_sales_upload->update(['status' => 'IMPORT FAILED']);
+        $digits_sales_upload->appendNewError($error_message);
     }
 }
