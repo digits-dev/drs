@@ -7,6 +7,10 @@
     .highlight-ltr{
         color: yellow;
     }
+
+    .swal2-popup, .swal2-modal, .swal2-icon-warning .swal2-show {
+        font-size: 1.6rem !important;
+    }
 </style>
 @endpush
 
@@ -160,12 +164,27 @@
             $(this).val('');
         });
 
-        $('#btnUpload').on('click', function(event) {
-            event.preventDefault();
+        // $('#btnUpload').on('click', function(event) {
+        //     event.preventDefault();
 
+        //     $('#btnUpload').prop('disabled', true);
+        //     $('.sk-chase-position').show();
+        //     $('#form').submit();
+        // });
+
+        $('#form').on('submit', function(event) {
+            event.preventDefault();
+            if (!$('#datepicker').val()) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Please select sales date!'
+                });
+                return;
+            }
             $('#btnUpload').prop('disabled', true);
             $('.sk-chase-position').show();
-            $('#form').submit();
+            this.submit();
         });
 
     });
