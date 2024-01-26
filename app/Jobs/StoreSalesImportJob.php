@@ -15,6 +15,7 @@ use App\Models\StoreSalesUpload;
 use App\Models\System;
 use Carbon\Carbon;
 use DateTime;
+use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -73,6 +74,10 @@ class StoreSalesImportJob implements ShouldQueue
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_location)->first();
             $v_employee = $employee->where('employee_name',$row->customer_location)->first();
+            $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
+            if ($sales_date < $chunk->from_date || $sales_date > $chunk->to_date) {
+                throw new Exception("SALES DATE OUT OF RANGE FOR REF #$row->reference_number.");
+            }
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
@@ -85,7 +90,7 @@ class StoreSalesImportJob implements ShouldQueue
                 'customers_id'          => $v_customer->id,
                 'receipt_number'		=> $row->receipt_number,
                 // 'sales_date'			=> DateTime::createFromFormat('m/d/Y', $row->sold_date)->format('Y-m-d'),
-                'sales_date'			=> date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60)),
+                'sales_date'			=> $sales_date,
                 'item_code'				=> $row->item_number,
                 'digits_code_rr_ref'    => $row->rr_ref,
                 'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row->item_description))),
@@ -107,9 +112,11 @@ class StoreSalesImportJob implements ShouldQueue
         StoreSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
     }
 
-    public function failed() {
+    public function failed($e) {
         $chunk = StoreSalesUploadLine::getWithHeader($this->chunk_id);
-        $store_sales_upload = StoreSalesUpload::find($chunk->store_sales_uploads_id)
-            ->update(['status' => 'IMPORT FAILED']);
+        $error_message = $e->getMessage();
+        $store_sales_upload = StoreSalesUpload::find($chunk->store_sales_uploads_id);
+        $store_sales_upload->update(['status' => 'IMPORT FAILED']);
+        $store_sales_upload->appendNewError($error_message);
     }
 }

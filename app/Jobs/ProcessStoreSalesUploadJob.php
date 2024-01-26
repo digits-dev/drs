@@ -81,8 +81,7 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
         }
 
         if (!empty($errors)) {
-            // TODO: insert to db for error uploads
-            return;
+            throw new Exception('REPORT TYPE MISMATCHED');
         }
 
         $snaked_headings = array_keys($excel_data[0]);
@@ -114,8 +113,10 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
 
     }
 
-    public function failed() {
+    public function failed($e) {
+        $error_message = $e->getMessage();
         $store_sales_upload = StoreSalesUpload::find($this->store_sales_uploads_id);
         $store_sales_upload->update(['status' => 'IMPORT FAILED']);
+        $store_sales_upload->appendNewError($error_message);
     }
 }
