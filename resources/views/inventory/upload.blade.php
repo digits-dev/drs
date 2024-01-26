@@ -169,7 +169,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Please select sales date!'
+                    text: 'Please select inventory date!'
                 });
                 return;
             }
