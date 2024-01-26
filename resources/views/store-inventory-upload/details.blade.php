@@ -38,10 +38,24 @@
                 </div>
             </div>
             <div class="row">
+                <label class="col-md-2 label-control">Inventory Date</label>
+                <div class="col-md-4">
+                    <p>{{ $item->from_date }}</p>
+                </div>
+            </div>
+            <div class="row">
                 <label class="col-md-2 label-control">Row Count</label>
                 <div class="col-md-4">
                     <p>{{ $item->row_count }}</p>
                 </div>
+                @if (json_decode($item->errors))
+                <label class="col-md-2 label-control">Errors</label>
+                <div class="col-md-4">
+                    @foreach (json_decode($item->errors) as $error)
+                    <label for="" class="label label-danger">{{ substr($error, 0, 55) . (strlen($error) > 55 ? '...' : '') }}</label>
+                    @endforeach
+                </div>
+                @endif
             </div>
             <div class="row">
                 <label class="col-md-2 label-control">Importing Started</label>
