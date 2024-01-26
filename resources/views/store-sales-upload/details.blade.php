@@ -38,6 +38,16 @@
                 </div>
             </div>
             <div class="row">
+                <label class="col-md-2 label-control">From</label>
+                <div class="col-md-4">
+                    <p>{{ $item->from_date }}</p>
+                </div>
+                <label class="col-md-2 label-control">To</label>
+                <div class="col-md-4">
+                    <p>{{ $item->to_date }}</p>
+                </div>
+            </div>
+            <div class="row">
                 <label class="col-md-2 label-control">Row Count</label>
                 <div class="col-md-4">
                     <p>{{ $item->row_count }}</p>
