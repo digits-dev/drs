@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Imports\WarehouseInventoryImport;
 use App\Models\WarehouseInventoryUpload;
 use App\Models\WarehouseInventoryUploadLine;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -64,18 +65,12 @@ class ProcessWarehouseInventoryUploadJob implements ShouldQueue
     {
         HeadingRowFormatter::default('slug');
         $excel_data = Excel::toArray(new WarehouseInventoryImport($this->batch_number), $this->excel_path)[0];
-        $errors = [];
 
         $excelReportType = array_unique(array_column($excel_data, "report_type"));
         foreach ($excelReportType as $keyReportType => $valueReportType) {
             if (!in_array($valueReportType, $this->report_type)) {
-                array_push($errors, 'report type "'.$valueReportType.'" mismatched!');
+                throw new Exception("INVALID REPORT TYPE: $valueReportType");
             }
-        }
-
-        if (!empty($errors)) {
-            // TODO: insert to db for error uploads
-            return;
         }
 
         $snaked_headings = array_keys($excel_data[0]);
@@ -106,8 +101,10 @@ class ProcessWarehouseInventoryUploadJob implements ShouldQueue
         
     }
 
-    public function failed() {
-        $warehouse_inventory_upload = StoreInventoryUpload::find($this->warehouse_inventory_uploads_id);
+    public function failed($e) {
+        $error_message = $e->getMessage();
+        $warehouse_inventory_upload = WarehouseInventoryUpload::find($this->warehouse_inventory_uploads_id);
         $warehouse_inventory_upload->update(['status' => 'IMPORT FAILED']);
+        $warehouse_inventory_upload->appendNewError($error_message);
     }
 }

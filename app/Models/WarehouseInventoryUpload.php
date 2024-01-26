@@ -22,4 +22,11 @@ class WarehouseInventoryUpload extends Model
             ->leftJoin('cms_users', 'cms_users.id', 'warehouse_inventory_uploads.created_by')
             ->first();
     }
+
+    public function appendNewError($error_message) {
+        $error_arr = json_decode($this->error) ?: [];
+        $error_arr[] = $error_message;
+        $this->errors = json_encode($error_arr);
+        $this->save();
+    }
 }

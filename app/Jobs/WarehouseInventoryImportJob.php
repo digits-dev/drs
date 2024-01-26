@@ -12,6 +12,7 @@ use App\Models\WarehouseInventory;
 use App\Models\WarehouseInventoryUpload;
 use App\Models\WarehouseInventoryUploadLine;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -70,7 +71,10 @@ class WarehouseInventoryImportJob implements ShouldQueue
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_location)->first();
             $v_employee = $employee->where('employee_name',$row->customer_location)->first();
-    
+            $inventory_date = date('Y-m-d', strtotime('1899-12-30') + ($row->inventory_as_of_date * 24 * 60 * 60));
+            if ($inventory_date != $chunk->from_date) {
+                throw new Exception("INVENTORY DATE MISMATCHED FOR REF #$row->reference_number ($inventory_date)");
+            }    
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
@@ -82,7 +86,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
                 'employees_id'          => $v_employee->id,
                 'customers_id'          => $v_customer->id,
                 // 'inventory_date'		=> Carbon::parse($this->transformDate($row["inventory_as_of_date"]))->format("Y-m-d"),
-                'inventory_date'		=> date('Y-m-d', strtotime('1899-12-30') + ($row->inventory_as_of_date * 24 * 60 * 60)),
+                'inventory_date'		=> $inventory_date,
                 'item_code'				=> $row->item_number,
                 'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row->item_description))),
                 'quantity_inv'			=> $row->inventory_qty,
@@ -100,9 +104,11 @@ class WarehouseInventoryImportJob implements ShouldQueue
         WarehouseInventory::upsert($insertable, ['batch_number', 'reference_number'], $columns);
     }
 
-    public function failed() {
+    public function failed($e) {
+        $error_message = $e->getMessage();
         $chunk = WarehouseInventoryUploadLine::getWithHeader($this->chunk_id);
-        $warehouse_inventory_upload = WarehouseInventoryUpload::find($chunk->warehouse_inventory_uploads_id)
-            ->update(['status' => 'IMPORT FAILED']);
+        $warehouse_inventory_upload = WarehouseInventoryUpload::find($chunk->warehouse_inventory_uploads_id);
+        $warehouse_inventory_upload->update(['status' => 'IMPORT FAILED']);
+        $warehouse_inventory_upload->appendNewError($error_message);
     }
 }
