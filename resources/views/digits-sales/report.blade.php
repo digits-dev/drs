@@ -212,7 +212,7 @@
                         <select name="channel_name" id="channel" class="form-control channel" title="Channel">
                             <option value="">Please select channel</option>
                             @foreach ($channels as $channel)
-                                <option value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
+                                <option data-id="{{ $channel->id }}" value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
                             @endforeach
                         </select>
                         </div>
@@ -220,11 +220,12 @@
                     <div class="col-md-6">
                         Concept
                         <div class="form-group">
-                        <select name="store_concept_name" id="concept" class="form-control concept" title="Concept">
-                            <option value="">Please select Concept</option>
-                            @foreach ($concepts as $concept)
+                        <select name="store_concept_name" id="concept" class="form-control concept" title="Concept" disabled>
+                            <option value="" selected disabled>Please select channel first</option>
+                
+                            {{-- @foreach ($concepts as $concept)
                                 <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
-                           @endforeach
+                           @endforeach --}}
                         </select>
                         </div>
                     </div>
@@ -282,6 +283,7 @@
 
 @push('bottom')
     <script>
+        
         $(document).ready(function(){
             $('.search').on("click", function() {
             });
@@ -304,5 +306,33 @@
         function showSalesReportExport() {
             $('#modal-order-export').modal('show');
         }
+        
+        $('#channel').change(function() {
+            var channelId = $(this).find(':selected').data('id');
+            $.ajax({
+                url: "{{ route('concepts') }}",
+            type: "POST",
+            data: {
+                'channel': channelId,
+                },
+            success: function(result)
+            {
+                console.log(result, channelId);
+                let i;
+                let showData = [];
+    
+                showData[0] = "<option selected disabled value=''>Please select Concept</option>";
+                for (i = 0; i < result.length; ++i) {
+                        showData[i+1] = "<option value='"+result[i]+"'>"+result[i]+"</option>";
+                }
+
+                $('#concept').removeAttr("disabled")
+                $('#concept').find('option').remove();
+                jQuery("#concept").html(showData); 
+            }
+            })
+        })
+
     </script>
+
 @endpush

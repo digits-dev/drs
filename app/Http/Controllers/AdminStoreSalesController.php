@@ -380,4 +380,14 @@
 	
 		}
 
+		public function concepts(Request $request) {
+			$concept_ids = DB::table('customers')
+			->where('channels_id', $request->channel)
+			->pluck('concepts_id');
+			$concepts = DB::table('concepts')
+			->whereIn('id', $concept_ids)
+			->pluck('concept_name');
+			return response()->json($concepts);
+		}
+
 	}
