@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminDigitsSalesController;
 use App\Http\Controllers\AdminStoreInventoriesController;
 use App\Http\Controllers\AdminStoreInventoryUploadsController;
 use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
+use App\Http\Controllers\AdminWarehouseInventoriesController;
 use App\Http\Controllers\DigitsSaleController;
 use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
@@ -44,8 +45,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_upload/download-uploaded-file/{id}',[AdminStoreSalesUploadsController::class, 'downloadUploadedFile']);
     Route::get('sales_upload/detail/{id}', [AdminStoreSalesUploadsController::class, 'getDetail'])->name('store_sales.detail');
 
-    Route::any('store_sales/filter',[StoreSaleController::class, 'filterStoreSales'])->name('store-sales.filter');
-    Route::get('store_sales/search',[AdminStoreSalesController::class, 'getIndex'])->name('store-sales.search');
+    Route::any('store_sales/filter',[AdminStoreSalesController::class, 'filterStoreSales'])->name('store-sales.filter');
 
 
     Route::post('sales_digits_uploads/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
@@ -57,8 +57,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_digits_uploads/download-uploaded-file/{id}',[AdminDigitsSalesUploadsController::class, 'downloadUploadedFile']);
     Route::get('sales_digits_uploads/detail/{id}', [AdminDigitsSalesUploadsController::class, 'getDetail'])->name('digits-sales.detail');
     
-    Route::any('digits_sales/filter',[DigitsSaleController::class, 'filterDigitsSales'])->name('digits-sales.filter');
-    Route::get('digits_sales/search',[AdminDigitsSalesController::class, 'getIndex'])->name('digits-sales.search');
+    Route::any('digits_sales/filter',[AdminDigitsSalesController::class, 'filterDigitsSales'])->name('digits-sales.filter');
 
 
     //import store inventory
@@ -71,8 +70,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_store_uploads/download-uploaded-file/{id}',[AdminStoreInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('store-inventory.detail');
     Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('digits_sales.detail');
-    Route::any('store_inventories/filter',[StoreInventoryController::class, 'filterStoreInventory'])->name('store-inventory.filter');
-    Route::get('store_inventories/search',[AdminStoreInventoriesController::class, 'getIndex'])->name('store-inventory.search');
+    Route::any('store_inventories/filter',[AdminStoreInventoriesController::class, 'filterStoreInventory'])->name('store-inventory.filter');
 
 
     //import warehouse inventory
@@ -84,7 +82,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_warehouse_uploads/export-batch/{id}',[AdminWarehouseInventoryUploadsController::class, 'exportBatch']);
     Route::get('inventory_warehouse_uploads/download-uploaded-file/{id}',[AdminWarehouseInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_warehouse_uploads/detail/{id}', [AdminWarehouseInventoryUploadsController::class, 'getDetail'])->name('digits_sales.detail');
-
+    Route::any('warehouse_inventories/filter',[AdminWarehouseInventoriesController::class, 'filterWarehouseInventory'])->name('warehouse-inventory.filter');
 
     Route::post('report_privileges/get/table-columns',[AdminReportPrivilegesController::class, 'getTableColumns'])->name('report-privileges.getTableColumns');
     Route::post('report_privileges/create/save',[AdminReportPrivilegesController::class, 'saveReport'])->name('report-privileges.save');

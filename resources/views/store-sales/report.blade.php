@@ -65,7 +65,7 @@
             </a>
         </div>
         <div class="panel-body">
-            <form action="{{ route('store-sales.search') }}">
+            <form action="{{ route('store-sales.filter') }}">
                 <div class="search-container">
                     <input
                         class="search-bar"

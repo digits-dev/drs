@@ -62,7 +62,7 @@
   
         </div>
         <div class="panel-body">
-            <form action="{{ route('store-inventory.search') }}">
+            <form action="{{ route('store-inventory.filter') }}">
                 <div class="search-container">
                     <input type='hidden' name='system_name' value="{{ $system_name }}">
                     <input type='hidden' name='channel_name' value="{{ $channel_name }}">

@@ -44,7 +44,6 @@
         border-radius: 5px;
         border: 1px solid #919191;
         }
-        
 
     </style>
 
@@ -56,17 +55,19 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
-                <i class="fa fa-download"></i> Export Sales
+   
+            <a href="javascript:showInventoryReportExport()" id="export-inventory" class="btn btn-primary btn-sm pull-right">
+                <i class="fa fa-download"></i> Export Inventory
             </a>
-
-            <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
-                <i class="fa fa-filter" aria-hidden="true"></i> Search Filter
-            </a>
+  
         </div>
         <div class="panel-body">
-            <form action="{{ route('digits-sales.filter') }}">
+            <form action="{{ route('warehouse-inventory.filter') }}">
                 <div class="search-container">
+                    <input type='hidden' name='system_name' value="{{ $system_name }}">
+                    <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+                    <input type='hidden' name='datefrom' value="{{ $datefrom }}">
+                    <input type='hidden' name='dateto' value="{{ $dateto }}">
                     <input
                         class="search-bar"
                         autofocus
@@ -82,7 +83,6 @@
                     </div>
                 </div>
             </form>
-            
             <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
                 <thead>
                     <tr>
@@ -93,8 +93,7 @@
                     <th>Channel</th>
                     <th>Customer Location</th>
                     <th>Concept</th>
-                    <th>Receipt #</th>
-                    <th>Sales Date</th>
+                    <th>Inventory Date</th>
                     <th>Action</th>
                     </tr>
                 </thead>
@@ -108,38 +107,36 @@
                     <td>{{ $row->channel_name }}</td>
                     <td>{{ $row->customer_location }}</td>
                     <td>{{ $row->store_concept_name }}</td>
-                    <td>{{ $row->receipt_number }}</td>
-                    <td>{{ $row->sales_date }}</td>
-
+                    <td>{{ $row->inventory_date }}</td>
                     <td>
-
-                        @if(CRUDBooster::isRead())
-                        <a class='btn-detail' title="Detail" href='{{CRUDBooster::mainpath("detail/$row->id")}}'><i class='fa fa-eye'></i></a>
-                        @endif
                     </td>
                     </tr>
                 @endforeach
                 </tbody>
             </table>
-           <div style="display: flex; justify-content: flex-end">
-            {{ $result->links() }}
-           </div>
+            <div style="display: flex; justify-content: flex-end">
+                {{ $result->links() }}
+               </div>
         </div>
     </div>
 
 </div>
 
-<div class='modal fade' tabindex='-1' role='dialog' id='modal-sales-export'>
+<div class='modal fade' tabindex='-1' role='dialog' id='modal-inventory-export'>
     <div class='modal-dialog'>
         <div class='modal-content'>
             <div class='modal-header'>
                 <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
                     <span aria-hidden='true'>×</span></button>
-                <h4 class='modal-title'><i class='fa fa-download'></i> Export Sales</h4>
+                <h4 class='modal-title'><i class='fa fa-download'></i> Export inventory</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('digits-sales.export') }}" autocomplete="off">
+            <form method='post' target='_blank' action="{{ route('warehouse-inventory.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
+            <input type='hidden' name='system_name' value="{{ $system_name }}">
+            <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+            <input type='hidden' name='datefrom' value="{{ $datefrom }}">
+            <input type='hidden' name='dateto' value="{{ $dateto }}">
             {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))
                 @foreach ($filters as $keyfilter => $valuefilter )
@@ -162,97 +159,7 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-filter">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
-                    <span aria-hidden='true'>×</span></button>
-                <h4 class='modal-title'><i class='fa fa-search'></i> Filter</h4>
-            </div>
-            <form method='post' target='_blank' action="{{ route('digits-sales.filter') }}"autocomplete="off">
-
-            <input type='hidden' name='_token' value="{{ csrf_token() }}">
-
-            <div class="modal-body">
-                <div class="row">
-
-                    <div class='col-sm-6'>
-                        Date From
-                        <div class="form-group">
-                            <div class='input-group date' id='datefrom'>
-                                <input type='text' name="datefrom" class="form-control date_picker" />
-                                <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class='col-sm-6'>
-                        Date To
-                        <div class="form-group">
-                            <div class='input-group date' id='dateto'>
-                                <input type='text' name="dateto" class="form-control date_picker" />
-                                <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="row">
-
-                    <div class="col-md-6">
-                        Channel
-                        <div class="form-group">
-                        <select name="channel_name" id="channel" class="form-control channel" title="Channel">
-                            <option value="">Please select channel</option>
-                            @foreach ($channels as $channel)
-                                <option value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
-                            @endforeach
-                        </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        Concept
-                        <div class="form-group">
-                        <select name="store_concept_name" id="concept" class="form-control concept" title="Concept">
-                            <option value="">Please select Concept</option>
-                            @foreach ($concepts as $concept)
-                                <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
-                           @endforeach
-                        </select>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="row">
-
-                    <div class="col-md-6">
-                        Receipt #
-                        <div class="form-group">
-                        <input type="text" class="form-control" name="receipt_number" id="receipt_number">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit'>Search</button>
-
-            </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class='modal fade' tabindex='-1' role='dialog' id='modal-order-export'>
+<div class='modal fade' tabindex='-1' role='dialog' id='modal-inventory-export'>
     <div class='modal-dialog'>
         <div class='modal-content'>
             <div class='modal-header'>
@@ -261,7 +168,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
+            <form method='post' target='_blank' action="{{ route('warehouse-inventory.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
@@ -292,17 +199,8 @@
                 "bFilter": false,
             });
         });
-        
-        $('.date_picker').datepicker({
-                    format: "yyyy-mm-dd",
-        });
-
-        function showFilter() {
-            $('#modal-filter').modal('show');
-        }
-
-        function showSalesReportExport() {
-            $('#modal-order-export').modal('show');
+        function showInventoryReportExport() {
+            $('#modal-inventory-export').modal('show');
         }
     </script>
 @endpush

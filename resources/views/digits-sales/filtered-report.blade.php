@@ -63,7 +63,7 @@
   
         </div>
         <div class="panel-body">
-            <form action="{{ route('digits-sales.search') }}">
+            <form action="{{ route('digits-sales.filter') }}">
                 <div class="search-container">
                     <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
                     <input type='hidden' name='channel_name' value="{{ $channel_name }}">
@@ -135,7 +135,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Sales</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('digits-sales.search') }}" autocomplete="off">
+            <form method='post' target='_blank' action="{{ route('digits-sales.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))

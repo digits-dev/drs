@@ -341,18 +341,10 @@
 			$data['channels'] = Channel::active();
 			$data['concepts'] = Concept::active();
 	
-			$searchTerm = request('search');
-			$data['searchval'] = $searchTerm;
-			$data['result'] = StoreSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
-			$data['result']->appends(['search' => $searchTerm]);
-	
-			$inputData = request()->all();
+			$data['result'] = StoreSalesReport::where('is_final', 1)->paginate(10);
 
-			if (count($inputData) > 1) {
-				return view('store-sales.filtered-report', $data);
-			} else {
-				return view('store-sales.report', $data);
-			}
+			return view('store-sales.report', $data);
+			
 		}
 
 		public function getDetail($id) {
@@ -363,6 +355,29 @@
 			$data['page_title'] = 'Store Sales Details';
 			$data['store_sales_details'] = StoreSalesReport::where('id', $id)->first();
 			return view('store-sales.details',$data);
+		}
+
+		public function filterStoreSales(Request $request) {
+			$data['searchval'] = $request->search;
+			$data['receipt_number'] = $request->receipt_number;
+			$data['channel_name'] = $request->channel_name;
+			$data['datefrom'] = $request->datefrom;
+			$data['dateto'] = $request->dateto;
+			$data['store_concept_name'] = $request->store_concept_name;
+			
+			if(!$request->has('search')){
+				$data['result'] = StoreSalesReport::searchFilter($request->all())->paginate(10);
+				$data['result']->appends($request->except(['_token']));
+				return view('store-sales.filtered-report',$data);
+			}else {
+				$searchTerm = $request->search;
+				$data['channels'] = Channel::active();
+				$data['concepts'] = Concept::active();
+				$data['result'] = StoreSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
+				$data['result']->appends(['search' => $searchTerm]);
+				return view('store-sales.report',$data);
+			}
+	
 		}
 
 	}

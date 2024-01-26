@@ -30,6 +30,21 @@
         label.error {
             color: red;
         }
+        .search-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 8px;
+        }
+        .search-bar {
+        padding: 5px 10px;
+        width: 400px;
+        outline: none;
+        margin-right: 8px;
+        border-radius: 5px;
+        border: 1px solid #919191;
+        }
+        
 
     </style>
 
@@ -50,6 +65,23 @@
             </a>
         </div>
         <div class="panel-body">
+            <form action="{{ route('warehouse-inventory.filter') }}">
+                <div class="search-container">
+                    <input
+                        class="search-bar"
+                        autofocus
+                        type="text"
+                        name="search"
+                        placeholder="Search"
+                        value="{{ $searchval }}"
+                    />
+                    <div class="search-btn-container">
+                        <button class="btn btn-info btn-sm pull-right" type="submit">
+                            <i class="fa fa-search"></i>  Search
+                        </button>
+                    </div>
+                </div>
+            </form>
             <table class="table table-striped table-bordered" id="inventory-report-table" style="width:100%">
                 <thead>
                     <tr>
@@ -86,6 +118,9 @@
                 @endforeach
                 </tbody>
             </table>
+            <div style="display: flex; justify-content: flex-end">
+                {{ $result->links() }}
+               </div>
         </div>
     </div>
 
@@ -100,7 +135,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export inventory</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('store-inventory.export') }}" autocomplete="off">
+            <form method='post' target='_blank' action="{{ route('warehouse-inventory.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             {{ CRUDBooster::getUrlParameters() }}
             @if(!empty($filters))
@@ -132,7 +167,7 @@
                     <span aria-hidden='true'>×</span></button>
                 <h4 class='modal-title'><i class='fa fa-search'></i> Filter</h4>
             </div>
-            <form method='post' target='_blank' action="#" autocomplete="off">
+            <form method='post' target='_blank' action="{{ route('warehouse-inventory.filter') }}" autocomplete="off">
 
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
 
@@ -143,7 +178,7 @@
                         Date From
                         <div class="form-group">
                             <div class='input-group date' id='datefrom'>
-                                <input type='text' name="datefrom" class="form-control" />
+                                <input type='text' name="datefrom" class="form-control date_picker" />
                                 <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                                 </span>
@@ -156,7 +191,7 @@
                         Date To
                         <div class="form-group">
                             <div class='input-group date' id='dateto'>
-                                <input type='text' name="dateto" class="form-control" />
+                                <input type='text' name="dateto" class="form-control date_picker" />
                                 <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                                 </span>
@@ -171,10 +206,10 @@
                     <div class="col-md-6">
                         Channel
                         <div class="form-group">
-                        <select name="channel" id="channel" class="form-control channel" title="Channel">
+                        <select name="channel_name" id="channel" class="form-control channel" title="Channel">
                             <option value="">Please select channel</option>
                             @foreach ($channels as $channel)
-                                <option value="{{ $channel->channel_code }}">{{ $channel->channel_name }}</option>
+                                <option value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
                             @endforeach
                         </select>
                         </div>
@@ -244,7 +279,14 @@
 
             $("#inventory-report-table").dataTable({
                 responsive: true,
+                "bPaginate": false,
+                "bInfo": false,
+                "bFilter": false,
             });
+        });
+        
+        $('.date_picker').datepicker({
+                    format: "yyyy-mm-dd",
         });
 
         function showFilter() {

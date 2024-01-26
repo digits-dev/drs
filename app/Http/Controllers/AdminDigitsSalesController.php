@@ -4,7 +4,7 @@ use App\Models\Channel;
 use App\Models\Concept;
 use App\Models\DigitsSalesReport;
 use Session;
-	use Request;
+	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
 
@@ -325,20 +325,12 @@ use Session;
             $data['channels'] = Channel::active();
 			$data['concepts'] = Concept::active();
 
-			$searchTerm = request('search');
-			$data['searchval'] = $searchTerm;
-			$data['result'] = DigitsSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
-			$data['result']->appends(['search' => $searchTerm]);
-			
-			$inputData = request()->all();
+	
+			$data['result'] = DigitsSalesReport::where('is_final', 1)->paginate(10);
+	
+			return view('digits-sales.report',$data);
 
-			if (count($inputData) > 1) {
-				return view('digits-sales.filtered-report', $data);
-			} else {
-			    return view('digits-sales.report',$data);
-
-			}
-        }
+		}
 
 		public function getDetail($id) {
 			if (!CRUDBooster::isRead()) {
@@ -350,5 +342,27 @@ use Session;
 			return view('digits-sales.details',$data);
 		}
 
+		
+		public function filterDigitsSales(Request $request) {
+			$data['searchval'] = $request->search;
+			$data['receipt_number'] = $request->receipt_number;
+			$data['channel_name'] = $request->channel_name;
+			$data['datefrom'] = $request->datefrom;
+			$data['dateto'] = $request->dateto;
+			$data['store_concept_name'] = $request->store_concept_name;
+			
+			if(!$request->has('search')){
+				$data['result'] = DigitsSalesReport::searchFilter($request->all())->paginate(10);
+				$data['result']->appends($request->except(['_token']));
+				return view('digits-sales.filtered-report',$data);
+			}else {
+				$searchTerm = $request->search;
+				$data['channels'] = Channel::active();
+				$data['concepts'] = Concept::active();
+				$data['result'] = DigitsSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
+				$data['result']->appends(['search' => $searchTerm]);
+				return view('digits-sales.report',$data);
+			}
+		}
 
 	}
