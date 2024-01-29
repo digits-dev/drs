@@ -318,6 +318,9 @@ use Maatwebsite\Excel\Facades\Excel;
 					if ($batch->is_final) {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is already tagged as final.", 'danger');
 					}
+					if ($batch->status = 'IMPORT FAILED') {
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has failed importing.", 'danger');
+					}
 					$batch->update([
 						'is_final' => 1,
 						'tagged_as_final_at' => date('Y-m-d H:i:s'), 
