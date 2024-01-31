@@ -106,6 +106,8 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
             $batch->add(new StoreSalesImportJob($store_sales_upload_line->id));
         }
 
+        $store_sales_upload->update(['status' => 'IMPORTING']);
+
     }
 
     public function failed($e) {

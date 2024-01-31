@@ -110,6 +110,13 @@ class StoreSalesImportJob implements ShouldQueue
         }
         $columns = array_keys($insertable[0]);
         StoreSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
+
+        $count = StoreSale::where('batch_number', $chunk->batch)->count();
+        Log::info("$count of $chunk->row_count rows imported for batch #$chunk->batch.");
+        if ($count == $chunk->row_count) {
+            $store_sales_upload = StoreSalesUpload::find($chunk->store_sales_uploads_id);
+            $store_sales_upload->update(['status' => 'IMPORT FINISHED']);
+        }
     }
 
     public function failed($e) {
