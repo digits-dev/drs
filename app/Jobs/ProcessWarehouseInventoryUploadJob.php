@@ -98,6 +98,8 @@ class ProcessWarehouseInventoryUploadJob implements ShouldQueue
             $warehouse_inventory_upload_line->save();
             $batch->add(new WarehouseInventoryImportJob($warehouse_inventory_upload_line->id));
         }
+
+        $warehouse_inventory_upload->update(['status' => 'IMPORTING']);
         
     }
 

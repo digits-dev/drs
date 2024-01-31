@@ -102,6 +102,12 @@ class WarehouseInventoryImportJob implements ShouldQueue
 
         $columns = array_keys($insertable[0]);
         WarehouseInventory::upsert($insertable, ['batch_number', 'reference_number'], $columns);
+
+        $count = WarehouseInventory::where('batch_number', $chunk->batch)->count();
+        if ($count == $chunk->row_count) {
+            $warehouse_inventory_upload = WarehouseInventoryUpload::find($chunk->warehouse_inventory_uploads_id);
+            $warehouse_inventory_upload->update(['status' => 'IMPORT FINISHED']);
+        }
     }
 
     public function failed($e) {
