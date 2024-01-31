@@ -13,6 +13,14 @@ use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminStoreInventoryUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
+		public $status_class = [
+			'FILE UPLOADED' => 'label-warning',
+			'IMPORTING' => 'label-info',
+			'IMPORT FINISHED' => 'label-primary',
+			'IMPORT FAILED' => 'label-danger',
+			'FINAL' => 'label-success',
+		];
+
 	    public function cbInit() {
 	    	# START CONFIGURATION DO NOT REMOVE THIS LINE
 			$this->table 			   = "store_inventory_uploads";	        
@@ -37,26 +45,11 @@ use Maatwebsite\Excel\Facades\Excel;
 
 			# START COLUMNS DO NOT REMOVE THIS LINE
 			$this->col = [];
+			$status_class = $this->status_class;
 			$this->col[] = ["label"=>"Batch","name"=>"batch"];
-			$this->col[] = ["label"=>"Status","name"=>"status","callback"=>function($row) {
-				if ($row->is_final) {
-					return '<label class="label label-success">TAGGED AS FINAL</label>';
-				}
-				if ($row->importing_finished_at && !$row->importing_cancelled_at) {
-					return '<label class="label label-primary">IMPORT FINISHED</label>';
-				}
-				if ($row->importing_cancelled_at && !$row->importing_finished_at) {
-					return '<label class="label label-danger">IMPORT CANCELLED</label>';
-				}
-				if ($row->importing_started_at && !$row->importing_finished_at && !$row->importing_cancelled_at && $row->status != 'IMPORT FAILED') {
-					return '<label class="label label-info">IMPORT ONGOING</label>';
-				}
-				if ($row->status == 'FILE UPLOADED') {
-					$class = 'warning';
-				} else if ($row->status == 'IMPORT FAILED') {
-					$class = 'danger';
-				}
-				return "<label class='label label-$class'>$row->status</label>";
+			$this->col[] = ["label"=>"Status","name"=>"status","callback"=>function($row) use ($status_class) {
+				$class = $status_class[$row->status] ?? 'label-default';
+				return "<label class='label $class'>$row->status</label>";
 			}];
 			$this->col[] = ["label"=>"Uploaded File","name"=>"file_name","callback"=>function($row) {
 				$main_path = CRUDBooster::mainPath();
@@ -303,6 +296,7 @@ use Maatwebsite\Excel\Facades\Excel;
 					}
 					$batch->update([
 						'is_final' => 1,
+						'status' => 'FINAL',
 						'tagged_as_final_at' => date('Y-m-d H:i:s'), 
 						'tagged_as_final_by' => CRUDBooster::myId(),
 					]);

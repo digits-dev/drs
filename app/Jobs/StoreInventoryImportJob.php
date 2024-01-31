@@ -102,6 +102,13 @@ class StoreInventoryImportJob implements ShouldQueue
 
         $columns = array_keys($insertable[0]);
         StoreInventory::upsert($insertable, ['batch_number', 'reference_number'], $columns);
+
+        $count = StoreInventory::where('batch_number',$chunk->batch)->count();
+
+        if ($count == $chunk->row_count) {
+            $store_inventory_upload = StoreInventoryUpload::find($chunk->store_inventory_uploads_id);
+            $store_inventory_upload->update(['status' => 'IMPORT FINISHED']);
+        }
     }
 
     public function failed($e) {

@@ -100,6 +100,8 @@ class ProcessStoreInventoryUploadJob implements ShouldQueue
 
             $batch->add(new StoreInventoryImportJob($store_inventory_upload_line->id));
         }
+
+        $store_inventory_upload->update(['status' => 'IMPORTING']);
         
     }
 
