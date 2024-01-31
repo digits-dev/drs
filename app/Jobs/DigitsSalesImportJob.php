@@ -98,6 +98,11 @@ class DigitsSalesImportJob implements ShouldQueue
 
         $columns = array_keys($insertable[0]);
         DigitsSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);
+        $count = DigitsSale::where('batch_number', $chunk->batch)->count();
+        if ($count == $chunk->row_count) {
+            $digits_sales_upload = DigitsSalesUpload::find($chunk->digits_sales_uploads_id);
+            $digits_sales_upload->update(['status' => 'IMPORT FINISHED']);
+        }
     }
 
     public function failed($e) {

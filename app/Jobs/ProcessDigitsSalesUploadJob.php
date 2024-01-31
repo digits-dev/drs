@@ -107,6 +107,8 @@ class ProcessDigitsSalesUploadJob implements ShouldQueue
             $batch->add(new DigitsSalesImportJob($digits_sales_upload_line->id));
         }
 
+        $digits_sales_upload->update(['status' => 'IMPORTING']);
+
     }
 
     public function failed($e) {
