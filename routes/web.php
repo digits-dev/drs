@@ -15,6 +15,7 @@ use App\Http\Controllers\DigitsSaleController;
 use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
 use App\Http\Controllers\WarehouseInventoryController;
+use App\Http\Controllers\RunRateController;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 
 /*
@@ -89,4 +90,10 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::post('report_privileges/get/table-columns',[AdminReportPrivilegesController::class, 'getTableColumns'])->name('report-privileges.getTableColumns');
     Route::post('report_privileges/create/save',[AdminReportPrivilegesController::class, 'saveReport'])->name('report-privileges.save');
+    
+    Route::get('run-rate/month',[RunRateController::class, 'getMonth'])->name('get-month');
+    Route::get('run-rate/get-cutoff',[RunRateController::class, 'getCutoffRange'])->name('get-cutoff-range');
+    Route::get('run-rate/concepts',[RunRateController::class, 'getConcepts'])->name('run-rate-concepts');
+    Route::get('run-rate/store-location',[RunRateController::class, 'getStoreLocation'])->name('run-rate-store');
+    
 });
