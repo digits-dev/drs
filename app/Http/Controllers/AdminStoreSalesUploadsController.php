@@ -15,7 +15,6 @@ use Maatwebsite\Excel\Facades\Excel;
 	class AdminStoreSalesUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
-
 			# START CONFIGURATION DO NOT REMOVE THIS LINE
 			$this->title_field = "folder_name";
 			$this->limit = "20";
@@ -307,7 +306,7 @@ use Maatwebsite\Excel\Facades\Excel;
 					if ($batch->is_final) {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is already tagged as final.", 'danger');
 					}
-					if ($batch->status = 'IMPORT FAILED') {
+					if ($batch->status == 'IMPORT FAILED') {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has failed importing.", 'danger');
 					}
 					$batch->update([
