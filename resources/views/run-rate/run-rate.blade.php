@@ -23,7 +23,7 @@
             <div class="col-md-3">
                 Year
                 <div class="form-group">
-                <select name="year" id="year" class="form-control" title="year" disabled>
+                <select name="sales_year" id="sales_year" class="form-control" title="Year" disabled>
                     <option value="" selected disabled>Please select year</option>
                     @foreach ($years as $year)
                         <option value="{{ $year->sales_year }}">{{ $year->sales_year }}</option>
@@ -34,7 +34,7 @@
             <div class="col-md-3">
                 Month
                 <div class="form-group">
-                <select name="month" id="month" class="form-control" title="month" disabled>
+                <select name="sales_month" id="sales_month" class="form-control" title="Month" disabled>
                     <option value="" selected disabled>Please select month</option>
                 </select>
                 </div>
@@ -74,7 +74,7 @@
             <div class="col-md-3">
                 Per Store / Location
                 <div class="form-group">
-                <select name="store" id="store" class="form-control" disabled>
+                <select name="customer_location" id="customer_location" class="form-control" disabled>
                     <option value="" selected disabled>Select a store / location</option>
                 </select>
                 </div>
@@ -93,15 +93,15 @@
     <script>
 
         $('#brand').change(function() {
-            $('#year').removeAttr('disabled');
-            $('#year').val('');
-            $('#month').attr("disabled", true)
-            $('#month').val('');
+            $('#sales_year').removeAttr('disabled');
+            $('#sales_year').val('');
+            $('#sales_month').attr("disabled", true)
+            $('#sales_month').val('');
             $('#cutoff').attr("disabled", true)
             $('#cutoff').val('');
         })
         
-        $('#year').change(function() {
+        $('#sales_year').change(function() {
     
             let year = $(this).val()
             $.ajax({
@@ -126,8 +126,8 @@
                     let monthIndex = result[i] - 1; 
                     showMonths.push("<option value='" + result[i] + "'>" + monthNames[monthIndex] + "</option>");
                 }
-                    jQuery("#month").html(showMonths); 
-                    $('#month').removeAttr('disabled');
+                    jQuery("#sales_month").html(showMonths); 
+                    $('#sales_month').removeAttr('disabled');
                     $('#cutoff').attr("disabled", true)
                     $('#cutoff').val('');
                 }
@@ -135,8 +135,8 @@
         })
 
         
-        $('#month').change(function() {
-           const year =  $('#year').val();
+        $('#sales_month').change(function() {
+           const year =  $('#sales_year').val();
            const brandGroup = $('#brand').val();
            const month = $(this).val();
 
@@ -188,8 +188,8 @@
                 $('#store_concept_name').find('option').remove();
                 jQuery("#store_concept_name").html(showConcept); 
 
-                $('#store').attr("disabled", true)
-                $('#store').val("");
+                $('#customer_location').attr("disabled", true)
+                $('#customer_location').val("");
             }
             })
         })
@@ -213,15 +213,11 @@
                 for (i = 0; i < result.length; ++i) {
                     showStore[i+1] = "<option value='"+result[i]+"'>"+result[i]+"</option>";
                 }
-                $('#store').removeAttr("disabled")
-                $('#store').find('option').remove();
-                jQuery("#store").html(showStore); 
+                $('#customer_location').removeAttr("disabled")
+                $('#customer_location').find('option').remove();
+                jQuery("#customer_location").html(showStore); 
             }
             })
         })
-
-         $('#store').change(function() {
-            alert($(this).val());
-         })
     </script>
 @endpush
