@@ -3,11 +3,9 @@
 
 @section('content')
 <form method='post' target='_blank' action=""autocomplete="off">
+    @csrf
     <div class="modal-body">
-  
-
         <div class="row">
-
             <div class="col-md-3">
                 Brand Group
                 <div class="form-group">
