@@ -1,5 +1,6 @@
 SELECT
     digits_code_rr_ref,
+    brand_description = 'APPLE' as is_apple,
     sum(quantity_sold) as quantity_sold,
     channel_name,
     customer_location,
@@ -18,6 +19,7 @@ where exists (
 )
 and is_final = 1
 group by digits_code_rr_ref,
+    is_apple,
     channel_name,
     customer_location,
     store_concept_name,

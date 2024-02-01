@@ -18,6 +18,7 @@ class CreateRunRateView extends Migration
         DB::statement("CREATE VIEW $this->view_name AS
             SELECT
                 digits_code_rr_ref,
+                brand_description = 'APPLE' as is_apple,
                 sum(quantity_sold) as quantity_sold,
                 channel_name,
                 customer_location,
@@ -36,6 +37,7 @@ class CreateRunRateView extends Migration
             )
             and is_final = 1
             group by digits_code_rr_ref,
+                is_apple,
                 channel_name,
                 customer_location,
                 store_concept_name,
@@ -46,7 +48,7 @@ class CreateRunRateView extends Migration
                 non_apple_week_cutoff,
                 sales_date_yr_mo,
                 sales_year,
-                sales_month        
+                sales_month;
         ");
 
     }
