@@ -2,7 +2,7 @@
 
 
 @section('content')
-<form method='post' target='_blank' action=""autocomplete="off">
+<form method='post' target='_blank' action="{{ route('run-rate.filter-run-rate') }}" autocomplete="off">
     @csrf
     <div class="modal-body">
         <div class="row">

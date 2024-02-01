@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminDigitsSalesUploadsController;
 use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesUploadsController;
 use App\Http\Controllers\AdminDigitsSalesController;
+use App\Http\Controllers\AdminRunRateController;
 use App\Http\Controllers\AdminStoreInventoriesController;
 use App\Http\Controllers\AdminStoreInventoryUploadsController;
 use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
@@ -91,9 +92,11 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('report_privileges/get/table-columns',[AdminReportPrivilegesController::class, 'getTableColumns'])->name('report-privileges.getTableColumns');
     Route::post('report_privileges/create/save',[AdminReportPrivilegesController::class, 'saveReport'])->name('report-privileges.save');
     
+    // run rate
     Route::get('run-rate/month',[RunRateController::class, 'getMonth'])->name('get-month');
     Route::get('run-rate/get-cutoff',[RunRateController::class, 'getCutoffRange'])->name('get-cutoff-range');
     Route::get('run-rate/concepts',[RunRateController::class, 'getConcepts'])->name('run-rate-concepts');
     Route::get('run-rate/store-location',[RunRateController::class, 'getStoreLocation'])->name('run-rate-store');
+    Route::any('run-rate/filter-run-rate',[AdminRunRateController::class, 'filterRunRate'])->name('run-rate.filter-run-rate');
     
 });

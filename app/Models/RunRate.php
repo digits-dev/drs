@@ -12,21 +12,17 @@ class RunRate extends Model
     protected $table = 'run_rate';
 
     
-    public function getByDate() {
-        $sales_date = self::distinct('sales_date')->pluck('sales_date');
-        $sum_queries = [];
+    public function filterRunRate($filters, $cutoff_queries = []) {
+        $query = self::whereNotNull('digits_code_rr_ref');
 
-        foreach ($sales_date as $date) {
-            $sum_queries[] = DB::raw("SUM(CASE WHEN sales_date = '$date' THEN quantity_sold ELSE 0 END) as '$date'");
+        foreach ($filters as $filter) {
+            $query->where(...$filter);
         }
+        $query
+            ->select('digits_code_rr_ref', ...$cutoff_queries)
+            ->groupBy('digits_code_rr_ref');
 
-        $store_sales = self::select(
-            'digits_code_rr_ref',
-            DB::raw("SUM(quantity_sold) as total_quantity_sold"),
-            ...$sum_queries,
-        )
-        ->groupBy('digits_code_rr_ref');
+        return $query;
         
-        return $store_sales;
     }
 }

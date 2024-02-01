@@ -1,13 +1,13 @@
 <?php namespace App\Http\Controllers;
 
-	use Session;
-	use Request;
-	use DB;
-	use CRUDBooster;
-	use App\Models\Channel;
-	use App\Models\StoreSalesReport;
+use Session;
+use Illuminate\Http\Request;
+use DB;
+use CRUDBooster;
+use App\Models\Channel;
+use App\Models\RunRate;
+use App\Models\StoreSalesReport;
 
-	
 	class AdminRunRateController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
@@ -421,7 +421,84 @@
 			return view('run-rate.run-rate', $data);
 		}
 
-	    //By the way, you can still create your own method in here... :) 
+		public function filterRunRate(Request $request) {
+			$request = $request->all();
+			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
+			$is_apple = (int) ($brand === 'APPLE');
+			$query_filter_params = self::generateFilterParams($request, $is_apple);
+
+			if ($cutoff_type === 'WEEKLY') {
+				$cutoff = $request['cutoff'];
+			} else {
+				$cutoff = $request['sales_year']. '_'. $request['sales_month'];
+			}
+			$cutoff_data = self::getCutoffData($cutoff_type, $cutoff, $is_apple);
+			
+			$data = [];
+			$data['page_title'] = 'Digits Reports System';
+			$data['query_filter_params'] = $query_filter_params;
+			$rows = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'])
+				->paginate(10)
+				->appends($request);
+			$data['rows'] = $rows;
+			$data['cutoff_columns'] = $cutoff_data['cutoff_columns'];
+
+			return $this->view('run-rate.filter-run-rate', $data);
+		}
+
+		public function generateFilterParams($request, $is_apple) {
+			$query_filter_params = [];
+			$query_filter_params[] = ['is_apple', '=', $is_apple];
+
+			if ($request['sales_year']) {
+				$query_filter_params[] = ['sales_year', '=', $request['sales_year']];
+			}
+			if ($request['sales_month']) {
+				$query_filter_params[] = ['sales_month', '=', $request['sales_month']];
+			}
+			if ($request['channel_name']) {
+				$query_filter_params[] = ['channel_name', '=', $request['channel_name']];
+			}
+			if ($request['store_concept_name']) {
+				$query_filter_params[] = ['store_concept_name', '=', $request['store_concept_name']];
+			}
+			if ($request['customer_location']) {
+				$query_filter_params[] = ['customer_location', '=', $request['customer_location']];
+			}
+			return $query_filter_params;
+		}
+
+		public function getCutoffData($cutoff_type, $cutoff, $is_apple) {
+			$cutoff_queries = [];
+			if ($cutoff_type === 'WEEKLY') {
+				$column_name = $is_apple ? 'apple_week_cutoff' : 'non_apple_week_cutoff';
+				$last_12 = RunRate::where('is_apple', $is_apple)
+					->where('apple_week_cutoff', '<=', $cutoff)
+					->distinct('apple_week_cutoff')
+					->orderBy('apple_week_cutoff', 'desc')
+					->limit(12)
+					->pluck('apple_week_cutoff')
+					->toArray();
+			} else {
+				$column_name = 'sales_date_yr_mo';
+				$last_12 = RunRate::where('is_apple', $is_apple)
+					->where('sales_date_yr_mo', '<=', $cutoff)
+					->distinct('sales_date_yr_mo')
+					->orderBy('sales_date_yr_mo', 'desc')
+					->limit(12)
+					->pluck('sales_date_yr_mo')
+					->toArray();
+
+			}
+
+			foreach ($last_12 as $last_12_item) {
+				$cutoff_queries[] = DB::raw("SUM(CASE WHEN $column_name = '$last_12_item' THEN quantity_sold ELSE 0 END) as `$last_12_item`");
+			}
+			return [
+				'cutoff_queries' => $cutoff_queries,
+				'cutoff_columns' => $last_12,
+			];
+		}
 
 
 	}
