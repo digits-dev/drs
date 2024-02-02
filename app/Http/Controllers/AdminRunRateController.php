@@ -424,6 +424,7 @@ use App\Models\StoreSalesReport;
 		public function filterRunRate(Request $request) {
 			$request = $request->all();
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
+			$search = $request['search'];
 			$is_apple = (int) ($brand === 'APPLE');
 			$query_filter_params = self::generateFilterParams($request, $is_apple);
 
@@ -437,11 +438,12 @@ use App\Models\StoreSalesReport;
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
 			$data['query_filter_params'] = $query_filter_params;
-			$rows = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'])
+			$rows = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'], $search)
 				->paginate(10)
 				->appends($request);
 			$data['rows'] = $rows;
 			$data['cutoff_columns'] = $cutoff_data['cutoff_columns'];
+			$data['search'] = $search;
 
 			return $this->view('run-rate.filter-run-rate', $data);
 		}
