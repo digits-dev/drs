@@ -20,6 +20,7 @@ class RunRateController extends Controller
     public function getCutoffRange(Request $request) {
         if ($request->brandGroup == 'APPLE - WEEKLY') {
             $cutoffRange = StoreSalesReport::where('sales_year', $request->year)->where('sales_month', $request->month)
+            ->where('brand_description', 'APPLE')
             ->distinct('apple_week_cutoff')
             ->pluck('apple_week_cutoff');
       

@@ -119,9 +119,10 @@
                 @endforeach
                 </tbody>
             </table>
-           <div style="display: flex; justify-content: flex-end">
-            {{ $result->links() }}
-           </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <p>Showing {{ $result->firstItem() ?? 0 }} to {{ $result->lastItem() ?? 0 }} of {{ $result->total() }} items.</p>      
+                {{ $result->links() }}
+            </div>
         </div>
     </div>
 
