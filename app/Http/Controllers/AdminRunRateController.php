@@ -533,7 +533,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			] + $cutoff_data;
 			$query = RunRate::filterRunRate($filter_params);
 			$export = (new RunRateExport($query, $cutoff_data['cutoff_columns']));
-			$file_name = implode('-', [$brand, $cutoff_type, $sales_year, $sales_month]);
+			$file_name = "DRS (Run Rate) " . date("Y-m-d h_i_s_a");
 			return Excel::download($export, "$file_name.xlsx");
 		}
 
