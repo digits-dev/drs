@@ -482,7 +482,6 @@ use Maatwebsite\Excel\Facades\Excel;
 		}
 
 		public function getCutoffData($cutoff_type, $cutoff, $is_apple) {
-			dd($cutoff_type, $cutoff, $is_apple);
 			$cutoff_queries = [];
 			if ($cutoff_type === 'WEEKLY') {
 				$column_name = $is_apple ? 'apple_week_cutoff' : 'non_apple_week_cutoff';
