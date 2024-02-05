@@ -42,6 +42,21 @@
                                 <th>{{ $column }}</th>
                                 @endforeach
                             </tr>
+                            <tr>
+                                <th> </th>
+                                @foreach ($cutoff_columns as $column)
+                                @php
+                                    $value = 0;
+                                    foreach ($col_totals as $total) {
+                                        if ($total[$column_name] === $column) {
+                                            $value = $total['total'];
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                <th>{{ $value }}</th>
+                                @endforeach
+                            </tr>
                         </thead>
                         <tbody>
                             @foreach ($rows as $row)

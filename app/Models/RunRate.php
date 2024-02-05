@@ -33,4 +33,25 @@ class RunRate extends Model
         return $query;
         
     }
+
+    public function sumByCutOff($params) {
+        $filters = $params['filters'];
+        $search = $params['search'];
+        $column_name = $params['column_name'];
+        $last_12 = $params['last_12'];
+        $query = self::whereNotNull('digits_code_rr_ref');
+
+        foreach ($filters as $filter) {
+            $query->where(...$filter);
+        }
+        if ($search) {
+            $query->where('digits_code_rr_ref', 'like', "%$search%");
+        }
+
+        return $query
+            ->whereIn($column_name, $last_12)
+            ->select($column_name, DB::raw("SUM(quantity_sold) AS total"))
+            ->groupBy($column_name);
+    }
+
 }

@@ -444,13 +444,17 @@ use Maatwebsite\Excel\Facades\Excel;
 			$rows = RunRate::filterRunRate($filter_params)
 				->paginate(10)
 				->appends($request);
+
+			$col_totals = RunRate::sumByCutOff($filter_params)->get();
 			
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
 			$data['query_filter_params'] = $query_filter_params;
 			$data['rows'] = $rows;
+			$data['col_totals'] = $col_totals->toArray();
 			$data['cutoff_columns'] = $cutoff_data['cutoff_columns'];
 			$data['search'] = $search;
+			$data['column_name'] = $cutoff_data['column_name'];
 
 			return $this->view('run-rate.filter-run-rate', $data);
 		}
@@ -478,27 +482,21 @@ use Maatwebsite\Excel\Facades\Excel;
 		}
 
 		public function getCutoffData($cutoff_type, $cutoff, $is_apple) {
+			dd($cutoff_type, $cutoff, $is_apple);
 			$cutoff_queries = [];
 			if ($cutoff_type === 'WEEKLY') {
 				$column_name = $is_apple ? 'apple_week_cutoff' : 'non_apple_week_cutoff';
-				$last_12 = RunRate::where('is_apple', $is_apple)
-					->where('apple_week_cutoff', '<=', $cutoff)
-					->distinct('apple_week_cutoff')
-					->orderBy('apple_week_cutoff', 'desc')
-					->limit(12)
-					->pluck('apple_week_cutoff')
-					->toArray();
 			} else {
 				$column_name = 'sales_date_yr_mo';
-				$last_12 = RunRate::where('is_apple', $is_apple)
-					->where('sales_date_yr_mo', '<=', $cutoff)
-					->distinct('sales_date_yr_mo')
-					->orderBy('sales_date_yr_mo', 'desc')
-					->limit(12)
-					->pluck('sales_date_yr_mo')
-					->toArray();
-
 			}
+
+			$last_12 = RunRate::where('is_apple', $is_apple)
+				->where($column_name, '<=', $cutoff)
+				->distinct($column_name)
+				->orderBy($column_name, 'desc')
+				->limit(12)
+				->pluck($column_name)
+				->toArray();
 
 			foreach ($last_12 as $last_12_item) {
 				$cutoff_queries[] = DB::raw("SUM(CASE WHEN $column_name = '$last_12_item' THEN quantity_sold ELSE 0 END) as `$last_12_item`");
