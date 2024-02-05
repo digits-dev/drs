@@ -109,7 +109,10 @@
                     </tbody>
                 </table>
             </div>
-            {{ $store_sales->links() }}
+            <div class="col-md-12">
+                {{ $store_sales->links() }}
+                <p>Showing {{ $store_sales->firstItem() ?? 0 }} to {{ $store_sales->lastItem() ?? 0 }} of {{ $store_sales->total() }} items.</p>        
+            </div>
         </div>
         <div class="panel-footer">
             <a href='{{ CRUDBooster::mainpath() }}' class='btn btn-default'>Back</a>
