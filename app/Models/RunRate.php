@@ -12,8 +12,13 @@ class RunRate extends Model
     protected $table = 'run_rate';
 
     
-    public function filterRunRate($filters, $cutoff_queries = [], $search = null) {
-        $query = self::whereNotNull('digits_code_rr_ref');
+    public function filterRunRate($params) {
+        $filters = $params['filters'];
+        $cutoff_queries = $params['cutoff_queries'];
+        $search = $params['search'];
+        $column_name = $params['column_name'];
+        $last_12 = $params['last_12'];
+        $query = self::whereNotNull('digits_code_rr_ref')->whereIn($column_name, $last_12);
 
         foreach ($filters as $filter) {
             $query->where(...$filter);

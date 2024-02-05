@@ -436,7 +436,12 @@ use Maatwebsite\Excel\Facades\Excel;
 				$cutoff = $request['sales_year']. '_'. $request['sales_month'];
 			}
 			$cutoff_data = self::getCutoffData($cutoff_type, $cutoff, $is_apple);
-			$rows = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'], $search)
+			$filter_params = [
+				'filters' => $query_filter_params,
+				'cutoff_queries' => $cutoff_data['cutoff_queries'],
+				'search' => $search,
+			] + $cutoff_data;
+			$rows = RunRate::filterRunRate($filter_params)
 				->paginate(10)
 				->appends($request);
 			
@@ -501,6 +506,8 @@ use Maatwebsite\Excel\Facades\Excel;
 			return [
 				'cutoff_queries' => $cutoff_queries,
 				'cutoff_columns' => $last_12,
+				'column_name' => $column_name,
+				'last_12' => $last_12,
 			];
 		}
 
@@ -519,7 +526,12 @@ use Maatwebsite\Excel\Facades\Excel;
 				$cutoff = $request['sales_year']. '_'. $request['sales_month'];
 			}
 			$cutoff_data = self::getCutoffData($cutoff_type, $cutoff, $is_apple);
-			$query = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'], $search);
+			$filter_params = [
+				'filters' => $query_filter_params,
+				'cutoff_queries' => $cutoff_data['cutoff_queries'],
+				'search' => $search,
+			] + $cutoff_data;
+			$query = RunRate::filterRunRate($filter_params);
 			$export = (new RunRateExport($query, $cutoff_data['cutoff_columns']));
 			$file_name = implode('-', [$brand, $cutoff_type, $sales_year, $sales_month]);
 			return Excel::download($export, "$file_name.xlsx");
