@@ -12,7 +12,13 @@
         </div>
         <div class="panel-body">
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
+                    <form target="_blank" id="export-form" action="{{ route('run-rate.export-run-rate') }}" method="get" style="display:inline-block;width: 260px;">
+                        {!! CRUDBooster::getUrlParameters(['search', 'page']) !!}
+                        <button class="btn btn-primary"><i class="fa fa-download"></i> Export</button>
+                    </form>
+                </div>
+                <div class="col-md-6">
                     <form id="search-form" method="get" class="pull-right" style="display:inline-block;width: 260px;">
                         {!! CRUDBooster::getUrlParameters(['search']) !!}
                         <div class="input-group">

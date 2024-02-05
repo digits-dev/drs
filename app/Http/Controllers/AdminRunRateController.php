@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exports\RunRateExport;
 use Session;
 use Illuminate\Http\Request;
 use DB;
@@ -7,6 +8,7 @@ use CRUDBooster;
 use App\Models\Channel;
 use App\Models\RunRate;
 use App\Models\StoreSalesReport;
+use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminRunRateController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -434,13 +436,13 @@ use App\Models\StoreSalesReport;
 				$cutoff = $request['sales_year']. '_'. $request['sales_month'];
 			}
 			$cutoff_data = self::getCutoffData($cutoff_type, $cutoff, $is_apple);
+			$rows = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'], $search)
+				->paginate(10)
+				->appends($request);
 			
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
 			$data['query_filter_params'] = $query_filter_params;
-			$rows = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'], $search)
-				->paginate(10)
-				->appends($request);
 			$data['rows'] = $rows;
 			$data['cutoff_columns'] = $cutoff_data['cutoff_columns'];
 			$data['search'] = $search;
@@ -500,6 +502,27 @@ use App\Models\StoreSalesReport;
 				'cutoff_queries' => $cutoff_queries,
 				'cutoff_columns' => $last_12,
 			];
+		}
+
+		public function exportRunRate(Request $request) {
+			$request = $request->all();
+			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
+			$sales_year = $request['sales_year'];
+			$sales_month = $request['sales_month'];
+			$search = $request['search'];
+			$is_apple = (int) ($brand === 'APPLE');
+			$query_filter_params = self::generateFilterParams($request, $is_apple);
+
+			if ($cutoff_type === 'WEEKLY') {
+				$cutoff = $request['cutoff'];
+			} else {
+				$cutoff = $request['sales_year']. '_'. $request['sales_month'];
+			}
+			$cutoff_data = self::getCutoffData($cutoff_type, $cutoff, $is_apple);
+			$query = RunRate::filterRunRate($query_filter_params, $cutoff_data['cutoff_queries'], $search);
+			$export = (new RunRateExport($query, $cutoff_data['cutoff_columns']));
+			$file_name = implode('-', [$brand, $cutoff_type, $sales_year, $sales_month]);
+			return Excel::download($export, "$file_name.xlsx");
 		}
 
 

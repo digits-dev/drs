@@ -97,6 +97,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('run-rate/get-cutoff',[RunRateController::class, 'getCutoffRange'])->name('get-cutoff-range');
     Route::get('run-rate/concepts',[RunRateController::class, 'getConcepts'])->name('run-rate-concepts');
     Route::get('run-rate/store-location',[RunRateController::class, 'getStoreLocation'])->name('run-rate-store');
-    Route::any('run-rate/filter-run-rate',[AdminRunRateController::class, 'filterRunRate'])->name('run-rate.filter-run-rate');
+    Route::get('run-rate/filter-run-rate',[AdminRunRateController::class, 'filterRunRate'])->name('run-rate.filter-run-rate');
+    Route::get('run-rate/filter-run-rate/export', [AdminRunRateController::class, 'exportRunRate'])->name('run-rate.export-run-rate');
     
 });
