@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			'IMPORTING' => 'label-info',
 			'IMPORT FINISHED' => 'label-primary',
 			'IMPORT FAILED' => 'label-danger',
+			'FILE DOWNLOADED' => 'label-info',
 			'FINAL' => 'label-success',
 		];
 
@@ -313,6 +314,10 @@ use Maatwebsite\Excel\Facades\Excel;
 					if ($batch->status == 'IMPORT FAILED') {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has failed importing.", 'danger');
 					}
+					if ($batch->status != 'FILE DOWNLOADED') {
+						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Please download and check first the batch # $batch->batch before tagging as final.", 'danger');
+					}
+
 					$batch->update([
 						'is_final' => 1,
 						'status' => 'FINAL',
@@ -431,7 +436,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function exportBatch($id) {
 			$batch = DigitsSalesUpload::find($id);
-			return Excel::download(new DigitsSalesUploadBatchExport($batch->batch), "$batch->batch.xlsx");
+			$batch_export = new DigitsSalesUploadBatchExport($batch->batch);
+			$batch->update(['status' => 'FILE DOWNLOADED']);
+			return Excel::download($batch_export, "$batch->batch.xlsx");
 		}
 
 		public function downloadUploadedFile($id) {
