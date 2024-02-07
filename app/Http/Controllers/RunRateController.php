@@ -63,6 +63,7 @@ class RunRateController extends Controller
     public function getStoreLocation(Request $request) {
         $store_location = DB::table('customers')
         ->where('concepts_id', $request->storeConceptId)
+        ->whereRaw('RIGHT(customer_name, 3) = ?', [$request->channelCode])
         ->orderBy('customer_name', 'asc')
         ->pluck('customer_name');
         return response()->json($store_location);
