@@ -80,8 +80,5 @@ class StoreSalesReport extends Model
         return $query;
     }
 
-    public function scopeDistinctYears($query) {
-        return $query->selectRaw('sales_year')->distinct()->get();
-    }
 
 }

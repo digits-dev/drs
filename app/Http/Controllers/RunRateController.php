@@ -8,30 +8,46 @@ use App\Models\StoreSalesReport;
 
 class RunRateController extends Controller
 {
-
-    public function getMonth(Request $request) {
-        $months = StoreSalesReport::where('sales_year', $request->year)
-        ->distinct('sales_month')
-        ->pluck('sales_month');
-
-        return response()->json($months);
+    
+    public function getYear(Request $request) {
+        $tableName = ($request->brand == 'APPLE - WEEKLY') ? 'apple_cutoffs' : 'non_apple_cutoffs';
+        $year = $this->fetchDistinctYears($tableName);
+        return response()->json($year);
     }
-
+    
+    public function getMonth(Request $request) {
+        $tableName = ($request->brand == 'APPLE - WEEKLY') ? 'apple_cutoffs' : 'non_apple_cutoffs';
+        $month = $this->fetchDistinctMonths($tableName, $request->year);
+        return response()->json($month);
+    }
+    
     public function getCutoffRange(Request $request) {
-        if ($request->brandGroup == 'APPLE - WEEKLY') {
-            $cutoffRange = StoreSalesReport::where('sales_year', $request->year)->where('sales_month', $request->month)
-            ->where('brand_description', 'APPLE')
-            ->distinct('apple_week_cutoff')
-            ->pluck('apple_week_cutoff');
-      
-        }else {
-            $cutoffRange = StoreSalesReport::where('sales_year', $request->year)->where('sales_month', $request->month)
-            ->distinct('non_apple_week_cutoff')
-            ->pluck('non_apple_week_cutoff');
-        }
+        $tableName = ($request->brandGroup == 'APPLE - WEEKLY') ? 'apple_cutoffs' : 'non_apple_cutoffs';
+        $cutoffRange = $this->fetchCutoffRange($tableName, $request->year, $request->month);
         return response()->json($cutoffRange);
     }
-
+    
+    private function fetchDistinctYears($tableName) {
+        return DB::table($tableName)
+            ->selectRaw('DISTINCT YEAR(sold_date) AS year')
+            ->pluck('year');
+    }
+    
+    private function fetchDistinctMonths($tableName, $year) {
+        return DB::table($tableName)
+            ->where('sold_date', 'like', '%' . $year . '%')
+            ->selectRaw('DISTINCT MONTH(sold_date) AS month')
+            ->pluck('month');
+    }
+    
+    private function fetchCutoffRange($tableName, $year, $month) {
+        $formattedMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
+        return DB::table($tableName)
+            ->whereRaw('DATE_FORMAT(sold_date, "%Y-%m") = ?', [$year . '-' . $formattedMonth])
+            ->distinct(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff')
+            ->pluck(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff');
+    }
+    
     public function getConcepts(Request $request) {
         $concept_ids = DB::table('customers')
         ->where('channels_id', $request->channel)

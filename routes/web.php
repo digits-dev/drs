@@ -93,6 +93,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('report_privileges/create/save',[AdminReportPrivilegesController::class, 'saveReport'])->name('report-privileges.save');
     
     // run rate
+    Route::get('run-rate/year',[RunRateController::class, 'getYear'])->name('get-year');
     Route::get('run-rate/month',[RunRateController::class, 'getMonth'])->name('get-month');
     Route::get('run-rate/get-cutoff',[RunRateController::class, 'getCutoffRange'])->name('get-cutoff-range');
     Route::get('run-rate/concepts',[RunRateController::class, 'getConcepts'])->name('run-rate-concepts');
