@@ -38,6 +38,7 @@ class RunRateController extends Controller
         ->pluck('concepts_id');
         $concepts = DB::table('concepts')
         ->whereIn('id', $concept_ids)
+        ->orderBy('concept_name', 'asc')
         ->get();
         return response()->json($concepts);
     }
@@ -46,6 +47,7 @@ class RunRateController extends Controller
     public function getStoreLocation(Request $request) {
         $store_location = DB::table('customers')
         ->where('concepts_id', $request->storeConceptId)
+        ->orderBy('customer_name', 'asc')
         ->pluck('customer_name');
         return response()->json($store_location);
     }

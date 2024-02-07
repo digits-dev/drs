@@ -20,7 +20,7 @@ class Channel extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status','ACTIVE')->get();
+        return $query->where('status','ACTIVE')->orderBy('channel_name', 'asc')->get();
     }
 
     public static function boot()

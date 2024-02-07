@@ -156,7 +156,7 @@
                 <div class="col-md-6">
                     <label>Cutoff Range <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="cutoff" id="cutoff" class="form-control" title="cutoff" disabled >
+                    <select class="dropdowns" name="cutoff" id="cutoff" class="form-control" title="cutoff" disabled required>
                         <option value="" selected disabled>Please select cutoff</option>
                     </select>
                     <div class="icon-container">
