@@ -416,10 +416,8 @@ use Maatwebsite\Excel\Facades\Excel;
 		public function getIndex() {
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
-			$data['years'] = StoreSalesReport::distinctYears();
 			$data['channels'] = Channel::active();
 			
-	
 			return view('run-rate.run-rate', $data);
 		}
 

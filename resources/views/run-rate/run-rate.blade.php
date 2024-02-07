@@ -107,9 +107,6 @@
                     <div class="form-group select-container">
                     <select class="dropdowns" name="sales_year" id="sales_year" class="form-control" title="Year" disabled required>
                         <option value="" selected disabled>Please select year</option>
-                        @foreach ($years as $year)
-                            <option value="{{ $year->sales_year }}">{{ $year->sales_year }}</option>
-                        @endforeach
                     </select>
                     <div class="icon-container">
                         <i class="fas fa-caret-down"></i>
@@ -181,23 +178,47 @@
         });
         
         $('#brand').change(function() {
-            $('#sales_year').removeAttr('disabled');
-            $('#sales_year,#sales_month,#cutoff').val('');
-            $('#sales_year').removeClass('disabled-color')
-            $('#sales_month').attr("disabled", true)
-            $('#cutoff').attr("disabled", true)
-            $('#sales_month,#cutoff')
-            .addClass('disabled-color')
+            let brand = $(this).val()
+            $.ajax({
+            url: "{{ route('get-year') }}",
+            type: "GET",
+            data: {
+                'brand': brand,
+                },
+            success: function(result)
+            {
+                console.log(result);
+                let i;
+                let showYear = [];
+    
+                showYear[0] = "<option selected disabled value=''>Please select cutoff</option>";
+                for (i = 0; i < result.length; ++i) {
+                    showYear[i+1] = "<option value='"+result[i]+"'>"+result[i]+"</option>";
+                }
+                jQuery("#sales_year").html(showYear); 
+                $('#sales_year').removeAttr('disabled');
+                $('#sales_year,#sales_month,#cutoff').val('');
+                $('#sales_year').removeClass('disabled-color')
+                $('#sales_month').attr("disabled", true)
+                $('#cutoff').attr("disabled", true)
+                $('#sales_month,#cutoff')
+                .addClass('disabled-color')
+            }
+            })
         })
+
+
         
         $('#sales_year').change(function() {
     
             let year = $(this).val()
+            let brand = $('#brand').val();
             $.ajax({
             url: "{{ route('get-month') }}",
             type: "GET",
             data: {
                 'year': year,
+                'brand': brand,
                 },
             success: function(result)
             {
