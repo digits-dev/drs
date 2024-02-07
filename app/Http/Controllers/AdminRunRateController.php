@@ -8,6 +8,7 @@ use CRUDBooster;
 use App\Models\Channel;
 use App\Models\RunRate;
 use App\Models\StoreSalesReport;
+use DateTime;
 use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminRunRateController extends \crocodicstudio\crudbooster\controllers\CBController {
@@ -461,12 +462,6 @@ use Maatwebsite\Excel\Facades\Excel;
 			$query_filter_params = [];
 			$query_filter_params[] = ['is_apple', '=', $is_apple];
 
-			if ($request['sales_year']) {
-				$query_filter_params[] = ['sales_year', '=', $request['sales_year']];
-			}
-			if ($request['sales_month']) {
-				$query_filter_params[] = ['sales_month', '=', $request['sales_month']];
-			}
 			if ($request['channel_name']) {
 				$query_filter_params[] = ['channel_name', '=', $request['channel_name']];
 			}
@@ -482,18 +477,30 @@ use Maatwebsite\Excel\Facades\Excel;
 		public function getCutoffData($cutoff_type, $cutoff, $is_apple) {
 			$cutoff_queries = [];
 			if ($cutoff_type === 'WEEKLY') {
+				$table_name = $is_apple ? 'apple_cutoffs' : 'non_apple_cutoffs';
 				$column_name = $is_apple ? 'apple_week_cutoff' : 'non_apple_week_cutoff';
+				$last_12 = DB::table($table_name)
+					->where($column_name, '<=', $cutoff)
+					->orderBy($column_name, 'desc')
+					->distinct($column_name)
+					->limit(12)
+					->pluck($column_name)
+					->toArray();
+
 			} else {
 				$column_name = 'sales_date_yr_mo';
+				[$year, $month] = explode('_', $cutoff);
+				$last_12 = [];
+				$date = DateTime::createFromFormat('Y_m', $cutoff);
+				$date->modify('+1 month');
+
+				for ($i = 1; $i <= 12; $i++) {
+					$date->modify('-1 month');
+					$last_12[] = $date->format('Y_m');
+				}
+				
 			}
 
-			$last_12 = RunRate::where('is_apple', $is_apple)
-				->where($column_name, '<=', $cutoff)
-				->distinct($column_name)
-				->orderBy($column_name, 'desc')
-				->limit(12)
-				->pluck($column_name)
-				->toArray();
 
 			foreach ($last_12 as $last_12_item) {
 				$cutoff_queries[] = DB::raw("SUM(CASE WHEN $column_name = '$last_12_item' THEN quantity_sold ELSE 0 END) as `$last_12_item`");
