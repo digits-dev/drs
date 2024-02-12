@@ -34,10 +34,16 @@ class RunRateController extends Controller
     }
     
     private function fetchDistinctMonths($tableName, $year) {
-        return DB::table($tableName)
-            ->where('sold_date', 'like', '%' . $year . '%')
-            ->selectRaw('DISTINCT MONTH(sold_date) AS month')
-            ->pluck('month');
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+
+        $query = DB::table($tableName)->where('sold_date', 'like', '%' . $year . '%');
+   
+        if ($year == $currentYear) {
+            $query->whereMonth('sold_date', '<=', $currentMonth);
+        }
+
+        return $query->selectRaw('DISTINCT MONTH(sold_date) AS month')->pluck('month');
     }
     
     private function fetchCutoffRange($tableName, $year, $month) {
@@ -65,7 +71,7 @@ class RunRateController extends Controller
         ->where('concepts_id', $request->storeConceptId)
         ->whereRaw('RIGHT(customer_name, 3) = ?', [$request->channelCode])
         ->orderBy('customer_name', 'asc')
-        ->pluck('customer_name');
+        ->get();
         return response()->json($store_location);
     }
 }
