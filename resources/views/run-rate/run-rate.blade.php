@@ -61,7 +61,7 @@
         align-self: flex-end;
         box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
     }
-  
+
 </style>
 @endpush
 
@@ -71,49 +71,77 @@
 <div class="form-container">
     <form method='get' target='_blank' action="{{ route('run-rate.filter-run-rate') }}" autocomplete="off">
         @csrf
-            <div>
-                <div class="col-md-6">
-                    <label>Brand Group <span class="arterisk">*</span></label>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-3">
+                    <label>Trade Item/Gashapon<span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                        <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required>
-                            <option value="" selected disabled>Please select brand group</option>
-                            <option value="APPLE - WEEKLY">APPLE - WEEKLY</option>
-                            <option value="NON-APPLE - WEEKLY">NON-APPLE - WEEKLY</option>
-                            <option value="NON-APPLE - MONTHLY">NON-APPLE - MONTHLY</option>
+                        <select  class="dropdowns" name="item" id="item" class="form-control" title="Item" required>
+                            <option value="" selected disabled>Please select</option>
+                            <option value="trade-item">Trade item</option>
+                            <option value="gashapon">Gashapon</option>
                         </select>
                             <div class="icon-container">
                                 <i class="fas fa-caret-down"></i>
                             </div>
                         </div>
                 </div>
+            </div>
+            <div>
+                <div>
                 <div class="col-md-6">
-                    <label>Channel <span class="arterisk">*</span></label>
+                        <label>Brand Group <span class="arterisk">*</span></label>
+                        <div class="form-group select-container">
+                            <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required disabled>
+                                <option value="" selected disabled>Please select brand group</option>
+                                <option value="APPLE - WEEKLY">APPLE - WEEKLY</option>
+                                <option value="NON-APPLE - WEEKLY">NON-APPLE - WEEKLY</option>
+                                <option value="NON-APPLE - MONTHLY">NON-APPLE - MONTHLY</option>
+                            </select>
+                                <div class="icon-container">
+                                    <i class="fas fa-caret-down"></i>
+                                </div>
+                            </div>
+                    <label>Year <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="channel_name" id="channel" class="form-control channel" title="Channel" required>
-                        <option value="" selected disabled>Please select channel</option>
-                        @foreach ($channels as $channel)
-                            <option data-code="{{ $channel->channel_code }}" data-id="{{ $channel->id }}" value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
-                        @endforeach
-                    </select>
+                        <select class="dropdowns" name="sales_year" id="sales_year" class="form-control" title="Year" disabled required>
+                            <option value="" selected disabled>Please select year</option>
+                        </select>
                     <div class="icon-container">
                         <i class="fas fa-caret-down"></i>
                     </div>
                     </div>
-                </div>  
-            </div>
-            <div>
-                <div class="col-md-6">
-                    <label>Year <span class="arterisk">*</span></label>
+                    <label> Month <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="sales_year" id="sales_year" class="form-control" title="Year" disabled required>
-                        <option value="" selected disabled>Please select year</option>
-                    </select>
+                        <select class="dropdowns" name="sales_month" id="sales_month" class="form-control" title="Month" disabled required>
+                            <option value="" selected disabled>Please select month</option>
+                        </select>
+                    <div class="icon-container">
+                        <i class="fas fa-caret-down"></i>
+                    </div>
+                    </div>
+                    <label>Cutoff Range <span class="arterisk">*</span></label>
+                    <div class="form-group select-container">
+                        <select class="dropdowns" name="cutoff" id="cutoff" class="form-control" title="cutoff" disabled required>
+                            <option value="" selected disabled>Please select cutoff</option>
+                        </select>
                     <div class="icon-container">
                         <i class="fas fa-caret-down"></i>
                     </div>
                     </div>
                 </div>
                 <div class="col-md-6">
+                    <label>Channel <span class="arterisk">*</span></label>
+                    <div class="form-group select-container">
+                    <select class="dropdowns" name="channel_name" id="channel" class="form-control channel" title="Channel" required disabled>
+                        <option value="" selected disabled>Please select channel</option>
+                        @foreach ($channels as $channel)
+                            <option data-code="{{ $channel->channel_code }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
+                        @endforeach
+                    </select>
+                    <div class="icon-container">
+                        <i class="fas fa-caret-down"></i>
+                    </div>
+                    </div>
                     <label>Store Concept <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
                     <select class="dropdowns" name="store_concept_name" id="store_concept_name" class="form-control" disabled required>
@@ -123,21 +151,6 @@
                         <i class="fas fa-caret-down"></i>
                     </div>
                     </div>
-                </div>  
-            </div>
-            <div>
-                <div class="col-md-6">
-                   <label> Month <span class="arterisk">*</span></label>
-                    <div class="form-group select-container">
-                    <select class="dropdowns" name="sales_month" id="sales_month" class="form-control" title="Month" disabled required>
-                        <option value="" selected disabled>Please select month</option>
-                    </select>
-                    <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
-                    </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
                     <label>Per Store / Location</label>
                     <div class="form-group select-container">
                     <select class="dropdowns" name="customer_location" id="customer_location" class="form-control" disabled>
@@ -148,22 +161,15 @@
                     </div>
                     </div>
                 </div>  
-            </div>
-            <div>
-                <div class="col-md-6">
-                    <label>Cutoff Range <span class="arterisk">*</span></label>
-                    <div class="form-group select-container">
-                    <select class="dropdowns" name="cutoff" id="cutoff" class="form-control" title="cutoff" disabled required>
-                        <option value="" selected disabled>Please select cutoff</option>
-                    </select>
-                    <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                </div>
+                <div>
+                    <div class="col-md-6">
                     </div>
+                    <div class="pull-right" >
+                        <button class="btn-submit" type='submit'>Search</button>
                     </div>
                 </div>
-                <div class="pull-right" >
-                    <button class="btn-submit" type='submit'>Search</button>
-                </div>
+                           
             </div>
     </form>
 </div>
@@ -172,11 +178,34 @@
 
 @push('bottom')
     <script>
+
          $(document).ready(function(){
-            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
-            .addClass('disabled-color')
+            $('#brand, #channel, #sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
+            .addClass('disabled-color');
+        
         });
         
+        $('#item').change(function () {
+            $('.trade-container').fadeIn(1000);
+            $('#brand,#sales_year,#sales_month,#cutoff, #channel, #store_concept_name, #customer_location').val('');
+            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
+            .addClass('disabled-color');
+            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
+            .attr("disabled", true)
+            $('#brand, #channel').removeAttr('disabled');
+            $('#brand, #channel').removeClass('disabled-color');
+
+          
+            
+            if ($(this).val() == 'gashapon') {
+                $("#brand option[value='APPLE - WEEKLY']").remove();
+            } else {
+                if ($("#brand option[value='APPLE - WEEKLY']").length == 0) {
+                    $("#brand option[value='']").after("<option value='APPLE - WEEKLY'>APPLE - WEEKLY</option>");
+                }
+            }
+        })
+
         $('#brand').change(function() {
             let brand = $(this).val()
             $.ajax({
@@ -190,7 +219,7 @@
                 let i;
                 let showYear = [];
     
-                showYear[0] = "<option selected disabled value=''>Please select cutoff</option>";
+                showYear[0] = "<option selected disabled value=''>Please select year</option>";
                 for (i = 0; i < result.length; ++i) {
                     showYear[i+1] = "<option value='"+result[i]+"'>"+result[i]+"</option>";
                 }
@@ -205,8 +234,6 @@
             }
             })
         })
-
-
         
         $('#sales_year').change(function() {
     
@@ -281,7 +308,7 @@
         })
         
         $('#channel').change(function() {
-            let channelId = $(this).find(':selected').data('id');
+            let channelId = $(this).val();
             $.ajax({
                 url: "{{ route('run-rate-concepts') }}",
             type: "GET",
@@ -295,7 +322,7 @@
     
                 showConcept[0] = "<option selected disabled value=''>Select a store concept</option>";
                 for (i = 0; i < result.length; ++i) {
-                    showConcept[i+1] = "<option data-id='"+result[i].id+"' value='"+result[i].concept_name+"'>"+result[i].concept_name+"</option>";
+                    showConcept[i+1] = "<option value='"+result[i].id+"'>"+result[i].concept_name+"</option>";
                 }
                 $('#store_concept_name').removeAttr("disabled")
                 $('#store_concept_name').find('option').remove();
@@ -310,7 +337,7 @@
         })
 
         $('#store_concept_name').change(function() {
-            let storeConceptId = $(this).find(':selected').data('id');
+            let storeConceptId = $(this).val();
             let channelCode = $('#channel').find(':selected').data('code');
 
             $.ajax({
@@ -322,12 +349,13 @@
                 },
             success: function(result)
             {
+                console.log(result);
                 let i;
                 let showStore = [];
     
                 showStore[0] = "<option selected value=''>-- All Store --</option>";
                 for (i = 0; i < result.length; ++i) {
-                    showStore[i+1] = "<option value='"+result[i]+"'>"+result[i]+"</option>";
+                    showStore[i+1] = "<option value='"+result[i].id+"'>"+result[i].customer_name+"</option>";
                 }
                 $('#customer_location').removeAttr("disabled")
                 $('#customer_location').find('option').remove();
