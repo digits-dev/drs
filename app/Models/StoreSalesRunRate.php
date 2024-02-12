@@ -49,6 +49,7 @@ class StoreSalesRunRate extends Model
         return $query
             ->whereIn($column_name, $last_12)
             ->select($column_name, DB::raw("SUM(quantity_sold) AS total"))
-            ->groupBy($column_name);
+            ->groupBy($column_name)
+            ->orderBy($column_name, 'DESC');
     }
 }

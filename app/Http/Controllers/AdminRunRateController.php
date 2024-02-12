@@ -536,7 +536,8 @@ use Maatwebsite\Excel\Facades\Excel;
 				'search' => $search,
 			] + $cutoff_data;
 			$query = StoreSalesRunRate::filterRunRate($filter_params);
-			$export = (new RunRateExport($query, $cutoff_data['cutoff_columns']));
+			$totals = StoreSalesRunRate::sumByCutOff($filter_params)->pluck('total')->toArray();
+			$export = (new RunRateExport($query, $totals, $cutoff_data['cutoff_columns']));
 			$file_name = "DRS (Run Rate) " . date("Y-m-d h_i_s_a");
 			return Excel::download($export, "$file_name.xlsx");
 		}

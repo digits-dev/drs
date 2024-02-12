@@ -12,14 +12,20 @@ use CRUDBooster;
 class RunRateExport implements FromQuery, WithHeadings, WithMapping
 {
     public $query;
+    public $totals;
+    public $cutoff_columns;
 
-    public function __construct($query, $cutoff_columns) {
+    public function __construct($query, $totals, $cutoff_columns) {
         $this->query = $query;
+        $this->totals = $totals;
         $this->cutoff_columns = $cutoff_columns;
     }
 
     public function headings(): array {
-        return ['DIGITS CODE', ...$this->cutoff_columns];
+        return [
+            ['DIGITS CODE', ...$this->cutoff_columns],
+            [' ',...$this->totals],
+        ];
 
     }
 
