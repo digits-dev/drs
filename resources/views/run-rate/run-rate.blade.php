@@ -92,7 +92,7 @@
                     <select class="dropdowns" name="channel_name" id="channel" class="form-control channel" title="Channel" required>
                         <option value="" selected disabled>Please select channel</option>
                         @foreach ($channels as $channel)
-                            <option data-id="{{ $channel->id }}" value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
+                            <option data-code="{{ $channel->channel_code }}" data-id="{{ $channel->id }}" value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
                         @endforeach
                     </select>
                     <div class="icon-container">
@@ -187,7 +187,6 @@
                 },
             success: function(result)
             {
-                console.log(result);
                 let i;
                 let showYear = [];
     
@@ -222,7 +221,6 @@
                 },
             success: function(result)
             {
-                console.log(result);
 
                 let showMonths = [];
                 let monthNames = [
@@ -292,7 +290,6 @@
                 },
             success: function(result)
             {
-                console.log(result);
                 let i;
                 let showConcept = [];
     
@@ -314,16 +311,17 @@
 
         $('#store_concept_name').change(function() {
             let storeConceptId = $(this).find(':selected').data('id');
+            let channelCode = $('#channel').find(':selected').data('code');
 
             $.ajax({
                 url: "{{ route('run-rate-store') }}",
             type: "GET",
             data: {
                 'storeConceptId': storeConceptId,
+                'channelCode': channelCode,
                 },
             success: function(result)
             {
-                console.log(result);
                 let i;
                 let showStore = [];
     
