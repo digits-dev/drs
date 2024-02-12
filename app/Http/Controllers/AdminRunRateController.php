@@ -8,6 +8,7 @@ use CRUDBooster;
 use App\Models\Channel;
 use App\Models\RunRate;
 use App\Models\StoreSalesReport;
+use App\Models\StoreSalesRunRate;
 use DateTime;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -424,6 +425,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function filterRunRate(Request $request) {
 			$request = $request->all();
+			$item_type = $request['item'];
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
 			$search = $request['search'];
 			$is_apple = (int) ($brand === 'APPLE');
@@ -440,11 +442,11 @@ use Maatwebsite\Excel\Facades\Excel;
 				'cutoff_queries' => $cutoff_data['cutoff_queries'],
 				'search' => $search,
 			] + $cutoff_data;
-			$rows = RunRate::filterRunRate($filter_params)
+			$rows = StoreSalesRunRate::filterRunRate($filter_params)
 				->paginate(10)
 				->appends($request);
 
-			$col_totals = RunRate::sumByCutOff($filter_params)->get();
+			$col_totals = StoreSalesRunRate::sumByCutOff($filter_params)->get();
 			
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
@@ -462,14 +464,14 @@ use Maatwebsite\Excel\Facades\Excel;
 			$query_filter_params = [];
 			$query_filter_params[] = ['is_apple', '=', $is_apple];
 
-			if ($request['channel_name']) {
-				$query_filter_params[] = ['channel_name', '=', $request['channel_name']];
+			if ($request['channels_id']) {
+				$query_filter_params[] = ['channels_id', '=', $request['channels_id']];
 			}
-			if ($request['store_concept_name']) {
-				$query_filter_params[] = ['store_concept_name', '=', $request['store_concept_name']];
+			if ($request['concepts_id']) {
+				$query_filter_params[] = ['concepts_id', '=', $request['concepts_id']];
 			}
-			if ($request['customer_location']) {
-				$query_filter_params[] = ['customer_location', '=', $request['customer_location']];
+			if ($request['customers_id']) {
+				$query_filter_params[] = ['customers_id', '=', $request['customers_id']];
 			}
 			return $query_filter_params;
 		}
@@ -533,7 +535,7 @@ use Maatwebsite\Excel\Facades\Excel;
 				'cutoff_queries' => $cutoff_data['cutoff_queries'],
 				'search' => $search,
 			] + $cutoff_data;
-			$query = RunRate::filterRunRate($filter_params);
+			$query = StoreSalesRunRate::filterRunRate($filter_params);
 			$export = (new RunRateExport($query, $cutoff_data['cutoff_columns']));
 			$file_name = "DRS (Run Rate) " . date("Y-m-d h_i_s_a");
 			return Excel::download($export, "$file_name.xlsx");
