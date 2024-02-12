@@ -1,5 +1,6 @@
 SELECT
     store_sales.id,
+    0 as is_apple,
     store_sales.channels_id,
     store_sales.customers_id,
     customers.concepts_id,

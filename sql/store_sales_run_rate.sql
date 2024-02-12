@@ -1,5 +1,6 @@
 SELECT
     store_sales.id,
+    items.brand_description = 'APPLE' AS is_apple,
     store_sales.channels_id,
     store_sales.customers_id,
     customers.concepts_id,
