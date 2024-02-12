@@ -132,7 +132,7 @@
                 <div class="col-md-6">
                     <label>Channel <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="channel_name" id="channel" class="form-control channel" title="Channel" required disabled>
+                    <select class="dropdowns" name="channels_id" id="channel" class="form-control channel" title="Channel" required disabled>
                         <option value="" selected disabled>Please select channel</option>
                         @foreach ($channels as $channel)
                             <option data-code="{{ $channel->channel_code }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
@@ -144,7 +144,7 @@
                     </div>
                     <label>Store Concept <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="store_concept_name" id="store_concept_name" class="form-control" disabled required>
+                    <select class="dropdowns" name="concepts_id" id="store_concept_name" class="form-control" disabled required>
                         <option value="" selected disabled>Select a store concept</option>
                     </select>
                     <div class="icon-container">
@@ -153,7 +153,7 @@
                     </div>
                     <label>Per Store / Location</label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="customer_location" id="customer_location" class="form-control" disabled>
+                    <select class="dropdowns" name="customers_id" id="customer_location" class="form-control" disabled>
                         <option value="" selected disabled>Select a store / location</option>
                     </select>
                     <div class="icon-container">
