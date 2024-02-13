@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use DB;
 use CRUDBooster;
 use App\Models\Channel;
+use App\Models\GachaSalesRunRate;
 use App\Models\RunRate;
 use App\Models\StoreSalesReport;
 use App\Models\StoreSalesRunRate;
@@ -442,11 +443,20 @@ use Maatwebsite\Excel\Facades\Excel;
 				'cutoff_queries' => $cutoff_data['cutoff_queries'],
 				'search' => $search,
 			] + $cutoff_data;
-			$rows = StoreSalesRunRate::filterRunRate($filter_params)
-				->paginate(10)
-				->appends($request);
 
-			$col_totals = StoreSalesRunRate::sumByCutOff($filter_params)->get();
+			if ($item_type === 'trade-item') {
+				$rows = StoreSalesRunRate::filterRunRate($filter_params)
+					->paginate(10)
+					->appends($request);
+	
+				$col_totals = StoreSalesRunRate::sumByCutOff($filter_params)->get();
+			} else {
+				$rows = GachaSalesRunRate::filterRunRate($filter_params)
+					->paginate(10)
+					->appends($request);
+	
+				$col_totals = GachaSalesRunRate::sumByCutOff($filter_params)->get();
+			}
 			
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
@@ -517,6 +527,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function exportRunRate(Request $request) {
 			$request = $request->all();
+			$item_type = $request['item'];
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
 			$sales_year = $request['sales_year'];
 			$sales_month = $request['sales_month'];
@@ -535,8 +546,13 @@ use Maatwebsite\Excel\Facades\Excel;
 				'cutoff_queries' => $cutoff_data['cutoff_queries'],
 				'search' => $search,
 			] + $cutoff_data;
-			$query = StoreSalesRunRate::filterRunRate($filter_params);
-			$totals = StoreSalesRunRate::sumByCutOff($filter_params)->pluck('total')->toArray();
+			if ($item_type === 'trade-item') {
+				$query = StoreSalesRunRate::filterRunRate($filter_params);
+				$totals = StoreSalesRunRate::sumByCutOff($filter_params)->get();
+			} else {
+				$query = GachaSalesRunRate::filterRunRate($filter_params);
+				$totals = GachaSalesRunRate::sumByCutOff($filter_params)->get();
+			}
 			$export = (new RunRateExport($query, $totals, $cutoff_data['cutoff_columns']));
 			$file_name = "DRS (Run Rate) " . date("Y-m-d h_i_s_a");
 			return Excel::download($export, "$file_name.xlsx");

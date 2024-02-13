@@ -22,10 +22,20 @@ class RunRateExport implements FromQuery, WithHeadings, WithMapping
     }
 
     public function headings(): array {
-        return [
-            ['DIGITS CODE', ...$this->cutoff_columns],
-            [' ',...$this->totals],
-        ];
+        $headings = [['DIGITS CODE', ...$this->cutoff_columns], []];
+
+        foreach ($headings[0] as $key => $value) {
+            foreach ($this->totals as $total) {
+                $total_values = array_values($total->toArray());
+                if (in_array($value, $total_values)) {
+                    $headings[1][$key] = $total->total;
+                    continue;
+                } else {
+                    $headings[1][$key] = "0";
+                }
+            }
+        }
+        return $headings;
 
     }
 
