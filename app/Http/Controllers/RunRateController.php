@@ -47,13 +47,24 @@ class RunRateController extends Controller
     }
     
     private function fetchCutoffRange($tableName, $year, $month) {
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+        $currentDate = date('Y-m-d');
         $formattedMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
-        return DB::table($tableName)
-            ->whereRaw('DATE_FORMAT(sold_date, "%Y-%m") = ?', [$year . '-' . $formattedMonth])
-            ->distinct(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff')
-            ->pluck(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff');
+        
+        $query =  DB::table($tableName)
+            ->whereRaw('DATE_FORMAT(sold_date, "%Y-%m") = ?', [$year . '-' . $formattedMonth]);
+          
+        if($year == $currentYear && $month == $currentMonth) {
+            $query->whereDate('from_date', '<=', $currentDate)
+            ->whereDate('to_date', '>=', $currentDate);
+        }
+
+        return $query->distinct(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff')
+        ->pluck(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff');
+
     }
-    
+
     public function getConcepts(Request $request) {
         $concept_ids = DB::table('customers')
         ->where('channels_id', $request->channel)
