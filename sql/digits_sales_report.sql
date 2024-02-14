@@ -2,14 +2,8 @@ SELECT
     digits_sales.id,
     digits_sales.batch_number,
     digits_sales.is_final,
-    digits_sales.reference_number AS reference_number, (
-        CASE
-            WHEN(
-                items.digits_code IS NULL
-            ) THEN 0
-            ELSE 1
-        END
-    ) AS rr_flag,
+    digits_sales.reference_number AS reference_number, 
+    all_items.digits_code IS NOT NULL as rr_flag,
     systems.system_name AS system_name,
     organizations.organization_name AS organization_name,
     report_types.report_type AS report_type,
@@ -25,60 +19,32 @@ SELECT
     apple_cutoffs.apple_week_cutoff AS apple_week_cutoff,
     non_apple_cutoffs.non_apple_yr_mon_wk AS non_apple_yr_mon_wk,
     non_apple_cutoffs.non_apple_week_cutoff AS non_apple_week_cutoff,
-    CONCAT(
-        EXTRACT(
-            YEAR
-            FROM
-                digits_sales.sales_date
-        ),
-        '_',
-        LPAD(
-            EXTRACT(
-                MONTH
-                FROM
-                    digits_sales.sales_date
-            ),
-            2,
-            0
-        )
-    ) AS sales_date_yr_mo,
-    EXTRACT(
-        YEAR
-        FROM
-            digits_sales.sales_date
-    ) AS sales_year,
-    LPAD(
-        EXTRACT(
-            MONTH
-            FROM
-                digits_sales.sales_date
-        ),
-        2,
-        0
-    ) AS sales_month,
+    DATE_FORMAT(digits_sales.sales_date, "%Y_%m") AS sales_date_yr_mo,
+    DATE_FORMAT(digits_sales.sales_date, "%Y") AS sales_year,
+    DATE_FORMAT(digits_sales.sales_date, "%m") AS sales_month,
     digits_sales.item_code AS item_code,
     digits_sales.item_description AS item_description,
     COALESCE(
         digits_sales.digits_code_rr_ref,
         digits_sales.item_code
     ) AS digits_code_rr_ref,
-    items.digits_code AS digits_code,
+    all_items.digits_code AS digits_code,
     COALESCE(
-        items.item_description,
+        all_items.item_description,
         digits_sales.item_description
     ) AS imfs_item_description,
-    items.upc_code AS upc_code,
-    items.upc_code2 AS upc_code2,
-    items.upc_code3 AS upc_code3,
-    items.upc_code4 AS upc_code4,
-    items.upc_code5 AS upc_code5,
-    items.brand_description AS brand_description,
-    items.category_description AS category_description,
-    items.margin_category_description AS margin_category_description,
-    items.vendor_type_code AS vendor_type_code,
-    items.inventory_type_description AS inventory_type_description,
-    items.sku_status_description AS sku_status_description,
-    items.brand_status AS brand_status,
+    all_items.upc_code AS upc_code,
+    all_items.upc_code2 AS upc_code2,
+    all_items.upc_code3 AS upc_code3,
+    all_items.upc_code4 AS upc_code4,
+    all_items.upc_code5 AS upc_code5,
+    all_items.brand_description AS brand_description,
+    all_items.category_description AS category_description,
+    all_items.margin_category_description AS margin_category_description,
+    all_items.vendor_type_code AS vendor_type_code,
+    all_items.inventory_type_description AS inventory_type_description,
+    all_items.sku_status_description AS sku_status_description,
+    all_items.brand_status AS brand_status,
     digits_sales.quantity_sold AS quantity_sold,
     digits_sales.sold_price AS sold_price,
     digits_sales.qtysold_price AS qtysold_price,
@@ -104,4 +70,4 @@ FROM digits_sales
     LEFT JOIN employees ON digits_sales.employees_id = employees.id
     LEFT JOIN apple_cutoffs ON digits_sales.sales_date = apple_cutoffs.sold_date
     LEFT JOIN non_apple_cutoffs ON digits_sales.sales_date = non_apple_cutoffs.sold_date
-    LEFT JOIN items ON digits_sales.item_code = items.digits_code
+    LEFT JOIN all_items ON digits_sales.item_code = all_items.item_code
