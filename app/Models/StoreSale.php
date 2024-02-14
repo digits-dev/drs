@@ -174,10 +174,8 @@ class StoreSale extends Model
         ->leftJoin('employees', 'store_sales.employees_id', '=', 'employees.id')
         ->leftJoin('apple_cutoffs', 'store_sales.sales_date', '=', 'apple_cutoffs.sold_date')
         ->leftJoin('non_apple_cutoffs', 'store_sales.sales_date', '=', 'non_apple_cutoffs.sold_date')
-        ->leftJoin('all_items', 'store_sales.item_code', '=', 'all_items.item_code');
-        if (count($ids)) {
-            $query->whereIn('store_sales.id', $ids);
-        }
+        ->leftJoin('all_items', 'store_sales.item_code', '=', 'all_items.item_code')
+        ->whereIn('store_sales.id', $ids);
         return $query;
     }
 

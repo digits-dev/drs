@@ -356,7 +356,7 @@ use Svg\Tag\Rect;
 			}
 			$data = [];
 			$data['page_title'] = 'Store Sales Details';
-			$data['store_sales_details'] = StoreSalesReport::where('id', $id)->first();
+			$data['store_sales_details'] = StoreSale::generateReport([$id])->first();
 			return view('store-sales.details',$data);
 		}
 
