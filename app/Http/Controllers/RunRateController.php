@@ -56,8 +56,7 @@ class RunRateController extends Controller
             ->whereRaw('DATE_FORMAT(sold_date, "%Y-%m") = ?', [$year . '-' . $formattedMonth]);
           
         if($year == $currentYear && $month == $currentMonth) {
-            $query->whereDate('from_date', '<=', $currentDate)
-            ->whereDate('to_date', '>=', $currentDate);
+            $query->whereDate('to_date', '<', $currentDate);
         }
 
         return $query->distinct(($tableName == 'apple_cutoffs') ? 'apple_week_cutoff' : 'non_apple_week_cutoff')

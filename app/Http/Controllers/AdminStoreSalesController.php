@@ -358,13 +358,14 @@
 		}
 
 		public function filterStoreSales(Request $request) {
+			dd($request->all());
 			$data['searchval'] = $request->search;
 			$data['receipt_number'] = $request->receipt_number;
-			$data['channel_name'] = $request->channel_name;
+			$data['channels_id'] = $request->channels_id;
 			$data['datefrom'] = $request->datefrom;
 			$data['dateto'] = $request->dateto;
-			$data['store_concept_name'] = $request->store_concept_name;
-			
+			$data['concepts_id'] = $request->concepts_id;
+
 			if(!$request->has('search')){
 				$data['result'] = StoreSalesReport::searchFilter($request->all())->paginate(10);
 				$data['result']->appends($request->except(['_token']));
@@ -386,7 +387,7 @@
 			->pluck('concepts_id');
 			$concepts = DB::table('concepts')
 			->whereIn('id', $concept_ids)
-			->pluck('concept_name');
+			->get();
 			return response()->json($concepts);
 		}
 

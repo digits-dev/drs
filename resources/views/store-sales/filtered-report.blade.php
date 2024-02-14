@@ -66,10 +66,10 @@
             <form action="{{ route('store-sales.filter') }}">
                 <div class="search-container">
                     <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
-                    <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+                    <input type='hidden' name='channels_id' value="{{ $channels_id }}">
                     <input type='hidden' name='datefrom' value="{{ $datefrom }}">
                     <input type='hidden' name='dateto' value="{{ $dateto }}">
-                    <input type='hidden' name='store_concept_name' value="{{ $store_concept_name }}">
+                    <input type='hidden' name='concepts_id' value="{{ $concepts_id }}">
                     <input
                         class="search-bar"
                         autofocus
@@ -172,10 +172,10 @@
             <form method='post' target='_blank' action="{{ route('store-sales.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
-            <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+            <input type='hidden' name='channels_id' value="{{ $channels_id }}">
             <input type='hidden' name='datefrom' value="{{ $datefrom }}">
             <input type='hidden' name='dateto' value="{{ $dateto }}">
-            <input type='hidden' name='store_concept_name' value="{{ $store_concept_name }}">
+            <input type='hidden' name='concepts_id' value="{{ $concepts_id }}">
             {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
                 <div class='form-group'>

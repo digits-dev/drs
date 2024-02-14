@@ -61,7 +61,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_digits_uploads/detail/{id}', [AdminDigitsSalesUploadsController::class, 'getDetail'])->name('digits-sales.detail');
     
     Route::any('digits_sales/filter',[AdminDigitsSalesController::class, 'filterDigitsSales'])->name('digits-sales.filter');
-    Route::post('concepts',[AdminDigitsSalesController::class, 'concepts'])->name('concepts');
+    // Route::post('concepts',[AdminDigitsSalesController::class, 'concepts'])->name('concepts');
 
 
 
