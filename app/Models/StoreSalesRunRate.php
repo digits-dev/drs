@@ -26,7 +26,8 @@ class StoreSalesRunRate extends Model
         }
         $query
             ->select('digits_code_rr_ref', ...$cutoff_queries)
-            ->groupBy('digits_code_rr_ref');
+            ->groupBy('digits_code_rr_ref')
+            ->orderBy('digits_code_rr_ref', 'ASC');
 
         return $query;
         
