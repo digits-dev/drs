@@ -188,6 +188,8 @@ class StoreSaleController extends Controller
 
     public function exportSales(Request $request) {
         $filename = $request->input('filename');
-        return Excel::download(new StoreSalesExport, $filename.'.xlsx');
+        $ids = StoreSale::filterForReport($request->all())->pluck('id')->toArray();
+        $query = (new AdminStoreSalesController)->generateReport($ids);
+        return Excel::download(new StoreSalesExport($query), $filename.'.xlsx');
     }
 }

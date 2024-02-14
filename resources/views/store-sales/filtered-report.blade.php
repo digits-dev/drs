@@ -101,7 +101,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($result as $row)
+                @foreach($rows as $row)
                     <tr>
                     <td>{{ $row->reference_number }}</td>
                     <td>{{ $row->system_name }}</td>

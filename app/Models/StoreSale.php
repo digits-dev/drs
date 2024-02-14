@@ -68,6 +68,44 @@ class StoreSale extends Model
         return $storeSales->reference_number + 1;
     }
 
+    public function filterForReport($filters = []) {
+        $search = $filters['search'];
+        $query = self::whereNotNull('store_sales.id')
+            ->leftJoin('systems', 'store_sales.systems_id', '=', 'systems.id')
+            ->leftJoin('organizations', 'store_sales.organizations_id', '=', 'organizations.id')
+            ->leftJoin('report_types', 'store_sales.report_types_id', '=', 'report_types.id')
+            ->leftJoin('channels', 'store_sales.channels_id', '=', 'channels.id')
+            ->leftJoin('customers', 'store_sales.customers_id', '=', 'customers.id')
+            ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
+            ->leftJoin('employees', 'store_sales.employees_id', '=', 'employees.id')
+            ->leftJoin('all_items', 'store_sales.item_code', '=', 'all_items.item_code');;
+
+        if ($filters['datefrom'] && $filters['dateto']) {
+            $query->whereBetween('store_sales.sales_date', [$filters['datefrom'], $filters['dateto']]);
+        }
+        if ($filters['channels_id']) {
+            $query->where('store_sales.channels_id', $filters['channels_id']);
+        }
+        if ($filters['concepts_id']) {
+            $query->where('customers.concepts_id', $filters['concepts_id']);
+        }
+        if ($search)  {
+            $query->whereRaw("
+                (
+                    store_sales.reference_number like '%$search%' OR
+                    systems.system_name like '%$search%' OR
+                    report_types.report_type like '%$search%' OR
+                    channels.channel_name like '%$search%' OR
+                    customers.customer_name like '%$search%' OR
+                    concepts.concept_name like '%$search%' OR
+                    store_sales.receipt_number like '%$search%' OR
+                    store_sales.sales_date = '$search'
+                )
+            ");
+        }
+        return $query->addSelect('store_sales.id');
+    }
+
     public static function boot()
     {
         parent::boot();
