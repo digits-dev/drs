@@ -25,13 +25,14 @@ class RunRateExport implements FromQuery, WithHeadings, WithMapping
         $headings = [['DIGITS CODE', ...$this->cutoff_columns], []];
 
         foreach ($headings[0] as $key => $value) {
-            foreach ($this->totals as $total) {
-                $total_values = array_values($total->toArray());
+            $totals = $this->totals->toArray();
+            foreach ($totals as $total) {
+                $total_values = array_values($total);
                 if (in_array($value, $total_values)) {
-                    $headings[1][$key] = $total->total;
+                    $headings[1][$key] = $total['total'];
                     continue;
-                } else {
-                    $headings[1][$key] = "0";
+                } else if (!$headings[1][$key]) {
+                    $headings[1][$key] = 0;
                 }
             }
         }
