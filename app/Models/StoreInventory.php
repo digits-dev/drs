@@ -59,7 +59,7 @@ class StoreInventory extends Model
     public function filterForReport($query, $filters = []) {
         $search = $filters['search'];
         if ($filters['datefrom'] && $filters['dateto']) {
-            $query->whereBetween('store_inventories.sales_date', [$filters['datefrom'], $filters['dateto']]);
+            $query->whereBetween('store_inventories.inventory_date', [$filters['datefrom'], $filters['dateto']]);
         }
         if ($filters['channels_id']) {
             $query->where('store_inventories.channels_id', $filters['channels_id']);

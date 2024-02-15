@@ -16,8 +16,9 @@ class WarehouseInventoryExport implements  FromQuery, WithHeadings, WithMapping
     use Exportable;
     private $userReport;
 
-    public function __construct() {
+    public function __construct($query) {
         $this->userReport = ReportPrivilege::myReport(4,3);
+        $this->query = $query;
     }
 
     public function headings(): array {
@@ -39,8 +40,6 @@ class WarehouseInventoryExport implements  FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $salesReport = WarehouseInventoriesReport::selectRaw("`".$this->userReport->report_query."`")->searchFilter(request()->all());
-       
-        return $salesReport;
+        return $this->query;
     }
 }
