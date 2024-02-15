@@ -70,6 +70,7 @@ class StoreSale extends Model
     }
 
     public function filterForReport($query, $filters = []) {
+        $search = $filters['search'];
         if ($filters['datefrom'] && $filters['dateto']) {
             $query->whereBetween('store_sales.sales_date', [$filters['datefrom'], $filters['dateto']]);
         }
