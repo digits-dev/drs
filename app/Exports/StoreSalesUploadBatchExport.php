@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\ReportPrivilege;
+use App\Models\StoreSale;
 use App\Models\StoreSalesReport;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -41,8 +42,6 @@ class StoreSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappin
 
     public function query()
     {
-        return StoreSalesReport::selectRaw("`".$this->userReport->report_query."`")
-            ->orderBy('reference_number', 'ASC')
-            ->where('batch_number', $this->batch);
+        return StoreSale::generateReport()->where('batch_number', $this->batch);
     }
 }
