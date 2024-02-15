@@ -64,8 +64,8 @@
         <div class="panel-body">
             <form action="{{ route('warehouse-inventory.filter') }}">
                 <div class="search-container">
-                    <input type='hidden' name='system_name' value="{{ $system_name }}">
-                    <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+                    <input type='hidden' name='systems_id' value="{{ $systems_id }}">
+                    <input type='hidden' name='channels_id' value="{{ $channels_id }}">
                     <input type='hidden' name='datefrom' value="{{ $datefrom }}">
                     <input type='hidden' name='dateto' value="{{ $dateto }}">
                     <input
@@ -134,8 +134,8 @@
 
             <form method='post' target='_blank' action="{{ route('warehouse-inventory.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
-            <input type='hidden' name='system_name' value="{{ $system_name }}">
-            <input type='hidden' name='channel_name' value="{{ $channel_name }}">
+            <input type='hidden' name='systems_id' value="{{ $systems_id }}">
+            <input type='hidden' name='channels_id' value="{{ $channels_id }}">
             <input type='hidden' name='datefrom' value="{{ $datefrom }}">
             <input type='hidden' name='dateto' value="{{ $dateto }}">
             {!! CRUDBooster::getUrlParameters() !!}

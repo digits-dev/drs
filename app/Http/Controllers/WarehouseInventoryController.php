@@ -182,6 +182,10 @@ class WarehouseInventoryController extends Controller
 
     public function exportInventory(Request $request) {
         $filename = $request->input('filename');
-        return Excel::download(new WarehouseInventoryExport, $filename.'.xlsx');
+        $filters = $request->all();
+        $query = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
+            ->where('is_final', 1);
+        return Excel::download(new WarehouseInventoryExport($query), $filename.'.xlsx');
+
     }
 }

@@ -3,6 +3,7 @@
     use App\Models\Channel;
     use App\Models\System;
     use App\Models\WarehouseInventoriesReport;
+    use App\Models\WarehouseInventory;
 	use Session;
 	use Illuminate\Http\Request;
 	use DB;
@@ -349,7 +350,10 @@
             $data['channels'] = Channel::active();
             $data['systems'] = System::active();
      
-			$data['result'] = WarehouseInventoriesReport::where('is_final', 1)->paginate(10);
+			
+			$data['result'] = WarehouseInventory::where('is_final', 1)->paginate(10);
+			$ids = $data['result']->pluck('id')->toArray();
+			$data['rows'] = WarehouseInventory::generateReport($ids)->get();
 
 			return view('warehouse-inventory.report',$data);
         }
@@ -360,7 +364,7 @@
 			}
 			$data = [];
 			$data['page_title'] = 'Warehouse Inventory Details';
-			$data['warehouse_inventory_details'] = WarehouseInventoriesReport::where('id', $id)->first();
+			$data['warehouse_inventory_details'] = WarehouseInventory::generateReport([$id])->first();
 			return view('warehouse-inventory.details',$data);
 		}
 
@@ -368,23 +372,16 @@
 
         
 			$data['searchval'] = $request->search;
-			$data['channel_name'] = $request->channel_name;
+			$data['channels_id'] = $request->channels_id;
 			$data['datefrom'] = $request->datefrom;
 			$data['dateto'] = $request->dateto;
-			$data['system_name'] = $request->system_name;
+			$data['systems_id'] = $request->systems_id;
 	
-			if(!$request->has('search')){
-	
-				$data['result'] = WarehouseInventoriesReport::searchFilter($request->all())->paginate(10);
-				$data['result']->appends($request->except(['_token']));
-				return view('warehouse-inventory.filtered-report',$data);
-			}else {
-				$searchTerm = $request->search;
-				$data['channels'] = Channel::active();
-				$data['systems'] = System::active();
-				$data['result'] = WarehouseInventoriesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
-				$data['result']->appends(['search' => $searchTerm]);
-				return view('warehouse-inventory.report',$data);
-			}
+			$data['result'] = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $request->all())
+			->where('is_final', 1)
+			->paginate(10);
+		$data['result']->appends($request->except(['_token']));
+		return view('warehouse-inventory.filtered-report',$data);
+
 		}
 	}
