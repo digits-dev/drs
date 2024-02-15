@@ -310,7 +310,7 @@
         $('#channel').change(function() {
             var channelId = $(this).find(':selected').data('id');
             $.ajax({
-                url: "{{ route('concepts') }}",
+                url: "{{ route('store-concepts') }}",
             type: "POST",
             data: {
                 'channel': channelId,
