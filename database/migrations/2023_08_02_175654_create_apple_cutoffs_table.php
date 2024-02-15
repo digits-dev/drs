@@ -29,6 +29,10 @@ class CreateAppleCutoffsTable extends Migration
             $table->integer('updated_by')->length(10)->unsigned()->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('sold_date');
+            $table->index('apple_yr_qtr_wk');
+            $table->index('apple_week_cutoff');
         });
     }
 

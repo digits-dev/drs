@@ -16,6 +16,9 @@ class AddSalesYearAndMonthToStoreSalesTable extends Migration
         Schema::table('store_sales', function (Blueprint $table) {
             $table->integer('sales_year')->length(10)->unsigned()->nullable()->after('sales_date_yr_mo');
             $table->integer('sales_month')->length(10)->unsigned()->nullable()->after('sales_year');
+
+            $table->index('sales_year');
+            $table->index('sales_month');
         });
     }
 

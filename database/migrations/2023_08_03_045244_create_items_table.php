@@ -29,7 +29,11 @@ class CreateItemsTable extends Migration
             $table->string('inventory_type_description',30);
             $table->string('sku_status_description',30);
             $table->string('brand_status',30);
+            $table->decimal('current_srp', 16, 2)->nullable();
 
+
+            $table->index('digits_code');
+            $table->index('brand_description');
         });
     }
 

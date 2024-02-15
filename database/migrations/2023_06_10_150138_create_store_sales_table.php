@@ -65,6 +65,17 @@ class CreateStoreSalesTable extends Migration
             $table->index('sales_date');
             $table->index('customers_id');
             $table->index('employees_id');
+            $table->index(['batch_number', 'reference_number']);
+            $table->index('systems_id');
+            $table->index('organizations_id');
+            $table->index('report_types_id');
+            $table->index('channels_id');
+            $table->index('digits_code_rr_ref');
+            $table->index('customer_location');
+            $table->index('sales_transaction_types_id');
+            $table->index('item_code');
+            $table->index('is_final');
+            $table->index('receipt_number');
         });
     }
 

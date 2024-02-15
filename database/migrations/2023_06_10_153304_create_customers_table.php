@@ -27,6 +27,8 @@ class CreateCustomersTable extends Migration
             $table->integer('updated_by')->length(10)->unsigned()->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('concepts_id');
         });
     }
 
