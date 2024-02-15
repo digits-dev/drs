@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\ReportPrivilege;
 use App\Models\WarehouseInventoriesReport;
+use App\Models\WarehouseInventory;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -41,8 +42,8 @@ class WarehouseInventoryUploadBatchExport implements FromQuery, WithHeadings, Wi
 
     public function query()
     {
-        return WarehouseInventoriesReport::selectRaw("`".$this->userReport->report_query."`")
-            ->orderBy('reference_number', 'ASC')
-            ->where('batch_number', $this->batch);
+        return WarehouseInventory::generateReport()
+            ->where('batch_number', $this->batch)
+            ->orderBy('reference_number', 'ASC');
     }
 }

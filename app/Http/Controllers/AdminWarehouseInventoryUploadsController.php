@@ -442,8 +442,8 @@ use Maatwebsite\Excel\Facades\Excel;
 			$search_term = request('search');
 			$warehouse_inventory_upload = (new WarehouseInventoryUpload())->getBatchDetails($id);
 			$user_report = ReportPrivilege::myReport(4, 3);
-			$warehouse_inventories = WarehouseInventoriesReport::filter(['search' => $search_term])
-				->selectRaw("`$user_report->report_query`")
+
+			$warehouse_inventories = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), ['search' => $search_term])
 				->where('batch_number', $warehouse_inventory_upload->batch)
 				->orderBy('reference_number', 'ASC')
 				->paginate(10)
