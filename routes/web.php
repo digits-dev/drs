@@ -48,7 +48,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_upload/detail/{id}', [AdminStoreSalesUploadsController::class, 'getDetail'])->name('store_sales.detail');
 
     Route::any('store_sales/filter',[AdminStoreSalesController::class, 'filterStoreSales'])->name('store-sales.filter');
-    Route::post('concepts',[AdminStoreSalesController::class, 'concepts'])->name('concepts');
+    Route::post('store-concepts',[AdminStoreSalesController::class, 'concepts'])->name('store-concepts');
 
 
     Route::post('sales_digits_uploads/import-upload',[DigitsSaleController::class, 'digitsSalesUpload'])->name('digits-sales.upload');
@@ -61,7 +61,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_digits_uploads/detail/{id}', [AdminDigitsSalesUploadsController::class, 'getDetail'])->name('digits-sales.detail');
     
     Route::any('digits_sales/filter',[AdminDigitsSalesController::class, 'filterDigitsSales'])->name('digits-sales.filter');
-    // Route::post('concepts',[AdminDigitsSalesController::class, 'concepts'])->name('concepts');
+    Route::post('digits-concepts',[AdminDigitsSalesController::class, 'concepts'])->name('digits-concepts');
 
 
 

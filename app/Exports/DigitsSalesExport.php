@@ -16,9 +16,11 @@ class DigitsSalesExport implements FromQuery, WithHeadings, WithMapping
 
     use Exportable;
     private $userReport;
+    public $query;
 
-    public function __construct() {
+    public function __construct($query) {
         $this->userReport = ReportPrivilege::myReport(2,1);
+        $this->query = $query;
     }
 
     public function headings(): array {
@@ -40,8 +42,6 @@ class DigitsSalesExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $salesReport = DigitsSalesReport::selectRaw("`".$this->userReport->report_query."`")->searchFilter(request()->all());
-       
-        return $salesReport;
+        return $this->query;
     }
 }

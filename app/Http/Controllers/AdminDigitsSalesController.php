@@ -2,6 +2,7 @@
 
 use App\Models\Channel;
 use App\Models\Concept;
+use App\Models\DigitsSale;
 use App\Models\DigitsSalesReport;
 use Session;
 	use Illuminate\Http\Request;
@@ -326,7 +327,9 @@ use Session;
 			$data['concepts'] = Concept::active();
 
 	
-			$data['result'] = DigitsSalesReport::where('is_final', 1)->paginate(10);
+			$data['result'] = DigitsSale::where('is_final', 1)->paginate(10);
+			$ids = $data['result']->pluck('id')->toArray();
+			$data['rows'] = DigitsSale::generateReport($ids)->get();
 	
 			return view('digits-sales.report',$data);
 
@@ -338,7 +341,7 @@ use Session;
 			}
 			$data = [];
 			$data['page_title'] = 'Digits Sales Details';
-			$data['digits_sales_details'] = DigitsSalesReport::where('id', $id)->first();
+			$data['digits_sales_details'] = DigitsSale::generateReport([$id])->first();
 			return view('digits-sales.details',$data);
 		}
 
@@ -351,18 +354,11 @@ use Session;
 			$data['dateto'] = $request->dateto;
 			$data['store_concept_name'] = $request->store_concept_name;
 			
-			if(!$request->has('search')){
-				$data['result'] = DigitsSalesReport::searchFilter($request->all())->paginate(10);
-				$data['result']->appends($request->except(['_token']));
-				return view('digits-sales.filtered-report',$data);
-			}else {
-				$searchTerm = $request->search;
-				$data['channels'] = Channel::active();
-				$data['concepts'] = Concept::active();
-				$data['result'] = DigitsSalesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
-				$data['result']->appends(['search' => $searchTerm]);
-				return view('digits-sales.report',$data);
-			}
+			$data['result'] = DigitsSale::filterForReport($request->all())->where('is_final', 1)->paginate(10);				
+			$ids = $data['result']->pluck('id')->toArray();
+			$data['rows'] = DigitsSale::generateReport($ids)->get();
+			$data['result']->appends($request->except(['_token']));
+			return view('digits-sales.filtered-report',$data);	
 		}
 
 		public function concepts(Request $request) {

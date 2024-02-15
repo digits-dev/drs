@@ -99,7 +99,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($result as $row)
+                @foreach($rows as $row)
                     <tr>
                     <td>{{ $row->reference_number }}</td>
                     <td>{{ $row->system_name }}</td>
@@ -311,14 +311,13 @@
         $('#channel').change(function() {
             var channelId = $(this).find(':selected').data('id');
             $.ajax({
-                url: "{{ route('concepts') }}",
+                url: "{{ route('digits-concepts') }}",
             type: "POST",
             data: {
                 'channel': channelId,
                 },
             success: function(result)
             {
-                console.log(result, channelId);
                 let i;
                 let showData = [];
     
