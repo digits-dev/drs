@@ -42,6 +42,8 @@ class DigitsSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappi
 
     public function query()
     {
-        return DigitsSale::generateReport()->where('batch_number', $this->batch);
+        return DigitsSale::generateReport()
+            ->where('batch_number', $this->batch)
+            ->orderBy('reference_number', 'ASC');
     }
 }
