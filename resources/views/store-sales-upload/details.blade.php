@@ -90,6 +90,7 @@
             </div>
             <br>
             <div class="table-responsive" >
+                @if (sizeof($store_sales))
                 <table id="table_dashboard" class="table table-hover table-striped table-bordered" id="store-sales-table">
                     <thead>
                         <tr class="active">
@@ -101,13 +102,16 @@
                     <tbody>
                         @foreach ($store_sales as $sale)
                             <tr>
-                                @foreach (array_values($sale->toArray()) as $value)
-                                    <td>{{ $value }}</td>
+                                @foreach (explode("`,`",$user_report->report_query) as $col_name)
+                                    <td>{{ $sale->$col_name }}</td>
                                 @endforeach
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+                @else
+                <p class="text-bold text-center">No data to show</p>
+                @endif
             </div>
             <div class="col-md-12">
                 {{ $store_sales->links() }}
