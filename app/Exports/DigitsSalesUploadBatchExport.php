@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\DigitsSale;
 use App\Models\DigitsSalesReport;
 use App\Models\ReportPrivilege;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -41,8 +42,6 @@ class DigitsSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappi
 
     public function query()
     {
-        return DigitsSalesReport::selectRaw("`".$this->userReport->report_query."`")
-            ->orderBy('reference_number', 'ASC')
-            ->where('batch_number', $this->batch);
+        return DigitsSale::generateReport()->where('batch_number', $this->batch);
     }
 }

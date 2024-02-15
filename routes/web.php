@@ -74,7 +74,6 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_store_uploads/export-batch/{id}',[AdminStoreInventoryUploadsController::class, 'exportBatch']);
     Route::get('inventory_store_uploads/download-uploaded-file/{id}',[AdminStoreInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('store-inventory.detail');
-    Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('digits_sales.detail');
     Route::any('store_inventories/filter',[AdminStoreInventoriesController::class, 'filterStoreInventory'])->name('store-inventory.filter');
 
 
@@ -86,7 +85,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_warehouse_uploads/batch/{batch_id}',[WarehouseInventoryController::class, 'getBatchDetails']);
     Route::get('inventory_warehouse_uploads/export-batch/{id}',[AdminWarehouseInventoryUploadsController::class, 'exportBatch']);
     Route::get('inventory_warehouse_uploads/download-uploaded-file/{id}',[AdminWarehouseInventoryUploadsController::class, 'downloadUploadedFile']);
-    Route::get('inventory_warehouse_uploads/detail/{id}', [AdminWarehouseInventoryUploadsController::class, 'getDetail'])->name('digits_sales.detail');
+    Route::get('inventory_warehouse_uploads/detail/{id}', [AdminWarehouseInventoryUploadsController::class, 'getDetail'])->name('warehouse_sales.detail');
     Route::any('warehouse_inventories/filter',[AdminWarehouseInventoriesController::class, 'filterWarehouseInventory'])->name('warehouse-inventory.filter');
 
     Route::post('report_privileges/get/table-columns',[AdminReportPrivilegesController::class, 'getTableColumns'])->name('report-privileges.getTableColumns');
