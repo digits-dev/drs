@@ -367,7 +367,9 @@ use Svg\Tag\Rect;
 			$data['datefrom'] = $request->datefrom;
 			$data['dateto'] = $request->dateto;
 			$data['concepts_id'] = $request->concepts_id;
-			$data['result'] = StoreSale::filterForReport(StoreSale::generateReport(), $request->all())->paginate(10);
+			$data['result'] = StoreSale::filterForReport(StoreSale::generateReport(), $request->all())
+				->where('is_final', 1)
+				->paginate(10);
 			$data['result']->appends($request->except(['_token']));
 			return view('store-sales.filtered-report',$data);
 		}
