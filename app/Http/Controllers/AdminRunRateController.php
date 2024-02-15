@@ -417,6 +417,14 @@ use Maatwebsite\Excel\Facades\Excel;
 	    }
 
 		public function getIndex() {
+			$file_path = base_path('sql/run_rate.sql');
+
+			if (file_exists($file_path)) {
+				$file_contents = file_get_contents($file_path);
+				dd($file_contents);
+			}
+
+
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
 			$data['channels'] = Channel::active();
