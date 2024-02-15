@@ -69,18 +69,7 @@ class StoreSale extends Model
         return $storeSales->reference_number + 1;
     }
 
-    public function filterForReport($filters = []) {
-        $search = $filters['search'];
-        $query = self::whereNotNull('store_sales.id')
-            ->leftJoin('systems', 'store_sales.systems_id', '=', 'systems.id')
-            ->leftJoin('organizations', 'store_sales.organizations_id', '=', 'organizations.id')
-            ->leftJoin('report_types', 'store_sales.report_types_id', '=', 'report_types.id')
-            ->leftJoin('channels', 'store_sales.channels_id', '=', 'channels.id')
-            ->leftJoin('customers', 'store_sales.customers_id', '=', 'customers.id')
-            ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
-            ->leftJoin('employees', 'store_sales.employees_id', '=', 'employees.id')
-            ->leftJoin('all_items', 'store_sales.item_code', '=', 'all_items.item_code');;
-
+    public function filterForReport($query, $filters = []) {
         if ($filters['datefrom'] && $filters['dateto']) {
             $query->whereBetween('store_sales.sales_date', [$filters['datefrom'], $filters['dateto']]);
         }
@@ -107,10 +96,10 @@ class StoreSale extends Model
                 )
             ");
         }
-        return $query->addSelect('store_sales.id');
+        return $query;
     }
 
-    public function generateReport($ids = []) {
+    public function generateReport($ids = null) {
         $query = StoreSale::select(
             'store_sales.id',
             'store_sales.batch_number',
@@ -174,8 +163,11 @@ class StoreSale extends Model
         ->leftJoin('employees', 'store_sales.employees_id', '=', 'employees.id')
         ->leftJoin('apple_cutoffs', 'store_sales.sales_date', '=', 'apple_cutoffs.sold_date')
         ->leftJoin('non_apple_cutoffs', 'store_sales.sales_date', '=', 'non_apple_cutoffs.sold_date')
-        ->leftJoin('all_items', 'store_sales.item_code', '=', 'all_items.item_code')
-        ->whereIn('store_sales.id', $ids);
+        ->leftJoin('all_items', 'store_sales.item_code', '=', 'all_items.item_code');
+
+        if (isset($ids)) {
+            $query->whereIn('store_sales.id', $ids);
+        }
         return $query;
     }
 
