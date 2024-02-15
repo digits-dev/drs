@@ -8,27 +8,9 @@ SELECT
     store_sales.sales_date AS sales_date,
     non_apple_cutoffs.non_apple_yr_mon_wk AS non_apple_yr_mon_wk,
     non_apple_cutoffs.non_apple_week_cutoff AS non_apple_week_cutoff,
-    CONCAT(
-        EXTRACT(
-            YEAR
-            FROM store_sales.sales_date
-        ), '_', LPAD(
-            EXTRACT(
-                MONTH
-                FROM store_sales.sales_date
-            ), 2, 0
-        )
-    ) AS sales_date_yr_mo,
-    EXTRACT(
-        YEAR
-        FROM store_sales.sales_date
-    ) AS sales_year,
-    LPAD(
-        EXTRACT(
-            MONTH
-            FROM store_sales.sales_date
-        ), 2, 0
-    ) AS sales_month,
+    DATE_FORMAT(store_sales.sales_date, "%Y_%m") AS sales_date_yr_mo,
+    DATE_FORMAT(store_sales.sales_date, "%Y") AS sales_year,
+    DATE_FORMAT(store_sales.sales_date, "%m") AS sales_month,
     store_sales.item_code AS item_code,
     COALESCE(
         store_sales.digits_code_rr_ref, store_sales.item_code
@@ -48,4 +30,5 @@ FROM
     LEFT JOIN gacha_items ON store_sales.item_code = gacha_items.digits_code
 WHERE
     store_sales.is_final = 1
-    AND gacha_items.digits_code IS NOT NULL;
+    AND gacha_items.digits_code IS NOT NULL
+    AND store_sales.digits_code_rr_ref != 'GWP'
