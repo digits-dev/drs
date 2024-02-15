@@ -210,10 +210,10 @@
                     <div class="col-md-6">
                         Channel
                         <div class="form-group">
-                        <select name="channel_name" id="channel" class="form-control channel" title="Channel">
+                        <select name="channels_id" id="channel" class="form-control channel" title="Channel">
                             <option value="">Please select channel</option>
                             @foreach ($channels as $channel)
-                                <option data-id="{{ $channel->id }}" value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
+                                <option data-id="{{ $channel->id }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
                             @endforeach
                         </select>
                         </div>
@@ -221,7 +221,7 @@
                     <div class="col-md-6">
                         Concept
                         <div class="form-group">
-                        <select name="store_concept_name" id="concept" class="form-control concept" title="Concept" disabled>
+                        <select name="concepts_id" id="concept" class="form-control concept" title="Concept" disabled>
                             <option value="" selected disabled>Please select channel first</option>
                 
                             {{-- @foreach ($concepts as $concept)
@@ -323,7 +323,7 @@
     
                 showData[0] = "<option selected disabled value=''>Please select Concept</option>";
                 for (i = 0; i < result.length; ++i) {
-                        showData[i+1] = "<option value='"+result[i]+"'>"+result[i]+"</option>";
+                        showData[i+1] = "<option value='"+result[i].id+"'>"+result[i].concept_name+"</option>";
                 }
 
                 $('#concept').removeAttr("disabled")

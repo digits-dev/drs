@@ -69,6 +69,7 @@ class DigitsSale extends Model
 
     public function filterForReport($query, $filters = []) {
         $search = $filters['search'];
+
         if ($filters['datefrom'] && $filters['dateto']) {
             $query->whereBetween('digits_sales.sales_date', [$filters['datefrom'], $filters['dateto']]);
         }

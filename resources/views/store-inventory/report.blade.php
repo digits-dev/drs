@@ -98,7 +98,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($result as $row)
+                @foreach($rows as $row)
                     <tr>
                     <td>{{ $row->reference_number }}</td>
                     <td>{{ $row->system_name }}</td>
@@ -208,10 +208,10 @@
                     <div class="col-md-6">
                         Channel
                         <div class="form-group">
-                        <select name="channel_name" id="channel" class="form-control channel" title="Channel">
+                        <select name="channels_id" id="channel" class="form-control channel" title="Channel">
                             <option value="">Please select channel</option>
                             @foreach ($channels as $channel)
-                                <option value="{{ $channel->channel_name }}">{{ $channel->channel_name }}</option>
+                                <option value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
                             @endforeach
                         </select>
                         </div>
@@ -220,10 +220,10 @@
                     <div class="col-md-6">
                         System
                         <div class="form-group">
-                        <select name="system" id="system" class="form-control system" title="system">
+                        <select name="systems_id" id="system" class="form-control system" title="system">
                             <option value="">Please select system</option>
                             @foreach ($systems as $system)
-                                <option value="{{ $system->system_name }}">{{ $system->system_name }}</option>
+                                <option value="{{ $system->id }}">{{ $system->system_name }}</option>
                             @endforeach
                         </select>
                         </div>

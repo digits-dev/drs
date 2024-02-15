@@ -348,14 +348,13 @@ use Session;
 		public function filterDigitsSales(Request $request) {
 			$data['searchval'] = $request->search;
 			$data['receipt_number'] = $request->receipt_number;
-			$data['channel_name'] = $request->channel_name;
+			$data['channels_id'] = $request->channels_id;
 			$data['datefrom'] = $request->datefrom;
 			$data['dateto'] = $request->dateto;
-			$data['store_concept_name'] = $request->store_concept_name;
-			
+			$data['concepts_id'] = $request->concepts_id;
 			$data['result'] = DigitsSale::filterForReport(DigitsSale::generateReport(), $request->all())
-				->where('is_final', 1)
-				->paginate(10);
+			->where('is_final', 1)
+			->paginate(10);
 			$data['result']->appends($request->except(['_token']));
 			return view('digits-sales.filtered-report',$data);	
 		}
@@ -366,7 +365,7 @@ use Session;
 			->pluck('concepts_id');
 			$concepts = DB::table('concepts')
 			->whereIn('id', $concept_ids)
-			->pluck('concept_name');
+			->get();
 			return response()->json($concepts);
 		}
 	}

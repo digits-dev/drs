@@ -2,6 +2,7 @@
 
     use App\Models\Channel;
     use App\Models\System;
+	use App\Models\StoreInventory;
     use App\Models\StoreInventoriesReport;
     use Session;
     use Illuminate\Http\Request;
@@ -348,10 +349,10 @@
             $data['page_title'] = 'Store Inventory';
             $data['channels'] = Channel::active();
             $data['systems'] = System::active();
-     
-	
-			$data['result'] = StoreInventoriesReport::where('is_final', 1)->paginate(10);
-
+			
+			$data['result'] = StoreInventory::where('is_final', 1)->paginate(10);
+			$ids = $data['result']->pluck('id')->toArray();
+			$data['rows'] = StoreInventory::generateReport($ids)->get();
 			return view('store-inventory.report',$data);
 
         }
@@ -362,30 +363,22 @@
 			}
 			$data = [];
 			$data['page_title'] = 'Store Sales Details';
-			$data['store_inventory_details'] = StoreInventoriesReport::where('id', $id)->first();
+			$data['store_inventory_details'] = StoreInventory::generateReport([$id])->first();
 			return view('store-inventory.details',$data);
 		}
 
 		public function filterStoreInventory(Request $request) {
-			
 			$data['searchval'] = $request->search;
-			$data['channel_name'] = $request->channel_name;
+			$data['channels_id'] = $request->channels_id;
 			$data['datefrom'] = $request->datefrom;
 			$data['dateto'] = $request->dateto;
-			$data['system_name'] = $request->system_name;
-	
-			if(!$request->has('search')){
-				$data['result'] = StoreInventoriesReport::searchFilter($request->all())->paginate(10);
-				$data['result']->appends($request->except(['_token']));
-				return view('store-inventory.filtered-report',$data);
-			}else {
-				$searchTerm = $request->search;
-				$data['channels'] = Channel::active();
-				$data['systems'] = System::active();
-				$data['result'] = StoreInventoriesReport::filter(['search' => $searchTerm])->where('is_final', 1)->paginate(10);
-				$data['result']->appends(['search' => $searchTerm]);
-				return view('store-inventory.report',$data);
-			}
+			$data['systems_id'] = $request->systems_id;
+			
+			$data['result'] = StoreInventory::filterForReport(StoreInventory::generateReport(), $request->all())
+				->where('is_final', 1)
+				->paginate(10);
+			$data['result']->appends($request->except(['_token']));
+			return view('store-inventory.filtered-report',$data);
 	
 		}
 	}

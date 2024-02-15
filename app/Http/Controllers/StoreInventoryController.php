@@ -181,7 +181,11 @@ class StoreInventoryController extends Controller
 
     public function exportInventory(Request $request) {
         $filename = $request->input('filename');
-        return Excel::download(new StoreInventoryExport, $filename.'.xlsx');
+
+        $filters = $request->all();
+        $query = StoreInventory::filterForReport(StoreInventory::generateReport(), $filters)
+            ->where('is_final', 1);
+        return Excel::download(new StoreInventoryExport($query), $filename.'.xlsx');
     }
 
 }
