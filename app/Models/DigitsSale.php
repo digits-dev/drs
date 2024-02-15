@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use CRUDBooster;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class DigitsSale extends Model
 {
@@ -67,18 +67,8 @@ class DigitsSale extends Model
         return $digitsSales->reference_number + 1;
     }
 
-    public function filterForReport($filters = []) {
+    public function filterForReport($query, $filters = []) {
         $search = $filters['search'];
-        $query = self::whereNotNull('digits_sales.id')
-            ->leftJoin('systems', 'digits_sales.systems_id', '=', 'systems.id')
-            ->leftJoin('organizations', 'digits_sales.organizations_id', '=', 'organizations.id')
-            ->leftJoin('report_types', 'digits_sales.report_types_id', '=', 'report_types.id')
-            ->leftJoin('channels', 'digits_sales.channels_id', '=', 'channels.id')
-            ->leftJoin('customers', 'digits_sales.customers_id', '=', 'customers.id')
-            ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
-            ->leftJoin('employees', 'digits_sales.employees_id', '=', 'employees.id')
-            ->leftJoin('all_items', 'digits_sales.item_code', '=', 'all_items.item_code');;
-
         if ($filters['datefrom'] && $filters['dateto']) {
             $query->whereBetween('digits_sales.sales_date', [$filters['datefrom'], $filters['dateto']]);
         }
@@ -105,10 +95,10 @@ class DigitsSale extends Model
                 )
             ");
         }
-        return $query->addSelect('digits_sales.id');
+        return $query;
     }
 
-    public function generateReport($ids = []) {
+    public function generateReport($ids = null) {
         $query = DigitsSale::select(
             'digits_sales.id',
             'digits_sales.batch_number',
@@ -172,8 +162,11 @@ class DigitsSale extends Model
         ->leftJoin('employees', 'digits_sales.employees_id', '=', 'employees.id')
         ->leftJoin('apple_cutoffs', 'digits_sales.sales_date', '=', 'apple_cutoffs.sold_date')
         ->leftJoin('non_apple_cutoffs', 'digits_sales.sales_date', '=', 'non_apple_cutoffs.sold_date')
-        ->leftJoin('all_items', 'digits_sales.item_code', '=', 'all_items.item_code')
-        ->whereIn('digits_sales.id', $ids);
+        ->leftJoin('all_items', 'digits_sales.item_code', '=', 'all_items.item_code');
+
+        if (isset($ids)) {
+            $query->whereIn('digits_sales.id', $ids);
+        }
         return $query;
     }
 

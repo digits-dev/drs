@@ -330,7 +330,6 @@ use Session;
 			$data['result'] = DigitsSale::where('is_final', 1)->paginate(10);
 			$ids = $data['result']->pluck('id')->toArray();
 			$data['rows'] = DigitsSale::generateReport($ids)->get();
-	
 			return view('digits-sales.report',$data);
 
 		}
@@ -354,9 +353,9 @@ use Session;
 			$data['dateto'] = $request->dateto;
 			$data['store_concept_name'] = $request->store_concept_name;
 			
-			$data['result'] = DigitsSale::filterForReport($request->all())->where('is_final', 1)->paginate(10);				
-			$ids = $data['result']->pluck('id')->toArray();
-			$data['rows'] = DigitsSale::generateReport($ids)->get();
+			$data['result'] = DigitsSale::filterForReport(DigitsSale::generateReport(), $request->all())
+				->where('is_final', 1)
+				->paginate(10);
 			$data['result']->appends($request->except(['_token']));
 			return view('digits-sales.filtered-report',$data);	
 		}

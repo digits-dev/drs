@@ -187,8 +187,8 @@ class DigitsSaleController extends Controller
 
     public function exportSales(Request $request) {
         $filename = $request->input('filename');
-        $ids = DigitsSale::filterForReport($request->all())->pluck('id')->toArray();
-        $query = DigitsSale::generateReport($ids);
+        $filters = $request->all();
+        $query = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters);
         return Excel::download(new DigitsSalesExport($query), $filename.'.xlsx');
     }
 }
