@@ -86,6 +86,7 @@
             </div>
             <br>
             <div class="table-responsive" >
+                @if (sizeof($store_inventories))
                 <table id="table_dashboard" class="table table-hover table-striped table-bordered" id="store-sales-table">
                     <thead>
                         <tr class="active">
@@ -97,14 +98,16 @@
                     <tbody>
                         @foreach ($store_inventories as $inventory)
                             <tr>
-                                @foreach (array_values($inventory->toArray()) as $value)
-                                    <td>{{ $value }}</td>
+                                @foreach (explode("`,`",$user_report->report_query) as $col_name)
+                                    <td>{{ $inventory->$col_name }}</td>
                                 @endforeach
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
-            </div>
+                @else
+                <p class="text-bold text-center">No data to show</p>
+                @endif            </div>
             <div class="col-md-12">
                 {{ $store_inventories->links() }}
                 <p>Showing {{ $store_inventories->firstItem() ?? 0 }} to {{ $store_inventories->lastItem() ?? 0 }} of {{ $store_inventories->total() }} items.</p>        

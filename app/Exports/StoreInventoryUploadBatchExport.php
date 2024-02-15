@@ -43,8 +43,8 @@ class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMa
 
     public function query()
     {
-        return StoreInventoriesReport::selectRaw("`".$this->userReport->report_query."`")
-            ->orderBy('reference_number', 'ASC')
-            ->where('batch_number', $this->batch);
+        return StoreInventory::generateReport()
+            ->where('batch_number', $this->batch)
+            ->orderBy('reference_number', 'ASC');
     }
 }
