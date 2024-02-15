@@ -42,6 +42,8 @@ class StoreSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappin
 
     public function query()
     {
-        return StoreSale::generateReport()->where('batch_number', $this->batch);
+        return StoreSale::generateReport()
+            ->where('batch_number', $this->batch)
+            ->orderBy('reference_number', 'ASC');
     }
 }
