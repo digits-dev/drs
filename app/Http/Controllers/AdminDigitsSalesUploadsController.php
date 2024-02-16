@@ -458,7 +458,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$search_term = request('search');
 			$digits_sales_upload = (new DigitsSalesUpload())->getBatchDetails($id);
 			$user_report = ReportPrivilege::myReport(2, 3);
-			$digits_sales = DigitsSale::filterForReport(DigitsSale::generateReport(), ['search' => $search_term])
+			$digits_sales = DigitsSale::filterForReport(DigitsSale::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $digits_sales_upload->batch)
 				->orderBy('reference_number', 'ASC')
 				->paginate(10)

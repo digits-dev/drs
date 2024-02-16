@@ -67,7 +67,7 @@ class DigitsSale extends Model
         return $digitsSales->reference_number + 1;
     }
 
-    public function filterForReport($query, $filters = []) {
+    public function filterForReport($query, $filters = [], $is_upload = false) {
         $search = $filters['search'];
 
         if ($filters['datefrom'] && $filters['dateto']) {
@@ -83,18 +83,28 @@ class DigitsSale extends Model
             $query->where('digits_sales.receipt_number', $filters['receipt_number']);
         }
         if ($search)  {
-            $query->whereRaw("
-                (
-                    digits_sales.reference_number like '%$search%' OR
-                    systems.system_name like '%$search%' OR
-                    report_types.report_type like '%$search%' OR
-                    channels.channel_name like '%$search%' OR
-                    customers.customer_name like '%$search%' OR
-                    concepts.concept_name like '%$search%' OR
-                    digits_sales.receipt_number like '%$search%' OR
-                    digits_sales.sales_date like '$search'
-                )
-            ");
+            $search_filter = "
+                digits_sales.reference_number like '%$search%' OR
+                systems.system_name like '%$search%' OR
+                report_types.report_type like '%$search%' OR
+                channels.channel_name like '%$search%' OR
+                customers.customer_name like '%$search%' OR
+                concepts.concept_name like '%$search%' OR
+                digits_sales.receipt_number like '%$search%' OR
+                digits_sales.sales_date like '$search'
+            ";
+            if ($is_upload) {
+                $search_filter .= "
+                    OR customers.customer_name LIKE '%$search%'
+                    OR employees.employee_name LIKE '%$search%'
+                    OR digits_sales.item_code LIKE '%$search%'
+                    OR all_items.item_description LIKE '%$search%'
+                    OR digits_sales.item_description LIKE '%$search%'
+                    OR all_items.margin_category_description LIKE '%$search%'
+                    OR all_items.brand_description LIKE '%$search%'
+                ";
+            }
+            $query->whereRaw("($search_filter)");
         }
         return $query;
     }
