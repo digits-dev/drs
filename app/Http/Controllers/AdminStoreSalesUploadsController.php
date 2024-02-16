@@ -447,7 +447,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$search_term = request('search');
 			$store_sale_upload = (new StoreSalesUpload())->getBatchDetails($id);
 			$user_report = ReportPrivilege::myReport(1, 3);
-			$store_sales = StoreSale::filterForReport(StoreSale::generateReport(), ['search' => $search_term])
+			$store_sales = StoreSale::filterForReport(StoreSale::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $store_sale_upload->batch)
 				->orderBy('reference_number', 'ASC')
 				->paginate(10)
