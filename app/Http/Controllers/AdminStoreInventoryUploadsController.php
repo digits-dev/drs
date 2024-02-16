@@ -440,7 +440,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$search_term = request('search');
 			$store_inventory_upload = (new StoreInventoryUpload())->getBatchDetails($id);
 			$user_report = ReportPrivilege::myReport(3, 3);
-			$store_inventories = StoreInventory::filterForReport(StoreInventory::generateReport(), ['search' => $search_term])
+			$store_inventories = StoreInventory::filterForReport(StoreInventory::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $store_inventory_upload->batch)
 				->orderBy('reference_number', 'ASC')
 				->paginate(10)
