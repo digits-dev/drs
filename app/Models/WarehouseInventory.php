@@ -87,6 +87,11 @@ class WarehouseInventory extends Model
                     OR warehouse_inventories.item_description LIKE '%$search%'
                     OR all_items.margin_category_description LIKE '%$search%'
                     OR all_items.brand_description LIKE '%$search%'
+                    OR all_items.sku_status_description LIKE '%$search%'
+                    OR all_items.category_description LIKE '%$search%'
+                    OR all_items.margin_category_description LIKE '%$search%'
+                    OR all_items.vendor_type_code LIKE '%$search%'
+                    OR all_items.inventory_type_description LIKE '%$search%'
                 ";
             }
             $query->whereRaw("($search_filter)");
