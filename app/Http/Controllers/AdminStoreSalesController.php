@@ -380,6 +380,7 @@ use Svg\Tag\Rect;
 			->pluck('concepts_id');
 			$concepts = DB::table('concepts')
 			->whereIn('id', $concept_ids)
+			->orderBy('concept_name', 'asc')
 			->get();
 			return response()->json($concepts);
 		}
