@@ -443,7 +443,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$warehouse_inventory_upload = (new WarehouseInventoryUpload())->getBatchDetails($id);
 			$user_report = ReportPrivilege::myReport(4, 3);
 
-			$warehouse_inventories = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), ['search' => $search_term])
+			$warehouse_inventories = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $warehouse_inventory_upload->batch)
 				->orderBy('reference_number', 'ASC')
 				->paginate(10)
