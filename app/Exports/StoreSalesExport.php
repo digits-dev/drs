@@ -18,7 +18,7 @@ class StoreSalesExport implements FromQuery, WithHeadings, WithMapping
     public $query;
 
     public function __construct($query) {
-        $this->userReport = ReportPrivilege::myReport(1,3);
+        $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
         $this->query = $query;
     }
 

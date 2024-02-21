@@ -441,7 +441,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			}
 			$search_term = request('search');
 			$warehouse_inventory_upload = (new WarehouseInventoryUpload())->getBatchDetails($id);
-			$user_report = ReportPrivilege::myReport(4, 3);
+			$user_report = ReportPrivilege::myReport(4, CRUDBooster::myPrivilegeId());
 
 			$warehouse_inventories = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $warehouse_inventory_upload->batch)

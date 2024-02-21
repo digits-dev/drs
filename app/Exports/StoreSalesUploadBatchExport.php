@@ -20,7 +20,7 @@ class StoreSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappin
 
     public function __construct($batch) {
         $this->batch = $batch;
-        $this->userReport = ReportPrivilege::myReport(1,3);
+        $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
     }
 
     public function headings(): array {
