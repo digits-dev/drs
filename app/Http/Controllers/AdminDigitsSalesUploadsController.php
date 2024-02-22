@@ -178,7 +178,6 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->index_button = array();
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
-				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeId(),[2])){
 					$this->index_button[] = [
 						"title"=>"Upload Sales",
 						"label"=>"Upload Sales",
@@ -186,7 +185,6 @@ use Maatwebsite\Excel\Facades\Excel;
 						"color"=>"success",
 						"url"=>route('digits-sales.upload-view')
 					];
-				}
 			}
 
 
