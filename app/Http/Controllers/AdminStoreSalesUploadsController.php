@@ -167,7 +167,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->index_button = array();
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
-				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
+				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeId(),[2])){
 					$this->index_button[] = [
 						"title"=>"Upload Sales",
 						"label"=>"Upload Sales",
