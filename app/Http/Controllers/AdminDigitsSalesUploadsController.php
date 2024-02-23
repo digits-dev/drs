@@ -178,7 +178,6 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->index_button = array();
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
-				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
 					$this->index_button[] = [
 						"title"=>"Upload Sales",
 						"label"=>"Upload Sales",
@@ -186,7 +185,6 @@ use Maatwebsite\Excel\Facades\Excel;
 						"color"=>"success",
 						"url"=>route('digits-sales.upload-view')
 					];
-				}
 			}
 
 
@@ -457,7 +455,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 			$search_term = request('search');
 			$digits_sales_upload = (new DigitsSalesUpload())->getBatchDetails($id);
-			$user_report = ReportPrivilege::myReport(2, 3);
+			$user_report = ReportPrivilege::myReport(2, CRUDBooster::myPrivilegeId());
 			$digits_sales = DigitsSale::filterForReport(DigitsSale::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $digits_sales_upload->batch)
 				->orderBy('reference_number', 'ASC')

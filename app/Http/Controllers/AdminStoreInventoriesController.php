@@ -110,14 +110,12 @@
 	        */
 	        $this->index_button = array();
             if(CRUDBooster::getCurrentMethod() == 'getIndex') {
-                if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
-                    $this->index_button[] = [
+                $this->index_button[] = [
                         "title"=>"Upload Inventory",
                         "label"=>"Upload Inventory",
                         "icon"=>"fa fa-upload",
                         "color"=>"success",
                         "url"=>route('store-inventory.upload-view')];
-                }
 				$this->index_button[] = ['label'=>'Export Order','url'=>"javascript:showInventoryExport()",'icon'=>'fa fa-download'];
             }
 

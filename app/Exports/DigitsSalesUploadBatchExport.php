@@ -20,7 +20,7 @@ class DigitsSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappi
 
     public function __construct($batch) {
         $this->batch = $batch;
-        $this->userReport = ReportPrivilege::myReport(2,3);
+        $this->userReport = ReportPrivilege::myReport(2,CRUDBooster::myPrivilegeId());
     }
 
     public function headings(): array {

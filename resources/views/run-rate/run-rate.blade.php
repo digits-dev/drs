@@ -133,7 +133,7 @@
                     <label>Channel <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
                     <select class="dropdowns" name="channels_id" id="channel" class="form-control channel" title="Channel" required disabled>
-                        <option value="" selected disabled>Please select channel</option>
+                        <option selected disabled>Please select channel</option>
                         @foreach ($channels as $channel)
                             <option data-code="{{ $channel->channel_code }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
                         @endforeach
@@ -142,9 +142,9 @@
                         <i class="fas fa-caret-down"></i>
                     </div>
                     </div>
-                    <label>Store Concept <span class="arterisk">*</span></label>
+                    <label>Store Concept</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="concepts_id" id="store_concept_name" class="form-control" disabled required>
+                    <select class="dropdowns" name="concepts_id" id="store_concept_name" class="form-control" disabled>
                         <option value="" selected disabled>Select a store concept</option>
                     </select>
                     <div class="icon-container">
@@ -195,7 +195,12 @@
             $('#brand, #channel').removeAttr('disabled');
             $('#brand, #channel').removeClass('disabled-color');
 
-          
+            if ($('#channel').find('option[value=""]').length === 0) {
+                var allChannelsOption = "<option selected value=''>-- All Channels --</option>";
+                $('#channel').find('option').eq(1).before(allChannelsOption);
+            }
+
+             
             
             if ($(this).val() == 'gashapon') {
                 $("#brand option[value='APPLE - WEEKLY']").remove();
@@ -309,7 +314,12 @@
         
         $('#channel').change(function() {
             let channelId = $(this).val();
-            $.ajax({
+            if($(this).val() == '') {
+                $('#store_concept_name, #customer_location').val('');
+                $('#customer_location, #store_concept_name').attr("disabled", true)
+                $('#customer_location, #store_concept_name').addClass('disabled-color')
+            }else {
+                $.ajax({
                 url: "{{ route('run-rate-concepts') }}",
             type: "GET",
             data: {
@@ -320,7 +330,7 @@
                 let i;
                 let showConcept = [];
     
-                showConcept[0] = "<option selected disabled value=''>Select a store concept</option>";
+                showConcept[0] = "<option selected value=''>-- All Store Concepts --</option>";
                 for (i = 0; i < result.length; ++i) {
                     showConcept[i+1] = "<option value='"+result[i].id+"'>"+result[i].concept_name+"</option>";
                 }
@@ -334,6 +344,7 @@
                 $('#customer_location').addClass('disabled-color')
             }
             })
+            }
         })
 
         $('#store_concept_name').change(function() {
@@ -353,7 +364,7 @@
                 let i;
                 let showStore = [];
     
-                showStore[0] = "<option selected value=''>-- All Store --</option>";
+                showStore[0] = "<option selected value=''>-- All Stores --</option>";
                 for (i = 0; i < result.length; ++i) {
                     showStore[i+1] = "<option value='"+result[i].id+"'>"+result[i].customer_name+"</option>";
                 }

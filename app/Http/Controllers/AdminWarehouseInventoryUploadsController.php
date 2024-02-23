@@ -162,7 +162,6 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->index_button = array();
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
-				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
 					$this->index_button[] = [
 						"title"=>"Upload Inventory",
 						"label"=>"Upload Inventory",
@@ -170,7 +169,6 @@ use Maatwebsite\Excel\Facades\Excel;
 						"color"=>"success",
 						"url"=>route('warehouse-inventory.upload-view')
 					];
-				}
 			}
 
 
@@ -441,7 +439,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			}
 			$search_term = request('search');
 			$warehouse_inventory_upload = (new WarehouseInventoryUpload())->getBatchDetails($id);
-			$user_report = ReportPrivilege::myReport(4, 3);
+			$user_report = ReportPrivilege::myReport(4, CRUDBooster::myPrivilegeId());
 
 			$warehouse_inventories = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $warehouse_inventory_upload->batch)

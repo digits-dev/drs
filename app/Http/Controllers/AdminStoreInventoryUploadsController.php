@@ -158,7 +158,6 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->index_button = array();
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
-				if(CRUDBooster::isSuperadmin() || in_array(CRUDBooster::myPrivilegeName(),["Sales Accounting"])){
 					$this->index_button[] = [
 						"title"=>"Upload Inventory",
 						"label"=>"Upload Inventory",
@@ -166,7 +165,6 @@ use Maatwebsite\Excel\Facades\Excel;
 						"color"=>"success",
 						"url"=>route('store-inventory.upload-view')
 					];
-				}
 			}
 
 
@@ -439,7 +437,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			}
 			$search_term = request('search');
 			$store_inventory_upload = (new StoreInventoryUpload())->getBatchDetails($id);
-			$user_report = ReportPrivilege::myReport(3, 3);
+			$user_report = ReportPrivilege::myReport(3, CRUDBooster::myPrivilegeId());
 			$store_inventories = StoreInventory::filterForReport(StoreInventory::generateReport(), ['search' => $search_term], true)
 				->where('batch_number', $store_inventory_upload->batch)
 				->orderBy('reference_number', 'ASC')

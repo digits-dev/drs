@@ -20,7 +20,7 @@ class WarehouseInventoryUploadBatchExport implements FromQuery, WithHeadings, Wi
 
     public function __construct($batch) {
         $this->batch = $batch;
-        $this->userReport = ReportPrivilege::myReport(4,3);
+        $this->userReport = ReportPrivilege::myReport(4,CRUDBooster::myPrivilegeId());
     }
 
     public function headings(): array {

@@ -17,7 +17,7 @@ class StoreInventoryExport implements  FromQuery, WithHeadings, WithMapping
     private $userReport;
 
     public function __construct($query) {
-        $this->userReport = ReportPrivilege::myReport(3,1);
+        $this->userReport = ReportPrivilege::myReport(3,CRUDBooster::myPrivilegeId());
         $this->query = $query;
     }
 
