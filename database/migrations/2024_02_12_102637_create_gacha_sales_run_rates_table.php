@@ -50,7 +50,7 @@ class CreateGachaSalesRunRatesTable extends Migration
                 WHERE
                     store_sales.is_final = 1
                     AND gacha_items.digits_code IS NOT NULL
-                    AND store_sales.digits_code_rr_ref != 'GWP'      
+                    AND (store_sales.digits_code_rr_ref != 'GWP' OR store_sales.digits_code_rr_ref IS NULL)    
         ");
     }
 
