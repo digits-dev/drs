@@ -1,7 +1,6 @@
 @extends('crudbooster::admin_template')
 
 @push('head')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style type="text/css">
     .content {
      display: flex;
@@ -81,7 +80,7 @@
                             <option value="gashapon">Gashapon</option>
                         </select>
                             <div class="icon-container">
-                                <i class="fas fa-caret-down"></i>
+                                <i class="fa fa-caret-down"></i>
                             </div>
                         </div>
                 </div>
@@ -98,7 +97,7 @@
                                 <option value="NON-APPLE - MONTHLY">NON-APPLE - MONTHLY</option>
                             </select>
                                 <div class="icon-container">
-                                    <i class="fas fa-caret-down"></i>
+                                    <i class="fa fa-caret-down"></i>
                                 </div>
                             </div>
                     <label>Year <span class="arterisk">*</span></label>
@@ -107,7 +106,7 @@
                             <option value="" selected disabled>Please select year</option>
                         </select>
                     <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                        <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                     <label> Month <span class="arterisk">*</span></label>
@@ -116,7 +115,7 @@
                             <option value="" selected disabled>Please select month</option>
                         </select>
                     <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                        <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                     <label>Cutoff Range <span class="arterisk">*</span></label>
@@ -125,7 +124,7 @@
                             <option value="" selected disabled>Please select cutoff</option>
                         </select>
                     <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                        <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                 </div>
@@ -139,7 +138,7 @@
                         @endforeach
                     </select>
                     <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                        <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                     <label>Store Concept</span></label>
@@ -148,7 +147,7 @@
                         <option value="" selected disabled>Select a store concept</option>
                     </select>
                     <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                        <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                     <label>Per Store / Location</label>
@@ -157,7 +156,7 @@
                         <option value="" selected disabled>Select a store / location</option>
                     </select>
                     <div class="icon-container">
-                        <i class="fas fa-caret-down"></i>
+                        <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                 </div>  
