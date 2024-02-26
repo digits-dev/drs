@@ -16,7 +16,8 @@ SELECT
         store_sales.digits_code_rr_ref, store_sales.item_code
     ) AS digits_code_rr_ref,
     gacha_items.digits_code AS digits_code,
-    store_sales.quantity_sold AS quantity_sold
+    store_sales.quantity_sold AS quantity_sold,
+    gacha_items.initial_wrr_date
 FROM
     store_sales
     LEFT JOIN systems ON store_sales.systems_id = systems.id
