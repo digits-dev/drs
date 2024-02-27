@@ -38,11 +38,13 @@
                         <thead>
                             <tr class="active">
                                 <th>Digits Code</th>
+                                <th>Initial WRR Date</th>
                                 @foreach ($cutoff_columns as $column)
                                 <th>{{ $column }}</th>
                                 @endforeach
                             </tr>
                             <tr>
+                                <th> </th>
                                 <th> </th>
                                 @foreach ($cutoff_columns as $column)
                                 @php
