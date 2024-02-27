@@ -8,7 +8,7 @@
 <div class="box">
     <div class="panel panel-default">
         <div class="panel-heading text-center">
-            User Report Privilege Creation
+            User Report Privilege Edit
         </div>
         <form action="{{ route('report-privileges.save') }}" method="post" id="user-report">
         @csrf
@@ -20,7 +20,10 @@
                     <select name="report_types" id="report_types" class="form-control" required>
                         <option value="">Select Report Type</option>
                         @foreach ($report_types as $report)
-                            <option value="{{ $report->id }}">{{ Str::upper($report->report_type) }}</option>
+                            <option value="{{ $report->id }}"
+                                {{ isset($report_privilege->report_types_id) && $report_privilege->report_types_id == $report->id ? 'selected' : '' }}>
+                                {{ Str::upper($report->report_type) }}
+                            </option>>
                         @endforeach
                     </select>
                 </div>
@@ -30,7 +33,10 @@
                     <select name="cms_privileges" id="cms_privileges" class="form-control" required>
                         <option value="">Select Privilege</option>
                         @foreach ($privileges as $privilege)
-                            <option value="{{ $privilege->id }}">{{ Str::upper($privilege->name) }}</option>
+                            <option value="{{ $privilege->id }}"
+                                {{ isset($report_privilege->cms_privileges_id) && $report_privilege->cms_privileges_id == $privilege->id ? 'selected' : '' }}>
+                                {{ Str::upper($privilege->name) }}
+                            </option>>
                         @endforeach
                     </select>
                 </div>
@@ -40,16 +46,54 @@
                     <select name="table_name" id="table_name" class="form-control" required>
                         <option value="">Select Table</option>
                         @foreach ($tables as $key => $value)
-                            <option value="{{ $key }}">{{ Str::upper($value) }}</option>
+                            <option value="{{ $key }}"
+                                {{ isset($report_privilege->table_name) && $report_privilege->table_name == $key ? 'selected' : '' }}>
+                                {{ Str::upper($value) }}</option>
                         @endforeach
                     </select>
                 </div>
 
             </div>
 
+            {{-- <div class="col-md-8">
+                <div class="form-group">
+                    <label>Columns</label>
+                    <div class="col-md-4 existing-query">
+                        @foreach ($user_report as $key => $val)
+                        <br>
+                        <input type="checkbox" @if(in_array($val, $reports)) checked @endif value="{{ $val }}" name="table_columns[{{ $key }}]" id="table_column_{{ $report }}">
+                        <label for="table_column_{{ $$val }}">{{ $val }}</label>
+                        @endforeach
+                    </div>
+                    <div class="left col-md-4">
+
+                    </div>
+                    <div class="mid col-md-4">
+
+                    </div>
+                    <div class="right col-md-4">
+
+                    </div>
+                </div>
+            </div> --}}
+       
+
             <div class="col-md-8">
                 <div class="form-group">
                     <label>Columns</label>
+                    @php
+                        $count = ceil(count($user_report) / 3);
+                        $chunkedReports = array_chunk($user_report, $count, true);
+                    @endphp
+                    @foreach ($chunkedReports as $index => $query)
+                    <div class="col-md-4 existing-query">
+                        @foreach ($query as $key => $val)
+                                <br>
+                                <input type="checkbox" @if(in_array($val, $reports)) checked @endif value="{{ $val }}" name="table_columns[{{ $key }}]" id="checkbox_{{ $key }}">
+                                <label for="checkbox_{{ $key }}">{{ $val }}</label>
+                        @endforeach
+                    </div>
+                    @endforeach
                     <div class="left col-md-4">
 
                     </div>
@@ -61,6 +105,8 @@
                     </div>
                 </div>
             </div>
+            
+            
 
         </div>
         <div class="panel-footer">
@@ -76,6 +122,7 @@
 
 @push('bottom')
     <script>
+        
         $(document).ready(function() {
 
             $("#table_name").change(function () {
@@ -88,11 +135,10 @@
                     },
                     success : function (data){
                         const length = Object.entries(data).length;
-
+                        $('.existing-query').remove();
                         $('.left').empty();
                         $('.mid').empty();
                         $('.right').empty();
-
 
                         $.each(data, function(i,val) {
                             const currentLength = $('.report-headers').get().length;

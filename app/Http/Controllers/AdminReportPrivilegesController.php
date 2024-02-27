@@ -342,6 +342,47 @@ use App\Models\ReportType;
             return view('report-privilege.create',$data);
         }
 
+		public function getEdit($id) {
+
+			$data['report_types'] = ReportType::active();
+            $data['privileges'] = CRUDBooster::isSuperAdmin() ? UserPrivilege::all() : UserPrivilege::privileges();
+            $data['tables'] = [
+                'store_sales'=>'STORE SALES',
+                'digits_sales'=>'DIGITS SALES',
+                'store_inventories'=>'STORE INVENTORY',
+                'warehouse_inventories'=>'WAREHOUSE INVENTORY'
+            ];
+
+			$data['report_privilege'] = ReportPrivilege::where('id', $id)->first();
+			$queryArray = explode(',', $data['report_privilege']->report_query);
+			foreach ($queryArray as &$query) {
+				$query = str_replace('`', '', $query);
+			}
+			$headerArray = explode(',', $data['report_privilege']->report_header);
+			
+			$data['user_report'] = config('user-report.'.$data['report_privilege']->table_name);
+			
+			$data['reports'] = array_combine($queryArray, $headerArray);
+			
+			return view('report-privilege.edit',$data);
+		}
+
+		public function getDetail($id) {
+
+			$data['report_privilege'] = ReportPrivilege::where('id', $id)->first();
+
+			$data['report_type'] = DB::table('report_types')->where('id' ,$data['report_privilege']->report_types_id)->value('report_type');
+			$data['privilege'] = DB::table('cms_privileges')->where('id' ,$data['report_privilege']->cms_privileges_id)->value('name');
+			
+			$headerArray = explode(',', $data['report_privilege']->report_header);
+			$queryArray = explode(',', $data['report_privilege']->report_query);
+			foreach ($queryArray as &$query) {
+			$query = str_replace('`', '', $query);
+			}
+			$data['reports'] = array_combine($queryArray, $headerArray);
+			return view('report-privilege.details',$data);
+		}
+
         public function getTableColumns(Request $request){
             return config('user-report.'.$request->tableName);
 
