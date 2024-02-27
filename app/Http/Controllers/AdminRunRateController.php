@@ -499,24 +499,40 @@ use Maatwebsite\Excel\Facades\Excel;
 					->limit(12)
 					->pluck($column_name)
 					->toArray();
+				$initial_wrr = array_map(function($value){
+					return explode(' to ', $value)[1];
+				}, $last_12);
 
 			} else {
 				$column_name = 'sales_date_yr_mo';
 				[$year, $month] = explode('_', $cutoff);
 				$last_12 = [];
+				$initial_wrr = [];
 				$date = DateTime::createFromFormat('Y_m', $cutoff);
 				$date->modify('+1 month');
 
 				for ($i = 1; $i <= 12; $i++) {
 					$date->modify('-1 month');
 					$last_12[] = $date->format('Y_m');
+					$date_string = $date->format('Y-m');
+					$date_time = DateTime::createFromFormat('Y-m', $date_string);
+					$date_time->modify('last day of this month');
+
+					$last_date = $date_time->format('Y-m-d');
+					$initial_wrr[] = $last_date;
 				}
-				
 			}
 
-
-			foreach ($last_12 as $last_12_item) {
-				$cutoff_queries[] = DB::raw("SUM(CASE WHEN $column_name = '$last_12_item' THEN quantity_sold ELSE 0 END) as `$last_12_item`");
+			foreach ($last_12 as $key => $last_12_item) {
+				$initial_cutoff = $initial_wrr[$key];
+				$cutoff_queries[] = DB::raw("
+					SUM(
+						CASE 
+							WHEN $column_name = '$last_12_item' THEN quantity_sold 
+							WHEN initial_wrr_date > '$initial_cutoff' THEN null 
+						ELSE 0 END
+					) as `$last_12_item`
+				");
 			}
 			return [
 				'cutoff_queries' => $cutoff_queries,
