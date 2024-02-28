@@ -64,8 +64,9 @@
             <div class="row">
                 <label class="col-md-2 label-control">Importing Started</label>
                 <div class="col-md-4">
+                    @if ($item->started_at)
                     <p>{{ date('Y-m-d H:i:s', $item->started_at) }}</p>
-                </div>
+                    @endif                </div>
                 <label class="col-md-2 label-control">Importing Finished</label>
                 <div class="col-md-4">
                     @if ($item->finished_at)
