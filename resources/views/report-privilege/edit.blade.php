@@ -1,7 +1,6 @@
 @extends('crudbooster::admin_template')
 
 @push('head')
-
 @endpush
 
 @section('content')
@@ -10,7 +9,7 @@
         <div class="panel-heading text-center">
             User Report Privilege Edit
         </div>
-        <form action="{{ route('report-privileges.save') }}" method="post" id="user-report">
+        <form method='post' action='{{CRUDBooster::mainpath('edit-save/'.$report_privilege->id)}}'>
         @csrf
         <div class="panel-body">
             <div class="col-md-4">
