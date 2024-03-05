@@ -39,14 +39,14 @@ class QueueWorkerChecker extends Command
     {
         // Check if "php artisan queue:work" is already running
         $output = [];
-        exec('ps -ef | grep "php artisan queue:work"', $output);
+        exec('pgrep -f "php artisan queue:work #drs-test"', $output);
 
         if (!empty($output)) {
             $this->info('Queue worker is already running. Doing nothing.');
         } else {
             // If not running, start the queue worker
             $this->info('Queue worker not running. Starting...');
-            exec('php artisan queue:work --daemon --quiet > /dev/null 2>&1 &');
+            exec('php artisan queue:work #drs-test');
         }
     }
 }
