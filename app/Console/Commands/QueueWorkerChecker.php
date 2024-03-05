@@ -45,7 +45,7 @@ class QueueWorkerChecker extends Command
         } else {
             // If not running, start the queue worker
             $this->info('Queue worker not running. Starting...');
-            exec('php artisan queue:work');
+            exec('/opt/cpanel/ea-php74/root/usr/bin/php artisan queue:work');
         }
     }
 }
