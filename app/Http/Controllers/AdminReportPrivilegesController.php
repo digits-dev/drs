@@ -268,7 +268,6 @@ use App\Models\ReportType;
 	    */
 	    public function hook_after_add($id) {
 	        //Your code here
-
 	    }
 
 	    /*
@@ -279,11 +278,41 @@ use App\Models\ReportType;
 	    | @id       = current id
 	    |
 	    */
-	    public function hook_before_edit(&$postdata,$id) {
-	        //Your code here
-
-	    }
-
+		public function hook_before_edit(&$postdata, $id) {
+			$reportPrivilege = ReportPrivilege::find($id);
+		
+			$existingRecord = ReportPrivilege::where('report_types_id', request()->report_types)
+				->where('cms_privileges_id', request()->cms_privileges)
+				->where('table_name', request()->table_name)
+				->where('id', '!=', $id)
+				->first();
+			
+		
+			if ($existingRecord) {
+				return CRUDBooster::redirect(CRUDBooster::mainpath(),'Cannot update. Another record with the same Report Type, Privilege, and Table Name already exists.', 'danger');
+			};
+		
+			$reportPrivilege->report_types_id = request()->report_types;
+			$reportPrivilege->cms_privileges_id = request()->cms_privileges;
+			$reportPrivilege->table_name = request()->table_name;
+		
+			$reportQuery = [];
+			$reportHeader = [];
+		
+			foreach (request()->table_columns as $key => $value) {
+				array_push($reportQuery, $key);
+				array_push($reportHeader, $value);
+			}
+		
+			$reportPrivilege->report_query = implode("`,`", $reportQuery);
+			$reportPrivilege->report_header = implode(",", $reportHeader);
+		
+			$reportPrivilege->save();
+		
+			return redirect(CRUDBooster::mainpath())->with(['message_type' => 'success', 'message' => 'Record updated successfully']);
+		}
+		
+		
 	    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for execute command after edit public static function called
@@ -423,6 +452,8 @@ use App\Models\ReportType;
 
             return redirect(CRUDBooster::mainpath())->with(['message_type' => 'success', 'message' => 'Saved!']);
         }
+
+
 
 
 	}
