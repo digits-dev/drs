@@ -19,10 +19,7 @@ SELECT
     ) AS digits_code_rr_ref,
     items.digits_code AS digits_code,
     store_sales.quantity_sold AS quantity_sold,
-    items.initial_wrr_date,
-    DATE_FORMAT(store_sales.sales_date, '%Y_%m') AS sales_date_yr_mo,
-    DATE_FORMAT(store_sales.sales_date, '%Y') AS sales_year,
-    DATE_FORMAT(store_sales.sales_date, '%m') AS sales_month
+    items.initial_wrr_date
 FROM
     store_sales
     LEFT JOIN systems ON store_sales.systems_id = systems.id
