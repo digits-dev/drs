@@ -26,8 +26,9 @@ class GachaSalesRunRate extends Model
             $query->where('digits_code_rr_ref', 'like', "%$search%");
         }
         $query
-            ->select('digits_code_rr_ref', ...$cutoff_queries)
-            ->groupBy('digits_code_rr_ref');
+            ->select('digits_code_rr_ref', 'initial_wrr_date', ...$cutoff_queries)
+            ->groupBy('digits_code_rr_ref', 'initial_wrr_date')
+            ->orderBy('digits_code_rr_ref', 'ASC');
 
         return $query;
         

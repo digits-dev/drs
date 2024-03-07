@@ -427,8 +427,12 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function filterRunRate(Request $request) {
 			$request = $request->all();
-			$item_type = $request['item'];
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
+			if ($brand === 'GASHAPON') {
+				$item_type = 'gashapon';
+			} else {
+				$item_type = 'trade-item';
+			}
 			$search = $request['search'];
 			$is_apple = (int) ($brand === 'APPLE');
 			$query_filter_params = self::generateFilterParams($request, $is_apple);
@@ -544,8 +548,12 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function exportRunRate(Request $request) {
 			$request = $request->all();
-			$item_type = $request['item'];
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
+			if ($brand === 'GASHAPON') {
+				$item_type = 'gashapon';
+			} else {
+				$item_type = 'trade-item';
+			}
 			$sales_year = $request['sales_year'];
 			$sales_month = $request['sales_month'];
 			$search = $request['search'];
