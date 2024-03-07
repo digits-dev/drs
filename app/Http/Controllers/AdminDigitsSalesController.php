@@ -1,10 +1,11 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Channel;
-use App\Models\Concept;
-use App\Models\DigitsSale;
-use App\Models\DigitsSalesReport;
-use Session;
+	use App\Models\Channel;
+	use App\Models\Concept;
+	use App\Models\DigitsSale;
+	use App\Models\DigitsSalesReport;
+	use App\Models\ReportPrivilege;
+	use Session;
 	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
@@ -341,6 +342,16 @@ use Session;
 			$data = [];
 			$data['page_title'] = 'Digits Sales Details';
 			$data['digits_sales_details'] = DigitsSale::generateReport([$id])->first();
+			$data['report_privilege'] = ReportPrivilege::myReport(2,CRUDBooster::myPrivilegeId());
+			
+			$headerArray = explode(',', $data['report_privilege']->report_header);
+			$queryArray = explode(',', $data['report_privilege']->report_query);
+			foreach ($queryArray as &$query) {
+				$query = str_replace('`', '', $query);
+			}
+			
+			$data['report'] = array_combine($queryArray, $headerArray);
+			
 			return view('digits-sales.details',$data);
 		}
 

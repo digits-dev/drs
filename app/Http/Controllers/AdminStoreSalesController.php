@@ -2,13 +2,14 @@
 
     use App\Models\Channel;
     use App\Models\Concept;
-use App\Models\StoreSale;
-use App\Models\StoreSalesReport;
+	use App\Models\StoreSale;
+	use App\Models\StoreSalesReport;
+	use App\Models\ReportPrivilege;
     use Session;
     use DB;
     use CRUDBooster;
     use Illuminate\Http\Request;
-use Svg\Tag\Rect;
+	use Svg\Tag\Rect;
 
 	class AdminStoreSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -357,6 +358,15 @@ use Svg\Tag\Rect;
 			$data = [];
 			$data['page_title'] = 'Store Sales Details';
 			$data['store_sales_details'] = StoreSale::generateReport([$id])->first();
+			$data['report_privilege'] = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+
+			$headerArray = explode(',', $data['report_privilege']->report_header);
+			$queryArray = explode(',', $data['report_privilege']->report_query);
+			foreach ($queryArray as &$query) {
+				$query = str_replace('`', '', $query);
+			}
+			
+			$data['report'] = array_combine($queryArray, $headerArray);
 			return view('store-sales.details',$data);
 		}
 

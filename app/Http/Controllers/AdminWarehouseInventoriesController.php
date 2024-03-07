@@ -4,6 +4,7 @@
     use App\Models\System;
     use App\Models\WarehouseInventoriesReport;
     use App\Models\WarehouseInventory;
+	use App\Models\ReportPrivilege;
 	use Session;
 	use Illuminate\Http\Request;
 	use DB;
@@ -363,6 +364,16 @@
 			$data = [];
 			$data['page_title'] = 'Warehouse Inventory Details';
 			$data['warehouse_inventory_details'] = WarehouseInventory::generateReport([$id])->first();
+			$data['report_privilege'] = ReportPrivilege::myReport(4,CRUDBooster::myPrivilegeId());
+
+			$headerArray = explode(',', $data['report_privilege']->report_header);
+			$queryArray = explode(',', $data['report_privilege']->report_query);
+			foreach ($queryArray as &$query) {
+				$query = str_replace('`', '', $query);
+			}
+			
+			$data['report'] = array_combine($queryArray, $headerArray);
+			
 			return view('warehouse-inventory.details',$data);
 		}
 
