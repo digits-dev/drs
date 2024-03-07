@@ -70,31 +70,17 @@
 <div class="form-container">
     <form method='get' target='_blank' action="{{ route('run-rate.filter-run-rate') }}" autocomplete="off">
         @csrf
-            <div class="row">
-                <div class="col-md-6 col-md-offset-3">
-                    <label>Trade Item/Gashapon<span class="arterisk">*</span></label>
-                    <div class="form-group select-container">
-                        <select  class="dropdowns" name="item" id="item" class="form-control" title="Item" required>
-                            <option value="" selected disabled>Please select</option>
-                            <option value="trade-item">Trade item</option>
-                            <option value="gashapon">Gashapon</option>
-                        </select>
-                            <div class="icon-container">
-                                <i class="fa fa-caret-down"></i>
-                            </div>
-                        </div>
-                </div>
-            </div>
-            <div>
                 <div>
                 <div class="col-md-6">
                         <label>Brand Group <span class="arterisk">*</span></label>
                         <div class="form-group select-container">
-                            <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required disabled>
+                            <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required>
                                 <option value="" selected disabled>Please select brand group</option>
                                 <option value="APPLE - WEEKLY">APPLE - WEEKLY</option>
                                 <option value="NON-APPLE - WEEKLY">NON-APPLE - WEEKLY</option>
                                 <option value="NON-APPLE - MONTHLY">NON-APPLE - MONTHLY</option>
+                                <option value="GASHAPON - WEEKLY">GASHAPON - WEEKLY</option>
+                                <option value="GASHAPON - MONTHLY">GASHAPON - MONTHLY</option>
                             </select>
                                 <div class="icon-container">
                                     <i class="fa fa-caret-down"></i>
@@ -131,7 +117,7 @@
                 <div class="col-md-6">
                     <label>Channel <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="channels_id" id="channel" class="form-control channel" title="Channel" required disabled>
+                    <select class="dropdowns" name="channels_id" id="channel" class="form-control channel" title="Channel" required>
                         <option selected disabled>Please select channel</option>
                         @foreach ($channels as $channel)
                             <option data-code="{{ $channel->channel_code }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
@@ -179,36 +165,14 @@
     <script>
 
          $(document).ready(function(){
-            $('#brand, #channel, #sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
+            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
             .addClass('disabled-color');
         
+            let allChannelsOption = "<option value=''>-- All Channels --</option>";
+                $('#channel').find('option').eq(1).before(allChannelsOption);
+
         });
         
-        $('#item').change(function () {
-            $('.trade-container').fadeIn(1000);
-            $('#brand,#sales_year,#sales_month,#cutoff, #channel, #store_concept_name, #customer_location').val('');
-            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
-            .addClass('disabled-color');
-            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
-            .attr("disabled", true)
-            $('#brand, #channel').removeAttr('disabled');
-            $('#brand, #channel').removeClass('disabled-color');
-
-            if ($('#channel').find('option[value=""]').length === 0) {
-                var allChannelsOption = "<option selected value=''>-- All Channels --</option>";
-                $('#channel').find('option').eq(1).before(allChannelsOption);
-            }
-
-             
-            
-            if ($(this).val() == 'gashapon') {
-                $("#brand option[value='APPLE - WEEKLY']").remove();
-            } else {
-                if ($("#brand option[value='APPLE - WEEKLY']").length == 0) {
-                    $("#brand option[value='']").after("<option value='APPLE - WEEKLY'>APPLE - WEEKLY</option>");
-                }
-            }
-        })
 
         $('#brand').change(function() {
             let brand = $(this).val()
@@ -303,7 +267,7 @@
                 }
             
                 jQuery("#cutoff").html(showCutoffRange); 
-                if(brandGroup != 'NON-APPLE - MONTHLY') {
+                if(brandGroup != 'NON-APPLE - MONTHLY' && brandGroup != 'GASHAPON - MONTHLY') {
                 $('#cutoff').removeAttr('disabled')
                 $('#cutoff').removeClass('disabled-color')
                 }
