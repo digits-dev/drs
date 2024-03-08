@@ -60,7 +60,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
         $channel = Channel::active();
         $customer = Customer::active();
         $employee = Employee::active();
-        $report_type = ReportType::byName("WAREHOUSE INVENTORY");
+        $report_type = ReportType::active();
         $chunk = WarehouseInventoryUploadLine::getWithHeader($this->chunk_id);
         $rows = json_decode($chunk->chunk_data);
         $insertable = [];
@@ -68,6 +68,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
         foreach ($rows ?: [] as $key => $row) {
             $v_system = $system->where('system_name',$row->system)->first();
             $v_organization = $organization->where('organization_name',$row->org)->first();
+            $v_report_type = $report_type->where('report_type',$row->report_type)->first();
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_location)->first();
             $v_employee = $employee->where('employee_name',$row->customer_location)->first();
@@ -81,7 +82,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
                 'reference_number'		=> $row->reference_number,
                 'systems_id'			=> $v_system->id,
                 'organizations_id'	    => $v_organization->id,
-                'report_types_id'		=> $report_type,
+                'report_types_id'		=> $v_report_type->id,
                 'channels_id'	        => $v_channel->id,
                 'employees_id'          => $v_employee->id,
                 'customers_id'          => $v_customer->id,

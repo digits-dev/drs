@@ -53,13 +53,14 @@ class DigitsSalesImportJob implements ShouldQueue
         $organization = Organization::active();
         $channel = Channel::active();
         $customer = Customer::active();
-        $report_type = ReportType::byName("DIGITS SALES");
+        $report_type = ReportType::active();
         $chunk = DigitsSalesUploadLine::getWithHeader($this->chunk_id);
         $rows = json_decode($chunk->chunk_data);
         $insertable = [];
         foreach ($rows ?: [] as $key => $row) {
             $v_system = $system->where('system_name',$row->system)->first();
             $v_organization = $organization->where('organization_name',$row->org)->first();
+            $v_report_type = $report_type->where('report_type',$row->report_type)->first();
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_location)->first();
             $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
@@ -72,7 +73,7 @@ class DigitsSalesImportJob implements ShouldQueue
                 'reference_number'		=> $row->reference_number,
                 'systems_id'			=> $v_system->id,
                 'organizations_id'	    => $v_organization->id,
-                'report_types_id'		=> $report_type,
+                'report_types_id'		=> $v_report_type->id,
                 'channels_id'	        => $v_channel->id,
                 'customers_id'          => $v_customer->id,
                 'receipt_number'		=> $row->receipt_number,
