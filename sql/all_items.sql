@@ -43,7 +43,7 @@ UNION
 SELECT
     'gacha_items' as table_name,
     gacha_items.status,
-    null as digits_code,
+    gacha_items.digits_code as digits_code,
     gacha_items.digits_code as item_code,
     gacha_items.item_description,
     gacha_items.current_srp,
