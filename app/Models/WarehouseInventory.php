@@ -108,7 +108,7 @@ class WarehouseInventory extends Model
             'systems.system_name AS system_name',
             'organizations.organization_name AS organization_name',
             'report_types.report_type AS report_type',
-            'channels.channel_name AS channel_name',
+            'channels.channel_code AS channel_code',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
             'concepts.concept_name AS store_concept_name',
             'concepts.concept_name AS store_concept_name',
