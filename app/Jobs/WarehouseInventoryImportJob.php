@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Channel;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\InventoryTransactionType;
 use App\Models\Organization;
 use App\Models\ReportType;
 use App\Models\System;
@@ -61,6 +62,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
         $customer = Customer::active();
         $employee = Employee::active();
         $report_type = ReportType::active();
+        $inventory_transaction_type = InventoryTransactionType::active();
         $chunk = WarehouseInventoryUploadLine::getWithHeader($this->chunk_id);
         $rows = json_decode($chunk->chunk_data);
         $insertable = [];
@@ -69,6 +71,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
             $v_system = $system->where('system_name',$row->system)->first();
             $v_organization = $organization->where('organization_name',$row->org)->first();
             $v_report_type = $report_type->where('report_type',$row->report_type)->first();
+            $v_inventory_transaction_type = $inventory_transaction_type->where('inventory_transaction_type',$row->inventory_type)->first();
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_location)->first();
             $v_employee = $employee->where('employee_name',$row->customer_location)->first();
@@ -86,7 +89,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
                 'channels_id'	        => $v_channel->id,
                 'employees_id'          => $v_employee->id,
                 'customers_id'          => $v_customer->id,
-                // 'inventory_date'		=> Carbon::parse($this->transformDate($row["inventory_as_of_date"]))->format("Y-m-d"),
+                'inventory_transaction_types_id' => $v_inventory_transaction_type->id,
                 'inventory_date'		=> $inventory_date,
                 'item_code'				=> $row->item_number,
                 'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row->item_description))),
