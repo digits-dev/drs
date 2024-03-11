@@ -109,6 +109,7 @@ class StoreInventory extends Model
             'organizations.organization_name AS organization_name',
             'report_types.report_type AS report_type',
             'channels.channel_code AS channel_code',
+            'inventory_transaction_types.inventory_transaction_type',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
             'concepts.concept_name AS store_concept_name',
             'concepts.concept_name AS store_concept_name',
@@ -130,7 +131,8 @@ class StoreInventory extends Model
             'all_items.sku_status_description AS sku_status_description',
             'all_items.brand_status AS brand_status',
             'store_inventories.quantity_inv AS quantity_inv',
-            DB::raw('all_items.current_srp AS current_srp, (
+            'all_items.current_srp AS current_srp',
+            DB::raw('(
                 all_items.current_srp *store_inventories.quantity_inv
              ) AS qtyinv_srp'),
             'store_inventories.store_cost AS store_cost',
@@ -139,9 +141,12 @@ class StoreInventory extends Model
             'store_inventories.qtyinv_rf AS qtyinv_rf',
             'store_inventories.landed_cost AS landed_cost',
             'store_inventories.qtyinv_lc AS qtyinv_lc',
+            'store_inventories.dtp_ecom AS dtp_ecom',
+            'store_inventories.qtyinv_ecom as qtyinv_ecom',
         )
         ->leftJoin('systems', 'store_inventories.systems_id', '=', 'systems.id')
         ->leftJoin('organizations', 'store_inventories.organizations_id', '=', 'organizations.id')
+        ->leftJoin('inventory_transaction_types', 'inventory_transaction_types.id', '=','store_inventories.inventory_transaction_types_id')
         ->leftJoin('report_types', 'store_inventories.report_types_id', '=', 'report_types.id')
         ->leftJoin('channels', 'store_inventories.channels_id', '=', 'channels.id')
         ->leftJoin('customers', 'store_inventories.customers_id', '=', 'customers.id')

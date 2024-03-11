@@ -6,6 +6,7 @@ SELECT
    systems.system_name AS system_name,
    organizations.organization_name AS organization_name,
    report_types.report_type AS report_type,
+   inventory_transaction_types.inventory_transaction_type AS inventory_transaction_type,
    channels.channel_name AS channel_name,
     COALESCE(
        customers.customer_name,
@@ -41,12 +42,15 @@ SELECT
    store_inventories.dtp_rf AS dtp_rf,
    store_inventories.qtyinv_rf AS qtyinv_rf,
    store_inventories.landed_cost AS landed_cost,
-   store_inventories.qtyinv_lc AS qtyinv_lc
+   store_inventories.qtyinv_lc AS qtyinv_lc,
+   store_inventories.qtyinv_ecom AS qtyinv_ecom,
+   store_inventories.dtp_ecom AS dtp_ecom
 FROM
    store_inventories
     LEFT JOIN systems ON store_inventories.systems_id = systems.id
     LEFT JOIN organizations ON store_inventories.organizations_id = organizations.id
     LEFT JOIN report_types ON store_inventories.report_types_id = report_types.id
+    LEFT JOIN inventory_transaction_types ON store_inventories.inventory_transaction_types_id = inventory_transaction_types.id
     LEFT JOIN channels ON store_inventories.channels_id = channels.id
     LEFT JOIN customers ON store_inventories.customers_id = customers.id
     LEFT JOIN concepts ON customers.concepts_id = concepts.id

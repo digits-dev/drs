@@ -109,6 +109,7 @@ class WarehouseInventory extends Model
             'organizations.organization_name AS organization_name',
             'report_types.report_type AS report_type',
             'channels.channel_code AS channel_code',
+            'inventory_transaction_types.inventory_transaction_type',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
             'concepts.concept_name AS store_concept_name',
             'concepts.concept_name AS store_concept_name',
@@ -130,7 +131,8 @@ class WarehouseInventory extends Model
             'all_items.sku_status_description AS sku_status_description',
             'all_items.brand_status AS brand_status',
             'warehouse_inventories.quantity_inv AS quantity_inv',
-            DB::raw('all_items.current_srp AS current_srp, (
+            'all_items.current_srp AS current_srp',
+            DB::raw('(
                 all_items.current_srp *warehouse_inventories.quantity_inv
              ) AS qtyinv_srp'),
             'warehouse_inventories.store_cost AS store_cost',
@@ -139,9 +141,12 @@ class WarehouseInventory extends Model
             'warehouse_inventories.qtyinv_rf AS qtyinv_rf',
             'warehouse_inventories.landed_cost AS landed_cost',
             'warehouse_inventories.qtyinv_lc AS qtyinv_lc',
+            'warehouse_inventories.dtp_ecom AS dtp_ecom',
+            'warehouse_inventories.qtyinv_ecom as qtyinv_ecom',
         )
         ->leftJoin('systems', 'warehouse_inventories.systems_id', '=', 'systems.id')
         ->leftJoin('organizations', 'warehouse_inventories.organizations_id', '=', 'organizations.id')
+        ->leftJoin('inventory_transaction_types', 'inventory_transaction_types.id', '=','warehouse_inventories.inventory_transaction_types_id')
         ->leftJoin('report_types', 'warehouse_inventories.report_types_id', '=', 'report_types.id')
         ->leftJoin('channels', 'warehouse_inventories.channels_id', '=', 'channels.id')
         ->leftJoin('customers', 'warehouse_inventories.customers_id', '=', 'customers.id')
