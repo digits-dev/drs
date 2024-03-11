@@ -4,6 +4,7 @@
     use App\Models\System;
 	use App\Models\StoreInventory;
     use App\Models\StoreInventoriesReport;
+	use App\Models\ReportPrivilege;
     use Session;
     use Illuminate\Http\Request;
 	use DB;
@@ -362,6 +363,16 @@
 			$data = [];
 			$data['page_title'] = 'Store Sales Details';
 			$data['store_inventory_details'] = StoreInventory::generateReport([$id])->first();
+			$data['report_privilege'] = ReportPrivilege::myReport(3,CRUDBooster::myPrivilegeId());
+			
+			$headerArray = explode(',', $data['report_privilege']->report_header);
+			$queryArray = explode(',', $data['report_privilege']->report_query);
+			foreach ($queryArray as &$query) {
+				$query = str_replace('`', '', $query);
+			}
+			
+			$data['report'] = array_combine($queryArray, $headerArray);
+
 			return view('store-inventory.details',$data);
 		}
 
