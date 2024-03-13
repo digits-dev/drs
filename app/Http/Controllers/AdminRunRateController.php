@@ -430,7 +430,7 @@ use Maatwebsite\Excel\Facades\Excel;
 		}
 
 		public function filterRunRate(Request $request) {
-
+			$param_desc = self::getParamDescription($request);
 			$request = $request->all();
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
 			if ($brand === 'GASHAPON') {
@@ -476,6 +476,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$data['cutoff_columns'] = $cutoff_data['cutoff_columns'];
 			$data['search'] = $search;
 			$data['column_name'] = $cutoff_data['column_name'];
+			$data['param_desc'] = $param_desc;
 
 			return $this->view('run-rate.filter-run-rate', $data);
 		}
@@ -601,6 +602,37 @@ use Maatwebsite\Excel\Facades\Excel;
 			$export = (new RunRateExport($query, $totals, $cutoff_data['cutoff_columns']));
 			$file_name = "DRS (Run Rate) " . date("Y-m-d h_i_s_a");
 			return Excel::download($export, "$file_name.xlsx");
+		}
+
+		public function getParamDescription(Request $request) {
+			$channels = array_filter($request->channels_id ?: []);
+			$concepts = array_filter($request->concepts_id ?: []);
+			$customers = array_filter($request->customers_id ?: []);
+			$param_desc = [];
+			if ($request->brand) {
+				$param_desc['REPORT RANGE'] = $request->brand;
+			}
+			if ($request->sales_year) {
+				$param_desc['YEAR'] = $request->sales_year;
+			}
+			if ($request->sales_month) {
+				$date_obj = DateTime::createFromFormat('!m', (int) $request->sales_month);
+				$param_desc['MONTH'] = $date_obj->format('F');
+			}
+			if ($request->cutoff) {
+				$param_desc['CUTOFF'] = $request->cutoff;
+			}
+
+			$param_desc['CHANNELS'] = Channel::whereIn('id', $channels)
+				->pluck('channel_name')
+				->toArray();
+			$param_desc['CONCEPTS'] = Concept::whereIn('id', $concepts)
+				->pluck('concept_name')
+				->toArray();
+			$param_desc['CUSTOMERS'] = Customer::whereIn('id', $customers)
+				->pluck('customer_name')
+				->toArray();
+			return $param_desc;
 		}
 
 

@@ -11,6 +11,31 @@
             RUN RATE RESULT
         </div>
         <div class="panel-body">
+            @php
+                $keys = array_keys($param_desc);
+                $chunks = array_chunk($keys, ceil(sizeof($keys) / 2));
+                // dd($chunks);
+            @endphp
+
+            <div class="row">
+                @foreach ($chunks as $chunk)
+                    <div class="col-md-6">
+                        @foreach ($chunk as $key)
+                            <div class="col-md-6 text-bold">{{ $key }}:</div>
+                            @php
+                                $value = $param_desc[$key];
+                                if (is_array($value)) {
+                                    $value = implode(', ', $value);
+                                    $value = strlen($value) ? $value : 'ALL';
+                                }
+                            @endphp
+                            <div class="col-md-6">{{ $value }}</div>
+                            <br>
+                        @endforeach
+                    </div>
+                @endforeach
+            </div>
+            <hr>
             <div class="row">
                 <div class="col-md-6">
                     <form target="_blank" id="export-form" action="{{ route('run-rate.export-run-rate') }}" method="get" style="display:inline-block;width: 260px;">
