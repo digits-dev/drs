@@ -17,27 +17,24 @@ class RunRateExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct($query, $totals, $cutoff_columns) {
         $this->query = $query;
-        $this->totals = $totals;
+        $total_arr = [];
+        foreach ($totals as $total) {
+            $total = $total->toArray();
+            $total = array_values($total);
+            $total_arr[$total[0]] = $total[1];
+        }
+        $this->totals = $total_arr;
         $this->cutoff_columns = $cutoff_columns;
     }
 
     public function headings(): array {
-        $headings = [['DIGITS CODE', 'INITIAL WRR DATE', ...$this->cutoff_columns], []];
+        $headings = [['TOTAL', ''], ['DIGITS CODE', 'INITIAL WRR DATE', ...$this->cutoff_columns]];
 
-        foreach ($headings[0] as $key => $value) {
-            $totals = $this->totals->toArray();
-            foreach ($totals as $total) {
-                $total_values = array_values($total);
-                if (in_array($value, $total_values)) {
-                    $headings[1][$key] = $total['total'];
-                    continue;
-                } else if (!$headings[1][$key]) {
-                    $headings[1][$key] = 0;
-                }
-            }
+        foreach ($this->cutoff_columns as $col) {
+            $total = $this->totals[$col] ?? '0';
+            $headings[0][] = $total;
         }
         return $headings;
-
     }
 
     public function map($row): array {

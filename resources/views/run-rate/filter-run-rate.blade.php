@@ -36,15 +36,8 @@
                 <div class="col-md-12 table-responsive">
                     <table id="table_dashboard" class="table table-hover table-striped table-bordered">
                         <thead>
-                            <tr class="active">
-                                <th>Digits Code</th>
-                                <th>Initial WRR Date</th>
-                                @foreach ($cutoff_columns as $column)
-                                <th>{{ $column }}</th>
-                                @endforeach
-                            </tr>
                             <tr>
-                                <th> </th>
+                                <th>Total</th>
                                 <th> </th>
                                 @foreach ($cutoff_columns as $column)
                                 @php
@@ -57,6 +50,13 @@
                                     }
                                 @endphp
                                 <th>{{ $value }}</th>
+                                @endforeach
+                            </tr>
+                            <tr class="active">
+                                <th>Digits Code</th>
+                                <th>Initial WRR Date</th>
+                                @foreach ($cutoff_columns as $column)
+                                <th>{{ $column }}</th>
                                 @endforeach
                             </tr>
                         </thead>
