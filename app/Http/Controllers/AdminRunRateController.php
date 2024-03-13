@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use DB;
 use CRUDBooster;
 use App\Models\Channel;
+use App\Models\Concept;
+use App\Models\Customer;
 use App\Models\GachaSalesRunRate;
 use App\Models\RunRate;
 use App\Models\StoreSalesReport;
@@ -421,11 +423,14 @@ use Maatwebsite\Excel\Facades\Excel;
 			$data = [];
 			$data['page_title'] = 'Digits Reports System';
 			$data['channels'] = Channel::active();
+			$data['concepts'] = Concept::active();
+			$data['customers'] = Customer::active();
 			
 			return view('run-rate.run-rate', $data);
 		}
 
 		public function filterRunRate(Request $request) {
+
 			$request = $request->all();
 			[$brand, $cutoff_type] = explode(' - ', $request['brand']);
 			if ($brand === 'GASHAPON') {

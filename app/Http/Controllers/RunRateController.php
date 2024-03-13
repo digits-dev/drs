@@ -64,24 +64,5 @@ class RunRateController extends Controller
 
     }
 
-    public function getConcepts(Request $request) {
-        $concept_ids = DB::table('customers')
-        ->where('channels_id', $request->channel)
-        ->pluck('concepts_id');
-        $concepts = DB::table('concepts')
-        ->whereIn('id', $concept_ids)
-        ->orderBy('concept_name', 'asc')
-        ->get();
-        return response()->json($concepts);
-    }
- 
-
-    public function getStoreLocation(Request $request) {
-        $store_location = DB::table('customers')
-        ->where('concepts_id', $request->storeConceptId)
-        ->whereRaw('RIGHT(customer_name, 3) = ?', [$request->channelCode])
-        ->orderBy('customer_name', 'asc')
-        ->get();
-        return response()->json($store_location);
-    }
+  
 }
