@@ -482,16 +482,31 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function generateFilterParams($request, $is_apple) {
 			$query_filter_params = [];
-			$query_filter_params[] = ['is_apple', '=', $is_apple];
+			$query_filter_params[] = [
+				'method' => 'where',
+				'params' => ['is_apple', '=', $is_apple]
+			];
+			$channels = array_filter($request['channels_id'] ?: []);
+			$concepts = array_filter($request['concepts_id'] ?: []);
+			$customers = array_filter($request['customers_id'] ?: []);
 
-			if ($request['channels_id']) {
-				$query_filter_params[] = ['channels_id', '=', $request['channels_id']];
+			if (sizeof($channels)) {
+				$query_filter_params[] = [
+					'method' => 'whereIn',
+					'params' => ['channels_id', $channels]
+				];
 			}
-			if ($request['concepts_id']) {
-				$query_filter_params[] = ['concepts_id', '=', $request['concepts_id']];
+			if (sizeof($concepts)) {
+				$query_filter_params[] = [
+					'method' => 'whereIn',
+					'params' => ['concepts_id', $channels]
+				];
 			}
-			if ($request['customers_id']) {
-				$query_filter_params[] = ['customers_id', '=', $request['customers_id']];
+			if (sizeof($customers)) {
+				$query_filter_params[] = [
+					'method' => 'whereIn',
+					'params' => ['customers_id', $channels]
+				];
 			}
 			return $query_filter_params;
 		}

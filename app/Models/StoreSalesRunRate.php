@@ -19,7 +19,7 @@ class StoreSalesRunRate extends Model
         $query = self::whereNotNull('digits_code_rr_ref')->whereIn($column_name, $last_12);
 
         foreach ($filters as $filter) {
-            $query->where(...$filter);
+            $query->{$filter['method']}(...$filter['params']);
         }
         if ($search) {
             $query->where('digits_code_rr_ref', 'like', "%$search%");
@@ -41,7 +41,7 @@ class StoreSalesRunRate extends Model
         $query = self::whereNotNull('digits_code_rr_ref');
 
         foreach ($filters as $filter) {
-            $query->where(...$filter);
+            $query->{$filter['method']}(...$filter['params']);
         }
         if ($search) {
             $query->where('digits_code_rr_ref', 'like', "%$search%");
