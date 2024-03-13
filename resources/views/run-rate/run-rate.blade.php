@@ -72,7 +72,7 @@
         @csrf
                 <div>
                 <div class="col-md-6">
-                        <label>Brand Group <span class="arterisk">*</span></label>
+                        <label>Report Range <span class="arterisk">*</span></label>
                         <div class="form-group select-container">
                             <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required>
                                 <option value="" selected disabled>Please select brand group</option>
