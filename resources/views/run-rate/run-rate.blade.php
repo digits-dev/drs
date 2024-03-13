@@ -1,6 +1,7 @@
 @extends('crudbooster::admin_template')
 
 @push('head')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style type="text/css">
     .content {
      display: flex;
@@ -61,6 +62,21 @@
         box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
     }
 
+    .select2-container--default .select2-selection--multiple{
+        font-size: 15px;
+        border: none;
+        border-radius: 5px;
+        appearance: none;
+        padding: 6px 0 8px 10px;
+        box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: rgb(221, 221, 221); 
+        color: black;
+        border: none;
+        font-size: 15px;
+    }
+
 </style>
 @endpush
 
@@ -117,30 +133,43 @@
                 <div class="col-md-6">
                     <label>Channel <span class="arterisk">*</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="channels_id" id="channel" class="form-control channel" title="Channel" required>
+                    {{-- <select class="dropdowns" name="channels_id" id="channel" class="form-control channel" title="Channel" required>
                         <option selected disabled>Please select channel</option>
                         @foreach ($channels as $channel)
                             <option data-code="{{ $channel->channel_code }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
                         @endforeach
-                    </select>
+                    </select> --}}
+                    <select name="channels_id[]" id="channel" class="js-example-basic-multiple" multiple="multiple" required>
+                        <option selected value="">All</option>
+                        @foreach ($channels as $channel)
+                        <option data-code="{{ $channel->channel_code }}" value="{{ $channel->id }}">{{ $channel->channel_name }}</option>
+                        @endforeach
+                    </select> 
                     <div class="icon-container">
                         <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                     <label>Store Concept</span></label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="concepts_id" id="store_concept_name" class="form-control" disabled>
-                        <option value="" selected disabled>Select a store concept</option>
-                    </select>
+                    <select name="concepts_id[]" id="store_concept_name" class="js-example-basic-multiple" multiple="multiple" required>
+                        <option selected value="">All</option>
+                        @foreach ($concepts as $concept)
+                        <option value="{{ $concept->id }}">{{ $concept->concept_name }}</option>
+                        @endforeach
+                    </select> 
                     <div class="icon-container">
                         <i class="fa fa-caret-down"></i>
                     </div>
                     </div>
                     <label>Per Store / Location</label>
                     <div class="form-group select-container">
-                    <select class="dropdowns" name="customers_id" id="customer_location" class="form-control" disabled>
-                        <option value="" selected disabled>Select a store / location</option>
-                    </select>
+                     <select name="customers_id[]" id="customer_location" class="js-example-basic-multiple" multiple="multiple" required>
+                        <option selected value="">All</option>
+                        @foreach ($customers as $customer)
+                        <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                        @endforeach
+                    </select> 
+                    
                     <div class="icon-container">
                         <i class="fa fa-caret-down"></i>
                     </div>
@@ -162,14 +191,21 @@
 @endsection
 
 @push('bottom')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
 
          $(document).ready(function(){
-            $('#sales_year, #sales_month,#store_concept_name,#customer_location,#cutoff')
+            $('.js-example-basic-multiple').select2({
+                width: '100%'
+            });
+            
+            $('#sales_year, #sales_month,#cutoff')
             .addClass('disabled-color');
         
-            let allChannelsOption = "<option value=''>-- All Channels --</option>";
-                $('#channel').find('option').eq(1).before(allChannelsOption);
+     
+            $('#channel option:not(:first-child)').prop('disabled', true);
+            $('#store_concept_name option:not(:first-child)').prop('disabled', true);
+            $('#customer_location option:not(:first-child)').prop('disabled', true);
 
         });
         
@@ -275,69 +311,27 @@
             })
         })
         
-        $('#channel').change(function() {
-            let channelId = $(this).val();
-            if($(this).val() == '') {
-                $('#store_concept_name, #customer_location').val('');
-                $('#customer_location, #store_concept_name').attr("disabled", true)
-                $('#customer_location, #store_concept_name').addClass('disabled-color')
-            }else {
-                $.ajax({
-                url: "{{ route('run-rate-concepts') }}",
-            type: "GET",
-            data: {
-                'channel': channelId,
-                },
-            success: function(result)
-            {
-                let i;
-                let showConcept = [];
-    
-                showConcept[0] = "<option selected value=''>-- All Store Concepts --</option>";
-                for (i = 0; i < result.length; ++i) {
-                    showConcept[i+1] = "<option value='"+result[i].id+"'>"+result[i].concept_name+"</option>";
-                }
-                $('#store_concept_name').removeAttr("disabled")
-                $('#store_concept_name').find('option').remove();
-                jQuery("#store_concept_name").html(showConcept); 
-
-                $('#customer_location').attr("disabled", true)
-                $('#customer_location').val("");
-                $('#store_concept_name').removeClass('disabled-color')
-                $('#customer_location').addClass('disabled-color')
+        function handleSelect2Event(selector) {
+        $(selector).on('select2:unselecting', function (e) {
+            var unSelectedValue = e.params.args.data.id;
+            if (unSelectedValue === '') {
+                $(selector + ' option').prop('disabled', false);
             }
-            })
-            }
-        })
+        });
 
-        $('#store_concept_name').change(function() {
-            let storeConceptId = $(this).val();
-            let channelCode = $('#channel').find(':selected').data('code');
+        $(selector).on('select2:selecting', function (e) {
+        var selectedValue = e.params.args.data.id;
+        if (selectedValue === '') {
+            $(this).val(['']);
+            $(selector + ' option:not(:first-child)').prop('disabled', true);
+        } else {
+            $(selector + ' option').prop('disabled', false);
+        }
+        });
+    }
+    handleSelect2Event('#channel');
+    handleSelect2Event('#store_concept_name');
+    handleSelect2Event('#customer_location');
 
-            $.ajax({
-                url: "{{ route('run-rate-store') }}",
-            type: "GET",
-            data: {
-                'storeConceptId': storeConceptId,
-                'channelCode': channelCode,
-                },
-            success: function(result)
-            {
-                console.log(result);
-                let i;
-                let showStore = [];
-    
-                showStore[0] = "<option selected value=''>-- All Stores --</option>";
-                for (i = 0; i < result.length; ++i) {
-                    showStore[i+1] = "<option value='"+result[i].id+"'>"+result[i].customer_name+"</option>";
-                }
-                $('#customer_location').removeAttr("disabled")
-                $('#customer_location').find('option').remove();
-                jQuery("#customer_location").html(showStore); 
-
-                $('#customer_location').removeClass('disabled-color')
-            }
-            })
-        })
     </script>
 @endpush
