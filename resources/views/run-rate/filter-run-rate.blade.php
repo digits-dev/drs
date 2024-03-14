@@ -14,14 +14,13 @@
             @php
                 $keys = array_keys($param_desc);
                 $chunks = array_chunk($keys, ceil(sizeof($keys) / 2));
-                // dd($chunks);
             @endphp
 
             <div class="row">
                 @foreach ($chunks as $chunk)
                     <div class="col-md-6">
                         @foreach ($chunk as $key)
-                            <div class="col-md-6 text-bold">{{ $key }}:</div>
+                            <div class="col-md-4 text-bold">{{ $key }}:</div>
                             @php
                                 $value = $param_desc[$key];
                                 if (is_array($value)) {
@@ -29,7 +28,7 @@
                                     $value = strlen($value) ? $value : 'ALL';
                                 }
                             @endphp
-                            <div class="col-md-6">{{ $value }}</div>
+                            <div class="col-md-8">{{ $value }}</div>
                             <br>
                         @endforeach
                     </div>
