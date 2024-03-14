@@ -435,7 +435,9 @@ use Maatwebsite\Excel\Facades\Excel;
 		public function exportBatch($id) {
 			$batch = DigitsSalesUpload::find($id);
 			$batch_export = new DigitsSalesUploadBatchExport($batch->batch);
-			$batch->update(['status' => 'FILE DOWNLOADED']);
+			if ($batch->status != 'FINAL') {
+				$batch->update(['status' => 'FILE DOWNLOADED']);
+			}
 			return Excel::download($batch_export, "$batch->batch.xlsx");
 		}
 

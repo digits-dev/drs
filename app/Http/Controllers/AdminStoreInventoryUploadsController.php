@@ -416,7 +416,9 @@ use Maatwebsite\Excel\Facades\Excel;
 		public function exportBatch($id) {
 			$batch = StoreInventoryUpload::find($id);
 			$batch_export = new StoreInventoryUploadBatchExport($batch->batch);
-			$batch->update(['status' => 'FILE DOWNLOADED']);
+			if ($batch->status != 'FINAL') {
+				$batch->update(['status' => 'FILE DOWNLOADED']);
+			}
 			return Excel::download($batch_export, "$batch->batch.xlsx");
 		}
 
