@@ -500,13 +500,13 @@ use Maatwebsite\Excel\Facades\Excel;
 			if (sizeof($concepts)) {
 				$query_filter_params[] = [
 					'method' => 'whereIn',
-					'params' => ['concepts_id', $channels]
+					'params' => ['concepts_id', $concepts]
 				];
 			}
 			if (sizeof($customers)) {
 				$query_filter_params[] = [
 					'method' => 'whereIn',
-					'params' => ['customers_id', $channels]
+					'params' => ['customers_id', $customers]
 				];
 			}
 			return $query_filter_params;
