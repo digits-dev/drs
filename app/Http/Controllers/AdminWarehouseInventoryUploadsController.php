@@ -1,14 +1,16 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exports\WarehouseInventoryUploadBatchExport;
+use App\Jobs\UpdateBatchImportStatusJob;
 use App\Models\ReportPrivilege;
 use App\Models\WarehouseInventoriesReport;
 use App\Models\WarehouseInventory;
 use App\Models\WarehouseInventoryUpload;
 use Session;
-	use Request;
-	use DB;
-	use CRUDBooster;
+use Request;
+use DB;
+use CRUDBooster;
+use Illuminate\Support\Facades\View;
 use Maatwebsite\Excel\Facades\Excel;
 
 	class AdminWarehouseInventoryUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
@@ -18,6 +20,8 @@ use Maatwebsite\Excel\Facades\Excel;
 			'IMPORT FINISHED' => 'label-primary',
 			'IMPORT FAILED' => 'label-danger',
 			'FILE DOWNLOADED' => 'label-info',
+			'GENERATING FILE' => 'label-warning',
+			'FILE GENERATED' => 'label-primary',
 			'FINAL' => 'label-success',
 		];
 
@@ -116,12 +120,24 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->addaction = array();
 			$this->addaction[] = [
+				'title'=>'Generate File',
+				'url'=>CRUDBooster::mainpath('generate-file/[id]'),
+				'icon'=>'fa fa-file',
+				'color' => 'info',
+				'showIf' => '(
+					[importing_finished_at] && 
+					[status] != "IMPORT FAILED" && 
+					[status] != "GENERATING FILE" && 
+					![generated_file_path]
+				)'
+			];
+			$this->addaction[] = [
 				'title'=>'Export Batch',
 				'url'=>CRUDBooster::mainpath('export-batch/[id]'),
 				'target'=>"_blank",
 				'icon'=>'fa fa-download',
 				'color' => 'success',
-				'showIf' => '([importing_finished_at] && [status] != "IMPORT FAILED")'
+				'showIf' => '([importing_finished_at] && [generated_file_path])'
 			];
 
 
@@ -226,7 +242,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        | $this->post_index_html = "<p>test</p>";
 	        |
 	        */
-	        $this->post_index_html = null;
+	        $this->post_index_html = NULL;
 	        
 	        
 	        
@@ -416,13 +432,28 @@ use Maatwebsite\Excel\Facades\Excel;
 
 	    }
 
+		public function generateFile($id) {
+			$batch = WarehouseInventoryUpload::find($id);
+			$folder_name = $batch->folder_name;
+			$batch_export = new WarehouseInventoryUploadBatchExport($batch->batch);
+			$filename = $batch->batch. '.csv';
+			$report_type = 'warehouse-inventory-upload';
+			$excel_path = storage_path("app/$report_type/$folder_name/$filename");
+			$excel_file = $batch_export->store("$report_type/$folder_name/$filename");
+			$excel_file->chain([new UpdateBatchImportStatusJob($batch, $excel_path)]);
+			return CRUDBooster::redirect(CRUDBooster::mainPath(), "Generating file for batch #$batch->batch.", 'info');
+		}
+
 		public function exportBatch($id) {
 			$batch = WarehouseInventoryUpload::find($id);
-			$batch_export = new WarehouseInventoryUploadBatchExport($batch->batch);
-			if ($batch->status != 'FINAL') {
-				$batch->update(['status' => 'FILE DOWNLOADED']);
+			if (file_exists($batch->generated_file_path)) {
+				if ($batch->status != 'FINAL') {
+					$batch->update(['status' => 'FILE DOWNLOADED']);
+				}
+				return response()->download($batch->generated_file_path);
+			} else {
+				abort(404, 'File not found');
 			}
-			return Excel::download($batch_export, "$batch->batch.xlsx");
 		}
 
 		public function downloadUploadedFile($id) {
@@ -456,7 +487,6 @@ use Maatwebsite\Excel\Facades\Excel;
 			$data['search_term'] = $search_term;
 
 			return $this->view('warehouse-inventory-upload.details', $data);
-
 		}
 
 
