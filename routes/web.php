@@ -43,6 +43,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('store_sales/export',[StoreSaleController::class, 'exportSales'])->name('store-sales.export');
     Route::get('store_sales/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
     Route::get('sales_upload/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
+    Route::get('sales_upload/generate-file/{id}',[AdminStoreSalesUploadsController::class, 'generateFile']);
     Route::get('sales_upload/export-batch/{id}',[AdminStoreSalesUploadsController::class, 'exportBatch']);
     Route::get('sales_upload/download-uploaded-file/{id}',[AdminStoreSalesUploadsController::class, 'downloadUploadedFile']);
     Route::get('sales_upload/detail/{id}', [AdminStoreSalesUploadsController::class, 'getDetail'])->name('store_sales.detail');

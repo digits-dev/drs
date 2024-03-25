@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exports\StoreSalesUploadBatchExport;
+use App\Jobs\UpdateBatchImportStatusJob;
 use App\Models\ReportPrivilege;
 use App\Models\StoreSale;
 use App\Models\StoreSalesReport;
@@ -19,6 +20,8 @@ use Maatwebsite\Excel\Facades\Excel;
 			'IMPORT FINISHED' => 'label-primary',
 			'IMPORT FAILED' => 'label-danger',
 			'FILE DOWNLOADED' => 'label-info',
+			'GENERATING FILE' => 'label-warning',
+			'FILE GENERATED' => 'label-primary',
 			'FINAL' => 'label-success',
 		];
 
@@ -121,12 +124,24 @@ use Maatwebsite\Excel\Facades\Excel;
 	        */
 	        $this->addaction = array();
 			$this->addaction[] = [
+				'title'=>'Generate File',
+				'url'=>CRUDBooster::mainpath('generate-file/[id]'),
+				'icon'=>'fa fa-file',
+				'color' => 'info',
+				'showIf' => '(
+					[importing_finished_at] && 
+					[status] != "IMPORT FAILED" && 
+					[status] != "GENERATING FILE" && 
+					![generated_file_path]
+				)'
+			];
+			$this->addaction[] = [
 				'title'=>'Export Batch',
 				'url'=>CRUDBooster::mainpath('export-batch/[id]'),
 				'target'=>"_blank",
 				'icon'=>'fa fa-download',
 				'color' => 'success',
-				'showIf' => '([importing_finished_at] && [status] != "IMPORT FAILED")'
+				'showIf' => '([importing_finished_at] && [generated_file_path])'
 			];
 
 
@@ -420,14 +435,29 @@ use Maatwebsite\Excel\Facades\Excel;
 	        //Your code here
 
 	    }
+		
+		public function generateFile($id) {
+			$batch = StoreSalesUpload::find($id);
+			$folder_name = $batch->folder_name;
+			$batch_export = new StoreSalesUploadBatchExport($batch->batch);
+			$filename = $batch->batch. '.csv';
+			$report_type = 'store-sales-upload';
+			$excel_path = storage_path("app/$report_type/$folder_name/$filename");
+			$excel_file = $batch_export->store("$report_type/$folder_name/$filename");
+			$excel_file->chain([new UpdateBatchImportStatusJob($batch, $excel_path)]);
+			return CRUDBooster::redirect(CRUDBooster::mainPath(), "Generating file for batch #$batch->batch.", 'info');
+		}
 
 		public function exportBatch($id) {
 			$batch = StoreSalesUpload::find($id);
-			$batch_export = new StoreSalesUploadBatchExport($batch->batch);
-			if ($batch->status != 'FINAL') {
-				$batch->update(['status' => 'FILE DOWNLOADED']);
+			if (file_exists($batch->generated_file_path)) {
+				if ($batch->status != 'FINAL') {
+					$batch->update(['status' => 'FILE DOWNLOADED']);
+				}
+				return response()->download($batch->generated_file_path);
+			} else {
+				abort(404, 'File not found');
 			}
-			return Excel::download($batch_export, "$batch->batch.xlsx");
 		}
 
 		public function downloadUploadedFile($id) {
