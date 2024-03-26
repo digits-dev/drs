@@ -6,14 +6,17 @@ use App\Models\DigitsSalesReport;
 use App\Models\ReportPrivilege;
 use App\Models\StoreInventoriesReport;
 use App\Models\StoreInventory;
+use App\Models\StoreInventoryUpload;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use CRUDBooster;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\WithCustomChunkSize;
 
-class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMapping
+class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMapping, ShouldQueue, WithCustomChunkSize
 {
     use Exportable;
     private $userReport;
@@ -21,6 +24,7 @@ class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMa
 
     public function __construct($batch) {
         $this->batch = $batch;
+        StoreInventoryUpload::where('batch', $batch)->update(['status' => 'GENERATING FILE']);
         $this->userReport = ReportPrivilege::myReport(3,CRUDBooster::myPrivilegeId());
     }
 
@@ -46,5 +50,17 @@ class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMa
         return StoreInventory::generateReport()
             ->where('batch_number', $this->batch)
             ->orderBy('reference_number', 'ASC');
+    }
+
+    public function failed($exception) : void {
+        $error_message = $exception->getMessage();
+        $warehouse_inventory_upload = StoreInventoryUpload::where('batch', $this->batch)->first();
+        $warehouse_inventory_upload->status = 'FAILED TO GENERATE FILE';
+        $warehouse_inventory_upload->save();
+        $warehouse_inventory_upload->appendNewError($error_message);
+    }
+
+    public function chunkSize(): int {
+        return 1000;
     }
 }
