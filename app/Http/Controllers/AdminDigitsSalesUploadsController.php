@@ -24,6 +24,8 @@ use Maatwebsite\Excel\Facades\Excel;
 			'FINAL' => 'label-success',
 		];
 
+		public $allowed_privs_to_tag_as_final = [1];
+
 	    public function cbInit() {
 
 			# START CONFIGURATION DO NOT REMOVE THIS LINE
@@ -168,7 +170,9 @@ use Maatwebsite\Excel\Facades\Excel;
 	        | 
 	        */
 	        $this->button_selected = array();
-			$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
+			if (in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_final)) {
+				$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
+			}
 
 
 	                
