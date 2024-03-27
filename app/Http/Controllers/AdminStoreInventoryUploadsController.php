@@ -25,6 +25,9 @@ use Maatwebsite\Excel\Facades\Excel;
 			'FINAL' => 'label-success',
 		];
 
+		public $allowed_privs_to_tag_as_final = [1];
+
+
 	    public function cbInit() {
 	    	# START CONFIGURATION DO NOT REMOVE THIS LINE
 			$this->table 			   = "store_inventory_uploads";	        
@@ -149,8 +152,9 @@ use Maatwebsite\Excel\Facades\Excel;
 	        | 
 	        */
 	        $this->button_selected = array();
-			$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
-
+			if (in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_final)) {
+				$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
+			}
 	                
 	        /* 
 	        | ---------------------------------------------------------------------- 
@@ -444,11 +448,14 @@ use Maatwebsite\Excel\Facades\Excel;
 
 		public function exportBatch($id) {
 			$batch = StoreInventoryUpload::find($id);
-			$batch_export = new StoreInventoryUploadBatchExport($batch->batch);
-			if ($batch->status != 'FINAL') {
-				$batch->update(['status' => 'FILE DOWNLOADED']);
+			if (file_exists($batch->generated_file_path)) {
+				if ($batch->status != 'FINAL') {
+					$batch->update(['status' => 'FILE DOWNLOADED']);
+				}
+				return response()->download($batch->generated_file_path);
+			} else {
+				abort(404, 'File not found');
 			}
-			return Excel::download($batch_export, "$batch->batch.xlsx");
 		}
 
 		public function downloadUploadedFile($id) {
