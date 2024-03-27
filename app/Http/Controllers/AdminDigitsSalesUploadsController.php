@@ -22,6 +22,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			'GENERATING FILE' => 'label-warning',
 			'FILE GENERATED' => 'label-primary',
 			'FINAL' => 'label-success',
+			'FAILED TO GENERATE FILE' => 'label-danger',
 		];
 
 		public $allowed_privs_to_tag_as_final = [1];
