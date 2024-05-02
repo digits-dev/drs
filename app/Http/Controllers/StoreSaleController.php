@@ -187,6 +187,8 @@ class StoreSaleController extends Controller
     }
 
     public function exportSales(Request $request) {
+        ini_set('memory_limit', '2048M');
+        ini_set('max_execution_time', 36000);
         $filename = $request->input('filename');
         $filters = $request->all();
         $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)

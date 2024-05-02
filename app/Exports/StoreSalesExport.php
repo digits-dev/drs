@@ -35,7 +35,7 @@ class StoreSalesExport implements FromQuery, WithHeadings, WithMapping
         foreach ($sales as $key => $value) {
             array_push($salesReport,$item->$value);
         }
-
+       
         return $salesReport;
     }
 

@@ -2,7 +2,7 @@
 
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.24/dist/sweetalert2.min.css" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
-
+    @livewireStyles
     <style type="text/css">
 
         table{
@@ -51,11 +51,12 @@
 @endpush
 
 @section('content')
-
+@livewireScripts
 <div class="box">
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
+            @livewire('export-store-sales')
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
@@ -261,6 +262,7 @@
                 <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
                     <span aria-hidden='true'>×</span></button>
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
+              
             </div>
 
             <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
