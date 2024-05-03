@@ -265,7 +265,7 @@
               
             </div>
 
-            <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
+            <form method='post' action="{{ CRUDBooster::mainpath("export")}}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>

@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Models\StoreSale;
 use Illuminate\Support\Facades\Storage;
+use Excel;
 
 class ExportStoreSalesCreateFileJob implements ShouldQueue
 {

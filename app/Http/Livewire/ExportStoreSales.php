@@ -24,7 +24,7 @@ class ExportStoreSales extends Component
         $chunkSize = 10000;
         $storeSalesCount = StoreSale::count();
         $numberOfChunks = ceil($storeSalesCount / $chunkSize);
-    
+
         $folder = now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString());
     
         $batches = [

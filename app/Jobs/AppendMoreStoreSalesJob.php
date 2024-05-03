@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Models\StoreSale;
 use Illuminate\Support\Facades\Storage;
+use Excel;
 
 class AppendMoreStoreSalesJob implements ShouldQueue
 {
@@ -18,7 +19,7 @@ class AppendMoreStoreSalesJob implements ShouldQueue
     private $chunkIndex;
     private $chunkSize;
     private $folder;
-    public function __construct($chunkIndex, $chunkSize,$folder) {
+    public function __construct($chunkIndex, $chunkSize, $folder) {
         $this->chunkIndex = $chunkIndex;
         $this->chunkSize = $chunkSize;
         $this->folder = $folder;
@@ -32,8 +33,8 @@ class AppendMoreStoreSalesJob implements ShouldQueue
             ->get()
             ->map(function ($sale) {
                 return [
-                    $sale->id,
-                    $sale->reference_number,
+                    trim($sale->id),
+                    trim($sale->reference_number)
                 ];
             });
 

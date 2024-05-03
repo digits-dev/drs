@@ -7,6 +7,7 @@ use App\Models\StoreSalesReport;
 use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreSalesExport;
+use App\Exports\StoreTestExportBatches;
 use App\Imports\StoreSalesImport;
 use App\Jobs\ProcessStoreSalesUploadJob;
 use App\Jobs\StoreSalesImportJob;
@@ -23,12 +24,14 @@ use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
+use DB;
 
 class StoreSaleController extends Controller
 {
     private $report_type;
 
     public function __construct(){
+        DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping("enum", "string");
         $this->report_type = ['STORE SALES'];
     }
     /**
@@ -189,10 +192,14 @@ class StoreSaleController extends Controller
     public function exportSales(Request $request) {
         ini_set('memory_limit', '2048M');
         ini_set('max_execution_time', 36000);
-        $filename = $request->input('filename');
+        // $filename = $request->input('filename');
+        $filename = 'StoreSales.xlsx';
         $filters = $request->all();
-        $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-            ->where('is_final', 1);
-        return Excel::download(new StoreSalesExport($query), $filename.'.xlsx');
+        // $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
+        //     ->where('is_final', 1)->limit(100)->get();
+     
+        // return Excel::download(new StoreSalesExport($query), );
+        (new StoreTestExportBatches($filters))->queue($filename);
+        return back()->withSuccess('Export started!'); 
     }
 }
