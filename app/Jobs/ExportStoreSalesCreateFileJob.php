@@ -10,21 +10,29 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Models\StoreSale;
+use App\Models\ReportPrivilege;
 use Illuminate\Support\Facades\Storage;
 use Excel;
+use CRUDBooster;
 
 class ExportStoreSalesCreateFileJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    private $userReport;
     private $chunkSize;
     private $folder;
-    public function __construct($chunkSize, $folder) {
+    private $fllters;
+    public function __construct($chunkSize, $folder, $filter) {
+        $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
         $this->chunkSize = $chunkSize;
         $this->folder = $folder;
+        $this->fllters = $filter;
     }
 
     public function handle(){
-        $storeSales = StoreSale::query()
+
+        $storeSales = StoreSale::filterForReport(StoreSale::generateReport(), $this->fllters)
+            ->where('is_final', 1)
             ->take($this->chunkSize)
             ->get();
 
@@ -32,10 +40,13 @@ class ExportStoreSalesCreateFileJob implements ShouldQueue
 
         (new \Rap2hpoutre\FastExcel\FastExcel($this->salesGenerator($storeSales)))
             ->export(storage_path("app/{$this->folder}/storeSales.csv"), function ($sale) {
-                return [
-                    'id' => $sale->id,
-                    'reference_number ' => $sale->reference_number
-                ];
+                $salesReport = [];
+                $sales = explode("`,`",$this->userReport->report_query);
+                //MAP USER REPORT PRIVILEGE
+                foreach ($sales as $key => $value) {
+                    array_push($salesReport, [$value => $sale->$value]);
+                }
+                return $salesReport;
             });
     }
 

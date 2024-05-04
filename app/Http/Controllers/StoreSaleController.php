@@ -15,6 +15,8 @@ use App\Models\ReportType;
 use App\Models\StoreSalesUpload;
 use App\Models\StoreSalesUploadLine;
 use App\Rules\ExcelFileValidationRule;
+use App\Jobs\ExportStoreSalesCreateFileJob;
+use App\Jobs\AppendMoreStoreSalesJob;
 use Carbon\Carbon;
 use CRUDBooster;
 use Illuminate\Bus\Batch;
@@ -29,7 +31,7 @@ use DB;
 class StoreSaleController extends Controller
 {
     private $report_type;
-
+    public $batchId;
     public function __construct(){
         DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping("enum", "string");
         $this->report_type = ['STORE SALES'];
@@ -190,16 +192,49 @@ class StoreSaleController extends Controller
     }
 
     public function exportSales(Request $request) {
-        ini_set('memory_limit', '2048M');
-        ini_set('max_execution_time', 36000);
-        // $filename = $request->input('filename');
-        $filename = 'StoreSales.xlsx';
+   
+        $filename = $request->input('filename');
         $filters = $request->all();
         // $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
         //     ->where('is_final', 1)->limit(100)->get();
-     
-        // return Excel::download(new StoreSalesExport($query), );
-        (new StoreTestExportBatches($filters))->queue($filename);
-        return back()->withSuccess('Export started!'); 
+        $storeSalesCount = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
+        ->where('is_final', 1)->count();
+        $chunkSize = 10000;
+        $numberOfChunks = ceil($storeSalesCount / $chunkSize);
+        $folder = now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString());
+        $batches = [
+            new ExportStoreSalesCreateFileJob($chunkSize, $folder, $filters)
+        ];
+    
+        if ($storeSalesCount > $chunkSize) {
+            $numberOfChunks = $numberOfChunks - 1;
+            for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
+                $batches[] = new AppendMoreStoreSalesJob($numberOfChunks, $chunkSize, $folder, $filters);
+            }
+        }
+    
+        $batch = Bus::batch($batches)
+            ->name('Export Users')
+            ->then(function (Batch $batch) use ($folder) {
+                $path = "exports/{$folder}/storeSales.csv";
+                // upload file to s3
+                $file = storage_path("app/{$folder}/storeSales.csv");
+                Storage::disk('s3')->put($path, file_get_contents($file));
+                // send email to admin
+            })
+            ->catch(function (Batch $batch, Throwable $e) {
+                // send email to admin or log error
+            })
+            ->finally(function (Batch $batch) use ($folder) {
+                // delete local file
+                Storage::disk('local')->deleteDirectory($folder);
+            })
+            ->dispatch();
+
+        $this->batchId = $batch->id;
+        return [
+            'batch_id' => $this->batchId,
+            'filename' => $folder
+        ];
     }
 }
