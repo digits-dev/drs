@@ -44,6 +44,125 @@
         border-radius: 5px;
         border: 1px solid #919191;
         }
+
+        .progress {
+        width: 150px;
+        height: 150px !important;
+        float: left; 
+        line-height: 150px;
+        background: none;
+        margin: 20px;
+        box-shadow: none;
+        position: relative;
+        }
+        .progress:after {
+        content: "";
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 12px solid #fff;
+        position: absolute;
+        top: 0;
+        left: 0;
+        }
+        .progress>span {
+        width: 50%;
+        height: 100%;
+        overflow: hidden;
+        position: absolute;
+        top: 0;
+        z-index: 1;
+        }
+        .progress .progress-left {
+        left: 0;
+        }
+        .progress .progress-bar {
+        width: 100%;
+        height: 100%;
+        background: none;
+        border-width: 12px;
+        border-style: solid;
+        position: absolute;
+        top: 0;
+        }
+        .progress .progress-left .progress-bar {
+        left: 100%;
+        border-top-right-radius: 80px;
+        border-bottom-right-radius: 80px;
+        border-left: 0;
+        -webkit-transform-origin: center left;
+        transform-origin: center left;
+        }
+        .progress .progress-right {
+        right: 0;
+        }
+        .progress .progress-right .progress-bar {
+        left: -100%;
+        border-top-left-radius: 80px;
+        border-bottom-left-radius: 80px;
+        border-right: 0;
+        -webkit-transform-origin: center right;
+        transform-origin: center right;
+        animation: loading-1 1.8s linear forwards;
+        }
+        .progress .progress-value {
+        width: 90%;
+        height: 90%;
+        border-radius: 50%;
+        background: #000;
+        font-size: 24px;
+        color: #fff;
+        line-height: 135px;
+        text-align: center;
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        }
+        .progress.blue .progress-bar {
+        border-color: #049dff;
+        }
+        .progress.blue .progress-left .progress-bar {
+        animation: loading-2 1.5s linear forwards 1.8s;
+        }
+        .progress.yellow .progress-bar {
+        border-color: #fdba04;
+        }
+        .progress.yellow .progress-right .progress-bar {
+        animation: loading-3 1.8s linear forwards;
+        }
+        .progress.yellow .progress-left .progress-bar {
+        animation: none;
+        }
+        @keyframes loading-1 {
+        0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+        }
+        100% {
+            -webkit-transform: rotate(180deg);
+            transform: rotate(180deg);
+        }
+        }
+        @keyframes loading-2 {
+        0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+        }
+        100% {
+            -webkit-transform: rotate(144deg);
+            transform: rotate(144deg);
+        }
+        }
+        @keyframes loading-3 {
+        0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+        }
+        100% {
+            -webkit-transform: rotate(135deg);
+            transform: rotate(135deg);
+        }
+        }
         
 
     </style>
@@ -56,7 +175,15 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            @livewire('export-store-sales')
+            <div class="progress blue">
+                <span class="progress-left">
+                                    <span class="progress-bar"></span>
+                </span>
+                <span class="progress-right">
+                                    <span class="progress-bar"></span>
+                </span>
+                <div class="progress-value"></div>
+            </div>
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
@@ -287,6 +414,7 @@
 @push('bottom')
     <script>
         $(document).ready(function(){
+            progressBar();
             $('.search').on("click", function() {
             });
             $("#sales-report-table").dataTable({
@@ -340,9 +468,37 @@
                 type: 'POST',
                 data: $('#exportForm').serialize(),
                 success: function(result){
-                    console.log(result);
+                    var return_id = '';
+                    if(result.batch_id){
+                        return_id = result.batch_id;
+                    }
+                    progressBar(return_id);
                 }
             });
         });
+
+        function progressBar(data){
+            var myInterval = setInterval(function () {
+                $.ajax({
+                    url: '{{ route("store-sales-progress-export") }}',
+                    type: 'POST',
+                    data: {
+                        batchId: data ? data : '{{session()->get("lastBatchId")}}'
+                    },
+                    success: function(response){
+                        let totalJobs = parseInt(response.total_jobs);
+                        let pendingJobs = parseInt(response.pending_jobs);
+                        let completeJobs = totalJobs - pendingJobs;
+                        let progressPercentage = 0;
+                        if(pendingJobs == 0){
+                            progressPercentage = 100;
+                        }else{
+                            progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
+                        }
+                        $('.progress-value').text(`${progressPercentage}%`);
+                    }
+                });
+            },10000); 
+        }
     </script>
 @endpush

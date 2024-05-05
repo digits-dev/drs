@@ -10,6 +10,8 @@
     use CRUDBooster;
     use Illuminate\Http\Request;
 	use Svg\Tag\Rect;
+	use Illuminate\Support\Facades\Response;
+	use Illuminate\Support\Facades\Storage;
 
 	class AdminStoreSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -393,6 +395,12 @@
 			->orderBy('concept_name', 'asc')
 			->get();
 			return response()->json($concepts);
+		}
+
+		public function getDownload($folder) {
+			$file = storage_path("app/{$folder}/storeSales.csv");
+			return Response::download($file, 'storeSales.csv')->deleteFileAfterSend(true);
+			Storage::disk('local')->deleteDirectory($folder);
 		}
 
 	}

@@ -2,7 +2,9 @@
 
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.24/dist/sweetalert2.min.css" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="{{ asset('css/progressbar.css')}}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
+    
     <style type="text/css">
 
         table{
@@ -55,11 +57,19 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-   
+            <div class="progress blue">
+                <span class="progress-left">
+                                    <span class="progress-bar"></span>
+                </span>
+                <span class="progress-right">
+                                    <span class="progress-bar"></span>
+                </span>
+                <div class="progress-value">%</div>
+            </div>
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download"></i> Export Sales
             </a>
-
+            <a class="form-control" id="downloadBtn">button</a> 
   
         </div>
         <div class="panel-body">
@@ -169,7 +179,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('store-sales.export') }}">
+            <form method='post' target='_blank' id="exportForm">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
             <input type='hidden' name='channels_id' value="{{ $channels_id }}">
@@ -185,7 +195,7 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
             </div>
         </form>
         </div>
@@ -196,6 +206,7 @@
 @push('bottom')
     <script>
         $(document).ready(function(){
+            progressBar();
             $('.search').on("click", function() {
             });
             $("#sales-report-table").dataTable({
@@ -208,6 +219,63 @@
 
         function showSalesReportExport() {
             $('#modal-order-export').modal('show');
+        }
+
+        $('#exportBtn').click(function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '{{ route("store-sales.export") }}',
+                type: 'POST',
+                data: $('#exportForm').serialize(),
+                success: function(result){
+                    var return_id = '';
+                    var fileName = '';
+                    if(result.batch_id){
+                        return_id = result.batch_id;
+                    }
+                    if(result.folder){
+                        fileName = result.folder;
+                    }
+                    progressBar(return_id, fileName);
+                }
+            });
+        });
+
+        function progressBar(data, file){
+            var myInterval = setInterval(function () {
+                $.ajax({
+                    url: '{{ route("store-sales-progress-export") }}',
+                    type: 'POST',
+                    data: {
+                        batchId: data ? data : '{{session()->get("lastBatchId")}}'
+                    },
+                    success: function(response){
+                        let totalJobs = parseInt(response.total_jobs);
+                        let pendingJobs = parseInt(response.pending_jobs);
+                        let completeJobs = totalJobs - pendingJobs;
+                        let progressPercentage = 0;
+                        if(pendingJobs == 0){
+                            progressPercentage = 100;
+                        }else{
+                            progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
+                        }
+                        $('.progress-value').text(progressPercentage);
+
+                        if(parseInt(progressPercentage) >= 100){
+                            downloadFile(file);
+                            clearInterval(myInterval);
+                            $('#downloadBtn').click();
+                        }
+                    }
+                });
+            },10000); 
+        }
+
+        function downloadFile(data){
+            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+            const folder = data ? data : '{{session()->get("folder")}}';
+            $('#downloadBtn').attr('href',url_download+'/'+folder);
+ 
         }
     </script>
 @endpush

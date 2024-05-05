@@ -21,17 +21,17 @@ class ExportStoreSalesCreateFileJob implements ShouldQueue
     private $userReport;
     private $chunkSize;
     private $folder;
-    private $fllters;
+    private $filters;
     public function __construct($chunkSize, $folder, $filter) {
         $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
         $this->chunkSize = $chunkSize;
         $this->folder = $folder;
-        $this->fllters = $filter;
+        $this->filters = $filter;
     }
 
     public function handle(){
 
-        $storeSales = StoreSale::filterForReport(StoreSale::generateReport(), $this->fllters)
+        $storeSales = StoreSale::filterForReport(StoreSale::generateReport(), $this->filters)
             ->where('is_final', 1)
             ->take($this->chunkSize)
             ->get();
@@ -41,10 +41,12 @@ class ExportStoreSalesCreateFileJob implements ShouldQueue
         (new \Rap2hpoutre\FastExcel\FastExcel($this->salesGenerator($storeSales)))
             ->export(storage_path("app/{$this->folder}/storeSales.csv"), function ($sale) {
                 $salesReport = [];
-                $sales = explode("`,`",$this->userReport->report_query);
+                $salesReportCon = [];
+                $salesHeader = explode(",",$this->userReport->report_header);
+                $salesValue = explode("`,`",$this->userReport->report_query);
                 //MAP USER REPORT PRIVILEGE
-                foreach ($sales as $key => $value) {
-                    array_push($salesReport, [$value => $sale->$value]);
+                foreach($salesValue as $key => $value) {
+                    $salesReport[$salesHeader[$key]] = $sale->$value;
                 }
                 return $salesReport;
             });

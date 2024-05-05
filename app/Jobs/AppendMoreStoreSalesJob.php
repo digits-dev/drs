@@ -23,7 +23,8 @@ class AppendMoreStoreSalesJob implements ShouldQueue
     private $chunkSize;
     private $folder;
     private $filters;
-    public function __construct($chunkIndex, $chunkSize, $folder, $filter) {
+    private $filename;
+    public function __construct($chunkIndex, $chunkSize, $folder, $filter, $filename) {
         $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
         $this->chunkIndex = $chunkIndex;
         $this->chunkSize = $chunkSize;
@@ -33,7 +34,7 @@ class AppendMoreStoreSalesJob implements ShouldQueue
 
     public function handle()
     {
-        $storeSales = StoreSale::filterForReport(StoreSale::generateReport(), $this->fllters)
+        $storeSales = StoreSale::filterForReport(StoreSale::generateReport(), $this->filters)
             ->where('is_final', 1)
             ->skip($this->chunkIndex * $this->chunkSize)
             ->take($this->chunkSize)
@@ -42,7 +43,7 @@ class AppendMoreStoreSalesJob implements ShouldQueue
                 //MAP USER REPORT PRIVILEGE
                 $sales = explode("`,`",$this->userReport->report_query);
                 $salesReport = [];
-                foreach ($sales as $key => $value) {
+                foreach($sales as $key => $value) {
                     array_push($salesReport,$sale->$value);
                 }
                 return $salesReport;

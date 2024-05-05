@@ -193,7 +193,7 @@ class StoreSaleController extends Controller
 
     public function exportSales(Request $request) {
    
-        $filename = $request->input('filename');
+        $filename = $request->input('filename').'.csv';
         $filters = $request->all();
         // $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
         //     ->where('is_final', 1)->limit(100)->get();
@@ -203,13 +203,13 @@ class StoreSaleController extends Controller
         $numberOfChunks = ceil($storeSalesCount / $chunkSize);
         $folder = now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString());
         $batches = [
-            new ExportStoreSalesCreateFileJob($chunkSize, $folder, $filters)
+            new ExportStoreSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
         ];
     
         if ($storeSalesCount > $chunkSize) {
             $numberOfChunks = $numberOfChunks - 1;
             for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
-                $batches[] = new AppendMoreStoreSalesJob($numberOfChunks, $chunkSize, $folder, $filters);
+                $batches[] = new AppendMoreStoreSalesJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
             }
         }
     
@@ -227,14 +227,32 @@ class StoreSaleController extends Controller
             })
             ->finally(function (Batch $batch) use ($folder) {
                 // delete local file
-                Storage::disk('local')->deleteDirectory($folder);
+                // Storage::disk('local')->deleteDirectory($folder);
             })
             ->dispatch();
 
         $this->batchId = $batch->id;
+
+        session()->put('lastBatchId',$this->batchId);
+        session()->put('folder',$folder);
+        // session()->put('filename',$filename);
+
         return [
             'batch_id' => $this->batchId,
             'filename' => $folder
         ];
+    }
+
+    public function progressExport(Request $request){
+        try{
+            $batchId = $request->batchId ?? session()->get('lastBatchId');
+            if(DB::table('job_batches')->where('id', $batchId)->count()){
+                $response = DB::table('job_batches')->where('id', $batchId)->first();
+                return response()->json($response);
+            }
+        }catch(Exception $e){
+            Log::error($e);
+            dd($e);
+        }
     }
 }
