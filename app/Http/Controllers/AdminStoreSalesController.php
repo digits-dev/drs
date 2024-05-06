@@ -401,8 +401,9 @@
 		public function getDownload($folder) {
 			$file = storage_path("app/{$folder}/ExportStoreSales.csv");
 			$batchId = session()->get('lastBatchId');
+			$batchInfo = DB::table('job_batches')->where('id', $batchId)->first();
 			if(file_exists($file)){
-				if(DB::table('job_batches')->where('id', $batchId)->count()){
+				if($batchInfo->pending_jobs == 0){
 					return response()->streamDownload(function () use ($file, $folder) {
 						$stream = fopen($file, 'r');
 						fpassthru($stream);
