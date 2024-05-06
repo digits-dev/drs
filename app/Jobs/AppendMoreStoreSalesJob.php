@@ -49,7 +49,7 @@ class AppendMoreStoreSalesJob implements ShouldQueue
                 return $salesReport;
             });
 
-        $file = storage_path("app/{$this->folder}/storeSales.csv");
+        $file = storage_path("app/{$this->folder}/ExportStoreSales.csv");
         $open = fopen($file, 'a+');
         foreach ($storeSales as $sale) {
             fputcsv($open, $sale);

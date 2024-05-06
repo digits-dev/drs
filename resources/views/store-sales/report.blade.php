@@ -45,125 +45,52 @@
         border: 1px solid #919191;
         }
 
-        .progress {
-        width: 150px;
-        height: 150px !important;
-        float: left; 
-        line-height: 150px;
-        background: none;
-        margin: 20px;
-        box-shadow: none;
-        position: relative;
+        .progress-bar{
+            border-radius: 40px !important;
+            -webkit-box-shadow: none !important;
+            -moz-box-shadow: none !important;
+            box-shadow: none !important;
         }
-        .progress:after {
-        content: "";
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        border: 12px solid #fff;
-        position: absolute;
-        top: 0;
-        left: 0;
+
+        .progress{
+            border-radius: 40px !important;
+            background-color: white !important;
+            
+            /* Changes below */
+            -webkit-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            -moz-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            box-shadow: inset 0 0 0 2px #337AB7 !important;
+            border: none;
         }
-        .progress>span {
-        width: 50%;
-        height: 100%;
-        overflow: hidden;
-        position: absolute;
-        top: 0;
-        z-index: 1;
+
+        .marquee {
+            height: 25px;
+            width: 420px;
+
+            overflow: hidden;
+            position: relative;
         }
-        .progress .progress-left {
-        left: 0;
+
+        .marquee div {
+            display: block;
+            width: 200%;
+            height: 30px;
+
+            position: absolute;
+            overflow: hidden;
+
+            animation: marquee 5s linear infinite;
         }
-        .progress .progress-bar {
-        width: 100%;
-        height: 100%;
-        background: none;
-        border-width: 12px;
-        border-style: solid;
-        position: absolute;
-        top: 0;
+
+        .marquee span {
+            float: left;
+            width: 50%;
         }
-        .progress .progress-left .progress-bar {
-        left: 100%;
-        border-top-right-radius: 80px;
-        border-bottom-right-radius: 80px;
-        border-left: 0;
-        -webkit-transform-origin: center left;
-        transform-origin: center left;
+
+        @keyframes marquee {
+            0% { left: 0; }
+            100% { left: -100%; }
         }
-        .progress .progress-right {
-        right: 0;
-        }
-        .progress .progress-right .progress-bar {
-        left: -100%;
-        border-top-left-radius: 80px;
-        border-bottom-left-radius: 80px;
-        border-right: 0;
-        -webkit-transform-origin: center right;
-        transform-origin: center right;
-        animation: loading-1 1.8s linear forwards;
-        }
-        .progress .progress-value {
-        width: 90%;
-        height: 90%;
-        border-radius: 50%;
-        background: #000;
-        font-size: 24px;
-        color: #fff;
-        line-height: 135px;
-        text-align: center;
-        position: absolute;
-        top: 5%;
-        left: 5%;
-        }
-        .progress.blue .progress-bar {
-        border-color: #049dff;
-        }
-        .progress.blue .progress-left .progress-bar {
-        animation: loading-2 1.5s linear forwards 1.8s;
-        }
-        .progress.yellow .progress-bar {
-        border-color: #fdba04;
-        }
-        .progress.yellow .progress-right .progress-bar {
-        animation: loading-3 1.8s linear forwards;
-        }
-        .progress.yellow .progress-left .progress-bar {
-        animation: none;
-        }
-        @keyframes loading-1 {
-        0% {
-            -webkit-transform: rotate(0deg);
-            transform: rotate(0deg);
-        }
-        100% {
-            -webkit-transform: rotate(180deg);
-            transform: rotate(180deg);
-        }
-        }
-        @keyframes loading-2 {
-        0% {
-            -webkit-transform: rotate(0deg);
-            transform: rotate(0deg);
-        }
-        100% {
-            -webkit-transform: rotate(144deg);
-            transform: rotate(144deg);
-        }
-        }
-        @keyframes loading-3 {
-        0% {
-            -webkit-transform: rotate(0deg);
-            transform: rotate(0deg);
-        }
-        100% {
-            -webkit-transform: rotate(135deg);
-            transform: rotate(135deg);
-        }
-        }
-        
 
     </style>
 
@@ -175,19 +102,27 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <div class="progress blue">
-                <span class="progress-left">
-                                    <span class="progress-bar"></span>
-                </span>
-                <span class="progress-right">
-                                    <span class="progress-bar"></span>
-                </span>
-                <div class="progress-value"></div>
-            </div>
+        
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
-
+            <div class="progress-div" style="display: none">
+                <div class="marquee">
+                    <div>
+                        <span>Please wait while generating file...</span>
+                        <span>Please don't leave or reload page...</span>
+                    </div>
+                </div>
+                <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv")))
+                <div class="download-file">
+                    <span style="font-size: bold">Download File: </span><a href='{{CRUDBooster::adminpath("store_sales/download/".session()->get('folder'))}}' id="downloadBtn"> Here</a> 
+                </div>
+            @endif
+            <div class="page-reload-msg" style="display: none">
+                <span>Please wait you can download file after page reload...</span>
+            </div>
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
                 <i class="fa fa-filter" aria-hidden="true"></i> Search Filter
             </a>
@@ -413,8 +348,8 @@
 
 @push('bottom')
     <script>
+     
         $(document).ready(function(){
-            progressBar();
             $('.search').on("click", function() {
             });
             $("#sales-report-table").dataTable({
@@ -463,21 +398,31 @@
 
         $('#exportBtn').click(function(e) {
             e.preventDefault();
+            $('#modal-order-export').modal('hide');
+            $('#export-sales').hide();
+            $('.download-file').hide();
+            $('#export-sales').hide();
+            $('.progress-div').show();
             $.ajax({
                 url: '{{ route("store-sales.export") }}',
                 type: 'POST',
                 data: $('#exportForm').serialize(),
                 success: function(result){
                     var return_id = '';
+                    var fileName = '';
                     if(result.batch_id){
                         return_id = result.batch_id;
                     }
-                    progressBar(return_id);
+                    if(result.folder){
+                        fileName = result.folder;
+                    }
+                    progressBar(return_id, fileName);
+                   
                 }
             });
         });
 
-        function progressBar(data){
+        function progressBar(data, file){
             var myInterval = setInterval(function () {
                 $.ajax({
                     url: '{{ route("store-sales-progress-export") }}',
@@ -495,10 +440,41 @@
                         }else{
                             progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
                         }
-                        $('.progress-value').text(`${progressPercentage}%`);
+                        
+                        $('#export-sales').hide();
+                        $('.progress-div').show();
+                        $('#progress-bar').text(`${progressPercentage}%`);
+                        $('#progress-bar').attr('style',`width:${progressPercentage}%`);
+                        $('#progress-bar').attr('aria-valuenow',progressPercentage);
+                        
+                        if(parseInt(progressPercentage) >= 100){
+                            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+                            const folder = file ? file : '{{session()->get("folder")}}';
+                            $('#downloadBtn').attr('href',url_download+'/'+folder);
+                            $('.progress-div').hide();
+                            $('#export-sales').show();
+                            $('#page-reload-msg').show();
+                            location.reload();
+                            clearInterval(myInterval);
+                        }
+                        
+                        if(response.finished_at){
+                            $('.progress-div').hide();
+                            $('#export-sales').show();
+                            $('#page-reload-msg').show();
+                            location.reload();
+                            clearInterval(myInterval);
+                        }
                     }
                 });
             },10000); 
         }
+
+        function downloadFile(data){
+            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+            const folder = data ? data : '{{session()->get("folder")}}';
+            $('#downloadBtn').attr('href',url_download+'/'+folder);
+        }
+
     </script>
 @endpush

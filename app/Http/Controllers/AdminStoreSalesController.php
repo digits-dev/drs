@@ -12,6 +12,7 @@
 	use Svg\Tag\Rect;
 	use Illuminate\Support\Facades\Response;
 	use Illuminate\Support\Facades\Storage;
+	use File;
 
 	class AdminStoreSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -398,9 +399,26 @@
 		}
 
 		public function getDownload($folder) {
-			$file = storage_path("app/{$folder}/storeSales.csv");
-			return Response::download($file, 'storeSales.csv')->deleteFileAfterSend(true);
-			Storage::disk('local')->deleteDirectory($folder);
+			$file = storage_path("app/{$folder}/ExportStoreSales.csv");
+			$batchId = session()->get('lastBatchId');
+			if(file_exists($file)){
+				if(DB::table('job_batches')->where('id', $batchId)->count()){
+					return response()->streamDownload(function () use ($file, $folder) {
+						$stream = fopen($file, 'r');
+						fpassthru($stream);
+						fclose($stream);
+						File::deleteDirectory(storage_path("app/{$folder}"));
+					},$stream, [
+						'Content-Type' => $file,
+						'Content-Disposition' => 'attachment; filename="ExportStoreSales-'.date('Y-m-d H:i:s').'.csv"',
+					]);
+				}else{
+					return CRUDBooster::redirect(CRUDBooster::adminPath('store_sales'),'Generate file not finish!', 'danger');
+				}
+			}else{
+				return CRUDBooster::redirect(CRUDBooster::adminPath('store_sales'),'Already downloaded!', 'danger');
+			}
+			
 		}
 
 	}

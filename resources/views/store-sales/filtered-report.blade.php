@@ -2,15 +2,11 @@
 
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.24/dist/sweetalert2.min.css" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ asset('css/progressbar.css')}}">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
-    
+ 
     <style type="text/css">
-
         table{
             border-collapse: collapse;
         }
-
         .noselect {
         -webkit-touch-callout: none; /* iOS Safari */
             -webkit-user-select: none; /* Safari */
@@ -47,6 +43,54 @@
         border: 1px solid #919191;
         }
 
+        .progress-bar{
+            border-radius: 40px !important;
+            -webkit-box-shadow: none !important;
+            -moz-box-shadow: none !important;
+            box-shadow: none !important;
+        }
+
+        .progress{
+            border-radius: 40px !important;
+            background-color: white !important;
+            
+            /* Changes below */
+            -webkit-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            -moz-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            box-shadow: inset 0 0 0 2px #337AB7 !important;
+            border: none;
+        }
+
+        .marquee {
+            height: 25px;
+            width: 420px;
+
+            overflow: hidden;
+            position: relative;
+        }
+
+        .marquee div {
+            display: block;
+            width: 200%;
+            height: 30px;
+
+            position: absolute;
+            overflow: hidden;
+
+            animation: marquee 5s linear infinite;
+        }
+
+        .marquee span {
+            float: left;
+            width: 50%;
+        }
+
+        @keyframes marquee {
+            0% { left: 0; }
+            100% { left: -100%; }
+        }
+
+    
     </style>
 
 @endpush
@@ -57,20 +101,27 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <div class="progress blue">
-                <span class="progress-left">
-                                    <span class="progress-bar"></span>
-                </span>
-                <span class="progress-right">
-                                    <span class="progress-bar"></span>
-                </span>
-                <div class="progress-value">%</div>
-            </div>
-            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm pull-right">
+          
+            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
-            <a class="form-control" id="downloadBtn">button</a> 
-  
+            <div class="progress-div" style="display: none">
+                <div class="marquee">
+                    <div>
+                        <span>Please wait while generating file...</span>
+                        <span>Please don't leave or reload page...</span>
+                    </div>
+                </div>
+                <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv")))
+                <div class="download-file">
+                    <span style="font-size: bold">Download File: </span><a href='{{CRUDBooster::adminpath("store_sales/download/".session()->get('folder'))}}' id="downloadBtn"> Here</a> 
+                </div>
+            @endif
+            <div class="page-reload-msg" style="display: none">
+                <span>Please wait you can download file after page reload...</span>
+            </div>
         </div>
         <div class="panel-body">
             <form action="{{ route('store-sales.filter') }}">
@@ -205,8 +256,8 @@
 
 @push('bottom')
     <script>
+    
         $(document).ready(function(){
-            progressBar();
             $('.search').on("click", function() {
             });
             $("#sales-report-table").dataTable({
@@ -223,6 +274,11 @@
 
         $('#exportBtn').click(function(e) {
             e.preventDefault();
+            $('#modal-order-export').modal('hide');
+            $('#export-sales').hide();
+            $('.download-file').hide();
+            $('#export-sales').hide();
+            $('.progress-div').show();
             $.ajax({
                 url: '{{ route("store-sales.export") }}',
                 type: 'POST',
@@ -237,6 +293,7 @@
                         fileName = result.folder;
                     }
                     progressBar(return_id, fileName);
+                   
                 }
             });
         });
@@ -259,12 +316,29 @@
                         }else{
                             progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
                         }
-                        $('.progress-value').text(progressPercentage);
 
+                        $('#export-sales').hide();
+                        $('.progress-div').show();
+                        $('#progress-bar').text(`${progressPercentage}%`);
+                        $('#progress-bar').attr('style',`width:${progressPercentage}%`);
+                        $('#progress-bar').attr('aria-valuenow',progressPercentage);
+                        
                         if(parseInt(progressPercentage) >= 100){
-                            downloadFile(file);
+                            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+                            const folder = file ? file : '{{session()->get("folder")}}';
+                            $('#downloadBtn').attr('href',url_download+'/'+folder);
+                            $('.progress-div').hide();
+                            $('#export-sales').show();
+                            $('.page-reload-msg').show();
+                            location.reload();
                             clearInterval(myInterval);
-                            $('#downloadBtn').click();
+                        }
+                        if(response.finished_at){
+                            $('.progress-div').hide();
+                            $('#export-sales').show();
+                            $('.page-reload-msg').show();
+                            location.reload();
+                            clearInterval(myInterval);
                         }
                     }
                 });
@@ -277,5 +351,6 @@
             $('#downloadBtn').attr('href',url_download+'/'+folder);
  
         }
+
     </script>
 @endpush

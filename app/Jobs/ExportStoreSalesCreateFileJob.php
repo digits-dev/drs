@@ -39,7 +39,7 @@ class ExportStoreSalesCreateFileJob implements ShouldQueue
         Storage::disk('local')->makeDirectory($this->folder);
 
         (new \Rap2hpoutre\FastExcel\FastExcel($this->salesGenerator($storeSales)))
-            ->export(storage_path("app/{$this->folder}/storeSales.csv"), function ($sale) {
+            ->export(storage_path("app/{$this->folder}/ExportStoreSales.csv"), function ($sale) {
                 $salesReport = [];
                 $salesReportCon = [];
                 $salesHeader = explode(",",$this->userReport->report_header);

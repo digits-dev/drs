@@ -201,7 +201,7 @@ class StoreSaleController extends Controller
         ->where('is_final', 1)->count();
         $chunkSize = 10000;
         $numberOfChunks = ceil($storeSalesCount / $chunkSize);
-        $folder = now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString());
+        $folder = now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
         $batches = [
             new ExportStoreSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
         ];
@@ -214,11 +214,11 @@ class StoreSaleController extends Controller
         }
     
         $batch = Bus::batch($batches)
-            ->name('Export Users')
+            ->name('Export Sales')
             ->then(function (Batch $batch) use ($folder) {
-                $path = "exports/{$folder}/storeSales.csv";
+                $path = "exports/{$folder}/ExportStoreSales.csv";
                 // upload file to s3
-                $file = storage_path("app/{$folder}/storeSales.csv");
+                $file = storage_path("app/{$folder}/ExportStoreSales.csv");
                 Storage::disk('s3')->put($path, file_get_contents($file));
                 // send email to admin
             })
