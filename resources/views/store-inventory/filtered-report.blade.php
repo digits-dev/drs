@@ -45,6 +45,53 @@
         border: 1px solid #919191;
         }
 
+        .progress-bar{
+            border-radius: 40px !important;
+            -webkit-box-shadow: none !important;
+            -moz-box-shadow: none !important;
+            box-shadow: none !important;
+        }
+
+        .progress{
+            border-radius: 40px !important;
+            background-color: white !important;
+            
+            /* Changes below */
+            -webkit-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            -moz-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            box-shadow: inset 0 0 0 2px #337AB7 !important;
+            border: none;
+        }
+
+        .marquee {
+            height: 25px;
+            width: 420px;
+
+            overflow: hidden;
+            position: relative;
+        }
+
+        .marquee div {
+            display: block;
+            width: 200%;
+            height: 30px;
+
+            position: absolute;
+            overflow: hidden;
+
+            animation: marquee 5s linear infinite;
+        }
+
+        .marquee span {
+            float: left;
+            width: 50%;
+        }
+
+        @keyframes marquee {
+            0% { left: 0; }
+            100% { left: -100%; }
+        }
+
     </style>
 
 @endpush
@@ -59,6 +106,24 @@
             <a href="javascript:showInventoryReportExport()" id="export-inventory" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download"></i> Export Inventory
             </a>
+
+            <div class="progress-div" style="display: none">
+                <div class="marquee">
+                    <div>
+                        <span>Please wait while generating file...</span>
+                        <span>Please don't leave or reload page...</span>
+                    </div>
+                </div>
+                <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportStoreSales.csv")))
+                <div class="download-file">
+                    <span style="font-size: bold">Download File: </span><a href='{{CRUDBooster::adminpath("store_sales/download/".session()->get('folder'))}}' id="downloadBtn"> Here</a> 
+                </div>
+            @endif
+            <div class="page-reload-msg" style="display: none">
+                <span>Please wait you can download file after page reload...</span>
+            </div>
   
         </div>
         <div class="panel-body">
@@ -169,7 +234,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('store-inventory.export') }}">
+            <form method='post' action="{{ route('store-inventory.export') }}" id="exportForm">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
@@ -180,7 +245,7 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
             </div>
         </form>
         </div>
@@ -202,6 +267,90 @@
         });
         function showInventoryReportExport() {
             $('#modal-inventory-export').modal('show');
+        }
+
+        $('#exportBtn').click(function(e) {
+            e.preventDefault();
+            $('#modal-order-export').modal('hide');
+            $('#export-sales').hide();
+            $('.download-file').hide();
+            $('#export-sales').hide();
+            $('.progress-div').show();
+            $.ajax({
+                url: '{{ route("digits-sales.export") }}',
+                type: 'POST',
+                data: $('#exportForm').serialize(),
+                success: function(result){
+                    if (result.status === 'success') {
+                        var return_id = '';
+                        var fileName = '';
+                        if(result.batch_id){
+                            return_id = result.batch_id;
+                        }
+                        if(result.folder){
+                            fileName = result.folder;
+                        }
+                        progressBar(return_id, fileName);
+                    
+                    } else if (result.status === 'error') {
+                        swal({
+                            type: result.status,
+                            title: result.msg,
+                        });
+                        e.preventDefault();
+                        location.reload();
+                        return false;
+                    }
+                }
+            });
+        });
+
+        function progressBar(data, file){
+            var myInterval = setInterval(function () {
+                $.ajax({
+                    url: '{{ route("store-inventory-progress-export") }}',
+                    type: 'POST',
+                    data: {
+                        batchId: data ? data : '{{session()->get("lastDigitSalesBatchId")}}'
+                    },
+                    success: function(response){
+                        let totalJobs = parseInt(response.total_jobs);
+                        let pendingJobs = parseInt(response.pending_jobs);
+                        let completeJobs = totalJobs - pendingJobs;
+                        let progressPercentage = 0;
+                        if(pendingJobs == 0){
+                            progressPercentage = 100;
+                        }else{
+                            progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
+                        }
+                        
+                        $('#export-sales').hide();
+                        $('.progress-div').show();
+                        $('#progress-bar').text(`${progressPercentage}%`);
+                        $('#progress-bar').attr('style',`width:${progressPercentage}%`);
+                        $('#progress-bar').attr('aria-valuenow',progressPercentage);
+                        
+                        if(parseInt(progressPercentage) >= 100){
+                            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+                            const folder = file ? file : '{{session()->get("folderSalesDigits")}}';
+                            $('#downloadBtn').attr('href',url_download+'/'+folder);
+                            $('.progress-div').hide();
+                            $('#export-sales').show();
+                            $('#page-reload-msg').show();
+                            location.reload();
+                            clearInterval(myInterval);
+                        }
+                        
+                        if(response.finished_at){
+                            $('.progress-div').hide();
+                            $('#export-sales').show();
+                            $('#page-reload-msg').show();
+                            location.reload();
+                            clearInterval(myInterval);
+                        }
+                    }
+                });
+            },10000); 
         }
     </script>
 @endpush

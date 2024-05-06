@@ -390,4 +390,28 @@
 			return view('store-inventory.filtered-report',$data);
 	
 		}
+
+		public function getDownload($folder) {
+			$file = storage_path("app/{$folder}/ExportStoreInventory.csv");
+			$batchId = session()->get('lastStoreInventoryBatchId');
+			$batchInfo = DB::table('job_batches')->where('id', $batchId)->first();
+			if(file_exists($file)){
+				if($batchInfo->pending_jobs == 0){
+					return response()->streamDownload(function () use ($file, $folder) {
+						$stream = fopen($file, 'r');
+						fpassthru($stream);
+						fclose($stream);
+						File::deleteDirectory(storage_path("app/{$folder}"));
+					},$stream, [
+						'Content-Type' => $file,
+						'Content-Disposition' => 'attachment; filename="ExportStoreInventory-'.date('Y-m-d H:i:s').'.csv"',
+					]);
+				}else{
+					return CRUDBooster::redirect(CRUDBooster::adminPath('store_inventories'),'Generate file not finish!', 'danger');
+				}
+			}else{
+				return CRUDBooster::redirect(CRUDBooster::adminPath('store_inventories'),'Already downloaded!', 'danger');
+			}
+			
+		}
 	}

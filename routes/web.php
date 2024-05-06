@@ -65,7 +65,8 @@ Route::group(['prefix'=>'admin'], function(){
     
     Route::any('digits_sales/filter',[AdminDigitsSalesController::class, 'filterDigitsSales'])->name('digits-sales.filter');
     Route::post('digits-concepts',[AdminDigitsSalesController::class, 'concepts'])->name('digits-concepts');
-
+    //PROGRESS EXPORT
+    Route::post('digits_sales/progress-export',[DigitsSaleController::class, 'progressExport'])->name('digits-sales-progress-export');
 
 
     //import store inventory
@@ -79,6 +80,8 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_store_uploads/download-uploaded-file/{id}',[AdminStoreInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('store-inventory.detail');
     Route::any('store_inventories/filter',[AdminStoreInventoriesController::class, 'filterStoreInventory'])->name('store-inventory.filter');
+    //PROGRESS EXPORT
+    Route::post('store_inventories/progress-export',[StoreInventoryController::class, 'progressExport'])->name('store-inventory-progress-export');
 
 
     //import warehouse inventory

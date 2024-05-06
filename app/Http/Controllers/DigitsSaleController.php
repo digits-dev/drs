@@ -186,9 +186,69 @@ class DigitsSaleController extends Controller
     }
 
     public function exportSales(Request $request) {
-        $filename = $request->input('filename');
+        $filename = $request->input('filename').'.csv';
         $filters = $request->all();
-        $query = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters);
-        return Excel::download(new DigitsSalesExport($query), $filename.'.xlsx');
+        // $query = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters);
+        $digitsSalesCount = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)->count();
+        if($digitsSalesCount == 0){
+            return response()->json(['msg'=>'Nothing to export','status'=>'error']);
+        }
+        $chunkSize = 10000;
+        $numberOfChunks = ceil($digitsSalesCount / $chunkSize);
+        $folder = 'digits-sales'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
+        $batches = [
+            new ExportDigitsSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
+        ];
+     
+        if ($storeSalesCount > $chunkSize) {
+            $numberOfChunks = $numberOfChunks - 1;
+            for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
+                $batches[] = new AppendMoreDigitsSalesJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
+            }
+        }
+
+        $batch = Bus::batch($batches)
+            ->name('Export Digits Sales')
+            ->then(function (Batch $batch) use ($folder) {
+                $path = "exports/{$folder}/ExportDigitsSales.csv";
+                // upload file to s3
+                $file = storage_path("app/{$folder}/ExportDigitsSales.csv");
+                Storage::disk('s3')->put($path, file_get_contents($file));
+                // send email to admin
+            })
+            ->catch(function (Batch $batch, Throwable $e) {
+                // send email to admin or log error
+            })
+            ->finally(function (Batch $batch) use ($folder) {
+                // delete local file
+                // Storage::disk('local')->deleteDirectory($folder);
+            })
+            ->dispatch();
+
+        $this->batchId = $batch->id;
+
+        session()->put('lastDigitSalesBatchId',$this->batchId);
+        session()->put('folderSalesDigits',$folder);
+        // session()->put('filename',$filename);
+
+        return [
+            'batch_id' => $this->batchId,
+            'filename' => $folder,
+            'status'   => 'success',
+            'msg'      => 'Success'
+        ];
+    }
+
+    public function progressExport(Request $request){
+        try{
+            $batchId = $request->batchId ?? session()->get('lastDigitSalesBatchId');
+            if(DB::table('job_batches')->where('id', $batchId)->count()){
+                $response = DB::table('job_batches')->where('id', $batchId)->first();
+                return response()->json($response);
+            }
+        }catch(Exception $e){
+            Log::error($e);
+            dd($e);
+        }
     }
 }

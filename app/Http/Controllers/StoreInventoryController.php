@@ -180,12 +180,71 @@ class StoreInventoryController extends Controller
     }
 
     public function exportInventory(Request $request) {
-        $filename = $request->input('filename');
+        $filename = $request->input('filename').'.csv';
 
         $filters = $request->all();
-        $query = StoreInventory::filterForReport(StoreInventory::generateReport(), $filters)
-            ->where('is_final', 1);
-        return Excel::download(new StoreInventoryExport($query), $filename.'.xlsx');
+  
+        $storeInventoryCount = StoreInventory::filterForReport(StoreInventory::generateReport(), $filters)
+            ->where('is_final', 1)->count();
+        if($storeInventoryCount == 0){
+            return response()->json(['msg'=>'Nothing to export','status'=>'error']);
+        }
+        $chunkSize = 10000;
+        $numberOfChunks = ceil($storeInventoryCount / $chunkSize);
+        $folder = 'store-inventory'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
+        $batches = [
+            new ExportStoreInventoryCreateFileJob($chunkSize, $folder, $filters, $filename)
+        ];
+
+        if ($storeSalesCount > $chunkSize) {
+            $numberOfChunks = $numberOfChunks - 1;
+            for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
+                $batches[] = new AppendMoreStoreInventoryJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
+            }
+        }
+    
+        $batch = Bus::batch($batches)
+            ->name('Export Store Inventory')
+            ->then(function (Batch $batch) use ($folder) {
+                $path = "exports/{$folder}/ExportStoreInventory.csv";
+                // upload file to s3
+                $file = storage_path("app/{$folder}/ExportStoreInventory.csv");
+                Storage::disk('s3')->put($path, file_get_contents($file));
+                // send email to admin
+            })
+            ->catch(function (Batch $batch, Throwable $e) {
+                // send email to admin or log error
+            })
+            ->finally(function (Batch $batch) use ($folder) {
+                // delete local file
+                // Storage::disk('local')->deleteDirectory($folder);
+            })
+            ->dispatch();
+
+        $this->batchId = $batch->id;
+
+        session()->put('lastStoreInventoryBatchId',$this->batchId);
+        session()->put('folderStoreInventory',$folder);
+        // session()->put('filename',$filename);
+
+        return [
+            'batch_id' => $this->batchId,
+            'filename' => $folder
+        ];
+        
+    }
+
+    public function progressExport(Request $request){
+        try{
+            $batchId = $request->batchId ?? session()->get('lastStoreInventoryBatchId');
+            if(DB::table('job_batches')->where('id', $batchId)->count()){
+                $response = DB::table('job_batches')->where('id', $batchId)->first();
+                return response()->json($response);
+            }
+        }catch(Exception $e){
+            Log::error($e);
+            dd($e);
+        }
     }
 
 }
