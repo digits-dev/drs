@@ -197,7 +197,7 @@ class DigitsSaleController extends Controller
         if($digitsSalesCount == 0){
             return response()->json(['msg'=>'Nothing to export','status'=>'error']);
         }
-        $chunkSize = 10000;
+        $chunkSize = 5000;
         $numberOfChunks = ceil($digitsSalesCount / $chunkSize);
         $folder = 'digits-sales'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
         $batches = [

@@ -192,7 +192,7 @@ class WarehouseInventoryController extends Controller
         if($warehouseInventoryCount == 0){
             return response()->json(['msg'=>'Nothing to export','status'=>'error']);
         }
-        $chunkSize = 10000;
+        $chunkSize = 5000;
         $numberOfChunks = ceil($warehouseInventoryCount / $chunkSize);
         $folder = 'warehouse-inventory'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
         $batches = [

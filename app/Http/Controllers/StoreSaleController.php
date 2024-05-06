@@ -199,7 +199,7 @@ class StoreSaleController extends Controller
         //     ->where('is_final', 1)->limit(100)->get();
         $storeSalesCount = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
         ->where('is_final', 1)->count();
-        $chunkSize = 10000;
+        $chunkSize = 5000;
         $numberOfChunks = ceil($storeSalesCount / $chunkSize);
         $folder = 'store-sales'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
         $batches = [
