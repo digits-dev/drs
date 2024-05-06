@@ -404,11 +404,14 @@
 			$batchInfo = DB::table('job_batches')->where('id', $batchId)->first();
 			if(file_exists($file)){
 				if($batchInfo->pending_jobs == 0){
+					session()->forget('lastBatchId');
+					session()->forget('folder');
 					return response()->streamDownload(function () use ($file, $folder) {
 						$stream = fopen($file, 'r');
 						fpassthru($stream);
 						fclose($stream);
 						File::deleteDirectory(storage_path("app/{$folder}"));
+						
 					},$stream, [
 						'Content-Type' => $file,
 						'Content-Disposition' => 'attachment; filename="ExportStoreSales-'.date('Y-m-d H:i:s').'.csv"',

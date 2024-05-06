@@ -18,6 +18,10 @@ use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use DB;
+use App\Jobs\ExportStoreInventoryCreateFileJob;
+use App\Jobs\AppendMoreStoreInventoryJob;
+use Illuminate\Support\Facades\Storage;
 
 class StoreInventoryController extends Controller
 {
@@ -229,7 +233,7 @@ class StoreInventoryController extends Controller
 
         return [
             'batch_id' => $this->batchId,
-            'filename' => $folder
+            'folder' => $folder
         ];
         
     }

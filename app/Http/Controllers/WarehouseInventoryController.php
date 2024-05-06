@@ -17,7 +17,10 @@ use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
-
+use DB;
+use App\Jobs\ExportWarehouseInventoryCreateFileJob;
+use App\Jobs\AppendMoreWarehouseInventoryJob;
+use Illuminate\Support\Facades\Storage;
 
 class WarehouseInventoryController extends Controller
 {
@@ -181,11 +184,68 @@ class WarehouseInventoryController extends Controller
     }
 
     public function exportInventory(Request $request) {
-        $filename = $request->input('filename');
+        $filename = $request->input('filename').'.csv';
         $filters = $request->all();
-        $query = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
-            ->where('is_final', 1);
-        return Excel::download(new WarehouseInventoryExport($query), $filename.'.xlsx');
+     
+        $warehouseInventoryCount = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
+        ->where('is_final', 1)->count();
+        if($warehouseInventoryCount == 0){
+            return response()->json(['msg'=>'Nothing to export','status'=>'error']);
+        }
+        $chunkSize = 10000;
+        $numberOfChunks = ceil($warehouseInventoryCount / $chunkSize);
+        $folder = 'warehouse-inventory'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
+        $batches = [
+            new ExportWarehouseInventoryCreateFileJob($chunkSize, $folder, $filters, $filename)
+        ];
 
+        if ($storeSalesCount > $chunkSize) {
+            $numberOfChunks = $numberOfChunks - 1;
+            for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
+                $batches[] = new AppendMoreWarehouseInventoryJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
+            }
+        }
+    
+        $batch = Bus::batch($batches)
+            ->name('Export Warehouse Inventory')
+            ->then(function (Batch $batch) use ($folder) {
+                $path = "exports/{$folder}/ExportWarehouseInventory.csv";
+                // upload file to s3
+                $file = storage_path("app/{$folder}/ExportWarehouseInventory.csv");
+                Storage::disk('s3')->put($path, file_get_contents($file));
+                // send email to admin
+            })
+            ->catch(function (Batch $batch, Throwable $e) {
+                // send email to admin or log error
+            })
+            ->finally(function (Batch $batch) use ($folder) {
+                // delete local file
+                // Storage::disk('local')->deleteDirectory($folder);
+            })
+            ->dispatch();
+
+        $this->batchId = $batch->id;
+
+        session()->put('lastWarehouseInventoryBatchId',$this->batchId);
+        session()->put('folderWarehouseInventory',$folder);
+        // session()->put('filename',$filename);
+
+        return [
+            'batch_id' => $this->batchId,
+            'folder' => $folder
+        ];
+    }
+
+    public function progressExport(Request $request){
+        try{
+            $batchId = $request->batchId ?? session()->get('lastWarehouseInventoryBatchId');
+            if(DB::table('job_batches')->where('id', $batchId)->count()){
+                $response = DB::table('job_batches')->where('id', $batchId)->first();
+                return response()->json($response);
+            }
+        }catch(Exception $e){
+            Log::error($e);
+            dd($e);
+        }
     }
 }

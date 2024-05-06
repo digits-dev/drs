@@ -44,6 +44,53 @@
         border-radius: 5px;
         border: 1px solid #919191;
         }
+
+        .progress-bar{
+            border-radius: 40px !important;
+            -webkit-box-shadow: none !important;
+            -moz-box-shadow: none !important;
+            box-shadow: none !important;
+        }
+
+        .progress{
+            border-radius: 40px !important;
+            background-color: white !important;
+            
+            /* Changes below */
+            -webkit-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            -moz-box-shadow: inset 0 0 0 2px #337AB7 !important;
+            box-shadow: inset 0 0 0 2px #337AB7 !important;
+            border: none;
+        }
+
+        .marquee {
+            height: 25px;
+            width: 420px;
+
+            overflow: hidden;
+            position: relative;
+        }
+
+        .marquee div {
+            display: block;
+            width: 200%;
+            height: 30px;
+
+            position: absolute;
+            overflow: hidden;
+
+            animation: marquee 5s linear infinite;
+        }
+
+        .marquee span {
+            float: left;
+            width: 50%;
+        }
+
+        @keyframes marquee {
+            0% { left: 0; }
+            100% { left: -100%; }
+        }
         
 
     </style>
@@ -59,6 +106,24 @@
             <a href="javascript:showInventoryReportExport()" id="export-inventory" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Inventory
             </a>
+
+            <div class="progress-div" style="display: none">
+                <div class="marquee">
+                    <div>
+                        <span class="text-danger">Please wait while generating file...</span>
+                        <span class="text-danger">Please don't leave or reload page...</span>
+                    </div>
+                </div>
+                <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {{-- @if(file_exists(storage_path("app/" . session()->get("folderWarehouseInventory") . "/ExportWarehouseInventory.csv"))) --}}
+                <div class="download-file">
+                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Here</a> 
+                </div>
+            {{-- @endif --}}
+            {{-- <div class="page-reload-msg" style="display: none">
+                <span>Please wait you can download file after page reload...</span>
+            </div> --}}
 
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
                 <i class="fa fa-search"></i> Search Filter
@@ -127,7 +192,7 @@
 
 </div>
 
-<div class='modal fade' tabindex='-1' role='dialog' id='modal-inventory-export'>
+{{-- <div class='modal fade' tabindex='-1' role='dialog' id='modal-inventory-export'>
     <div class='modal-dialog'>
         <div class='modal-content'>
             <div class='modal-header'>
@@ -158,7 +223,7 @@
         </form>
         </div>
     </div>
-</div>
+</div> --}}
 
 <div class="modal fade" tabindex="-1" role="dialog" id="modal-filter">
     <div class="modal-dialog">
@@ -251,7 +316,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
+            <form method='post' action="{{ CRUDBooster::mainpath("export")}}" id="exportForm">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             {{ CRUDBooster::getUrlParameters()}}
             <div class='modal-body'>
@@ -262,7 +327,7 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
             </div>
         </form>
         </div>
@@ -296,6 +361,96 @@
 
         function showInventoryReportExport() {
             $('#modal-inventory-export').modal('show');
+        }
+
+        $('#exportBtn').click(function(e) {
+            e.preventDefault();
+            $('#modal-inventory-export').modal('hide');
+            $('#export-inventory').hide();
+            $('.download-file').hide();
+            $('#export-inventory').hide();
+            $('.progress-div').show();
+            $.ajax({
+                url: '{{ route("warehouse-inventory.export") }}',
+                type: 'POST',
+                data: $('#exportForm').serialize(),
+                success: function(result){
+                    if (result.status === 'success') {
+                        var return_id = '';
+                        var fileName = '';
+                        if(result.batch_id){
+                            return_id = result.batch_id;
+                        }
+                        if(result.folder){
+                            fileName = result.folder;
+                        }
+                        progressBar(return_id, fileName);
+                    
+                    } else if (result.status === 'error') {
+                        swal({
+                            type: result.status,
+                            title: result.msg,
+                        });
+                        e.preventDefault();
+                        location.reload();
+                        return false;
+                    }
+                }
+            });
+        });
+
+        function progressBar(data, file){
+            var myInterval = setInterval(function () {
+                $.ajax({
+                    url: '{{ route("warehouse-inventory-progress-export") }}',
+                    type: 'POST',
+                    data: {
+                        batchId: data ? data : '{{session()->get("lastWarehouseInventoryBatchId")}}'
+                    },
+                    success: function(response){
+                        let totalJobs = parseInt(response.total_jobs);
+                        let pendingJobs = parseInt(response.pending_jobs);
+                        let completeJobs = totalJobs - pendingJobs;
+                        let progressPercentage = 0;
+                        if(pendingJobs == 0){
+                            progressPercentage = 100;
+                        }else{
+                            progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
+                        }
+                        
+                        $('#export-inventory').hide();
+                        $('.progress-div').show();
+                        $('#progress-bar').text(`${progressPercentage}%`);
+                        $('#progress-bar').attr('style',`width:${progressPercentage}%`);
+                        $('#progress-bar').attr('aria-valuenow',progressPercentage);
+                        
+                        if(parseInt(progressPercentage) >= 100){
+                            const url_download = '{{CRUDBooster::adminpath("warehouse_inventories/download/")}}';
+                            const folder = file ? file : '{{session()->get("folderWarehouseInventory")}}';
+                            $('#downloadBtn').attr('href',url_download+'/'+folder);
+                            $('.progress-div').hide();
+                            $('#export-inventory').show();
+                            $('#page-reload-msg').show();
+                            downloadBtn(file);
+                            clearInterval(myInterval);
+                        }
+                        
+                        if(response.finished_at){
+                            $('.progress-div').hide();
+                            $('#export-inventory').show();
+                            $('#page-reload-msg').show();
+                            downloadBtn(file);
+                            clearInterval(myInterval);
+                        }
+                    }
+                });
+            },2000); 
+        }
+
+        function  downloadBtn(data){
+            const url_download = '{{CRUDBooster::adminpath("warehouse_inventories/download/")}}';
+            const folder = data ? data : '{{session()->get("folderWarehouseInventory")}}';
+            $('#downloadBtn').attr('href',url_download+'/'+folder);
         }
     </script>
 @endpush

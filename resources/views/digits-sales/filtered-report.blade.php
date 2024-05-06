@@ -110,20 +110,20 @@
             <div class="progress-div" style="display: none">
                 <div class="marquee">
                     <div>
-                        <span>Please wait while generating file...</span>
-                        <span>Please don't leave or reload page...</span>
+                        <span class="text-danger">Please wait while generating file...</span>
+                        <span class="text-danger">Please don't leave or reload page...</span>
                     </div>
                 </div>
                 <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-            @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportStoreSales.csv")))
-                <div class="download-file">
-                    <span style="font-size: bold">Download File: </span><a href='{{CRUDBooster::adminpath("store_sales/download/".session()->get('folder'))}}' id="downloadBtn"> Here</a> 
+            {{-- @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportDigitsSales.csv"))) --}}
+                <div class="download-file" style="display: none">
+                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Here</a> 
                 </div>
-            @endif
-            <div class="page-reload-msg" style="display: none">
+            {{-- @endif --}}
+            {{-- <div class="page-reload-msg" style="display: none">
                 <span>Please wait you can download file after page reload...</span>
-            </div>
+            </div> --}}
   
         </div>
         <div class="panel-body">
@@ -200,7 +200,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Sales</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('digits-sales.export') }}" autocomplete="off">
+            <form method='post' action="{{ route('digits-sales.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))
@@ -233,8 +233,8 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' id="exportForm">
-            <input type='hidden' name='_token' value="{{ csrf_token()}}">
+            <form method='post' >
+            <input type='hidden' name='_token' value="{{ csrf_token()}}" id="exportForm">
             <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
             <input type='hidden' name='channels_id' value="{{ $channels_id }}">
             <input type='hidden' name='datefrom' value="{{ $datefrom }}">
@@ -286,16 +286,26 @@
                 type: 'POST',
                 data: $('#exportForm').serialize(),
                 success: function(result){
-                    var return_id = '';
-                    var fileName = '';
-                    if(result.batch_id){
-                        return_id = result.batch_id;
+                    if (result.status === 'success') {
+                        var return_id = '';
+                        var fileName = '';
+                        if(result.batch_id){
+                            return_id = result.batch_id;
+                        }
+                        if(result.folder){
+                            fileName = result.folder;
+                        }
+                        progressBar(return_id, fileName);
+                    
+                    } else if (result.status === 'error') {
+                        swal({
+                            type: result.status,
+                            title: result.msg,
+                        });
+                        e.preventDefault();
+                        location.reload();
+                        return false;
                     }
-                    if(result.folder){
-                        fileName = result.folder;
-                    }
-                    progressBar(return_id, fileName);
-                   
                 }
             });
         });
@@ -326,13 +336,13 @@
                         $('#progress-bar').attr('aria-valuenow',progressPercentage);
                         
                         if(parseInt(progressPercentage) >= 100){
-                            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+                            const url_download = '{{CRUDBooster::adminpath("digits_sales/download/")}}';
                             const folder = file ? file : '{{session()->get("folderSalesDigits")}}';
                             $('#downloadBtn').attr('href',url_download+'/'+folder);
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('#page-reload-msg').show();
-                            location.reload();
+                            downloadBtn(file);
                             clearInterval(myInterval);
                         }
                         
@@ -340,12 +350,18 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('#page-reload-msg').show();
-                            location.reload();
+                            downloadBtn(file);
                             clearInterval(myInterval);
                         }
                     }
                 });
-            },10000); 
+            },2000); 
+        }
+
+        function  downloadBtn(data){
+            const url_download = '{{CRUDBooster::adminpath("digits_sales/download/")}}';
+            const folder = data ? data : '{{session()->get("folderSalesDigits")}}';
+            $('#downloadBtn').attr('href',url_download+'/'+folder);
         }
     </script>
 @endpush

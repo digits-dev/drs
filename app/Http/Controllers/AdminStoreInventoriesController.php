@@ -9,6 +9,7 @@
     use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
+	use File;
 
 	class AdminStoreInventoriesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -397,6 +398,8 @@
 			$batchInfo = DB::table('job_batches')->where('id', $batchId)->first();
 			if(file_exists($file)){
 				if($batchInfo->pending_jobs == 0){
+					session()->forget('lastStoreInventoryBatchId');
+					session()->forget('folderStoreInventory');
 					return response()->streamDownload(function () use ($file, $folder) {
 						$stream = fopen($file, 'r');
 						fpassthru($stream);

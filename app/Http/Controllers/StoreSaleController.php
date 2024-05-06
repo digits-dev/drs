@@ -239,7 +239,7 @@ class StoreSaleController extends Controller
 
         return [
             'batch_id' => $this->batchId,
-            'filename' => $folder
+            'folder' => $folder
         ];
     }
 

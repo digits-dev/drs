@@ -101,27 +101,26 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-          
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
             <div class="progress-div" style="display: none">
                 <div class="marquee">
                     <div>
-                        <span>Please wait while generating file...</span>
-                        <span>Please don't leave or reload page...</span>
+                        <span class="text-danger">Please wait while generating file...</span>
+                        <span class="text-danger">Please wait while generating file...</span>
                     </div>
                 </div>
                 <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-            @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv")))
-                <div class="download-file">
-                    <span style="font-size: bold">Download File: </span><a href='{{CRUDBooster::adminpath("store_sales/download/".session()->get('folder'))}}' id="downloadBtn"> Here</a> 
+            </div><br>
+            {{-- @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv"))) --}}
+                <div class="download-file" style="display: none">
+                    <span style="font-size: bold">Click here to download: </span><a class="fileBtn"> Generated file</a> 
                 </div>
-            @endif
-            <div class="page-reload-msg" style="display: none">
+            {{-- @endif --}}
+            {{-- <div class="page-reload-msg" style="display: none">
                 <span>Please wait you can download file after page reload...</span>
-            </div>
+            </div> --}}
         </div>
         <div class="panel-body">
             <form action="{{ route('store-sales.filter') }}">
@@ -258,6 +257,10 @@
     <script>
     
         $(document).ready(function(){
+            var isSessionBatch = '{{session()->get("lastBatchId")}}';
+            if(isSessionBatch){
+                progressBar();
+            }
             $('.search').on("click", function() {
             });
             $("#sales-report-table").dataTable({
@@ -324,32 +327,30 @@
                         $('#progress-bar').attr('aria-valuenow',progressPercentage);
                         
                         if(parseInt(progressPercentage) >= 100){
-                            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
-                            const folder = file ? file : '{{session()->get("folder")}}';
-                            $('#downloadBtn').attr('href',url_download+'/'+folder);
+                            downloadBtn(file);
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.page-reload-msg').show();
-                            location.reload();
+                            $('.download-file').show();
                             clearInterval(myInterval);
                         }
                         if(response.finished_at){
+                            downloadBtn(file);
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.page-reload-msg').show();
-                            location.reload();
+                            $('.download-file').show();
                             clearInterval(myInterval);
                         }
                     }
                 });
-            },10000); 
+            },2000); 
         }
 
-        function downloadFile(data){
+        function  downloadBtn(data){
             const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
             const folder = data ? data : '{{session()->get("folder")}}';
-            $('#downloadBtn').attr('href',url_download+'/'+folder);
- 
+            $('.fileBtn').attr('href',url_download+'/'+folder);
         }
 
     </script>

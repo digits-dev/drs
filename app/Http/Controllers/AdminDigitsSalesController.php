@@ -9,6 +9,7 @@
 	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
+	use File;
 
 	class AdminDigitsSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -387,6 +388,8 @@
 			$batchInfo = DB::table('job_batches')->where('id', $batchId)->first();
 			if(file_exists($file)){
 				if($batchInfo->pending_jobs == 0){
+					session()->forget('lastDigitSalesBatchId');
+					session()->forget('folderSalesDigits');
 					return response()->streamDownload(function () use ($file, $folder) {
 						$stream = fopen($file, 'r');
 						fpassthru($stream);

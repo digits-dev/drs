@@ -19,6 +19,10 @@ use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Illuminate\Support\Str;
+use DB;
+use App\Jobs\ExportDigitsSalesCreateFileJob;
+use App\Jobs\AppendMoreDigitsSalesJob;
+use Illuminate\Support\Facades\Storage;
 
 class DigitsSaleController extends Controller
 {
@@ -233,7 +237,7 @@ class DigitsSaleController extends Controller
 
         return [
             'batch_id' => $this->batchId,
-            'filename' => $folder,
+            'folder' => $folder,
             'status'   => 'success',
             'msg'      => 'Success'
         ];

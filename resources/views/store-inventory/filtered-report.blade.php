@@ -110,20 +110,20 @@
             <div class="progress-div" style="display: none">
                 <div class="marquee">
                     <div>
-                        <span>Please wait while generating file...</span>
-                        <span>Please don't leave or reload page...</span>
+                        <span class="text-danger">Please wait while generating file...</span>
+                        <span class="text-danger">Please don't leave or reload page...</span>
                     </div>
                 </div>
                 <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-            @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportStoreSales.csv")))
+            {{-- @if(file_exists(storage_path("app/" . session()->get("folderStoreInventory") . "/ExportStoreInventory.csv"))) --}}
                 <div class="download-file">
-                    <span style="font-size: bold">Download File: </span><a href='{{CRUDBooster::adminpath("store_sales/download/".session()->get('folder'))}}' id="downloadBtn"> Here</a> 
+                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Here</a> 
                 </div>
-            @endif
-            <div class="page-reload-msg" style="display: none">
+            {{-- @endif --}}
+            {{-- <div class="page-reload-msg" style="display: none">
                 <span>Please wait you can download file after page reload...</span>
-            </div>
+            </div> --}}
   
         </div>
         <div class="panel-body">
@@ -197,7 +197,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export inventory</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('store-inventory.export') }}" autocomplete="off">
+            <form method='post'  action="{{ route('store-inventory.export') }}" autocomplete="off" id="exportForm">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             <input type='hidden' name='systems_id' value="{{ $systems_id }}">
             <input type='hidden' name='channels_id' value="{{ $channels_id }}">
@@ -218,7 +218,7 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
             </div>
         </form>
         </div>
@@ -234,7 +234,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' action="{{ route('store-inventory.export') }}" id="exportForm">
+            <form method='post' action="{{ route('store-inventory.export') }}" >
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
@@ -245,7 +245,7 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
+                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
             </div>
         </form>
         </div>
@@ -271,10 +271,10 @@
 
         $('#exportBtn').click(function(e) {
             e.preventDefault();
-            $('#modal-order-export').modal('hide');
-            $('#export-sales').hide();
+            $('#modal-inventory-export').modal('hide');
+            $('#export-inventory').hide();
             $('.download-file').hide();
-            $('#export-sales').hide();
+            $('#export-inventory').hide();
             $('.progress-div').show();
             $.ajax({
                 url: '{{ route("digits-sales.export") }}',
@@ -311,7 +311,7 @@
                     url: '{{ route("store-inventory-progress-export") }}',
                     type: 'POST',
                     data: {
-                        batchId: data ? data : '{{session()->get("lastDigitSalesBatchId")}}'
+                        batchId: data ? data : '{{session()->get("lastStoreInventoryBatchId")}}'
                     },
                     success: function(response){
                         let totalJobs = parseInt(response.total_jobs);
@@ -324,33 +324,39 @@
                             progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
                         }
                         
-                        $('#export-sales').hide();
+                        $('#export-inventory').hide();
                         $('.progress-div').show();
                         $('#progress-bar').text(`${progressPercentage}%`);
                         $('#progress-bar').attr('style',`width:${progressPercentage}%`);
                         $('#progress-bar').attr('aria-valuenow',progressPercentage);
                         
                         if(parseInt(progressPercentage) >= 100){
-                            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
-                            const folder = file ? file : '{{session()->get("folderSalesDigits")}}';
+                            const url_download = '{{CRUDBooster::adminpath("store_inventories/download/")}}';
+                            const folder = file ? file : '{{session()->get("folderStoreInventory")}}';
                             $('#downloadBtn').attr('href',url_download+'/'+folder);
                             $('.progress-div').hide();
-                            $('#export-sales').show();
+                            $('#export-inventory').show();
                             $('#page-reload-msg').show();
-                            location.reload();
+                            downloadBtn(file);
                             clearInterval(myInterval);
                         }
                         
                         if(response.finished_at){
                             $('.progress-div').hide();
-                            $('#export-sales').show();
+                            $('#export-inventory').show();
                             $('#page-reload-msg').show();
-                            location.reload();
+                            downloadBtn(file);
                             clearInterval(myInterval);
                         }
                     }
                 });
-            },10000); 
+            },2000); 
+        }
+
+        function  downloadBtn(data){
+            const url_download = '{{CRUDBooster::adminpath("store_inventories/download/")}}';
+            const folder = data ? data : '{{session()->get("folderStoreInventory")}}';
+            $('#downloadBtn').attr('href',url_download+'/'+folder);
         }
     </script>
 @endpush

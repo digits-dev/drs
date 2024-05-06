@@ -9,6 +9,7 @@
 	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
+	use File;
 
 	class AdminWarehouseInventoriesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -392,5 +393,31 @@
 		$data['result']->appends($request->except(['_token']));
 		return view('warehouse-inventory.filtered-report',$data);
 
+		}
+
+		public function getDownload($folder) {
+			$file = storage_path("app/{$folder}/ExportWarehouseInventory.csv");
+			$batchId = session()->get('lastWarehouseInventoryBatchId');
+			$batchInfo = DB::table('job_batches')->where('id', $batchId)->first();
+			if(file_exists($file)){
+				if($batchInfo->pending_jobs == 0){
+					session()->forget('lastWarehouseInventoryBatchId');
+					session()->forget('folderWarehouseInventory');
+					return response()->streamDownload(function () use ($file, $folder) {
+						$stream = fopen($file, 'r');
+						fpassthru($stream);
+						fclose($stream);
+						File::deleteDirectory(storage_path("app/{$folder}"));
+					},$stream, [
+						'Content-Type' => $file,
+						'Content-Disposition' => 'attachment; filename="ExportWarehouseInventory-'.date('Y-m-d H:i:s').'.csv"',
+					]);
+				}else{
+					return CRUDBooster::redirect(CRUDBooster::adminPath('warehouse_inventories'),'Generate file not finish!', 'danger');
+				}
+			}else{
+				return CRUDBooster::redirect(CRUDBooster::adminPath('warehouse_inventories'),'Already downloaded!', 'danger');
+			}
+			
 		}
 	}
