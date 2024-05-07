@@ -117,7 +117,7 @@
                 <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             {{-- @if(file_exists(storage_path("app/" . session()->get("folderWarehouseInventory") . "/ExportWarehouseInventory.csv"))) --}}
-                <div class="download-file">
+                <div class="download-file" style="display: none">
                     <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Here</a> 
                 </div>
             {{-- @endif --}}
@@ -338,7 +338,10 @@
 @push('bottom')
     <script>
         $(document).ready(function(){
-
+            var isSessionBatch = '{{session()->get("lastWarehouseInventoryBatchId")}}';
+            if(isSessionBatch){
+                progressBar();
+            }
             $('.search').on("click", function() {
 
             });
@@ -431,6 +434,7 @@
                             $('.progress-div').hide();
                             $('#export-inventory').show();
                             $('#page-reload-msg').show();
+                            $('.download-file').show();
                             downloadBtn(file);
                             clearInterval(myInterval);
                         }
@@ -439,6 +443,7 @@
                             $('.progress-div').hide();
                             $('#export-inventory').show();
                             $('#page-reload-msg').show();
+                            $('.download-file').show();
                             downloadBtn(file);
                             clearInterval(myInterval);
                         }

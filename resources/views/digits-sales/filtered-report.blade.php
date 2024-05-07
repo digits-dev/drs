@@ -260,6 +260,10 @@
 @push('bottom')
     <script>
         $(document).ready(function(){
+            var isSessionBatch = '{{session()->get("lastDigitSalesBatchId")}}';
+            if(isSessionBatch){
+                progressBar();
+            }
             $('.search').on("click", function() {
             });
             $("#sales-report-table").dataTable({
@@ -343,6 +347,7 @@
                             $('#export-sales').show();
                             $('#page-reload-msg').show();
                             downloadBtn(file);
+                            $('.download-file').show();
                             clearInterval(myInterval);
                         }
                         
@@ -351,6 +356,7 @@
                             $('#export-sales').show();
                             $('#page-reload-msg').show();
                             downloadBtn(file);
+                            $('.download-file').show();
                             clearInterval(myInterval);
                         }
                     }
