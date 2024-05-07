@@ -34,7 +34,7 @@ class AppendMoreDigitsSalesJob implements ShouldQueue
 
     public function handle()
     {
-        $digitsSales = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
+        $digitsSales = DigitsSale::filterForReport(DigitsSale::generateReport(), $this->filters)
             ->skip($this->chunkIndex * $this->chunkSize)
             ->take($this->chunkSize)
             ->get()

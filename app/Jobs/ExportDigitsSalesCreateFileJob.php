@@ -31,7 +31,7 @@ class ExportDigitsSalesCreateFileJob implements ShouldQueue
 
     public function handle(){
 
-        $digitsSales = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
+        $digitsSales = DigitsSale::filterForReport(DigitsSale::generateReport(), $this->filters)
             ->take($this->chunkSize)
             ->get();
 
