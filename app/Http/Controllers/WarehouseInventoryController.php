@@ -200,7 +200,7 @@ class WarehouseInventoryController extends Controller
             new ExportWarehouseInventoryCreateFileJob($chunkSize, $folder, $filters, $filename)
         ];
 
-        if ($storeSalesCount > $chunkSize) {
+        if ($warehouseInventoryCount > $chunkSize) {
             $numberOfChunks = $numberOfChunks - 1;
             for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
                 $batches[] = new AppendMoreWarehouseInventoryJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);

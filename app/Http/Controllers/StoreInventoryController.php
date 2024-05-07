@@ -201,7 +201,7 @@ class StoreInventoryController extends Controller
             new ExportStoreInventoryCreateFileJob($chunkSize, $folder, $filters, $filename)
         ];
 
-        if ($storeSalesCount > $chunkSize) {
+        if ($storeInventoryCount > $chunkSize) {
             $numberOfChunks = $numberOfChunks - 1;
             for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
                 $batches[] = new AppendMoreStoreInventoryJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);

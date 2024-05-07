@@ -205,7 +205,7 @@ class DigitsSaleController extends Controller
             new ExportDigitsSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
         ];
      
-        if ($storeSalesCount > $chunkSize) {
+        if ($digitsSalesCount > $chunkSize) {
             $numberOfChunks = $numberOfChunks - 1;
             for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
                 $batches[] = new AppendMoreDigitsSalesJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
