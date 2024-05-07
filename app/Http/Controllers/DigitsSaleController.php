@@ -194,7 +194,8 @@ class DigitsSaleController extends Controller
         $filename = $request->input('filename').'.csv';
         $filters = $request->all();
         // $query = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters);
-        $digitsSalesCount = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)->count();
+        $digitsSalesCount = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
+        ->where('is_final', 1)->count();
         if($digitsSalesCount == 0){
             return response()->json(['msg'=>'Nothing to export','status'=>'error']);
         }
