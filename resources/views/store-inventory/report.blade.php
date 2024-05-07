@@ -106,15 +106,7 @@
             <a href="javascript:showInventoryReportExport()" id="export-inventory" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Inventory
             </a>
-            <div class="progress-div" style="display: none">
-                <div class="marquee">
-                    <div>
-                        <span class="text-danger">Please wait while generating file...</span>
-                        <span class="text-danger">Please wait while generating file...</span>
-                    </div>
-                </div>
-                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
+            @include('partial.progress-bar')
             {{-- @if(file_exists(storage_path("app/" . session()->get("folderStoreInventory") . "/ExportStoreInventory.csv"))) --}}
                 <div class="download-file" style="display: none">
                     <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Generated file</a> 
