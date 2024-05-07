@@ -101,7 +101,7 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
+            <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download"></i> Export Sales
             </a>
             <div class="progress-div" style="display: none">
@@ -111,7 +111,7 @@
                         <span class="text-danger">Please wait while generating file...</span>
                     </div>
                 </div>
-                <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
             </div><br>
             {{-- @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv"))) --}}
                 <div class="download-file" style="display: none">

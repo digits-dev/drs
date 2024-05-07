@@ -111,10 +111,10 @@
                 <div class="marquee">
                     <div>
                         <span class="text-danger">Please wait while generating file...</span>
-                        <span class="text-danger">Please don't leave or reload page...</span>
+                        <span class="text-danger">Please wait while generating file...</span>
                     </div>
                 </div>
-                <div class="progress-bar progress-bar-striped bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             {{-- @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportDigitsSales.csv"))) --}}
                 <div class="download-file" style="display: none">
