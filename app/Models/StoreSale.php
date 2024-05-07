@@ -92,7 +92,7 @@ class StoreSale extends Model
                 customers.customer_name LIKE '%$search%' OR
                 concepts.concept_name LIKE '%$search%' OR
                 store_sales.receipt_number LIKE '%$search%' OR
-                store_sales.sales_date LIKE '%$search%'       
+                store_sales.sales_date LIKE '%$search%'
             ";
             if ($is_upload) {
                 $search_filter .= "
@@ -124,7 +124,7 @@ class StoreSale extends Model
             'systems.system_name AS system_name',
             'organizations.organization_name AS organization_name',
             'report_types.report_type AS report_type',
-            'channels.channel_code AS channel_code',
+            'channels.channel_code AS channel_name',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
             'concepts.concept_name AS store_concept_name',
             'store_sales.receipt_number AS receipt_number',
