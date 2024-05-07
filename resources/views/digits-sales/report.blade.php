@@ -118,7 +118,7 @@
             </div>
             {{-- @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportDigitsSales.csv"))) --}}
                 <div class="download-file" style="display: none">
-                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Here</a> 
+                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Generated file</a> 
                 </div>
             {{-- @endif --}}
             {{-- <div class="page-reload-msg" style="display: none">
