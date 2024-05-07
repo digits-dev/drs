@@ -233,8 +233,8 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' >
-            <input type='hidden' name='_token' value="{{ csrf_token()}}" id="exportForm">
+            <form method='post' id="exportForm">
+            <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
             <input type='hidden' name='channels_id' value="{{ $channels_id }}">
             <input type='hidden' name='datefrom' value="{{ $datefrom }}">

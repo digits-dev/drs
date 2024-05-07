@@ -281,7 +281,7 @@
             $('#export-inventory').hide();
             $('.progress-div').show();
             $.ajax({
-                url: '{{ route("digits-sales.export") }}',
+                url: '{{ route("store-inventory.export") }}',
                 type: 'POST',
                 data: $('#exportForm').serialize(),
                 success: function(result){
