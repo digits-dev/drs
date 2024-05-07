@@ -231,14 +231,12 @@ class StoreSaleController extends Controller
             })
             ->dispatch();
 
-        $this->batchId = $batch->id;
-
-        session()->put('lastBatchId',$this->batchId);
+        session()->put('lastBatchId',$batch->id);
         session()->put('folder',$folder);
         // session()->put('filename',$filename);
 
         return [
-            'batch_id' => $this->batchId,
+            'batch_id' => $batch->id,
             'folder' => $folder
         ];
     }

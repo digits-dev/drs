@@ -225,14 +225,12 @@ class StoreInventoryController extends Controller
             })
             ->dispatch();
 
-        $this->batchId = $batch->id;
-
-        session()->put('lastStoreInventoryBatchId',$this->batchId);
+        session()->put('lastStoreInventoryBatchId',$batch->id);
         session()->put('folderStoreInventory',$folder);
         // session()->put('filename',$filename);
 
         return [
-            'batch_id' => $this->batchId,
+            'batch_id' => $batch->id,
             'folder' => $folder
         ];
         

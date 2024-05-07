@@ -224,14 +224,12 @@ class WarehouseInventoryController extends Controller
             })
             ->dispatch();
 
-        $this->batchId = $batch->id;
-
-        session()->put('lastWarehouseInventoryBatchId',$this->batchId);
+        session()->put('lastWarehouseInventoryBatchId',$batch->id);
         session()->put('folderWarehouseInventory',$folder);
         // session()->put('filename',$filename);
 
         return [
-            'batch_id' => $this->batchId,
+            'batch_id' => $batch->id,
             'folder' => $folder
         ];
     }

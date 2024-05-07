@@ -229,14 +229,12 @@ class DigitsSaleController extends Controller
             })
             ->dispatch();
 
-        $this->batchId = $batch->id;
-
-        session()->put('lastDigitSalesBatchId',$this->batchId);
+        session()->put('lastDigitSalesBatchId',$batch->id);
         session()->put('folderSalesDigits',$folder);
         // session()->put('filename',$filename);
 
         return [
-            'batch_id' => $this->batchId,
+            'batch_id' => $batch->id,
             'folder' => $folder,
             'status'   => 'success',
             'msg'      => 'Success'
