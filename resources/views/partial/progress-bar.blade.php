@@ -6,5 +6,7 @@
             <span class="text-danger">Please wait while generating file...</span>
         </div>
     </div>
-    <div class="progress-bar progress-bar-striped active" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="progress">
+        <div class="progress-bar progress-bar-striped active" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
 </div>
