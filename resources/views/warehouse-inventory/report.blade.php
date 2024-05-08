@@ -420,23 +420,20 @@
                         $('#progress-bar').attr('aria-valuenow',progressPercentage);
                         
                         if(parseInt(progressPercentage) >= 100){
-                            const url_download = '{{CRUDBooster::adminpath("warehouse_inventories/download/")}}';
-                            const folder = file ? file : '{{session()->get("folderWarehouseInventory")}}';
-                            $('#downloadBtn').attr('href',url_download+'/'+folder);
+                            downloadBtn(file);
                             $('.progress-div').hide();
                             $('#export-inventory').show();
                             $('#page-reload-msg').show();
                             $('.download-file').show();
-                            downloadBtn(file);
                             clearInterval(myInterval);
                         }
                         
                         if(response.finished_at){
+                            downloadBtn(file);
                             $('.progress-div').hide();
                             $('#export-inventory').show();
                             $('#page-reload-msg').show();
                             $('.download-file').show();
-                            downloadBtn(file);
                             clearInterval(myInterval);
                         }
                     }

@@ -231,7 +231,9 @@ class WarehouseInventoryController extends Controller
 
         return [
             'batch_id' => $batch->id,
-            'folder' => $folder
+            'folder' => $folder,
+            'status'   => 'success',
+            'msg'      => 'Success'
         ];
     }
 
