@@ -26,7 +26,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			'FAILED TO GENERATE FILE' => 'label-danger',
 		];
 
-		public $allowed_privs_to_tag_as_final = [1];
+		public $allowed_privs_to_tag_as_final = [1,3];
 
 	    public function cbInit() {
 			# START CONFIGURATION DO NOT REMOVE THIS LINE
@@ -134,9 +134,9 @@ use Maatwebsite\Excel\Facades\Excel;
 				'icon'=>'fa fa-file',
 				'color' => 'info',
 				'showIf' => '(
-					[importing_finished_at] && 
-					[status] != "IMPORT FAILED" && 
-					[status] != "GENERATING FILE" && 
+					[importing_finished_at] &&
+					[status] != "IMPORT FAILED" &&
+					[status] != "GENERATING FILE" &&
 					![generated_file_path]
 				)'
 			];
@@ -327,7 +327,7 @@ use Maatwebsite\Excel\Facades\Excel;
 					$batch->update([
 						'is_final' => 1,
 						'status' => 'FINAL',
-						'tagged_as_final_at' => date('Y-m-d H:i:s'), 
+						'tagged_as_final_at' => date('Y-m-d H:i:s'),
 						'tagged_as_final_by' => CRUDBooster::myId(),
 					]);
 					$store_sales = StoreSale::where('batch_number', $batch->batch)->update(['is_final' => 1]);
@@ -441,7 +441,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        //Your code here
 
 	    }
-		
+
 		public function generateFile($id) {
 			$batch = StoreSalesUpload::find($id);
 			$folder_name = $batch->folder_name;
