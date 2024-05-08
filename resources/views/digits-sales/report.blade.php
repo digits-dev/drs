@@ -108,14 +108,7 @@
             </a>
 
             @include('partial.progress-bar')
-            {{-- @if(file_exists(storage_path("app/" . session()->get("folderSalesDigits") . "/ExportDigitsSales.csv"))) --}}
-                <div class="download-file" style="display: none">
-                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Generated file</a> 
-                </div>
-            {{-- @endif --}}
-            {{-- <div class="page-reload-msg" style="display: none">
-                <span>Please wait you can download file after page reload...</span>
-            </div> --}}
+            @include('partial.download-btn')
 
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
                 <i class="fa fa-filter" aria-hidden="true"></i> Search Filter
@@ -461,7 +454,6 @@
                             $('#downloadBtn').attr('href',url_download+'/'+folder);
                             $('.progress-div').hide();
                             $('#export-sales').show();
-                            $('#page-reload-msg').show();
                             downloadBtn(file);
                             $('.download-file').show();
                             clearInterval(myInterval);
@@ -470,7 +462,6 @@
                         if(response.finished_at){
                             $('.progress-div').hide();
                             $('#export-sales').show();
-                            $('#page-reload-msg').show();
                             downloadBtn(file);
                             $('.download-file').show();
                             clearInterval(myInterval);

@@ -108,14 +108,7 @@
             </a>
 
             @include('partial.progress-bar')
-            {{-- @if(file_exists(storage_path("app/" . session()->get("folderWarehouseInventory") . "/ExportWarehouseInventory.csv"))) --}}
-                <div class="download-file" style="display: none">
-                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Generated file</a> 
-                </div>
-            {{-- @endif --}}
-            {{-- <div class="page-reload-msg" style="display: none">
-                <span>Please wait you can download file after page reload...</span>
-            </div> --}}
+            @include('partial.download-btn')
 
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
                 <i class="fa fa-search"></i> Search Filter
@@ -160,7 +153,7 @@
                     <td>{{ $row->system_name }}</td>
                     <td>{{ $row->organization_name }}</td>
                     <td>{{ $row->report_type }}</td>
-                    <td>{{ $row->channel_name }}</td>
+                    <td>{{ $row->channel_code }}</td>
                     <td>{{ $row->customer_location }}</td>
                     <td>{{ $row->store_concept_name }}</td>
                     <td>{{ $row->inventory_date }}</td>
@@ -423,7 +416,6 @@
                             downloadBtn(file);
                             $('.progress-div').hide();
                             $('#export-inventory').show();
-                            $('#page-reload-msg').show();
                             $('.download-file').show();
                             clearInterval(myInterval);
                         }
@@ -432,7 +424,6 @@
                             downloadBtn(file);
                             $('.progress-div').hide();
                             $('#export-inventory').show();
-                            $('#page-reload-msg').show();
                             $('.download-file').show();
                             clearInterval(myInterval);
                         }
