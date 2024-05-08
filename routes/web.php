@@ -49,6 +49,8 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_upload/detail/{id}', [AdminStoreSalesUploadsController::class, 'getDetail'])->name('store_sales.detail');
     //PROGRESS EXPORT
     Route::post('store_sales/progress-export',[StoreSaleController::class, 'progressExport'])->name('store-sales-progress-export');
+    Route::post('store_sales/send-email',[StoreSaleController::class, 'sendEmail'])->name('store-sales-send-email');
+   
     Route::any('store_sales/filter',[AdminStoreSalesController::class, 'filterStoreSales'])->name('store-sales.filter');
     Route::post('store-concepts',[AdminStoreSalesController::class, 'concepts'])->name('store-concepts');
 

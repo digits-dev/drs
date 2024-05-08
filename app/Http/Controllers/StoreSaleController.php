@@ -27,6 +27,8 @@ use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
 use DB;
+use App\Mail\SendSalesToEmail;
+use Mail;
 
 class StoreSaleController extends Controller
 {
@@ -252,5 +254,20 @@ class StoreSaleController extends Controller
             Log::error($e);
             dd($e);
         }
+    }
+
+    public function sendEmail(Request $request){
+        // Retrieve data from the request
+        $data = [];
+        $data['folder'] = $request->folderName;
+        $data['filename'] = $request->filename;
+        $email = DB::table('cms_users')->where('id', CRUDBooster::myId())->first();
+        $data['employee'] = $email->name;
+        
+        // Send email with attachment
+        Mail::to($email->email)->send(new SendSalesToEmail($data));
+
+        // You can return a response if needed
+        return response()->json(['message' => 'Email sent successfully']);
     }
 }

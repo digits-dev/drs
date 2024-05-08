@@ -441,6 +441,7 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.download-file').show();
+                            sendToEmail();
                             clearInterval(myInterval);
                         }
 
@@ -449,6 +450,7 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.download-file').show();
+                            sendToEmail();
                             clearInterval(myInterval);
                         }
                     }
@@ -460,6 +462,24 @@
             const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
             const folder = data ? data : '{{session()->get("folder")}}';
             $('#downloadBtn').attr('href',url_download+'/'+folder);
+        }
+
+        function sendToEmail(batchId, folderName){
+            $.ajax({
+                url: '{{ route("store-sales-send-email") }}',
+                type: 'POST',
+                data: {
+                    batchId: batchId ? batchId : '{{session()->get("lastBatchId")}}',
+                    folderName: folderName ? folderName : '{{session()->get("folder")}}',
+                    filename: 'ExportStoreSales.csv'
+                },
+                success: function(response) {
+                   console.log(response);
+                },
+                error: function(xhr, status, error) {
+                  
+                }
+            });
         }
 
     </script>
