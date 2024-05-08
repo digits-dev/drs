@@ -107,11 +107,7 @@
             @include('partial.progress-bar')
             {{-- @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv"))) --}}
                 <div class="download-file" style="display: none">
-<<<<<<< Updated upstream
-                    <span style="font-size: bold">Click here to download: </span><a class="fileBtn"> <span style="color:#00a65a">Generated file</span></a> 
-=======
-                    <span style="font-size: bold">Click here to download: </span><a class="fileBtn"> Generated file</a>
->>>>>>> Stashed changes
+                    <span style="font-size: bold">Click here to download: </span><a class="fileBtn"> <span style="color:#00a65a">Generated file</span></a>
                 </div>
             {{-- @endif --}}
             {{-- <div class="page-reload-msg" style="display: none">
