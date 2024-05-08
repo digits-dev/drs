@@ -55,7 +55,7 @@
         .progress{
             border-radius: 40px !important;
             background-color: white !important;
-            
+
             /* Changes below */
             -webkit-box-shadow: inset 0 0 0 2px #337AB7 !important;
             -moz-box-shadow: inset 0 0 0 2px #337AB7 !important;
@@ -102,14 +102,18 @@
 
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
-        
+
             <a href="javascript:showSalesReportExport()" id="export-sales" class="btn btn-primary btn-sm">
                 <i class="fa fa-download"></i> Export Sales
             </a>
             @include('partial.progress-bar')
             {{-- @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv"))) --}}
                 <div class="download-file" style="display: none">
+<<<<<<< Updated upstream
                     <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> <span style="color:#00a65a">Generated file</span></a> 
+=======
+                    <span style="font-size: bold">Click here to download: </span><a id="downloadBtn"> Generated file</a>
+>>>>>>> Stashed changes
                 </div>
             {{-- @endif --}}
             {{-- <div class="page-reload-msg" style="display: none">
@@ -137,7 +141,7 @@
                     </div>
                 </div>
             </form>
-            
+
             <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
                 <thead>
                     <tr>
@@ -160,7 +164,7 @@
                     <td>{{ $row->system_name }}</td>
                     <td>{{ $row->organization_name }}</td>
                     <td>{{ $row->report_type }}</td>
-                    <td>{{ $row->channel_name }}</td>
+                    <td>{{ $row->channel_code }}</td>
                     <td>{{ $row->customer_location }}</td>
                     <td>{{ $row->store_concept_name }}</td>
                     <td>{{ $row->receipt_number }}</td>
@@ -177,7 +181,7 @@
                 </tbody>
             </table>
            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <p>Showing {{ $result->firstItem() ?? 0 }} to {{ $result->lastItem() ?? 0 }} of {{ $result->total() }} items.</p>      
+                <p>Showing {{ $result->firstItem() ?? 0 }} to {{ $result->lastItem() ?? 0 }} of {{ $result->total() }} items.</p>
                 {{ $result->links() }}
             </div>
         </div>
@@ -316,7 +320,7 @@
                 <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
                     <span aria-hidden='true'>×</span></button>
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
-              
+
             </div>
 
             <form method='post' action="{{ CRUDBooster::mainpath("export")}}" id="exportForm">
@@ -340,7 +344,7 @@
 
 @push('bottom')
     <script>
-     
+
         $(document).ready(function(){
             var isSessionBatch = '{{session()->get("lastBatchId")}}';
             if(isSessionBatch){
@@ -380,14 +384,14 @@
             {
                 let i;
                 let showData = [];
-    
+
                 showData[0] = "<option selected disabled value=''>Please select Concept</option>";
                 for (i = 0; i < result.length; ++i) {
                         showData[i+1] = "<option value='"+result[i].id+"'>"+result[i].concept_name+"</option>";
                 }
                 $('#concept').removeAttr("disabled")
                 $('#concept').find('option').remove();
-                jQuery("#concept").html(showData); 
+                jQuery("#concept").html(showData);
             }
             })
         })
@@ -413,7 +417,7 @@
                         fileName = result.folder;
                     }
                     progressBar(return_id, fileName);
-                   
+
                 }
             });
         });
@@ -436,13 +440,13 @@
                         }else{
                             progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
                         }
-                        
+
                         $('#export-sales').hide();
                         $('.progress-div').show();
                         $('#progress-bar').text(`${progressPercentage}%`);
                         $('#progress-bar').attr('style',`width:${progressPercentage}%`);
                         $('#progress-bar').attr('aria-valuenow',progressPercentage);
-                        
+
                         if(parseInt(progressPercentage) >= 100){
                             downloadBtn(file);
                             $('.progress-div').hide();
@@ -451,7 +455,7 @@
                             $('.download-file').show();
                             clearInterval(myInterval);
                         }
-                        
+
                         if(response.finished_at){
                             downloadBtn(file);
                             $('.progress-div').hide();
@@ -462,7 +466,7 @@
                         }
                     }
                 });
-            },2000); 
+            },2000);
         }
 
         function downloadBtn(data){

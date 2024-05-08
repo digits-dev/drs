@@ -2,7 +2,7 @@
 
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.24/dist/sweetalert2.min.css" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
- 
+
     <style type="text/css">
         table{
             border-collapse: collapse;
@@ -53,7 +53,7 @@
         .progress{
             border-radius: 40px !important;
             background-color: white !important;
-            
+
             /* Changes below */
             -webkit-box-shadow: inset 0 0 0 2px #337AB7 !important;
             -moz-box-shadow: inset 0 0 0 2px #337AB7 !important;
@@ -90,7 +90,7 @@
             100% { left: -100%; }
         }
 
-    
+
     </style>
 
 @endpush
@@ -107,7 +107,11 @@
             @include('partial.progress-bar')
             {{-- @if(file_exists(storage_path("app/" . session()->get("folder") . "/ExportStoreSales.csv"))) --}}
                 <div class="download-file" style="display: none">
+<<<<<<< Updated upstream
                     <span style="font-size: bold">Click here to download: </span><a class="fileBtn"> <span style="color:#00a65a">Generated file</span></a> 
+=======
+                    <span style="font-size: bold">Click here to download: </span><a class="fileBtn"> Generated file</a>
+>>>>>>> Stashed changes
                 </div>
             {{-- @endif --}}
             {{-- <div class="page-reload-msg" style="display: none">
@@ -159,7 +163,7 @@
                     <td>{{ $row->system_name }}</td>
                     <td>{{ $row->organization_name }}</td>
                     <td>{{ $row->report_type }}</td>
-                    <td>{{ $row->channel_name }}</td>
+                    <td>{{ $row->channel_code }}</td>
                     <td>{{ $row->customer_location }}</td>
                     <td>{{ $row->store_concept_name }}</td>
                     <td>{{ $row->receipt_number }}</td>
@@ -171,7 +175,7 @@
                 </tbody>
             </table>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <p>Showing {{ $result->firstItem() ?? 0 }} to {{ $result->lastItem() ?? 0 }} of {{ $result->total() }} items.</p>      
+                <p>Showing {{ $result->firstItem() ?? 0 }} to {{ $result->lastItem() ?? 0 }} of {{ $result->total() }} items.</p>
                 {{ $result->links() }}
             </div>
         </div>
@@ -247,7 +251,7 @@
 
 @push('bottom')
     <script>
-    
+
         $(document).ready(function(){
             var isSessionBatch = '{{session()->get("lastBatchId")}}';
             if(isSessionBatch){
@@ -288,7 +292,7 @@
                         fileName = result.folder;
                     }
                     progressBar(return_id, fileName);
-                   
+
                 }
             });
         });
@@ -317,7 +321,7 @@
                         $('#progress-bar').text(`${progressPercentage}%`);
                         $('#progress-bar').attr('style',`width:${progressPercentage}%`);
                         $('#progress-bar').attr('aria-valuenow',progressPercentage);
-                        
+
                         if(parseInt(progressPercentage) >= 100){
                             downloadBtn(file);
                             $('.progress-div').hide();
@@ -336,7 +340,7 @@
                         }
                     }
                 });
-            },2000); 
+            },2000);
         }
 
         function  downloadBtn(data){
