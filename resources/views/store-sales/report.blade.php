@@ -312,7 +312,8 @@
 
             </div>
 
-            <form method='post' action="{{ CRUDBooster::mainpath("export")}}" id="exportForm">
+            {{-- <form method='post' action="{{ CRUDBooster::mainpath("export")}}" id="exportForm"> --}}
+        <form method='post' target='_blank' action="{{ CRUDBooster::mainpath("export")}}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             {!! CRUDBooster::getUrlParameters() !!}
             <div class='modal-body'>
@@ -323,7 +324,8 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
+                {{-- <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button> --}}
+                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
             </div>
         </form>
         </div>

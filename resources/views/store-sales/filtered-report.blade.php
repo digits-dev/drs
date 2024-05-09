@@ -214,7 +214,8 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Orders</h4>
             </div>
 
-            <form method='post' target='_blank' id="exportForm">
+            {{-- <form method='post' target='_blank' id="exportForm"> --}}
+        <form method='post' target='_blank' action="{{ route('store-sales.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' value="{{ $receipt_number }}">
             <input type='hidden' name='channels_id' value="{{ $channels_id }}">
@@ -230,7 +231,8 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
+                {{-- <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button> --}}
+                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
             </div>
         </form>
         </div>
