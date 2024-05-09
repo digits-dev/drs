@@ -441,7 +441,7 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.download-file').show();
-                            sendToEmail();
+                            // sendToEmail();
                             clearInterval(myInterval);
                         }
 
@@ -450,7 +450,7 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.download-file').show();
-                            sendToEmail();
+                            // sendToEmail();
                             clearInterval(myInterval);
                         }
                     }

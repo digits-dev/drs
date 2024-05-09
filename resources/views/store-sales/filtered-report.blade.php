@@ -316,7 +316,7 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.download-file').show();
-                            sendToEmail();
+                            // sendToEmail();
                             clearInterval(myInterval);
                         }
                         if(response.finished_at){
@@ -324,7 +324,7 @@
                             $('.progress-div').hide();
                             $('#export-sales').show();
                             $('.download-file').show();
-                            sendToEmail();
+                            // sendToEmail();
                             clearInterval(myInterval);
                         }
                     }

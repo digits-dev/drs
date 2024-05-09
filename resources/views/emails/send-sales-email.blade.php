@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Digits Asset Management System</title>
+    <title>DRS Sales Report</title>
 </head>
 <body>
     
