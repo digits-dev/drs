@@ -413,76 +413,76 @@
             });
         });
 
-        function progressBar(data, file){
-            var myInterval = setInterval(function () {
-                $.ajax({
-                    url: '{{ route("store-sales-progress-export") }}',
-                    type: 'POST',
-                    data: {
-                        batchId: data ? data : '{{session()->get("lastBatchId")}}'
-                    },
-                    success: function(response){
-                        let totalJobs = parseInt(response.total_jobs);
-                        let pendingJobs = parseInt(response.pending_jobs);
-                        let completeJobs = totalJobs - pendingJobs;
-                        let progressPercentage = 0;
-                        if(pendingJobs == 0){
-                            progressPercentage = 100;
-                        }else{
-                            progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
-                        }
+        // function progressBar(data, file){
+        //     var myInterval = setInterval(function () {
+        //         $.ajax({
+        //             url: '{{ route("store-sales-progress-export") }}',
+        //             type: 'POST',
+        //             data: {
+        //                 batchId: data ? data : '{{session()->get("lastBatchId")}}'
+        //             },
+        //             success: function(response){
+        //                 let totalJobs = parseInt(response.total_jobs);
+        //                 let pendingJobs = parseInt(response.pending_jobs);
+        //                 let completeJobs = totalJobs - pendingJobs;
+        //                 let progressPercentage = 0;
+        //                 if(pendingJobs == 0){
+        //                     progressPercentage = 100;
+        //                 }else{
+        //                     progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
+        //                 }
 
-                        $('#export-sales').hide();
-                        $('.progress-div').show();
-                        $('#progress-bar').text(`${progressPercentage}%`);
-                        $('#progress-bar').attr('style',`width:${progressPercentage}%`);
-                        $('#progress-bar').attr('aria-valuenow',progressPercentage);
+        //                 $('#export-sales').hide();
+        //                 $('.progress-div').show();
+        //                 $('#progress-bar').text(`${progressPercentage}%`);
+        //                 $('#progress-bar').attr('style',`width:${progressPercentage}%`);
+        //                 $('#progress-bar').attr('aria-valuenow',progressPercentage);
 
-                        if(parseInt(progressPercentage) >= 100){
-                            downloadBtn(file);
-                            $('.progress-div').hide();
-                            $('#export-sales').show();
-                            $('.download-file').show();
-                            // sendToEmail();
-                            clearInterval(myInterval);
-                        }
+        //                 if(parseInt(progressPercentage) >= 100){
+        //                     downloadBtn(file);
+        //                     $('.progress-div').hide();
+        //                     $('#export-sales').show();
+        //                     $('.download-file').show();
+        //                     // sendToEmail();
+        //                     clearInterval(myInterval);
+        //                 }
 
-                        if(response.finished_at){
-                            downloadBtn(file);
-                            $('.progress-div').hide();
-                            $('#export-sales').show();
-                            $('.download-file').show();
-                            // sendToEmail();
-                            clearInterval(myInterval);
-                        }
-                    }
-                });
-            },2000);
-        }
+        //                 if(response.finished_at){
+        //                     downloadBtn(file);
+        //                     $('.progress-div').hide();
+        //                     $('#export-sales').show();
+        //                     $('.download-file').show();
+        //                     // sendToEmail();
+        //                     clearInterval(myInterval);
+        //                 }
+        //             }
+        //         });
+        //     },2000);
+        // }
 
-        function downloadBtn(data){
-            const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
-            const folder = data ? data : '{{session()->get("folder")}}';
-            $('#downloadBtn').attr('href',url_download+'/'+folder);
-        }
+        // function downloadBtn(data){
+        //     const url_download = '{{CRUDBooster::adminpath("store_sales/download/")}}';
+        //     const folder = data ? data : '{{session()->get("folder")}}';
+        //     $('#downloadBtn').attr('href',url_download+'/'+folder);
+        // }
 
-        function sendToEmail(batchId, folderName){
-            $.ajax({
-                url: '{{ route("store-sales-send-email") }}',
-                type: 'POST',
-                data: {
-                    batchId: batchId ? batchId : '{{session()->get("lastBatchId")}}',
-                    folderName: folderName ? folderName : '{{session()->get("folder")}}',
-                    filename: 'ExportStoreSales.csv'
-                },
-                success: function(response) {
-                   console.log(response);
-                },
-                error: function(xhr, status, error) {
+        // function sendToEmail(batchId, folderName){
+        //     $.ajax({
+        //         url: '{{ route("store-sales-send-email") }}',
+        //         type: 'POST',
+        //         data: {
+        //             batchId: batchId ? batchId : '{{session()->get("lastBatchId")}}',
+        //             folderName: folderName ? folderName : '{{session()->get("folder")}}',
+        //             filename: 'ExportStoreSales.csv'
+        //         },
+        //         success: function(response) {
+        //            console.log(response);
+        //         },
+        //         error: function(xhr, status, error) {
                   
-                }
-            });
-        }
+        //         }
+        //     });
+        // }
 
     </script>
 @endpush

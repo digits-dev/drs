@@ -24,6 +24,8 @@ use DB;
 use App\Jobs\ExportDigitsSalesCreateFileJob;
 use App\Jobs\AppendMoreDigitsSalesJob;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ReportPrivilege;
+use Illuminate\Support\Facades\Response;
 
 class DigitsSaleController extends Controller
 {
@@ -190,57 +192,94 @@ class DigitsSaleController extends Controller
         return Excel::download($export, 'digits-sales-'.date("Ymd").'-'.date("h.i.sa").'.xlsx');
     }
 
-    public function exportSales(Request $request) {
-        $filename = $request->input('filename').'.csv';
-        $filters = $request->all();
-        // $query = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters);
-        $digitsSalesCount = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
-        ->where('is_final', 1)->count();
-        if($digitsSalesCount == 0){
-            return response()->json(['msg'=>'Nothing to export','status'=>'error']);
-        }
-        $chunkSize = 10000;
-        $numberOfChunks = ceil($digitsSalesCount / $chunkSize);
-        $folder = 'digits-sales'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
-        $batches = [
-            new ExportDigitsSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
-        ];
+    // public function exportSales(Request $request) {
+    //     $filename = $request->input('filename').'.csv';
+    //     $filters = $request->all();
+    //     // $query = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters);
+    //     $digitsSalesCount = DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
+    //     ->where('is_final', 1)->count();
+    //     if($digitsSalesCount == 0){
+    //         return response()->json(['msg'=>'Nothing to export','status'=>'error']);
+    //     }
+    //     $chunkSize = 10000;
+    //     $numberOfChunks = ceil($digitsSalesCount / $chunkSize);
+    //     $folder = 'digits-sales'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
+    //     $batches = [
+    //         new ExportDigitsSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
+    //     ];
      
-        if ($digitsSalesCount > $chunkSize) {
-            $numberOfChunks = $numberOfChunks - 1;
-            for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
-                $batches[] = new AppendMoreDigitsSalesJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
-            }
-        }
+    //     if ($digitsSalesCount > $chunkSize) {
+    //         $numberOfChunks = $numberOfChunks - 1;
+    //         for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
+    //             $batches[] = new AppendMoreDigitsSalesJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
+    //         }
+    //     }
 
-        $batch = Bus::batch($batches)
-            ->name('Export Digits Sales')
-            ->then(function (Batch $batch) use ($folder) {
-                $path = "exports/{$folder}/ExportDigitsSales.csv";
-                // upload file to s3
-                $file = storage_path("app/{$folder}/ExportDigitsSales.csv");
-                Storage::disk('s3')->put($path, file_get_contents($file));
-                // send email to admin
-            })
-            ->catch(function (Batch $batch, Throwable $e) {
-                // send email to admin or log error
-            })
-            ->finally(function (Batch $batch) use ($folder) {
-                // delete local file
-                // Storage::disk('local')->deleteDirectory($folder);
-            })
-            ->dispatch();
+    //     $batch = Bus::batch($batches)
+    //         ->name('Export Digits Sales')
+    //         ->then(function (Batch $batch) use ($folder) {
+    //             $path = "exports/{$folder}/ExportDigitsSales.csv";
+    //             // upload file to s3
+    //             $file = storage_path("app/{$folder}/ExportDigitsSales.csv");
+    //             Storage::disk('s3')->put($path, file_get_contents($file));
+    //             // send email to admin
+    //         })
+    //         ->catch(function (Batch $batch, Throwable $e) {
+    //             // send email to admin or log error
+    //         })
+    //         ->finally(function (Batch $batch) use ($folder) {
+    //             // delete local file
+    //             // Storage::disk('local')->deleteDirectory($folder);
+    //         })
+    //         ->dispatch();
 
-        session()->put('lastDigitSalesBatchId',$batch->id);
-        session()->put('folderSalesDigits',$folder);
-        // session()->put('filename',$filename);
+    //     session()->put('lastDigitSalesBatchId',$batch->id);
+    //     session()->put('folderSalesDigits',$folder);
+    //     // session()->put('filename',$filename);
 
-        return [
-            'batch_id' => $batch->id,
-            'folder' => $folder,
-            'status'   => 'success',
-            'msg'      => 'Success'
+    //     return [
+    //         'batch_id' => $batch->id,
+    //         'folder' => $folder,
+    //         'status'   => 'success',
+    //         'msg'      => 'Success'
+    //     ];
+    // }
+    public function exportSales(Request $request) {
+        $filename = $request->input('filename').'.tsv';
+        $filters = $request->all();
+        $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+    
+        $headers = [
+            'Content-Type' => 'text/tab-separated-values',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
+  
+        // Open a stream to write the response body
+        $callback = function () use($userReport, $filters) {
+            $handle = fopen('php://output', 'w');
+            
+            // Write headers
+            fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
+
+            // Query and stream data
+            DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
+            ->where('is_final', 1)
+            ->chunk(5000, function ($data) use ($handle, $userReport) {
+                $sales = explode("`,`",$userReport->report_query);
+                foreach($data as $value_data){
+                    $salesData = [];
+                    foreach ($sales as $key => $value) {
+                        array_push($salesData, $value_data->$value);
+                    }
+                    fputcsv($handle,$salesData, "\t");
+                }
+            });
+            
+            fclose($handle);
+        };
+    
+        // Return the streamed response
+        return Response::stream($callback, 200, $headers);
     }
 
     public function progressExport(Request $request){

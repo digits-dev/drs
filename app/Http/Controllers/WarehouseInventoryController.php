@@ -22,6 +22,8 @@ use DB;
 use App\Jobs\ExportWarehouseInventoryCreateFileJob;
 use App\Jobs\AppendMoreWarehouseInventoryJob;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ReportPrivilege;
+use Illuminate\Support\Facades\Response;
 
 class WarehouseInventoryController extends Controller
 {
@@ -184,57 +186,94 @@ class WarehouseInventoryController extends Controller
         return Excel::download($export, 'warehouse-inventory-'.date("Ymd").'-'.date("h.i.sa").'.xlsx');
     }
 
-    public function exportInventory(Request $request) {
-        $filename = $request->input('filename').'.csv';
-        $filters = $request->all();
+    // public function exportInventory(Request $request) {
+    //     $filename = $request->input('filename').'.csv';
+    //     $filters = $request->all();
      
-        $warehouseInventoryCount = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
-        ->where('is_final', 1)->count();
-        if($warehouseInventoryCount == 0){
-            return response()->json(['msg'=>'Nothing to export','status'=>'error']);
-        }
-        $chunkSize = 10000;
-        $numberOfChunks = ceil($warehouseInventoryCount / $chunkSize);
-        $folder = 'warehouse-inventory'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
-        $batches = [
-            new ExportWarehouseInventoryCreateFileJob($chunkSize, $folder, $filters, $filename)
-        ];
+    //     $warehouseInventoryCount = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
+    //     ->where('is_final', 1)->count();
+    //     if($warehouseInventoryCount == 0){
+    //         return response()->json(['msg'=>'Nothing to export','status'=>'error']);
+    //     }
+    //     $chunkSize = 10000;
+    //     $numberOfChunks = ceil($warehouseInventoryCount / $chunkSize);
+    //     $folder = 'warehouse-inventory'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
+    //     $batches = [
+    //         new ExportWarehouseInventoryCreateFileJob($chunkSize, $folder, $filters, $filename)
+    //     ];
 
-        if ($warehouseInventoryCount > $chunkSize) {
-            $numberOfChunks = $numberOfChunks - 1;
-            for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
-                $batches[] = new AppendMoreWarehouseInventoryJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
-            }
-        }
+    //     if ($warehouseInventoryCount > $chunkSize) {
+    //         $numberOfChunks = $numberOfChunks - 1;
+    //         for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
+    //             $batches[] = new AppendMoreWarehouseInventoryJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
+    //         }
+    //     }
     
-        $batch = Bus::batch($batches)
-            ->name('Export Warehouse Inventory')
-            ->then(function (Batch $batch) use ($folder) {
-                $path = "exports/{$folder}/ExportWarehouseInventory.csv";
-                // upload file to s3
-                $file = storage_path("app/{$folder}/ExportWarehouseInventory.csv");
-                Storage::disk('s3')->put($path, file_get_contents($file));
-                // send email to admin
-            })
-            ->catch(function (Batch $batch, Throwable $e) {
-                // send email to admin or log error
-            })
-            ->finally(function (Batch $batch) use ($folder) {
-                // delete local file
-                // Storage::disk('local')->deleteDirectory($folder);
-            })
-            ->dispatch();
+    //     $batch = Bus::batch($batches)
+    //         ->name('Export Warehouse Inventory')
+    //         ->then(function (Batch $batch) use ($folder) {
+    //             $path = "exports/{$folder}/ExportWarehouseInventory.csv";
+    //             // upload file to s3
+    //             $file = storage_path("app/{$folder}/ExportWarehouseInventory.csv");
+    //             Storage::disk('s3')->put($path, file_get_contents($file));
+    //             // send email to admin
+    //         })
+    //         ->catch(function (Batch $batch, Throwable $e) {
+    //             // send email to admin or log error
+    //         })
+    //         ->finally(function (Batch $batch) use ($folder) {
+    //             // delete local file
+    //             // Storage::disk('local')->deleteDirectory($folder);
+    //         })
+    //         ->dispatch();
 
-        session()->put('lastWarehouseInventoryBatchId',$batch->id);
-        session()->put('folderWarehouseInventory',$folder);
-        // session()->put('filename',$filename);
+    //     session()->put('lastWarehouseInventoryBatchId',$batch->id);
+    //     session()->put('folderWarehouseInventory',$folder);
+    //     // session()->put('filename',$filename);
 
-        return [
-            'batch_id' => $batch->id,
-            'folder' => $folder,
-            'status'   => 'success',
-            'msg'      => 'Success'
+    //     return [
+    //         'batch_id' => $batch->id,
+    //         'folder' => $folder,
+    //         'status'   => 'success',
+    //         'msg'      => 'Success'
+    //     ];
+    // }
+    public function exportInventory(Request $request) {
+        $filename = $request->input('filename').'.tsv';
+        $filters = $request->all();
+        $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+    
+        $headers = [
+            'Content-Type' => 'text/tab-separated-values',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
+  
+        // Open a stream to write the response body
+        $callback = function () use($userReport, $filters) {
+            $handle = fopen('php://output', 'w');
+            
+            // Write headers
+            fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
+
+            // Query and stream data
+            WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
+            ->where('is_final', 1)
+            ->chunk(5000, function ($data) use ($handle, $userReport) {
+                $sales = explode("`,`",$userReport->report_query);
+                foreach($data as $value_data){
+                    $salesData = [];
+                    foreach ($sales as $key => $value) {
+                        array_push($salesData, $value_data->$value);
+                    }
+                    fputcsv($handle,$salesData, "\t");
+                }
+            });
+            
+            fclose($handle);
+        };
+    
+        // Return the streamed response
+        return Response::stream($callback, 200, $headers);
     }
 
     public function progressExport(Request $request){

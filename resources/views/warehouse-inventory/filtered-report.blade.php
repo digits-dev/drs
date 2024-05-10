@@ -182,7 +182,8 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export inventory</h4>
             </div>
 
-            <form method='post' action="{{ route('warehouse-inventory.export') }}" autocomplete="off" id="exportForm">
+            {{-- <form method='post' action="{{ route('warehouse-inventory.export') }}" autocomplete="off" id="exportForm"> --}}
+            <form method='post' target='_blank' action="{{ route('warehouse-inventory.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             <input type='hidden' name='systems_id' value="{{ $systems_id }}">
             <input type='hidden' name='channels_id' value="{{ $channels_id }}">
@@ -203,7 +204,8 @@
             </div>
             <div class='modal-footer' align='right'>
                 <button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-                <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button>
+                {{-- <button class='btn btn-primary btn-submit' type='submit' id="exportBtn">Submit</button> --}}
+                <button class='btn btn-primary btn-submit' type='submit'>Submit</button>
             </div>
         </form>
         </div>
@@ -258,91 +260,91 @@
             $('#modal-inventory-export').modal('show');
         }
 
-        $('#exportBtn').click(function(e) {
-            e.preventDefault();
-            $('#modal-inventory-export').modal('hide');
-            $('#export-inventory').hide();
-            $('.download-file').hide();
-            $('#export-inventory').hide();
-            $('.progress-div').show();
-            $.ajax({
-                url: '{{ route("warehouse-inventory.export") }}',
-                type: 'POST',
-                data: $('#exportForm').serialize(),
-                success: function(result){
-                    if (result.status === 'success') {
-                        var return_id = '';
-                        var fileName = '';
-                        if(result.batch_id){
-                            return_id = result.batch_id;
-                        }
-                        if(result.folder){
-                            fileName = result.folder;
-                        }
-                        progressBar(return_id, fileName);
+        // $('#exportBtn').click(function(e) {
+        //     e.preventDefault();
+        //     $('#modal-inventory-export').modal('hide');
+        //     $('#export-inventory').hide();
+        //     $('.download-file').hide();
+        //     $('#export-inventory').hide();
+        //     $('.progress-div').show();
+        //     $.ajax({
+        //         url: '{{ route("warehouse-inventory.export") }}',
+        //         type: 'POST',
+        //         data: $('#exportForm').serialize(),
+        //         success: function(result){
+        //             if (result.status === 'success') {
+        //                 var return_id = '';
+        //                 var fileName = '';
+        //                 if(result.batch_id){
+        //                     return_id = result.batch_id;
+        //                 }
+        //                 if(result.folder){
+        //                     fileName = result.folder;
+        //                 }
+        //                 progressBar(return_id, fileName);
                     
-                    } else if (result.status === 'error') {
-                        swal({
-                            type: result.status,
-                            title: result.msg,
-                        });
-                        e.preventDefault();
-                        location.reload();
-                        return false;
-                    }
-                }
-            });
-        });
+        //             } else if (result.status === 'error') {
+        //                 swal({
+        //                     type: result.status,
+        //                     title: result.msg,
+        //                 });
+        //                 e.preventDefault();
+        //                 location.reload();
+        //                 return false;
+        //             }
+        //         }
+        //     });
+        // });
 
-        function progressBar(data, file){
-            var myInterval = setInterval(function () {
-                $.ajax({
-                    url: '{{ route("warehouse-inventory-progress-export") }}',
-                    type: 'POST',
-                    data: {
-                        batchId: data ? data : '{{session()->get("lastWarehouseInventoryBatchId")}}'
-                    },
-                    success: function(response){
-                        let totalJobs = parseInt(response.total_jobs);
-                        let pendingJobs = parseInt(response.pending_jobs);
-                        let completeJobs = totalJobs - pendingJobs;
-                        let progressPercentage = 0;
-                        if(pendingJobs == 0){
-                            progressPercentage = 100;
-                        }else{
-                            progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
-                        }
+        // function progressBar(data, file){
+        //     var myInterval = setInterval(function () {
+        //         $.ajax({
+        //             url: '{{ route("warehouse-inventory-progress-export") }}',
+        //             type: 'POST',
+        //             data: {
+        //                 batchId: data ? data : '{{session()->get("lastWarehouseInventoryBatchId")}}'
+        //             },
+        //             success: function(response){
+        //                 let totalJobs = parseInt(response.total_jobs);
+        //                 let pendingJobs = parseInt(response.pending_jobs);
+        //                 let completeJobs = totalJobs - pendingJobs;
+        //                 let progressPercentage = 0;
+        //                 if(pendingJobs == 0){
+        //                     progressPercentage = 100;
+        //                 }else{
+        //                     progressPercentage = parseInt(completeJobs/totalJobs*100).toFixed(0);
+        //                 }
                         
-                        $('#export-inventory').hide();
-                        $('.progress-div').show();
-                        $('#progress-bar').text(`${progressPercentage}%`);
-                        $('#progress-bar').attr('style',`width:${progressPercentage}%`);
-                        $('#progress-bar').attr('aria-valuenow',progressPercentage);
+        //                 $('#export-inventory').hide();
+        //                 $('.progress-div').show();
+        //                 $('#progress-bar').text(`${progressPercentage}%`);
+        //                 $('#progress-bar').attr('style',`width:${progressPercentage}%`);
+        //                 $('#progress-bar').attr('aria-valuenow',progressPercentage);
                         
-                        if(parseInt(progressPercentage) >= 100){
-                            downloadBtn(file);
-                            $('.progress-div').hide();
-                            $('#export-inventory').show();
-                            $('.download-file').show();
-                            clearInterval(myInterval);
-                        }
+        //                 if(parseInt(progressPercentage) >= 100){
+        //                     downloadBtn(file);
+        //                     $('.progress-div').hide();
+        //                     $('#export-inventory').show();
+        //                     $('.download-file').show();
+        //                     clearInterval(myInterval);
+        //                 }
                         
-                        if(response.finished_at){
-                            downloadBtn(file);
-                            $('.progress-div').hide();
-                            $('#export-inventory').show();
-                            $('.download-file').show();
-                            clearInterval(myInterval);
-                        }
-                    }
-                });
-            },2000); 
-        }
+        //                 if(response.finished_at){
+        //                     downloadBtn(file);
+        //                     $('.progress-div').hide();
+        //                     $('#export-inventory').show();
+        //                     $('.download-file').show();
+        //                     clearInterval(myInterval);
+        //                 }
+        //             }
+        //         });
+        //     },2000); 
+        // }
 
-        function  downloadBtn(data){
-            const url_download = '{{CRUDBooster::adminpath("warehouse_inventories/download/")}}';
-            const folder = data ? data : '{{session()->get("folderWarehouseInventory")}}';
-            $('#downloadBtn').attr('href',url_download+'/'+folder);
-        }
+        // function  downloadBtn(data){
+        //     const url_download = '{{CRUDBooster::adminpath("warehouse_inventories/download/")}}';
+        //     const folder = data ? data : '{{session()->get("folderWarehouseInventory")}}';
+        //     $('#downloadBtn').attr('href',url_download+'/'+folder);
+        // }
     </script>
 @endpush

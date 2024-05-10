@@ -23,6 +23,8 @@ use DB;
 use App\Jobs\ExportStoreInventoryCreateFileJob;
 use App\Jobs\AppendMoreStoreInventoryJob;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ReportPrivilege;
+use Illuminate\Support\Facades\Response;
 
 class StoreInventoryController extends Controller
 {
@@ -240,13 +242,43 @@ class StoreInventoryController extends Controller
     // }
 
     public function exportInventory(Request $request) {
-        $filename = $request->input('filename');
-
+        $filename = $request->input('filename').'.tsv';
         $filters = $request->all();
-        $query = StoreInventory::filterForReport(StoreInventory::generateReport(), $filters)
-            ->where('is_final', 1);
-        return Excel::download(new StoreInventoryExport($query), $filename.'.xlsx');
+        $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+    
+        $headers = [
+            'Content-Type' => 'text/tab-separated-values',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+  
+        // Open a stream to write the response body
+        $callback = function () use($userReport, $filters) {
+            $handle = fopen('php://output', 'w');
+            
+            // Write headers
+            fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
+
+            // Query and stream data
+            StoreInventory::filterForReport(StoreInventory::generateReport(), $filters)
+            ->where('is_final', 1)
+            ->chunk(5000, function ($data) use ($handle, $userReport) {
+                $sales = explode("`,`",$userReport->report_query);
+                foreach($data as $value_data){
+                    $salesData = [];
+                    foreach ($sales as $key => $value) {
+                        array_push($salesData, $value_data->$value);
+                    }
+                    fputcsv($handle,$salesData, "\t");
+                }
+            });
+            
+            fclose($handle);
+        };
+    
+        // Return the streamed response
+        return Response::stream($callback, 200, $headers);
     }
+    
     public function progressExport(Request $request){
         try{
             $batchId = $request->batchId ?? session()->get('lastStoreInventoryBatchId');
