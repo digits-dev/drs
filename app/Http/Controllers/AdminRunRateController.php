@@ -534,8 +534,9 @@ use Maatwebsite\Excel\Facades\Excel;
 				$last_12 = [];
 				$initial_wrr = [];
 				$date = DateTime::createFromFormat('Y_m', $cutoff);
+			
 				$date->modify('+1 month');
-
+				
 				for ($i = 1; $i <= 12; $i++) {
 					$date->modify('-1 month');
 					$last_12[] = $date->format('Y_m');

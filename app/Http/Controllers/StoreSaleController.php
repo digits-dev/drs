@@ -250,8 +250,8 @@ class StoreSaleController extends Controller
         $filename = $request->input('filename').'.tsv';
         $filters = $request->all();
         $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
-        // $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-        //     ->where('is_final', 1);
+        $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
+            ->where('is_final', 1);
 
         $headers = [
             'Content-Type' => 'text/tab-separated-values',
@@ -259,17 +259,14 @@ class StoreSaleController extends Controller
         ];
   
         // Open a stream to write the response body
-        $callback = function () use($userReport, $filters) {
+        $callback = function () use($userReport, $query) {
             $handle = fopen('php://output', 'w');
             
             // Write headers
             fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
 
             // Query and stream data
-            StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-            ->where('is_final', 1)
-            ->chunk(10000, function ($data) use ($handle, $userReport) {
-                
+            $query->chunk(10000, function ($data) use ($handle, $userReport) {
                     $sales = explode("`,`",$userReport->report_query);
                     foreach($data as $value_data){
                         $salesData = [];

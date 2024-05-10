@@ -248,23 +248,23 @@ class DigitsSaleController extends Controller
         $filename = $request->input('filename').'.tsv';
         $filters = $request->all();
         $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
-    
+        $query =  DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
+        ->where('is_final', 1);
         $headers = [
             'Content-Type' => 'text/tab-separated-values',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
   
         // Open a stream to write the response body
-        $callback = function () use($userReport, $filters) {
+        $callback = function () use($userReport, $query) {
             $handle = fopen('php://output', 'w');
             
             // Write headers
             fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
 
             // Query and stream data
-            DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
-            ->where('is_final', 1)
-            ->chunk(10000, function ($data) use ($handle, $userReport) {
+           
+            $query->chunk(10000, function ($data) use ($handle, $userReport) {
                 $sales = explode("`,`",$userReport->report_query);
                 foreach($data as $value_data){
                     $salesData = [];
