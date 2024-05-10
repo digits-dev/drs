@@ -264,7 +264,7 @@ class DigitsSaleController extends Controller
             // Query and stream data
             DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
             ->where('is_final', 1)
-            ->chunk(5000, function ($data) use ($handle, $userReport) {
+            ->chunk(10000, function ($data) use ($handle, $userReport) {
                 $sales = explode("`,`",$userReport->report_query);
                 foreach($data as $value_data){
                     $salesData = [];

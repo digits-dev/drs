@@ -258,7 +258,7 @@ class WarehouseInventoryController extends Controller
             // Query and stream data
             WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
             ->where('is_final', 1)
-            ->chunk(5000, function ($data) use ($handle, $userReport) {
+            ->chunk(10000, function ($data) use ($handle, $userReport) {
                 $sales = explode("`,`",$userReport->report_query);
                 foreach($data as $value_data){
                     $salesData = [];
