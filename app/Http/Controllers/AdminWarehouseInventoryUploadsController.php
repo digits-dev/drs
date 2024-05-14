@@ -26,7 +26,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			'FAILED TO GENERATE FILE' => 'label-danger',
 		];
 
-		public $allowed_privs_to_tag_as_final = [1];
+		public $allowed_privs_to_tag_as_final = [1,3];
 
 	    public function cbInit() {
 	    	# START CONFIGURATION DO NOT REMOVE THIS LINE
