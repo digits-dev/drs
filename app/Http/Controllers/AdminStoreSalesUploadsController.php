@@ -24,6 +24,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			'FILE GENERATED' => 'label-primary',
 			'FINAL' => 'label-success',
 			'FAILED TO GENERATE FILE' => 'label-danger',
+			'REJECTED' => 'label-danger',
 		];
 
 		public $allowed_privs_to_tag_as_final = [1,3];
@@ -136,6 +137,7 @@ use Maatwebsite\Excel\Facades\Excel;
 				'showIf' => '(
 					[importing_finished_at] &&
 					[status] != "IMPORT FAILED" &&
+					[status] != "REJECTED" &&
 					[status] != "GENERATING FILE" &&
 					![generated_file_path]
 				)'
@@ -146,7 +148,8 @@ use Maatwebsite\Excel\Facades\Excel;
 				'target'=>"_blank",
 				'icon'=>'fa fa-download',
 				'color' => 'success',
-				'showIf' => '([importing_finished_at] && [generated_file_path])'
+				'showIf' => '([importing_finished_at] && [generated_file_path] &&
+				[status] != "REJECTED")'
 			];
 
 
@@ -163,6 +166,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        $this->button_selected = array();
 			if (in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_final)) {
 				$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
+				$this->button_selected[] = ['label'=>'REJECT','icon'=>'fa fa-thumbs-down','name'=>'tag_as_reject'];
 			}
 
 	        /*
@@ -332,9 +336,26 @@ use Maatwebsite\Excel\Facades\Excel;
 					]);
 					$store_sales = StoreSale::where('batch_number', $batch->batch)->update(['is_final' => 1]);
 				}
+
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully tagged as final.", 'success');
+
+			}
+			
+			if($button_name == 'tag_as_reject'){
+				foreach ($id_selected as $id) {
+					$batch = StoreSalesUpload::find($id);
+					$batch = $batch->getBatchDetails();
+				
+					$batch->update([
+						'status' => 'REJECTED',
+						'deleted_at' => date('Y-m-d H:i:s')
+		
+					]);
+					
+				}
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully rejected.", 'success');
 			}
 
-			return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully tagged as final.", 'success');
 
 	    }
 
@@ -355,8 +376,6 @@ use Maatwebsite\Excel\Facades\Excel;
 					'job_batches.finished_at as importing_finished_at',
 					'job_batches.cancelled_at as importing_cancelled_at',
 				);
-
-
 	    }
 
 	    /*

@@ -17,6 +17,7 @@ use App\Http\Controllers\StoreSaleController;
 use App\Http\Controllers\StoreInventoryController;
 use App\Http\Controllers\WarehouseInventoryController;
 use App\Http\Controllers\RunRateController;
+use App\Http\Controllers\AdminAdminItemMasterController;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 
 /*
@@ -110,4 +111,6 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('run-rate/filter-run-rate',[AdminRunRateController::class, 'filterRunRate'])->name('run-rate.filter-run-rate');
     Route::get('run-rate/filter-run-rate/export', [AdminRunRateController::class, 'exportRunRate'])->name('run-rate.export-run-rate');
     
+    //Admin imfs
+    Route::post('admin/admin_items/export', [AdminAdminItemMasterController::class, 'exportData'])->name('admin_imfs_export');
 });
