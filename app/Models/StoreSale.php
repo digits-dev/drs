@@ -139,7 +139,7 @@ class StoreSale extends Model
             'store_sales.item_code AS item_code',
             'store_sales.item_description AS item_description',
             DB::raw('COALESCE(store_sales.digits_code_rr_ref, store_sales.item_code) AS digits_code_rr_ref'),
-            'all_items.digits_code AS digits_code',
+            'all_items.item_code AS digits_code',
             DB::raw('COALESCE(all_items.item_description, store_sales.item_description) AS imfs_item_description'),
             'all_items.upc_code AS upc_code',
             'all_items.upc_code2 AS upc_code2',

@@ -116,7 +116,7 @@ class StoreInventory extends Model
             'store_inventories.inventory_date AS inventory_date',
             'store_inventories.item_code AS item_code',
             'store_inventories.item_description AS item_description',
-            'all_items.digits_code AS digits_code',
+            'all_items.item_code AS digits_code',
             DB::raw('COALESCE(all_items.item_description, store_inventories.item_description) AS imfs_item_description'),
             'all_items.upc_code AS upc_code',
             'all_items.upc_code2 AS upc_code2',
