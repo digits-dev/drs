@@ -241,7 +241,7 @@ class WarehouseInventoryController extends Controller
     public function exportInventory(Request $request) {
         $filename = $request->input('filename').'.tsv';
         $filters = $request->all();
-        $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+        $userReport = ReportPrivilege::myReport(4,CRUDBooster::myPrivilegeId());
         $query = WarehouseInventory::filterForReport(WarehouseInventory::generateReport(), $filters)
         ->where('is_final', 1);
         $headers = [
