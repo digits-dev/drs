@@ -18,6 +18,8 @@ use App\Http\Controllers\StoreInventoryController;
 use App\Http\Controllers\WarehouseInventoryController;
 use App\Http\Controllers\RunRateController;
 use App\Http\Controllers\AdminAdminItemMasterController;
+use App\Http\Controllers\AdminServiceItemsController;
+use App\Http\Controllers\AdminCustomersController;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 
 /*
@@ -113,4 +115,6 @@ Route::group(['prefix'=>'admin'], function(){
     
     //Admin imfs
     Route::post('admin/admin_items/export', [AdminAdminItemMasterController::class, 'exportData'])->name('admin_imfs_export');
+    Route::post('admin/service_items/export', [AdminServiceItemsController::class, 'exportData'])->name('pos_imfs_export');
+    Route::post('admin/customers_master/export', [AdminCustomersController::class, 'exportData'])->name('customers_export');
 });

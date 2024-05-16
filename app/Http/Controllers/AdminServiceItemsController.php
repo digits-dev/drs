@@ -7,7 +7,7 @@
 	use App\Exports\AdminImfsExport;
 	use Excel;
 
-	class AdminAdminItemMasterController extends \crocodicstudio\crudbooster\controllers\CBController {
+	class AdminServiceItemsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
 
@@ -27,7 +27,7 @@
 			$this->button_filter = true;
 			$this->button_import = true;
 			$this->button_export = false;
-			$this->table = "admin_items";
+			$this->table = "service_items";
 			# END CONFIGURATION DO NOT REMOVE THIS LINE
 
 			# START COLUMNS DO NOT REMOVE THIS LINE
@@ -44,11 +44,11 @@
 
 			# START FORM DO NOT REMOVE THIS LINE
 			$this->form = [];
-			$this->form[] = ['label'=>'Item Code','name'=>'item_code','type'=>'text','validation'=>'required|min:3|max:30','width'=>'col-sm-4'];
+			$this->form[] = ['label'=>'Item Code','name'=>'item_code','type'=>'text','validation'=>'required|min:1|max:30','width'=>'col-sm-4'];
 			$this->form[] = ['label'=>'Item Description','name'=>'item_description','type'=>'text','validation'=>'required|min:5|max:100','width'=>'col-sm-4'];
-			$this->form[] = ['label'=>'Current SRP','name'=>'current_srp','type'=>'number','validation'=>'required','step'=>'0.01','width'=>'col-sm-4'];
+			$this->form[] = ['label'=>'Current SRP','name'=>'current_srp','type'=>'number','validation'=>'required','width'=>'col-sm-4'];
 			if(CRUDBooster::getCurrentMethod() == 'getEdit' || CRUDBooster::getCurrentMethod() == 'postEditSave') {
-			    $this->form[] = ['label'=>'Status','name'=>'status','type'=>'select','validation'=>'required','width'=>'col-sm-4','dataenum'=>'ACTIVE;INACTIVE'];
+		        $this->form[] = ['label'=>'Status','name'=>'status','type'=>'select','validation'=>'required','width'=>'col-sm-4','dataenum'=>'ACTIVE;INACTIVE'];
 			}
 			# END FORM DO NOT REMOVE THIS LINE
 
@@ -165,7 +165,6 @@
 				
 			";
 
-
             /*
 	        | ---------------------------------------------------------------------- 
 	        | Include HTML Code before index table 
@@ -186,34 +185,34 @@
 	        | $this->post_index_html = "<p>test</p>";
 	        |
 	        */
-	        $this->post_index_html = "
-			<div class='modal fade' tabindex='-1' role='dialog' id='modal-export'>
-			<div class='modal-dialog'>
-				<div class='modal-content'>
-					<div class='modal-header'>
-						<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
-							<span aria-hidden='true'>×</span></button>
-						<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
-					</div>
-
-					<form method='post' target='_blank' action=".route('admin_imfs_export').">
-					<input type='hidden' name='_token' value=".csrf_token().">
-					".CRUDBooster::getUrlParameters()."
-					<div class='modal-body'>
-						<div class='form-group'>
-							<label>File Name</label>
-							<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+			$this->post_index_html = "
+				<div class='modal fade' tabindex='-1' role='dialog' id='modal-export'>
+				<div class='modal-dialog'>
+					<div class='modal-content'>
+						<div class='modal-header'>
+							<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+								<span aria-hidden='true'>×</span></button>
+							<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
 						</div>
+
+						<form method='post' target='_blank' action=".route('pos_imfs_export').">
+						<input type='hidden' name='_token' value=".csrf_token().">
+						".CRUDBooster::getUrlParameters()."
+						<div class='modal-body'>
+							<div class='form-group'>
+								<label>File Name</label>
+								<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+							</div>
+						</div>
+						<div class='modal-footer' align='right'>
+							<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
+							<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+						</div>
+					</form>
 					</div>
-					<div class='modal-footer' align='right'>
-						<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-						<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
-					</div>
-				</form>
 				</div>
 			</div>
-		</div>
-			";
+				";
 	        
 	        /*
 	        | ---------------------------------------------------------------------- 
@@ -298,7 +297,7 @@
 	    */
 	    public function hook_before_add(&$postdata) {        
 	        //Your code here
-
+			$postdata['created_by']=CRUDBooster::myId();
 	    }
 
 	    /* 
@@ -310,7 +309,7 @@
 	    */
 	    public function hook_after_add($id) {        
 	        //Your code here
-			$postdata['created_by']=CRUDBooster::myId();
+
 	    }
 
 	    /* 
@@ -360,11 +359,11 @@
 	    public function hook_after_delete($id) {
 	        //Your code here
 
-	    } 
+	    }
 
 		public function exportData(Request $request) {
 			$filename = $request->input('filename');
-			$tableName = 'admin_items';
+			$tableName = 'service_items';
 			return Excel::download(new AdminImfsExport($tableName), $filename.'.csv');
 		}
 

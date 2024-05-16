@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers;
 
 	use Session;
-	use Request;
+	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
+	use App\Exports\AdminImfsExport;
+	use Excel;
 
 	class AdminCustomersController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -126,10 +128,16 @@
 	        | @icon  = Icon from Awesome.
 	        |
 	        */
-	        $this->index_button = array();
-
-
-
+	       $this->index_button = array();
+			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
+				$this->index_button[] = [
+					"title"=>"Export all data",
+					"label"=>"Export all data",
+					"icon"=>"fa fa-upload",
+					"color"=>"primary",
+					"url"=>"javascript:showExport()",
+				];
+			}
 	        /*
 	        | ----------------------------------------------------------------------
 	        | Customize Table Row Color
@@ -161,7 +169,12 @@
 	        |
 	        */
 	        $this->script_js = NULL;
-
+			$this->script_js = "
+				function showExport() {
+					$('#modal-export').modal('show');
+				}
+				
+			";
 
             /*
 	        | ----------------------------------------------------------------------
@@ -183,10 +196,34 @@
 	        | $this->post_index_html = "<p>test</p>";
 	        |
 	        */
-	        $this->post_index_html = null;
+			$this->post_index_html = "
+				<div class='modal fade' tabindex='-1' role='dialog' id='modal-export'>
+				<div class='modal-dialog'>
+					<div class='modal-content'>
+						<div class='modal-header'>
+							<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+								<span aria-hidden='true'>×</span></button>
+							<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
+						</div>
 
-
-
+						<form method='post' target='_blank' action=".route('customers_export').">
+						<input type='hidden' name='_token' value=".csrf_token().">
+						".CRUDBooster::getUrlParameters()."
+						<div class='modal-body'>
+							<div class='form-group'>
+								<label>File Name</label>
+								<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+							</div>
+						</div>
+						<div class='modal-footer' align='right'>
+							<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
+							<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+						</div>
+					</form>
+					</div>
+				</div>
+			</div>
+				";
 	        /*
 	        | ----------------------------------------------------------------------
 	        | Include Javascript File
@@ -334,5 +371,10 @@
 
 	    }
 
+		public function exportData(Request $request) {
+			$filename = $request->input('filename');
+			$tableName = 'customers';
+			return Excel::download(new AdminImfsExport($tableName), $filename.'.csv');
+		}
 
 	}
