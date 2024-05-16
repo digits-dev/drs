@@ -160,6 +160,7 @@ use Maatwebsite\Excel\Facades\Excel;
 	        $this->button_selected = array();
 			if (in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_final)) {
 				$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
+                $this->button_selected[] = ['label'=>'REJECT','icon'=>'fa fa-thumbs-down','name'=>'tag_as_reject'];
 			}
 
 	        /*
@@ -331,9 +332,16 @@ use Maatwebsite\Excel\Facades\Excel;
 					]);
 					$warehouse_inventory = WarehouseInventory::where('batch_number', $batch->batch)->update(['is_final' => 1]);
 				}
+                return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully tagged as final.", 'success');
 			}
 
-			return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully tagged as final.", 'success');
+            if ($button_name == 'tag_as_reject'){
+                WarehouseInventoryUpload::whereIn('id', $id_selected)
+                ->update([
+                    'status' => 'REJECTED',
+                    'deleted_at' => date('Y-m-d H:i:s')
+                ]);
+            }
 
 	    }
 
