@@ -32,6 +32,19 @@ class AdminImfsExport implements FromQuery, WithHeadings, WithMapping
                 'UPDATED AT'
 
             ];
+        }else if($this->table_name === 'employees'){
+            return [
+                'CHANNEL',
+                'FIRST NAME',
+                'LAST NAME',
+                'EMPLOYEE NAME',
+                'BILL TO',
+                'STATUS',
+                'CREATED BY',
+                'CREATED AT',
+                'UPDATED BY',
+                'UPDATED AT'
+            ];
         }else{
             return [
                 'CHANNEL',
@@ -64,6 +77,20 @@ class AdminImfsExport implements FromQuery, WithHeadings, WithMapping
                 $admin_items->created_at,
                 $admin_items->updater_name,
                 $admin_items->updated_at    
+            ];
+        }else if($this->table_name === 'employees'){
+            return [
+                $admin_items->channel_name,
+                $admin_items->first_name,
+                $admin_items->last_name,
+                $admin_items->employee_name,
+                $admin_items->bill_to,
+                $admin_items->status,
+                $admin_items->creator_name,
+                $admin_items->created_at,
+                $admin_items->updater_name,
+                $admin_items->updated_at    
+    
             ];
         }else{
             return [
@@ -125,9 +152,24 @@ class AdminImfsExport implements FromQuery, WithHeadings, WithMapping
                 'updater.name AS updater_name',
                 $this->table_name.'.updated_at'
             )->orderBy($this->table_name.'.id');
+        }else if(in_array($this->table_name,['employees'])){
+            $admin_items = DB::table($this->table_name)->leftJoin('cms_users AS creator', $this->table_name.'.created_by', 'creator.id')
+            ->leftJoin('cms_users AS updater', $this->table_name.'.updated_by', 'updater.id')
+            ->leftJoin('channels', $this->table_name.'.channels_id', 'channels.id')
+            ->select(
+                'channels.channel_name',
+                $this->table_name.'.first_name',
+                $this->table_name.'.last_name',
+                $this->table_name.'.employee_name',
+                $this->table_name.'.bill_to',
+                $this->table_name.'.status',
+                'creator.name AS creator_name',
+                $this->table_name.'.created_at',
+                'updater.name AS updater_name',
+                $this->table_name.'.updated_at'
+            )->orderBy($this->table_name.'.id');
         }
        
-
         return $admin_items;
     }
 }

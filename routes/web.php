@@ -20,6 +20,7 @@ use App\Http\Controllers\RunRateController;
 use App\Http\Controllers\AdminAdminItemMasterController;
 use App\Http\Controllers\AdminServiceItemsController;
 use App\Http\Controllers\AdminCustomersController;
+use App\Http\Controllers\AdminEmployeesController;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 
 /*
@@ -117,4 +118,5 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('admin/admin_items/export', [AdminAdminItemMasterController::class, 'exportData'])->name('admin_imfs_export');
     Route::post('admin/service_items/export', [AdminServiceItemsController::class, 'exportData'])->name('pos_imfs_export');
     Route::post('admin/customers_master/export', [AdminCustomersController::class, 'exportData'])->name('customers_export');
+    Route::post('admin/employees/export', [AdminEmployeesController::class, 'exportData'])->name('employees_export');
 });

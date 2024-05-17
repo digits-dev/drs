@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Organization;
 use App\Models\ReportType;
 use App\Models\StoreInventory;
+use App\Models\InventoryTransactionType;
 use App\Models\System;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,6 +43,7 @@ class StoreInventoryImport implements ToModel,
     private $employee;
     private $batch_number;
     private $report_type;
+    private $inventory_type;
 
     public function __construct($batch_number)
     {
@@ -52,6 +54,7 @@ class StoreInventoryImport implements ToModel,
         $this->employee = Employee::active();
         $this->batch_number = $batch_number;
         $this->report_type = ReportType::byName("STORE INVENTORY");
+        $this->inventory_type = InventoryTransactionType::active();
     }
 
     /**
@@ -66,31 +69,33 @@ class StoreInventoryImport implements ToModel,
         $v_channel = $this->channel->where('channel_code',$row['channel_code'])->first();
         $v_customer = $this->customer->where('customer_name',$row['customer_location'])->first();
         $v_employee = $this->employee->where('employee_name',$row['customer_location'])->first();
+        $v_inv_type = $this->inventory_type->where('inventory_transaction_type',$row['inventory_type'])->first();
 
         StoreInventory::updateOrCreate([
-            'batch_number'			=> $this->batch_number,
-            'reference_number'		=> $row['reference_number'],
+            'batch_number'			         => $this->batch_number,
+            'reference_number'		         => $row['reference_number'],
         ],[
-            'batch_date'			=> Carbon::now()->format('Ym'),
-            'reference_number'		=> $row['reference_number'],
-            'systems_id'			=> $v_system->id ?? NULL,
-            'organizations_id'	    => $v_organization->id ?? NULL,
-            'report_types_id'		=> $this->report_type,
-            'channels_id'	        => $v_channel->id ?? NULL,
-            'employees_id'          => $v_employee->id ?? NULL,
-            'customers_id'          => $v_customer->id ?? NULL,
-            // 'customer_location'		=> $row['customer_location'],
-            'inventory_date'		=> Carbon::parse($this->transformDate($row["inventory_as_of_date"]))->format("Y-m-d"),
-            'item_code'				=> $row['item_number'],
-            'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row['item_description']))),
-            'quantity_inv'			=> $row['inventory_qty'],
-            'store_cost'			=> $row['store_cost'],
-            'dtp_ecom'			    => $row['store_cost_ecomm'],
-            'qtyinv_sc'			    => ($row['inventory_qty'])*($row['store_cost']),
-            'qtyinv_ecom'			=> ($row['inventory_qty'])*($row['store_cost_ecomm']),
-            'landed_cost'			=> $row['landed_cost'],
-            'qtyinv_lc'			    => ($row['inventory_qty'])*($row['landed_cost']),
-            'batch_number'			=> $this->batch_number,
+            'batch_date'			         => Carbon::now()->format('Ym'),
+            'reference_number'		         => $row['reference_number'],
+            'systems_id'			         => $v_system->id ?? NULL,
+            'organizations_id'	             => $v_organization->id ?? NULL,
+            'report_types_id'		         => $this->report_type,
+            'channels_id'	                 => $v_channel->id ?? NULL,
+            'inventory_transaction_types_id' => $v_inv_type->id,
+            'employees_id'                   => $v_employee->id ?? NULL,
+            'customers_id'                   => $v_customer->id ?? NULL,
+            // 'customer_location'		         => $row['customer_location'],
+            'inventory_date'		         => Carbon::parse($this->transformDate($row["inventory_as_of_date"]))->format("Y-m-d"),
+            'item_code'				         => $row['item_number'],
+            'item_description'               => trim(preg_replace('/\s+/', ' ', strtoupper($row['item_description']))),
+            'quantity_inv'			         => $row['inventory_qty'],
+            'store_cost'			         => $row['store_cost'],
+            'dtp_ecom'			             => $row['store_cost_ecomm'],
+            'qtyinv_sc'			             => ($row['inventory_qty'])*($row['store_cost']),
+            'qtyinv_ecom'			         => ($row['inventory_qty'])*($row['store_cost_ecomm']),
+            'landed_cost'			         => $row['landed_cost'],
+            'qtyinv_lc'			             => ($row['inventory_qty'])*($row['landed_cost']),
+            'batch_number'			         => $this->batch_number,
         ]);
     }
 
