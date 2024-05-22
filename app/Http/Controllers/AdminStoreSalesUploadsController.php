@@ -28,6 +28,7 @@ use Maatwebsite\Excel\Facades\Excel;
 		];
 
 		public $allowed_privs_to_tag_as_final = [1,3];
+		public $allowed_privs_to_tag_as_rejected = [1,3,11];
 
 	    public function cbInit() {
 			# START CONFIGURATION DO NOT REMOVE THIS LINE
@@ -166,6 +167,8 @@ use Maatwebsite\Excel\Facades\Excel;
 	        $this->button_selected = array();
 			if (in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_final)) {
 				$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
+			}
+			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
 				$this->button_selected[] = ['label'=>'REJECT','icon'=>'fa fa-thumbs-down','name'=>'tag_as_reject'];
 			}
 
