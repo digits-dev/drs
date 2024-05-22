@@ -15,8 +15,9 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use CRUDBooster;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\WithCustomChunkSize;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMapping, ShouldQueue, WithCustomChunkSize
+class StoreInventoryUploadBatchExport implements FromQuery, WithHeadings, WithMapping, ShouldQueue, WithCustomChunkSize, WithStrictNullComparison
 {
     use Exportable;
     private $userReport;

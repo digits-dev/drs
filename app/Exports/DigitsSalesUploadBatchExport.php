@@ -14,8 +14,9 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use CRUDBooster;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\WithCustomChunkSize;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class DigitsSalesUploadBatchExport implements FromQuery, WithHeadings, WithMapping, ShouldQueue, WithCustomChunkSize
+class DigitsSalesUploadBatchExport implements FromQuery, WithHeadings, WithMapping, ShouldQueue, WithCustomChunkSize, WithStrictNullComparison
 {
     use Exportable;
     private $userReport;
