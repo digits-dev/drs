@@ -518,6 +518,10 @@ use Maatwebsite\Excel\Facades\Excel;
 				'status' => 'IMPORT FINISHED',
 				'generated_file_path' => NULL
 			]);
+			$folder_name = $batch->folder_name;
+			$filename = $batch->batch. '.csv';
+			$report_type = 'digits-sales-upload';
+			unlink(storage_path("app/$report_type/$folder_name/$filename"));
 			CRUDBooster::redirect(CRUDBooster::mainPath(), "Successfully status reverse #$batch->batch.", 'info');
 		}
 
