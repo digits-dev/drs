@@ -153,6 +153,16 @@ use Maatwebsite\Excel\Facades\Excel;
 				[status] != "REJECTED")'
 			];
 
+			$this->addaction[] = [
+				'title'=>'Regenerate file',
+				'url'=>CRUDBooster::mainpath('regenerate-file/[id]'),
+				'icon'=>'fa fa-refresh',
+				'color' => 'warning',
+				'showIf' => '([status] == "FILE DOWNLOADED" && [generated_file_path])',
+				'confirmation'=>'yes',
+				'confirmation_title'=>'Confirm Regenerating file',
+				'confirmation_text'=>'Are you sure to regenerate this file?'
+			];
 
 	        /*
 	        | ----------------------------------------------------------------------
@@ -486,6 +496,15 @@ use Maatwebsite\Excel\Facades\Excel;
 			} else {
 				abort(404, 'File not found');
 			}
+		}
+
+		public function regenerateFile($id) {
+			$batch = StoreSalesUpload::find($id);
+			$batch->update([
+				'status' => 'IMPORT FINISHED',
+				'generated_file_path' => NULL
+			]);
+			CRUDBooster::redirect(CRUDBooster::mainPath(), "Successfully status reverse #$batch->batch.", 'info');
 		}
 
 		public function downloadUploadedFile($id) {

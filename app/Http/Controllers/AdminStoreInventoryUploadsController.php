@@ -27,7 +27,7 @@ use Maatwebsite\Excel\Facades\Excel;
 		];
 
 		public $allowed_privs_to_tag_as_final = [1,3];
-		public $allowed_privs_to_tag_as_rejected = [1,3,11];
+		public $allowed_privs_to_tag_as_rejected = [1,3,5,11];
 
 	    public function cbInit() {
 	    	# START CONFIGURATION DO NOT REMOVE THIS LINE
@@ -131,6 +131,7 @@ use Maatwebsite\Excel\Facades\Excel;
 					![generated_file_path]
 				)'
 			];
+
 			$this->addaction[] = [
 				'title'=>'Export Batch',
 				'url'=>CRUDBooster::mainpath('export-batch/[id]'),
@@ -140,7 +141,16 @@ use Maatwebsite\Excel\Facades\Excel;
 				'showIf' => '([importing_finished_at] && [generated_file_path])'
 			];
 
-
+			$this->addaction[] = [
+				'title'=>'Regenerate file',
+				'url'=>CRUDBooster::mainpath('regenerate-file/[id]'),
+				'icon'=>'fa fa-refresh',
+				'color' => 'warning',
+				'showIf' => '([status] == "FILE DOWNLOADED" && [generated_file_path])',
+				'confirmation'=>'yes',
+				'confirmation_title'=>'Confirm Regenerating file',
+				'confirmation_text'=>'Are you sure to regenerate this file?'
+			];
 
 	        /*
 	        | ----------------------------------------------------------------------
@@ -468,6 +478,15 @@ use Maatwebsite\Excel\Facades\Excel;
 			} else {
 				abort(404, 'File not found');
 			}
+		}
+
+		public function regenerateFile($id) {
+			$batch = StoreInventoryUpload::find($id);
+			$batch->update([
+				'status' => 'IMPORT FINISHED',
+				'generated_file_path' => NULL
+			]);
+			CRUDBooster::redirect(CRUDBooster::mainPath(), "Successfully status reverse #$batch->batch.", 'info');
 		}
 
 		public function downloadUploadedFile($id) {

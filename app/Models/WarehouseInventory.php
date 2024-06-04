@@ -112,7 +112,6 @@ class WarehouseInventory extends Model
             'inventory_transaction_types.inventory_transaction_type',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
             'concepts.concept_name AS store_concept_name',
-            'concepts.concept_name AS store_concept_name',
             'warehouse_inventories.inventory_date AS inventory_date',
             'warehouse_inventories.item_code AS item_code',
             'warehouse_inventories.item_description AS item_description',

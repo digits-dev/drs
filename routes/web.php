@@ -49,6 +49,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_upload/batch/{batch_id}',[StoreSaleController::class, 'getBatchDetails']);
     Route::get('sales_upload/generate-file/{id}',[AdminStoreSalesUploadsController::class, 'generateFile']);
     Route::get('sales_upload/export-batch/{id}',[AdminStoreSalesUploadsController::class, 'exportBatch']);
+    Route::get('sales_upload/regenerate-file/{id}',[AdminStoreSalesUploadsController::class, 'regenerateFile']);
     Route::get('sales_upload/download-uploaded-file/{id}',[AdminStoreSalesUploadsController::class, 'downloadUploadedFile']);
     Route::get('sales_upload/detail/{id}', [AdminStoreSalesUploadsController::class, 'getDetail'])->name('store_sales.detail');
     //PROGRESS EXPORT
@@ -66,6 +67,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('sales_digits_uploads/batch/{batch_id}',[DigitsSaleController::class, 'getBatchDetails']);
     Route::get('sales_digits_uploads/generate-file/{id}',[AdminDigitsSalesUploadsController::class, 'generateFile']);
     Route::get('sales_digits_uploads/export-batch/{id}',[AdminDigitsSalesUploadsController::class, 'exportBatch']);
+    Route::get('sales_digits_uploads/regenerate-file/{id}',[AdminDigitsSalesUploadsController::class, 'regenerateFile']);
     Route::get('sales_digits_uploads/download-uploaded-file/{id}',[AdminDigitsSalesUploadsController::class, 'downloadUploadedFile']);
     Route::get('sales_digits_uploads/detail/{id}', [AdminDigitsSalesUploadsController::class, 'getDetail'])->name('digits-sales.detail');
     
@@ -83,6 +85,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_store_uploads/batch/{batch_id}',[StoreInventoryController::class, 'getBatchDetails']);
     Route::get('inventory_store_uploads/generate-file/{id}',[AdminStoreInventoryUploadsController::class, 'generateFile']);
     Route::get('inventory_store_uploads/export-batch/{id}',[AdminStoreInventoryUploadsController::class, 'exportBatch']);
+    Route::get('inventory_store_uploads/regenerate-file/{id}',[AdminStoreInventoryUploadsController::class, 'regenerateFile']);
     Route::get('inventory_store_uploads/download-uploaded-file/{id}',[AdminStoreInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_store_uploads/detail/{id}', [AdminStoreInventoryUploadsController::class, 'getDetail'])->name('store-inventory.detail');
     Route::any('store_inventories/filter',[AdminStoreInventoriesController::class, 'filterStoreInventory'])->name('store-inventory.filter');
@@ -98,6 +101,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('inventory_warehouse_uploads/batch/{batch_id}',[WarehouseInventoryController::class, 'getBatchDetails']);
     Route::get('inventory_warehouse_uploads/generate-file/{id}',[AdminWarehouseInventoryUploadsController::class, 'generateFile']);
     Route::get('inventory_warehouse_uploads/export-batch/{id}',[AdminWarehouseInventoryUploadsController::class, 'exportBatch']);
+    Route::get('inventory_warehouse_uploads/regenerate-file/{id}',[AdminWarehouseInventoryUploadsController::class, 'regenerateFile']);
     Route::get('inventory_warehouse_uploads/download-uploaded-file/{id}',[AdminWarehouseInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('inventory_warehouse_uploads/detail/{id}', [AdminWarehouseInventoryUploadsController::class, 'getDetail'])->name('warehouse_sales.detail');
     Route::any('warehouse_inventories/filter',[AdminWarehouseInventoriesController::class, 'filterWarehouseInventory'])->name('warehouse-inventory.filter');
