@@ -92,7 +92,7 @@ class StoreSalesImportJob implements ShouldQueue
                 'receipt_number'		=> $row->receipt_number,
                 // 'sales_date'			=> DateTime::createFromFormat('m/d/Y', $row->sold_date)->format('Y-m-d'),
                 'sales_date'			=> $sales_date,
-                'item_code'				=> $row->item_number,
+                'item_code'				=> trim($row->item_number),
                 'digits_code_rr_ref'    => $row->rr_ref,
                 'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row->item_description))),
                 'quantity_sold'			=> $row->qty_sold,

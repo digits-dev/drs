@@ -247,7 +247,7 @@ class DigitsSaleController extends Controller
     public function exportSales(Request $request) {
         $filename = $request->input('filename').'.tsv';
         $filters = $request->all();
-        $userReport = ReportPrivilege::myReport(2,CRUDBooster::myPrivilegeId());
+        $userReport = ReportPrivilege::myReport(7,CRUDBooster::myPrivilegeId());
         $query =  DigitsSale::filterForReport(DigitsSale::generateReport(), $filters)
         ->where('is_final', 1);
         $headers = [

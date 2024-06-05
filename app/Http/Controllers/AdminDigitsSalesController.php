@@ -343,7 +343,7 @@
 			$data = [];
 			$data['page_title'] = 'Digits Sales Details';
 			$data['digits_sales_details'] = DigitsSale::generateReport([$id])->first();
-			$data['report_privilege'] = ReportPrivilege::myReport(2,CRUDBooster::myPrivilegeId());
+			$data['report_privilege'] = ReportPrivilege::myReport(7,CRUDBooster::myPrivilegeId());
 			
 			$headerArray = explode(',', $data['report_privilege']->report_header);
 			$queryArray = explode(',', $data['report_privilege']->report_query);

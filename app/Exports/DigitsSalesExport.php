@@ -19,7 +19,7 @@ class DigitsSalesExport implements FromQuery, WithHeadings, WithMapping
     public $query;
 
     public function __construct($query) {
-        $this->userReport = ReportPrivilege::myReport(2,CRUDBooster::myPrivilegeId());
+        $this->userReport = ReportPrivilege::myReport(7,CRUDBooster::myPrivilegeId());
         $this->query = $query;
     }
 

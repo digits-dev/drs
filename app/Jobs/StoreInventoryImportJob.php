@@ -91,7 +91,7 @@ class StoreInventoryImportJob implements ShouldQueue
                 'customers_id'          => $v_customer->id,
                 'inventory_transaction_types_id' => $v_inventory_transaction_type->id,
                 'inventory_date'		=> $inventory_date,
-                'item_code'				=> $row->item_number,
+                'item_code'				=> trim($row->item_number),
                 'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row->item_description))),
                 'quantity_inv'			=> $row->inventory_qty,
                 'store_cost'			=> $row->store_cost,

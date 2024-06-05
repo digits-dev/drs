@@ -25,7 +25,7 @@ class DigitsSalesUploadBatchExport implements FromQuery, WithHeadings, WithMappi
     public function __construct($batch) {
         $this->batch = $batch;
         DigitsSalesUpload::where('batch', $batch)->update(['status' => 'GENERATING FILE']);
-        $this->userReport = ReportPrivilege::myReport(2,CRUDBooster::myPrivilegeId());
+        $this->userReport = ReportPrivilege::myReport(7,CRUDBooster::myPrivilegeId());
     }
 
     public function headings(): array {
