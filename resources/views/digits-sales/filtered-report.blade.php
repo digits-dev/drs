@@ -142,7 +142,8 @@
                     <th>Org</th>
                     <th>Report Type</th>
                     <th>Channel</th>
-                    <th>Customer Location</th>
+                    <th>Customer Bill To</th>
+                    <th>Bill To</th>
                     <th>Concept</th>
                     <th>Receipt #</th>
                     <th>Sales Date</th>
@@ -157,7 +158,8 @@
                     <td>{{ $row->organization_name }}</td>
                     <td>{{ $row->report_type }}</td>
                     <td>{{ $row->channel_code }}</td>
-                    <td>{{ $row->customer_location }}</td>
+                    <td>{{ $row->customer_bill_to }}</td>
+                    <td>{{ $row->bill_to }}</td>
                     <td>{{ $row->store_concept_name }}</td>
                     <td>{{ $row->receipt_number }}</td>
                     <td>{{ $row->sales_date }}</td>
