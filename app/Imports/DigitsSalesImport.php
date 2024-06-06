@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Channel;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\DigitsSale;
 use App\Models\Organization;
 use App\Models\ReportType;
@@ -38,6 +39,7 @@ class DigitsSalesImport implements ToModel,
     private $organization;
     private $channel;
     private $customer;
+    private $employee;
     private $batch_number;
     private $report_type;
 
@@ -47,6 +49,7 @@ class DigitsSalesImport implements ToModel,
         $this->organization = Organization::active();
         $this->channel = Channel::active();
         $this->customer = Customer::active();
+        $this->employee = Employee::active();
         $this->batch_number = $batch_number;
         $this->report_type = ReportType::byName("DIGITS SALES");
     }

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Channel;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\DigitsSale;
 use App\Models\DigitsSalesUpload;
 use App\Models\DigitsSalesUploadLine;
@@ -29,6 +30,7 @@ class DigitsSalesImportJob implements ShouldQueue
     private $organization;
     private $channel;
     private $customer;
+    private $employee;
     private $batch_number;
     private $report_type;
 
@@ -53,6 +55,8 @@ class DigitsSalesImportJob implements ShouldQueue
         $organization = Organization::active();
         $channel = Channel::active();
         $customer = Customer::active();
+        $customer = Customer::active();
+        $employee = Employee::active();
         $report_type = ReportType::active();
         $chunk = DigitsSalesUploadLine::getWithHeader($this->chunk_id);
         $rows = json_decode($chunk->chunk_data);
@@ -63,6 +67,7 @@ class DigitsSalesImportJob implements ShouldQueue
             $v_report_type = $report_type->where('report_type',$row->report_type)->first();
             $v_channel = $channel->where('channel_code',$row->channel_code)->first();
             $v_customer = $customer->where('customer_name',$row->customer_bill_to)->first();
+            $v_employee = $employee->where('employee_name',$row['bill_to'])->first();
             $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
             if ($sales_date < $chunk->from_date || $sales_date > $chunk->to_date) {
                 throw new Exception("SALES DATE OUT OF RANGE FOR REF #$row->reference_number ($sales_date)");
@@ -76,6 +81,7 @@ class DigitsSalesImportJob implements ShouldQueue
                 'report_types_id'		=> $v_report_type->id,
                 'channels_id'	        => $v_channel->id,
                 'customers_id'          => $v_customer->id,
+                'employees_id'          => $v_employee->id,
                 'receipt_number'		=> $row->receipt_number,
                 // 'sales_date'			=> DateTime::createFromFormat('m/d/Y', $row->sold_date)->format('Y-m-d'),
                 'sales_date'			=> date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60)),
