@@ -155,7 +155,7 @@
                     <td>{{ $row->system_name }}</td>
                     <td>{{ $row->organization_name }}</td>
                     <td>{{ $row->report_type }}</td>
-                    <td>{{ $row->channel_name }}</td>
+                    <td>{{ $row->channel_code }}</td>
                     <td>{{ $row->customer_location }}</td>
                     <td>{{ $row->store_concept_name }}</td>
                     <td>{{ $row->receipt_number }}</td>

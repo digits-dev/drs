@@ -63,7 +63,7 @@ class DigitsSalesImport implements ToModel,
         $v_organization = $this->organization->where('organization_name',$row['org'])->first();
         $v_channel = $this->channel->where('channel_code',$row['channel_code'])->first();
         $v_customer = $this->customer->where('customer_name',$row['customer_location'])->first();
-
+        $v_employee = $this->employee->where('employee_name',$row['customer_location'])->first();
         DigitsSale::updateOrCreate([
             'batch_number'			=> $this->batch_number,
             'reference_number'		=> $row['reference_number'],
@@ -75,6 +75,7 @@ class DigitsSalesImport implements ToModel,
             'report_types_id'		=> $this->report_type,
             'channels_id'	        => $v_channel->id ?? NULL,
             'customers_id'          =>  $v_customer->id ?? NULL,
+            'customers_id'          => $v_customer->id ?? NULL,
             // 'customer_location'		=> $row['customer_location'],
             'receipt_number'		=> $row['receipt_number'],
             'sales_date'			=> Carbon::parse($row["sold_date"])->format("Y-m-d"),
