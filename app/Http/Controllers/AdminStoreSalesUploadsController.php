@@ -78,6 +78,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			$this->col[] = ["label"=>"Importing Finished","name"=>"id","callback"=>fn ($row) =>$row->importing_finished_at ? date('Y-m-d H:i:s', $row->importing_finished_at) : null];
 			$this->col[] = ["label"=>"Tagged By","name"=>"tagged_as_final_by","join"=>"cms_users,name"];
 			$this->col[] = ["label"=>"Tagged Date","name"=>"tagged_as_final_at"];
+			$this->col[] = ["label"=>"Error","name"=>"errors"];
 			# END COLUMNS DO NOT REMOVE THIS LINE
 
 			# START FORM DO NOT REMOVE THIS LINE

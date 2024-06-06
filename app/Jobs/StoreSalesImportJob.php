@@ -72,12 +72,21 @@ class StoreSalesImportJob implements ShouldQueue
             $v_system = $system->where('system_name',$row->system)->first();
             $v_organization = $organization->where('organization_name',$row->org)->first();
             $v_report_type = $report_type->where('report_type',$row->report_type)->first();
-            $v_channel = $channel->where('channel_code',$row->channel_code)->first();
-            $v_customer = $customer->where('customer_name',$row->customer_location)->first();
-            $v_employee = $employee->where('employee_name',$row->customer_location)->first();
+            $v_channel = $channel->where('channel_code',trim($row->channel_code))->first();
+            $v_customer = $customer->where('customer_name',trim($row->customer_location))->first();
+            $v_employee = $employee->where('employee_name',trim($row->customer_location))->first();
             $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
             if ($sales_date < $chunk->from_date || $sales_date > $chunk->to_date) {
                 throw new Exception("SALES DATE OUT OF RANGE FOR REF #$row->reference_number.");
+            }
+            if(!$v_channel){
+                throw new Exception("CHANNEL NOT FOUND FOR REF #$row->reference_number ($sales_date)");
+            }
+            if(!$v_customer){
+                throw new Exception("CUSTOMER NOT FOUND FOR REF #$row->reference_number ($sales_date)");
+            }
+            if(!$v_employee){
+                throw new Exception("EMPLOYEE NOT FOUND FOR REF #$row->reference_number ($sales_date)");
             }
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,

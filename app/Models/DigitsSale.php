@@ -125,7 +125,7 @@ class DigitsSale extends Model
             'report_types.report_type AS report_type',
             'channels.channel_code AS channel_code',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_bill_to'),
-            'customers.bill_to AS bill_to',
+            DB::raw('COALESCE(customers.bill_to, employees.bill_to) AS bill_to'),
             'concepts.concept_name AS store_concept_name',
             'digits_sales.receipt_number AS receipt_number',
             'digits_sales.sales_date AS sales_date',
@@ -185,7 +185,6 @@ class DigitsSale extends Model
         }
         return $query;
     }
-
 
     public static function boot()
     {

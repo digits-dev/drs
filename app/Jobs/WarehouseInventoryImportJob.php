@@ -34,6 +34,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
     private $employee;
     private $batch_number;
     private $report_type;
+    private $inventory_transaction_type;
     private $apple_cutoff;
     private $non_apple_cutoff;
     private $chunk_id;
@@ -71,14 +72,23 @@ class WarehouseInventoryImportJob implements ShouldQueue
             $v_system = $system->where('system_name',$row->system)->first();
             $v_organization = $organization->where('organization_name',$row->org)->first();
             $v_report_type = $report_type->where('report_type',$row->report_type)->first();
-            $v_inventory_transaction_type = $inventory_transaction_type->where('inventory_transaction_type',$row->inventory_type)->first();
-            $v_channel = $channel->where('channel_code',$row->channel_code)->first();
-            $v_customer = $customer->where('customer_name',$row->customer_location)->first();
-            $v_employee = $employee->where('employee_name',$row->customer_location)->first();
+            $v_inventory_transaction_type = $inventory_transaction_type->where('inventory_transaction_type',trim($row->inventory_type))->first();
+            $v_channel = $channel->where('channel_code',trim($row->channel_code))->first();
+            $v_customer = $customer->where('customer_name',trim($row->customer_location))->first();
+            $v_employee = $employee->where('employee_name',trim($row->customer_location))->first();
             $inventory_date = date('Y-m-d', strtotime('1899-12-30') + ($row->inventory_as_of_date * 24 * 60 * 60));
             if ($inventory_date != $chunk->from_date) {
                 throw new Exception("INVENTORY DATE MISMATCHED FOR REF #$row->reference_number ($inventory_date)");
             }    
+            if(!$v_channel){
+                throw new Exception("CHANNEL NOT FOUND FOR REF #$row->reference_number ($sales_date)");
+            }
+            if(!$v_customer){
+                throw new Exception("CUSTOMER NOT FOUND FOR REF #$row->reference_number ($sales_date)");
+            }
+            if(!$v_employee){
+                throw new Exception("EMPLOYEE NOT FOUND FOR REF #$row->reference_number ($sales_date)");
+            }
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
