@@ -80,15 +80,7 @@ class WarehouseInventoryImportJob implements ShouldQueue
             if ($inventory_date != $chunk->from_date) {
                 throw new Exception("INVENTORY DATE MISMATCHED FOR REF #$row->reference_number ($inventory_date)");
             }    
-            if(!$v_channel){
-                throw new Exception("CHANNEL NOT FOUND FOR REF #$row->reference_number ($sales_date)");
-            }
-            if(!$v_customer){
-                throw new Exception("CUSTOMER NOT FOUND FOR REF #$row->reference_number ($sales_date)");
-            }
-            if(!$v_employee){
-                throw new Exception("EMPLOYEE NOT FOUND FOR REF #$row->reference_number ($sales_date)");
-            }
+           
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
