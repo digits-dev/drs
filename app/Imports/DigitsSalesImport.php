@@ -62,8 +62,8 @@ class DigitsSalesImport implements ToModel,
         $v_system = $this->system->where('system_name',$row['system'])->first();
         $v_organization = $this->organization->where('organization_name',$row['org'])->first();
         $v_channel = $this->channel->where('channel_code',$row['channel_code'])->first();
-        $v_customer = $this->customer->where('customer_name',$row['customer_location'])->first();
-        $v_employee = $this->employee->where('employee_name',$row['customer_location'])->first();
+        $v_customer = $this->customer->where('customer_name',$row['customer_bill_to'])->first();
+        $v_employee = $this->employee->where('employee_name',$row['bill_to'])->first();
         DigitsSale::updateOrCreate([
             'batch_number'			=> $this->batch_number,
             'reference_number'		=> $row['reference_number'],
@@ -74,7 +74,7 @@ class DigitsSalesImport implements ToModel,
             'organizations_id'	    => $v_organization->id ?? NULL,
             'report_types_id'		=> $this->report_type,
             'channels_id'	        => $v_channel->id ?? NULL,
-            'customers_id'          =>  $v_customer->id ?? NULL,
+            'employees_id'          => $v_employee->id ?? NULL,
             'customers_id'          => $v_customer->id ?? NULL,
             // 'customer_location'		=> $row['customer_location'],
             'receipt_number'		=> $row['receipt_number'],
