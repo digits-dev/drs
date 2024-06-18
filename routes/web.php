@@ -22,7 +22,8 @@ use App\Http\Controllers\AdminServiceItemsController;
 use App\Http\Controllers\AdminCustomersController;
 use App\Http\Controllers\AdminEmployeesController;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
-
+use App\Http\Controllers\AdminGachaItemsController;
+use App\Http\Controllers\AdminRmaItemsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -123,4 +124,25 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('admin/service_items/export', [AdminServiceItemsController::class, 'exportData'])->name('pos_imfs_export');
     Route::post('admin/customers_master/export', [AdminCustomersController::class, 'exportData'])->name('customers_export');
     Route::post('admin/employees/export', [AdminEmployeesController::class, 'exportData'])->name('employees_export');
+
+    //Admin upload
+    Route::get('admin_items/admin-items-upload',[AdminAdminItemMasterController::class, 'importData']);
+    Route::get('admin_items/upload-items-template',[AdminAdminItemMasterController::class, 'importItemsTemplate']);
+    Route::post('admin_items/upload-items-save',[AdminAdminItemMasterController::class, 'importPostSave'])->name('upload-item-save');
+
+    //Gacha upload
+    Route::get('gacha_items/gacha-items-upload',[AdminGachaItemsController::class, 'importData']);
+    Route::get('gacha_items/upload-gacha-items-template',[AdminGachaItemsController::class, 'importItemsTemplate']);
+    Route::post('gacha_items/upload-gacha-items-save',[AdminGachaItemsController::class, 'importPostSave'])->name('upload-gacha-item-save');
+    
+    //Rma upload
+    Route::get('rma_items/rma-items-upload',[AdminRmaItemsController::class, 'importData']);
+    Route::get('rma_items/upload-rma-items-template',[AdminRmaItemsController::class, 'importItemsTemplate']);
+    Route::post('rma_items/upload-rma-items-save',[AdminRmaItemsController::class, 'importPostSave'])->name('upload-rma-item-save');
+
+    //Services upload
+    Route::get('service_items/service-items-upload',[AdminServiceItemsController::class, 'importData']);
+    Route::get('service_items/upload-service-items-template',[AdminServiceItemsController::class, 'importItemsTemplate']);
+    Route::post('service_items/upload-service-items-save',[AdminServiceItemsController::class, 'importPostSave'])->name('upload-service-item-save');
+ 
 });

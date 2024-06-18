@@ -5,6 +5,7 @@
 	use DB;
 	use CRUDBooster;
 	use App\Exports\AdminImfsExport;
+	use App\Imports\AdminItemsImport;
 	use Excel;
 
 	class AdminAdminItemMasterController extends \crocodicstudio\crudbooster\controllers\CBController {
@@ -124,6 +125,10 @@
 					"color"=>"primary",
 					"url"=>"javascript:showExport()",
 				];
+
+				if(CRUDBooster::isSuperAdmin()){
+					$this->index_button[] = ["label"=>"Upload Data","icon"=>"fa fa-upload","url"=>CRUDBooster::mainpath('admin-items-upload'),'color'=>'primary'];
+				}
 			}
 
 
@@ -368,5 +373,34 @@
 			return Excel::download(new AdminImfsExport($tableName), $filename.'.csv');
 		}
 
+		public function importData() {
+			$data['page_title']= 'Upload Data';
+			return view('import.admin-items-upload', $data)->render();
+		}
 
+		public function importItemsTemplate(){
+			$filename = "admin-items"."-".date("Ymd").".csv";
+			$fileHeader = ['ITEM CODE', 'ITEM DESCRIPTION', 'CURRENT SRP', 'UPC CODE', 'BRAND DESCRIPTION', 'CATEGORY DESCRIPTION', 'MARGIN CATEGORY DESCRIPTION', 'VENDOR TYPE CODE', 'INVENTORY TYPE DESCRIPTION', 'SKU STATUS DESCRIPTION', 'BRAND STATUS', 'INITIAL WRR DATE'];
+			$fileData = [];
+
+			header("Content-Disposition: attachment; filename=\"$filename\"");
+			header("Content-Type: text/csv; charset=UTF-16LE");
+			$out = fopen("php://output", 'w');
+			$flag = false;
+			if(!$flag) {
+				// display field/column names as first row
+				fputcsv($out, $fileHeader);
+				$flag = true;
+			}
+			fputcsv($out, $fileData);
+			fclose($out);
+			exit;
+		}
+
+		public function importPostSave(Request $request) {
+			$path_excel = $request->file('import_file')->store('temp');
+			$path = storage_path('app').'/'.$path_excel;
+			Excel::import(new AdminItemsImport, $path);	
+			CRUDBooster::redirect(CRUDBooster::adminpath('admin_items'), trans("Upload Successfully!"), 'success');
+		}
 	}

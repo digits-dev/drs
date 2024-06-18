@@ -1,41 +1,46 @@
 <?php namespace App\Http\Controllers;
-
 	use Session;
 	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
 	use App\Exports\AdminImfsExport;
-	use App\Imports\ServiceItemsImport;
+	use App\Imports\RmaItemsImport;
 	use Excel;
 
-	class AdminServiceItemsController extends \crocodicstudio\crudbooster\controllers\CBController {
+	class AdminRmaItemsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
 
 			# START CONFIGURATION DO NOT REMOVE THIS LINE
-			$this->title_field = "item_code";
+			$this->title_field = "id";
 			$this->limit = "20";
-			$this->orderby = "item_code,asc";
+			$this->orderby = "id,desc";
 			$this->global_privilege = false;
 			$this->button_table_action = true;
 			$this->button_bulk_action = true;
 			$this->button_action_style = "button_icon";
 			$this->button_add = true;
 			$this->button_edit = true;
-			$this->button_delete = true;
+			$this->button_delete = false;
 			$this->button_detail = true;
 			$this->button_show = true;
 			$this->button_filter = true;
-			$this->button_import = true;
+			$this->button_import = false;
 			$this->button_export = false;
-			$this->table = "service_items";
+			$this->table = "rma_items";
 			# END CONFIGURATION DO NOT REMOVE THIS LINE
 
 			# START COLUMNS DO NOT REMOVE THIS LINE
 			$this->col = [];
-			$this->col[] = ["label"=>"Item Code","name"=>"item_code"];
+			$this->col[] = ["label"=>"Item Code","name"=>"digits_code"];
 			$this->col[] = ["label"=>"Item Description","name"=>"item_description"];
+			$this->col[] = ["label"=>"UPC Code","name"=>"upc_code"];
 			$this->col[] = ["label"=>"Current SRP","name"=>"current_srp"];
+			$this->col[] = ["label"=>"Brand Description","name"=>"brand_description"];
+			$this->col[] = ["label"=>"Category Description","name"=>"category_description"];
+			$this->col[] = ["label"=>"Main Category Description","name"=>"margin_category_description"];
+			$this->col[] = ["label"=>"Vendor Type Code","name"=>"vendor_type_code"];
+			$this->col[] = ["label"=>"Inventory Type Description","name"=>"inventory_type_description"];
 			$this->col[] = ["label"=>"Status","name"=>"status"];
 			$this->col[] = ["label"=>"Created By","name"=>"created_by","join"=>"cms_users,name"];
 			$this->col[] = ["label"=>"Created Date","name"=>"created_at"];
@@ -45,12 +50,7 @@
 
 			# START FORM DO NOT REMOVE THIS LINE
 			$this->form = [];
-			$this->form[] = ['label'=>'Item Code','name'=>'item_code','type'=>'text','validation'=>'required|min:1|max:30','width'=>'col-sm-4'];
-			$this->form[] = ['label'=>'Item Description','name'=>'item_description','type'=>'text','validation'=>'required|min:5|max:100','width'=>'col-sm-4'];
-			$this->form[] = ['label'=>'Current SRP','name'=>'current_srp','type'=>'number','validation'=>'required','width'=>'col-sm-4'];
-			if(CRUDBooster::getCurrentMethod() == 'getEdit' || CRUDBooster::getCurrentMethod() == 'postEditSave') {
-		        $this->form[] = ['label'=>'Status','name'=>'status','type'=>'select','validation'=>'required','width'=>'col-sm-4','dataenum'=>'ACTIVE;INACTIVE'];
-			}
+
 			# END FORM DO NOT REMOVE THIS LINE
 
 			/* 
@@ -103,7 +103,7 @@
 	        | @type    = warning,success,danger,info        
 	        | 
 	        */
-	        $this->alert = array();
+	        $this->alert        = array();
 	                
 
 	        
@@ -118,20 +118,10 @@
 	        */
 	        $this->index_button = array();
 			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
-				$this->index_button[] = [
-					"title"=>"Export all data",
-					"label"=>"Export all data",
-					"icon"=>"fa fa-upload",
-					"color"=>"primary",
-					"url"=>"javascript:showExport()",
-				];
-			}
-			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
 				if(CRUDBooster::isSuperAdmin()){
-					$this->index_button[] = ["label"=>"Upload Data","icon"=>"fa fa-upload","url"=>CRUDBooster::mainpath('service-items-upload'),'color'=>'primary'];
+					$this->index_button[] = ["label"=>"Upload Data","icon"=>"fa fa-upload","url"=>CRUDBooster::mainpath('rma-items-upload'),'color'=>'primary'];
 				}
 			}
-
 
 
 	        /* 
@@ -165,12 +155,7 @@
 	        |
 	        */
 	        $this->script_js = NULL;
-			$this->script_js = "
-				function showExport() {
-					$('#modal-export').modal('show');
-				}
-				
-			";
+
 
             /*
 	        | ---------------------------------------------------------------------- 
@@ -192,34 +177,9 @@
 	        | $this->post_index_html = "<p>test</p>";
 	        |
 	        */
-			$this->post_index_html = "
-				<div class='modal fade' tabindex='-1' role='dialog' id='modal-export'>
-				<div class='modal-dialog'>
-					<div class='modal-content'>
-						<div class='modal-header'>
-							<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
-								<span aria-hidden='true'>×</span></button>
-							<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
-						</div>
-
-						<form method='post' target='_blank' action=".route('pos_imfs_export').">
-						<input type='hidden' name='_token' value=".csrf_token().">
-						".CRUDBooster::getUrlParameters()."
-						<div class='modal-body'>
-							<div class='form-group'>
-								<label>File Name</label>
-								<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
-							</div>
-						</div>
-						<div class='modal-footer' align='right'>
-							<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-							<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
-						</div>
-					</form>
-					</div>
-				</div>
-			</div>
-				";
+	        $this->post_index_html = null;
+	        
+	        
 	        
 	        /*
 	        | ---------------------------------------------------------------------- 
@@ -304,7 +264,7 @@
 	    */
 	    public function hook_before_add(&$postdata) {        
 	        //Your code here
-			$postdata['created_by']=CRUDBooster::myId();
+
 	    }
 
 	    /* 
@@ -341,7 +301,7 @@
 	    */
 	    public function hook_after_edit($id) {
 	        //Your code here 
-			$postdata['updated_by']=CRUDBooster::myId();
+
 	    }
 
 	    /* 
@@ -368,19 +328,13 @@
 
 	    }
 
-		public function exportData(Request $request) {
-			$filename = $request->input('filename');
-			$tableName = 'service_items';
-			return Excel::download(new AdminImfsExport($tableName), $filename.'.csv');
-		}
-
 		public function importData() {
 			$data['page_title']= 'Upload Data';
-			return view('import.service-items-upload', $data)->render();
+			return view('import.rma-items-upload', $data)->render();
 		}
 
 		public function importItemsTemplate(){
-			$filename = "service-items"."-".date("Ymd").".csv";
+			$filename = "rma-items"."-".date("Ymd").".csv";
 			$fileHeader = ['ITEM CODE', 'ITEM DESCRIPTION', 'CURRENT SRP', 'UPC CODE', 'BRAND DESCRIPTION', 'CATEGORY DESCRIPTION', 'MARGIN CATEGORY DESCRIPTION', 'VENDOR TYPE CODE', 'INVENTORY TYPE DESCRIPTION', 'SKU STATUS DESCRIPTION', 'BRAND STATUS', 'INITIAL WRR DATE'];
 			$fileData = [];
 
@@ -401,8 +355,8 @@
 		public function importPostSave(Request $request) {
 			$path_excel = $request->file('import_file')->store('temp');
 			$path = storage_path('app').'/'.$path_excel;
-			Excel::import(new ServiceItemsImport, $path);	
-			CRUDBooster::redirect(CRUDBooster::adminpath('service_items'), trans("Upload Successfully!"), 'success');
+			Excel::import(new RmaItemsImport, $path);	
+			CRUDBooster::redirect(CRUDBooster::adminpath('rma_items'), trans("Upload Successfully!"), 'success');
 		}
 
 	}
