@@ -58,6 +58,7 @@ class AddColumnsToAdminItems extends Migration
             $table->string('inventory_type_description')->nullable()->after('vendor_type_code');
             $table->string('sku_status_description')->nullable()->after('inventory_type_description');
             $table->string('brand_status')->nullable()->after('sku_status_description');
+            $table->date('initial_wrr_date')->nullable()->after('current_srp');
         });
 
         Schema::table('service_items', function (Blueprint $table) {
@@ -129,6 +130,7 @@ class AddColumnsToAdminItems extends Migration
             $table->dropColumn('inventory_type_description');
             $table->dropColumn('sku_status_description');
             $table->dropColumn('brand_status');
+            $table->dropColumn('initial_wrr_date');
         });
 
         Schema::table('service_items', function (Blueprint $table) {
