@@ -24,8 +24,8 @@ class GachaItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
     public function collection(Collection $rows)
     {
         foreach ($rows->toArray() as $row){
-            DB::beginTransaction();
-			try {
+            // DB::beginTransaction();
+			// try {
                 GachaItem::updateOrcreate([
                     'digits_code' => $row['item_code'] 
                 ],
@@ -43,11 +43,11 @@ class GachaItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     'brand_status' => $row['brand_status'],
                     'initial_wrr_date' => $row['initial_wrr_date']
                 ]);
-            DB::commit();
-            } catch (\Exception $e) {
-                \Log::debug($e);
-                DB::rollback();
-            }
+            // DB::commit();
+            // } catch (\Exception $e) {
+            //     \Log::debug($e);
+            //     DB::rollback();
+            // }
         }
     }
 }
