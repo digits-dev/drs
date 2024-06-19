@@ -24,6 +24,7 @@ use App\Http\Controllers\AdminEmployeesController;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use App\Http\Controllers\AdminGachaItemsController;
 use App\Http\Controllers\AdminRmaItemsController;
+use App\Http\Controllers\AdminItemsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -144,5 +145,10 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('service_items/service-items-upload',[AdminServiceItemsController::class, 'importData']);
     Route::get('service_items/upload-service-items-template',[AdminServiceItemsController::class, 'importItemsTemplate']);
     Route::post('service_items/upload-service-items-save',[AdminServiceItemsController::class, 'importPostSave'])->name('upload-service-item-save');
- 
+   
+    //Services upload
+    Route::get('items/digits-items-upload',[AdminItemsController::class, 'importData']);
+    Route::get('items/upload-digits-items-template',[AdminItemsController::class, 'importItemsTemplate']);
+    Route::post('items/upload-digits-items-save',[AdminItemsController::class, 'importPostSave'])->name('upload-digits-item-save');
+
 });
