@@ -120,9 +120,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('run-rate/filter-run-rate',[AdminRunRateController::class, 'filterRunRate'])->name('run-rate.filter-run-rate');
     Route::get('run-rate/filter-run-rate/export', [AdminRunRateController::class, 'exportRunRate'])->name('run-rate.export-run-rate');
     
-    //Admin imfs
-    Route::post('admin/admin_items/export', [AdminAdminItemMasterController::class, 'exportData'])->name('admin_imfs_export');
-    Route::post('admin/service_items/export', [AdminServiceItemsController::class, 'exportData'])->name('pos_imfs_export');
+    //Customer Employees export
     Route::post('admin/customers_master/export', [AdminCustomersController::class, 'exportData'])->name('customers_export');
     Route::post('admin/employees/export', [AdminEmployeesController::class, 'exportData'])->name('employees_export');
 
@@ -130,25 +128,30 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('admin_items/admin-items-upload',[AdminAdminItemMasterController::class, 'importData']);
     Route::get('admin_items/upload-items-template',[AdminAdminItemMasterController::class, 'importItemsTemplate']);
     Route::post('admin_items/upload-items-save',[AdminAdminItemMasterController::class, 'importPostSave'])->name('upload-item-save');
+    Route::post('admin/admin_items/export', [AdminAdminItemMasterController::class, 'exportData'])->name('admin_imfs_export');
 
     //Gacha upload
     Route::get('gacha_items/gacha-items-upload',[AdminGachaItemsController::class, 'importData']);
     Route::get('gacha_items/upload-gacha-items-template',[AdminGachaItemsController::class, 'importItemsTemplate']);
     Route::post('gacha_items/upload-gacha-items-save',[AdminGachaItemsController::class, 'importPostSave'])->name('upload-gacha-item-save');
+    Route::post('admin/gacha_items/export', [AdminGachaItemsController::class, 'exportData'])->name('gacha_imfs_export');
     
     //Rma upload
     Route::get('rma_items/rma-items-upload',[AdminRmaItemsController::class, 'importData']);
     Route::get('rma_items/upload-rma-items-template',[AdminRmaItemsController::class, 'importItemsTemplate']);
     Route::post('rma_items/upload-rma-items-save',[AdminRmaItemsController::class, 'importPostSave'])->name('upload-rma-item-save');
+    Route::post('admin/rma_items/export', [AdminRmaItemsController::class, 'exportData'])->name('rma_imfs_export');
 
     //Services upload
     Route::get('service_items/service-items-upload',[AdminServiceItemsController::class, 'importData']);
     Route::get('service_items/upload-service-items-template',[AdminServiceItemsController::class, 'importItemsTemplate']);
     Route::post('service_items/upload-service-items-save',[AdminServiceItemsController::class, 'importPostSave'])->name('upload-service-item-save');
+    Route::post('admin/service_items/export', [AdminServiceItemsController::class, 'exportData'])->name('pos_imfs_export');
    
-    //Services upload
+    //Item upload
     Route::get('items/digits-items-upload',[AdminItemsController::class, 'importData']);
     Route::get('items/upload-digits-items-template',[AdminItemsController::class, 'importItemsTemplate']);
     Route::post('items/upload-digits-items-save',[AdminItemsController::class, 'importPostSave'])->name('upload-digits-item-save');
+    Route::post('admin/items/export', [AdminItemsController::class, 'exportData'])->name('item_imfs_export');
 
 });

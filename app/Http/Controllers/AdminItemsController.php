@@ -4,7 +4,7 @@
 	use Illuminate\Http\Request;
 	use DB;
 	use CRUDBooster;
-	use App\Exports\AdminImfsExport;
+	use App\Exports\ItemSubmastersExport;
 	use App\Imports\DigitsItemsImport;
 	use Excel;
 
@@ -112,10 +112,18 @@
 	        | 
 	        */
 	        $this->index_button = array();
-			if(CRUDBooster::isSuperAdmin()){
-				$this->index_button[] = ["label"=>"Upload Data","icon"=>"fa fa-upload","url"=>CRUDBooster::mainpath('digits-items-upload'),'color'=>'primary'];
+			if (CRUDBooster::getCurrentMethod() == 'getIndex') {
+				$this->index_button[] = [
+					"title"=>"Export all data",
+					"label"=>"Export all data",
+					"icon"=>"fa fa-upload",
+					"color"=>"primary",
+					"url"=>"javascript:showExport()",
+				];
+				if(CRUDBooster::isSuperAdmin()){
+					$this->index_button[] = ["label"=>"Upload Data","icon"=>"fa fa-upload","url"=>CRUDBooster::mainpath('digits-items-upload'),'color'=>'primary'];
+				}
 			}
-
 
 	        /* 
 	        | ---------------------------------------------------------------------- 
@@ -147,7 +155,12 @@
 	        | $this->script_js = "function() { ... }";
 	        |
 	        */
-	        $this->script_js = NULL;
+			$this->script_js = "
+			function showExport() {
+					$('#modal-export').modal('show');
+				}
+				
+			";
 
 
             /*
@@ -170,9 +183,34 @@
 	        | $this->post_index_html = "<p>test</p>";
 	        |
 	        */
-	        $this->post_index_html = null;
-	        
-	        
+			$this->post_index_html = "
+			<div class='modal fade' tabindex='-1' role='dialog' id='modal-export'>
+				<div class='modal-dialog'>
+					<div class='modal-content'>
+						<div class='modal-header'>
+							<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+								<span aria-hidden='true'>×</span></button>
+							<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
+						</div>
+
+						<form method='post' target='_blank' action=".route('item_imfs_export').">
+						<input type='hidden' name='_token' value=".csrf_token().">
+						".CRUDBooster::getUrlParameters()."
+						<div class='modal-body'>
+							<div class='form-group'>
+								<label>File Name</label>
+								<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+							</div>
+						</div>
+						<div class='modal-footer' align='right'>
+							<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
+							<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+						</div>
+					</form>
+					</div>
+				</div>
+			</div>
+			";
 	        
 	        /*
 	        | ---------------------------------------------------------------------- 
@@ -320,6 +358,12 @@
 	        //Your code here
 
 	    }
+
+		public function exportData(Request $request) {
+			$filename = $request->input('filename');
+			$tableName = 'items';
+			return Excel::download(new ItemSubmastersExport($tableName), $filename.'.csv');
+		}
 
 		public function importData() {
 			$data['page_title']= 'Upload Data';
