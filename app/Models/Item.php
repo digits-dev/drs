@@ -19,6 +19,7 @@ class Item extends Model
         'upc_code4',
         'upc_code5',
         'item_description',
+        'current_srp',
         'brand_description',
         'category_description',
         'margin_category_description',
