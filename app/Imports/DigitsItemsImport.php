@@ -36,7 +36,7 @@ class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     'upc_code' => $row['upc_code'],
                     'brand_description' => $row['brand_description'],
                     'category_description' => $row['category_description'],
-                    'margin_category_description' => $row['margin_category_description'],
+                    // 'margin_category_description' => $row['margin_category_description'],
                     'vendor_type_code' => $row['vendor_type_code'],
                     'inventory_type_description' => $row['inventory_type_description'],
                     'sku_status_description' => $row['sku_status_description'],

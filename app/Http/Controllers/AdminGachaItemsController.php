@@ -404,5 +404,48 @@
 			CRUDBooster::redirect(CRUDBooster::adminpath('gacha_items'), trans("Upload Successfully!"), 'success');
 		}
 
+		public function getDimfsGachaItemsData(){
+			$api = config('link-api.get-created-gacha-items-url');
+			$ch = curl_init($api);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			$response = curl_exec($ch);
+			curl_close($ch);
+		
+			$data = json_decode($response, true);
+		
+			$all_items = $data['created_items'];
+
+			$to_be_inserted = [];
+			foreach ($all_items as $item) {
+			
+				$to_be_inserted['digits_code']                 = $item['digits_code'];
+				$to_be_inserted['item_description']            = $item['item_description'];
+				$to_be_inserted['upc_code']                    = $item['upc_code'];
+				$to_be_inserted['brand_description']           = $item['brand_description'];
+				$to_be_inserted['category_description']        = $item['category_description'];
+				$to_be_inserted['margin_category_description'] = $item['margin_category_description'];
+				$to_be_inserted['vendor_type_code']            = $item['vendor_type_code'];
+				$to_be_inserted['inventory_type_description']  = $item['inventory_type_description'];
+				$to_be_inserted['current_srp']                 = $item['current_srp'];
+				$to_be_inserted['initial_wrr_date']            = $item['initial_wrr_date'];
+				$to_be_inserted['status']               	   = $item['status'];
+				
+				$digits_code = $item['digits_code'];
+				
+				$is_existing = DB::table('rma_items')
+					->where('digits_code', $digits_code)
+					->exists();
+
+				if ($is_existing) {
+					$to_be_inserted['updated_at'] = date('Y-m-d H:i:s');
+					DB::table('rma_items')
+						->where('digits_code', $item['digits_code'])
+						->update($to_be_inserted);
+				} else {
+					$to_be_inserted['created_at'] = date('Y-m-d H:i:s');
+					DB::table('rma_items')->insert($to_be_inserted);
+				}
+			}
+		}
 
 	}

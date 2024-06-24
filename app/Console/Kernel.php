@@ -19,7 +19,12 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
+        $schedule->call('\App\Http\Controllers\AdminItemsController@getDimfsData')->everyMinute();
+        $schedule->call('\App\Http\Controllers\AdminGachaItemsController@getDimfsGachaItemsData')->hourly();
+        $schedule->call('\App\Http\Controllers\AdminRmaItemsController@getDimfsRmaItemsData')->everyMinute();
+        
+        // $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
+        
     }
 
     /**
