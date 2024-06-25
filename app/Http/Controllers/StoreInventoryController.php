@@ -25,6 +25,7 @@ use App\Jobs\AppendMoreStoreInventoryJob;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ReportPrivilege;
 use Illuminate\Support\Facades\Response;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class StoreInventoryController extends Controller
 {
@@ -278,7 +279,7 @@ class StoreInventoryController extends Controller
         // Return the streamed response
         return Response::stream($callback, 200, $headers);
     }
-    
+
     public function progressExport(Request $request){
         try{
             $batchId = $request->batchId ?? session()->get('lastStoreInventoryBatchId');

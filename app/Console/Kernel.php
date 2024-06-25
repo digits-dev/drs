@@ -23,7 +23,7 @@ class Kernel extends ConsoleKernel
         $schedule->call('\App\Http\Controllers\AdminGachaItemsController@getDimfsGachaItemsData')->hourly();
         $schedule->call('\App\Http\Controllers\AdminRmaItemsController@getDimfsRmaItemsData')->everyMinute();
         
-        // $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
+        $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
         
     }
 
