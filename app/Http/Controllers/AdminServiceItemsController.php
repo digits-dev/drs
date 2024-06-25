@@ -6,6 +6,7 @@
 	use CRUDBooster;
 	use App\Exports\AdminImfsExport;
 	use App\Imports\ServiceItemsImport;
+	use App\Exports\ItemSubmastersExport;
 	use Excel;
 
 	class AdminServiceItemsController extends \crocodicstudio\crudbooster\controllers\CBController {
@@ -132,6 +133,16 @@
 				}
 			}
 
+			if(in_array(CRUDBooster::myPrivilegeId(),[1,5,7])){
+				$this->index_button[] = [
+					"title"=>"Export all with all headers",
+					"label"=>"Export all with all headers",
+					"icon"=>"fa fa-upload",
+					"color"=>"primary",
+					"url"=>"javascript:showExportWithHeaders()",
+				];
+			}
+
 
 
 	        /* 
@@ -169,7 +180,10 @@
 				function showExport() {
 					$('#modal-export').modal('show');
 				}
-				
+
+				function showExportWithHeaders() {
+					$('#modal-export-with-headers').modal('show');
+				}
 			";
 
             /*
@@ -194,31 +208,58 @@
 	        */
 			$this->post_index_html = "
 				<div class='modal fade' tabindex='-1' role='dialog' id='modal-export'>
-				<div class='modal-dialog'>
-					<div class='modal-content'>
-						<div class='modal-header'>
-							<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
-								<span aria-hidden='true'>×</span></button>
-							<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
-						</div>
-
-						<form method='post' target='_blank' action=".route('pos_imfs_export').">
-						<input type='hidden' name='_token' value=".csrf_token().">
-						".CRUDBooster::getUrlParameters()."
-						<div class='modal-body'>
-							<div class='form-group'>
-								<label>File Name</label>
-								<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+					<div class='modal-dialog'>
+						<div class='modal-content'>
+							<div class='modal-header'>
+								<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+									<span aria-hidden='true'>×</span></button>
+								<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
 							</div>
+
+							<form method='post' target='_blank' action=".route('pos_imfs_export').">
+							<input type='hidden' name='_token' value=".csrf_token().">
+							".CRUDBooster::getUrlParameters()."
+							<div class='modal-body'>
+								<div class='form-group'>
+									<label>File Name</label>
+									<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+								</div>
+							</div>
+							<div class='modal-footer' align='right'>
+								<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
+								<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+							</div>
+						</form>
 						</div>
-						<div class='modal-footer' align='right'>
-							<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
-							<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
-						</div>
-					</form>
 					</div>
 				</div>
-			</div>
+
+				<div class='modal fade' tabindex='-1' role='dialog' id='modal-export-with-headers'>
+					<div class='modal-dialog'>
+						<div class='modal-content'>
+							<div class='modal-header'>
+								<button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+									<span aria-hidden='true'>×</span></button>
+								<h4 class='modal-title'><i class='fa fa-download'></i> Export all datta</h4>
+							</div>
+
+							<form method='post' target='_blank' action=".route('pos_imfs_export_with_headers').">
+							<input type='hidden' name='_token' value=".csrf_token().">
+							".CRUDBooster::getUrlParameters()."
+							<div class='modal-body'>
+								<div class='form-group'>
+									<label>File Name</label>
+									<input type='text' name='filename' class='form-control' required value='Export ".CRUDBooster::getCurrentModule()->name ." - ".date('Y-m-d H:i:s')."'/>
+								</div>
+							</div>
+							<div class='modal-footer' align='right'>
+								<button class='btn btn-default' type='button' data-dismiss='modal'>Close</button>
+								<button class='btn btn-primary btn-submit' type='submit'>Submit</button>
+							</div>
+						</form>
+						</div>
+					</div>
+				</div>
 				";
 	        
 	        /*
@@ -372,6 +413,12 @@
 			$filename = $request->input('filename');
 			$tableName = 'service_items';
 			return Excel::download(new AdminImfsExport($tableName), $filename.'.csv');
+		}
+
+		public function exportWithHeadersData(Request $request) {
+			$filename = $request->input('filename');
+			$tableName = 'service_items';
+			return Excel::download(new ItemSubmastersExport($tableName), $filename.'.csv');
 		}
 
 		public function importData() {

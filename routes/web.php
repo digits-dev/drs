@@ -129,6 +129,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('admin_items/upload-items-template',[AdminAdminItemMasterController::class, 'importItemsTemplate']);
     Route::post('admin_items/upload-items-save',[AdminAdminItemMasterController::class, 'importPostSave'])->name('upload-item-save');
     Route::post('admin/admin_items/export', [AdminAdminItemMasterController::class, 'exportData'])->name('admin_imfs_export');
+    Route::post('admin/admin_items/export-with-headers', [AdminAdminItemMasterController::class, 'exportWithHeadersData'])->name('admin_imfs_export_with_headers');
 
     //Gacha upload
     Route::get('gacha_items/gacha-items-upload',[AdminGachaItemsController::class, 'importData']);
@@ -147,6 +148,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('service_items/upload-service-items-template',[AdminServiceItemsController::class, 'importItemsTemplate']);
     Route::post('service_items/upload-service-items-save',[AdminServiceItemsController::class, 'importPostSave'])->name('upload-service-item-save');
     Route::post('admin/service_items/export', [AdminServiceItemsController::class, 'exportData'])->name('pos_imfs_export');
+    Route::post('admin/service_items/export-service-with-headers', [AdminServiceItemsController::class, 'exportWithHeadersData'])->name('pos_imfs_export_with_headers');
    
     //Item upload
     Route::get('items/digits-items-upload',[AdminItemsController::class, 'importData']);
