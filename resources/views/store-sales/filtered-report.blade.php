@@ -147,19 +147,19 @@
                 </thead>
                 <tbody>
                 @foreach($result as $row)
-                    <tr>
-                    <td>{{ $row->reference_number }}</td>
-                    <td>{{ $row->system_name }}</td>
-                    <td>{{ $row->organization_name }}</td>
-                    <td>{{ $row->report_type }}</td>
-                    <td>{{ $row->channel_code }}</td>
-                    <td>{{ $row->customer_location }}</td>
-                    <td>{{ $row->store_concept_name }}</td>
-                    <td>{{ $row->receipt_number }}</td>
-                    <td>{{ $row->sales_date }}</td>
-                    <td>
-                    </td>
-                    </tr>
+                        <tr>
+                        <td>{{ $row->reference_number }}</td>
+                        <td>{{ $row->system_name }}</td>
+                        <td>{{ $row->organization_name }}</td>
+                        <td>{{ $row->report_type }}</td>
+                        <td>{{ $row->channel_code }}</td>
+                        <td>{{ $row->customer_location }}</td>
+                        <td>{{ $row->store_concept_name }}</td>
+                        <td>{{ $row->receipt_number }}</td>
+                        <td>{{ $row->sales_date }}</td>
+                        <td>
+                        </td>
+                        </tr>
                 @endforeach
                 </tbody>
             </table>
