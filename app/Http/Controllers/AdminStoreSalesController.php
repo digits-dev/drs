@@ -374,6 +374,8 @@
 		}
 
 		public function filterStoreSales(Request $request) {
+			ini_set('memory_limit', '-1');
+        	ini_set('max_execution_time', 3000);
 			$data['searchval'] = $request->search;
 			$data['receipt_number'] = $request->receipt_number;
 			$data['channels_id'] = $request->channels_id;
