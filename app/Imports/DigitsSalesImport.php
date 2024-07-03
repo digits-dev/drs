@@ -66,7 +66,7 @@ class DigitsSalesImport implements ToModel,
         $v_organization = $this->organization->where('organization_name',$row['org'])->first();
         $v_channel = $this->channel->where('channel_code',$row['channel_code'])->first();
         $v_customer = $this->customer->where('customer_name',$row['customer_bill_to'])->first();
-        $v_employee = $this->employee->where('employee_name',$row['bill_to'])->first();
+        $v_employee = $this->employee->where('employee_name',$row['customer_bill_to'])->first();
         DigitsSale::updateOrCreate([
             'batch_number'			=> $this->batch_number,
             'reference_number'		=> $row['reference_number'],

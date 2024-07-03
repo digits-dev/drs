@@ -67,7 +67,7 @@ class DigitsSalesImportJob implements ShouldQueue
             $v_report_type = $report_type->where('report_type',$row->report_type)->first();
             $v_channel = $channel->where('channel_code',trim($row->channel_code))->first();
             $v_customer = $customer->where('customer_name',trim($row->customer_bill_to))->first();
-            $v_employee = $employee->where('employee_name',trim($row->bill_to))->first();
+            $v_employee = $employee->where('employee_name',trim($row->customer_bill_to))->first();
             $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
             if ($sales_date < $chunk->from_date || $sales_date > $chunk->to_date) {
                 throw new Exception("SALES DATE OUT OF RANGE FOR REF #$row->reference_number ($sales_date)");
