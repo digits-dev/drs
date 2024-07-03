@@ -308,7 +308,7 @@
 	    */
 	    public function hook_before_add(&$postdata) {
 	        //Your code here
-			$postdata['employee_name']=$postdata['last_name'].",".$postdata['first_name'];
+			$postdata['employee_name']=$postdata['last_name'].",".$postdata['first_name'].".EEE";
 			$postdata['bill_to']=$postdata['last_name'].",".$postdata['first_name'];
             $postdata['created_by']=CRUDBooster::myId();
 	    }
@@ -335,7 +335,7 @@
 	    */
 	    public function hook_before_edit(&$postdata,$id) {
 	        //Your code here
-			$postdata['employee_name']=$postdata['last_name'].",".$postdata['first_name'];
+			$postdata['employee_name']=$postdata['last_name'].",".$postdata['first_name'].".EEE";
 			$postdata['bill_to']=$postdata['last_name'].",".$postdata['first_name'];
             $postdata['updated_by']=CRUDBooster::myId();
 	    }
