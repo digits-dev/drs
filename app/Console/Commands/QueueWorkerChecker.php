@@ -39,13 +39,13 @@ class QueueWorkerChecker extends Command
     {
         // Check if "php artisan queue:work" is already running
         $output = [];
-        exec('pgrep -f "php artisan queue:work"', $output);
+        exec('pgrep -f "php artisan queue:work --force"', $output);
         if (!empty($output)) {
             $this->info('Queue worker is already running. Doing nothing.');
         } else {
             // If not running, start the queue worker
             $this->info('Queue worker not running. Starting...');
-            exec('/opt/cpanel/ea-php74/root/usr/bin/php artisan queue:work --timeout=1200');
+            exec('/opt/cpanel/ea-php74/root/usr/bin/php artisan queue:work --force --timeout=1200');
         }
     }
 }
