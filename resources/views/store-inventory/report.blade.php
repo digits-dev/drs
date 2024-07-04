@@ -108,7 +108,11 @@
             </a>
             @include('partial.progress-bar')
             @include('partial.download-btn')
-          
+            @if(CRUDBooster::isSuperAdmin())
+                <a href="javascript:showModalImport()" id="export-sales" class="btn btn-warning btn-sm">
+                    <i class="fa fa-download"></i> update items
+                </a>
+            @endif
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
                 <i class="fa fa-filter" aria-hidden="true"></i> Search Filter
             </a>
@@ -321,6 +325,49 @@
         </div>
     </div>
 </div>
+
+<div class='modal fade' tabindex='-1' role='dialog' id='modal-import'>
+    <div class='modal-dialog modal-lg'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+                <span aria-hidden='true'>×</span></button>
+                <h3 class="box-title">Upload a File</h3>
+            </div>
+        
+            <form method='post' id="form" enctype="multipart/form-data" action="{{ route('update-items-save') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <div class="box-body">
+        
+                    <div class='callout callout-success'>
+                        <h4>Welcome to Data Importer Tool</h4>
+                        Before uploading a file, please read below instructions : <br/>
+                        * File format should be : CSV, XLSX file format<br/>
+                    </div>
+        
+                    <label class='col-sm-2 control-label'>Import Template File: </label>
+                    <div class='col-sm-4'>
+                        <a href='{{ CRUDBooster::mainpath() }}/upload-items-template' class="btn btn-primary" role="button">Download Template</a>
+                    </div>
+                    <label for='import_file' class='col-sm-2 control-label'>File to Import: </label>
+                    <div class='col-sm-6'>
+                        <input type='hidden' name='table_name' class='form-control' value="	store_inventories" required/>
+                        <input type='file' name='import_file' class='form-control' required/>
+                        <div class='help-block'>File type supported only : CSV, XLSX</div>
+                    </div>
+        
+                </div><!-- /.box-body -->
+        
+                <div class="box-footer">
+                    <div class='pull-right'>
+                        <a href='{{ CRUDBooster::mainpath() }}' class='btn btn-default'>Cancel</a>
+                        <input type='submit' class='btn btn-primary' name='submit' value='Upload'/>
+                    </div>
+                </div><!-- /.box-footer-->
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('bottom')
@@ -352,6 +399,10 @@
 
         function showInventoryReportExport() {
             $('#modal-inventory-export').modal('show');
+        }
+
+        function showModalImport() {
+            $('#modal-import').modal('show');
         }
 
         // $('#exportBtn').click(function(e) {

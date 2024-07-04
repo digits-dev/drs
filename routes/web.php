@@ -25,6 +25,7 @@ use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use App\Http\Controllers\AdminGachaItemsController;
 use App\Http\Controllers\AdminRmaItemsController;
 use App\Http\Controllers\AdminItemsController;
+use App\Http\Controllers\RequestController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -156,4 +157,6 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('items/upload-digits-items-save',[AdminItemsController::class, 'importPostSave'])->name('upload-digits-item-save');
     Route::post('admin/items/export', [AdminItemsController::class, 'exportData'])->name('item_imfs_export');
 
+    //ITEM update
+    Route::post('digits_sales/update-items-save',[RequestController::class, 'updateSaveItem'])->name('update-items-save');
 });
