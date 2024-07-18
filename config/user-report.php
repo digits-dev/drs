@@ -8,7 +8,7 @@ return [
         "report_type"       =>"REPORT TYPE",
         "channel_code"      =>"CHANNEL CODE",
         "customer_location" =>"CUSTOMER / LOCATION",
-        "store_concept_name"=>"STORE CONCEPT",
+        "concept_name"      =>"STORE CONCEPT",
         "receipt_number"    =>"RECEIPT #",
         "sales_date"        =>"SOLD DATE",
         "sales_date_yr_mo"  =>"YR_MO",

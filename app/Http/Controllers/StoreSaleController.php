@@ -31,6 +31,7 @@ use App\Mail\SendSalesToEmail;
 use Mail;
 use App\Models\ReportPrivilege;
 use Illuminate\Support\Facades\Response;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class StoreSaleController extends Controller
 {
@@ -284,6 +285,58 @@ class StoreSaleController extends Controller
         return Response::stream($callback, 200, $headers);
     
     }
+
+    // public function exportSales(Request $request) {
+    //     $filename = $request->input('filename') . '.xlsx';
+    //     $filters = $request->all();
+    //     $userReport = ReportPrivilege::myReport(1, CRUDBooster::myPrivilegeId());
+    //     $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
+    //         ->where('is_final', 1)->get();
+
+    //     // Prepare data for export
+    //     $sales = explode("`,`", $userReport->report_query);
+    //     $headerRow = explode(",", $userReport->report_header);
+
+    //     // // Collect data including headers
+    //     $data = $query->map(function ($item) use ($sales, $headerRow) {
+    //         $salesData = [];
+    //         foreach ($sales as $key => $value) {
+    //             $salesData[$headerRow[$key]] = $item->$value;
+    //         }
+    //         return $salesData;
+    //     })->values()->toArray();
+        
+    //     // Create and return the response using FastExcel
+    //     return (new FastExcel($data))->download($filename);
+    // }
+
+    // public function exportSales(Request $request) {
+    //     $filename = $request->input('filename') . '.xlsx';
+    //     $filters = $request->all();
+    //     $userReport = ReportPrivilege::myReport(1, CRUDBooster::myPrivilegeId());
+    //     $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
+    //         ->where('is_final', 1)->take(100);
+    
+    //     // Create a callback to process data in chunks
+    //     $dataCallback = function () use ($query, $userReport) {
+    //         $chunkSize = 10; // Define your chunk size here
+    //         $query->chunk(10, function ($items) use ($userReport) {
+    //             // Prepare data for export
+    //             $sales = explode("`,`", $userReport->report_query);
+    //             $headerRow = explode(",", $userReport->report_header);
+    //             foreach ($items as $item) {
+    //                 $salesData = [];
+    //                 foreach ($sales as $key => $value) {
+    //                     $salesData[$headerRow[$key]] = $item->$value;
+    //                 }
+    //                 yield $salesData;
+    //             }
+    //         });
+    //     };
+    //     dd($dataCallback);
+    //     // Create and return the response using FastExcel
+    //     return (new FastExcel($dataCallback))->download($filename);
+    // }
 
     public function progressExport(Request $request){
         try{

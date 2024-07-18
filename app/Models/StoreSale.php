@@ -71,9 +71,11 @@ class StoreSale extends Model
 
     public function filterForReport($query, $filters = [], $is_upload = false) {
         $search = $filters['search'];
+        
         if ($filters['datefrom'] && $filters['dateto']) {
             $query->whereBetween('store_sales.sales_date', [$filters['datefrom'], $filters['dateto']]);
         }
+    
         if ($filters['channels_id']) {
             $query->where('store_sales.channels_id', $filters['channels_id']);
         }
@@ -83,34 +85,35 @@ class StoreSale extends Model
         if ($filters['receipt_number']) {
             $query->where('store_sales.receipt_number', $filters['receipt_number']);
         }
-        if ($search)  {
-            $search_filter = "
-                store_sales.reference_number LIKE '%$search%' OR
-                systems.system_name LIKE '%$search%' OR
-                report_types.report_type LIKE '%$search%' OR
-                channels.channel_name LIKE '%$search%' OR
-                customers.customer_name LIKE '%$search%' OR
-                concepts.concept_name LIKE '%$search%' OR
-                store_sales.receipt_number LIKE '%$search%' OR
-                store_sales.sales_date LIKE '%$search%'
-            ";
-            if ($is_upload) {
-                $search_filter .= "
-                    OR customers.customer_name LIKE '%$search%'
-                    OR employees.employee_name LIKE '%$search%'
-                    OR store_sales.item_code LIKE '%$search%'
-                    OR all_items.item_description LIKE '%$search%'
-                    OR store_sales.item_description LIKE '%$search%'
-                    OR all_items.margin_category_description LIKE '%$search%'
-                    OR all_items.brand_description LIKE '%$search%'
-                    OR all_items.sku_status_description LIKE '%$search%'
-                    OR all_items.category_description LIKE '%$search%'
-                    OR all_items.margin_category_description LIKE '%$search%'
-                    OR all_items.vendor_type_code LIKE '%$search%'
-                    OR all_items.inventory_type_description LIKE '%$search%'                ";
-            }
-            $query->whereRaw("($search_filter)");
-        }
+        // if (isset($search))  {
+        //     $search_filter = "
+        //         store_sales.reference_number LIKE '%$search%' OR
+        //         systems.system_name LIKE '%$search%' OR
+        //         report_types.report_type LIKE '%$search%' OR
+        //         channels.channel_name LIKE '%$search%' OR
+        //         customers.customer_name LIKE '%$search%' OR
+        //         concepts.concept_name LIKE '%$search%' OR
+        //         store_sales.receipt_number LIKE '%$search%' OR
+        //         store_sales.sales_date LIKE '%$search%'
+        //     ";
+        //     if ($is_upload) {
+        //         $search_filter .= "
+        //             OR customers.customer_name LIKE '%$search%'
+        //             OR employees.employee_name LIKE '%$search%'
+        //             OR store_sales.item_code LIKE '%$search%'
+        //             OR all_items.item_description LIKE '%$search%'
+        //             OR store_sales.item_description LIKE '%$search%'
+        //             OR all_items.margin_category_description LIKE '%$search%'
+        //             OR all_items.brand_description LIKE '%$search%'
+        //             OR all_items.sku_status_description LIKE '%$search%'
+        //             OR all_items.category_description LIKE '%$search%'
+        //             OR all_items.margin_category_description LIKE '%$search%'
+        //             OR all_items.vendor_type_code LIKE '%$search%'
+        //             OR all_items.inventory_type_description LIKE '%$search%'";
+        //     }
+        //     $query->whereRaw("($search_filter)");
+        // }
+       
         return $query;
     }
 
@@ -126,7 +129,7 @@ class StoreSale extends Model
             'report_types.report_type AS report_type',
             'channels.channel_code AS channel_code',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
-            'concepts.concept_name AS store_concept_name',
+            'concepts.concept_name AS concept_name',
             'store_sales.receipt_number AS receipt_number',
             'store_sales.sales_date AS sales_date',
             'apple_cutoffs.apple_yr_qtr_wk AS apple_yr_qtr_wk',
