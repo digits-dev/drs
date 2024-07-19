@@ -67,35 +67,35 @@ class StoreInventory extends Model
         if ($filters['systems_id']) {
             $query->where('store_inventories.systems_id', $filters['systems_id']);
         }
-        if ($search)  {
-            $search_filter = "
-                store_inventories.reference_number like '%$search%' OR
-                systems.system_name like '%$search%' OR
-                report_types.report_type like '%$search%' OR
-                channels.channel_name like '%$search%' OR
-                customers.customer_name like '%$search%' OR
-                concepts.concept_name like '%$search%' OR
-                store_inventories.inventory_date LIKE '%$search%'            
-            ";
+        // if ($search)  {
+        //     $search_filter = "
+        //         store_inventories.reference_number like '%$search%' OR
+        //         systems.system_name like '%$search%' OR
+        //         report_types.report_type like '%$search%' OR
+        //         channels.channel_name like '%$search%' OR
+        //         customers.customer_name like '%$search%' OR
+        //         concepts.concept_name like '%$search%' OR
+        //         store_inventories.inventory_date LIKE '%$search%'            
+        //     ";
 
-            if ($is_upload) {
-                $search_filter .= "
-                    OR customers.customer_name LIKE '%$search%'
-                    OR employees.employee_name LIKE '%$search%'
-                    OR store_inventories.item_code LIKE '%$search%'
-                    OR all_items.item_description LIKE '%$search%'
-                    OR store_inventories.item_description LIKE '%$search%'
-                    OR all_items.margin_category_description LIKE '%$search%'
-                    OR all_items.brand_description LIKE '%$search%'
-                    OR all_items.sku_status_description LIKE '%$search%'
-                    OR all_items.category_description LIKE '%$search%'
-                    OR all_items.margin_category_description LIKE '%$search%'
-                    OR all_items.vendor_type_code LIKE '%$search%'
-                    OR all_items.inventory_type_description LIKE '%$search%'
-                ";
-            }
-            $query->whereRaw("($search_filter)");
-        }
+        //     if ($is_upload) {
+        //         $search_filter .= "
+        //             OR customers.customer_name LIKE '%$search%'
+        //             OR employees.employee_name LIKE '%$search%'
+        //             OR store_inventories.item_code LIKE '%$search%'
+        //             OR all_items.item_description LIKE '%$search%'
+        //             OR store_inventories.item_description LIKE '%$search%'
+        //             OR all_items.margin_category_description LIKE '%$search%'
+        //             OR all_items.brand_description LIKE '%$search%'
+        //             OR all_items.sku_status_description LIKE '%$search%'
+        //             OR all_items.category_description LIKE '%$search%'
+        //             OR all_items.margin_category_description LIKE '%$search%'
+        //             OR all_items.vendor_type_code LIKE '%$search%'
+        //             OR all_items.inventory_type_description LIKE '%$search%'
+        //         ";
+        //     }
+        //     $query->whereRaw("($search_filter)");
+        // }
         return $query;
     }
 
@@ -157,6 +157,39 @@ class StoreInventory extends Model
             $query->whereIn('store_inventories.id', $ids);
         }
         return $query;
+    }
+
+    public function scopeGetYajraDefaultData($query){
+        return $query->leftJoin('systems', 'store_inventories.systems_id', '=', 'systems.id')
+        ->leftJoin('organizations', 'store_inventories.organizations_id', '=', 'organizations.id')
+        ->leftJoin('report_types', 'store_inventories.report_types_id', '=', 'report_types.id')
+        ->leftJoin('channels', 'store_inventories.channels_id', '=', 'channels.id')
+        ->leftJoin('customers', 'store_inventories.customers_id', '=', 'customers.id')
+        ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
+        ->leftJoin('employees', 'store_inventories.employees_id', '=', 'employees.id')
+        ->select(
+            'store_inventories.id',
+            'store_inventories.batch_number',
+            'store_inventories.is_final',
+            'store_inventories.reference_number',
+            'systems.system_name AS system_name',
+            'organizations.organization_name AS organization_name',
+            'report_types.report_type AS report_type',
+            'channels.channel_code AS channel_code',
+            DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
+            'concepts.concept_name AS store_concept_name',
+            'store_inventories.inventory_date AS inventory_date',
+            'store_inventories.item_code AS item_code',
+            'store_inventories.item_description AS item_description',
+            'store_inventories.store_cost AS store_cost',
+            'store_inventories.qtyinv_sc AS qtyinv_sc',
+            'store_inventories.dtp_rf AS dtp_rf',
+            'store_inventories.qtyinv_rf AS qtyinv_rf',
+            'store_inventories.landed_cost AS landed_cost',
+            'store_inventories.qtyinv_lc AS qtyinv_lc',
+            'store_inventories.dtp_ecom AS dtp_ecom',
+            'store_inventories.qtyinv_ecom as qtyinv_ecom',
+        );
     }
 
     public static function boot()

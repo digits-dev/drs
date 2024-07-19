@@ -138,13 +138,35 @@
             </a>
             @include('partial.progress-bar')
             @include('partial.download-btn')
+            @if(CRUDBooster::isSuperAdmin())
+                <a href="javascript:showModalImport()" id="export-sales" class="btn btn-warning btn-sm">
+                    <i class="fa fa-download"></i> update items
+                </a>
+            @endif
             <a href="javascript:showFilter()" id="search-filter" class="btn btn-info btn-sm pull-right">
                 <i class="fa fa-filter" aria-hidden="true"></i> Search Filter
             </a>
         </div>
         <div class="panel-body">
-        
-            <table class="table table-striped table-bordered" id="digits-report-table" style="width:100%">
+            {{-- <form action="{{ route('store-sales.filter') }}">
+                <div class="search-container">
+                    <input
+                        class="search-bar"
+                        autofocus
+                        type="text"
+                        name="search"
+                        placeholder="Search"
+                        value="{{ $searchval }}"
+                    />
+                    <div class="search-btn-container">
+                        <button class="btn btn-info btn-sm pull-right" type="submit">
+                            <i class="fa fa-search"></i>  Search
+                        </button>
+                    </div>
+                </div>
+            </form> --}}
+           
+            <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
                 <thead>
                     <tr>
                     <th>Reference #</th>
@@ -152,15 +174,14 @@
                     <th>Org</th>
                     <th>Report Type</th>
                     <th>Channel</th>
-                    <th>Customer Bill To</th>
-                    <th>Bill To</th>
+                    <th>Customer Location</th>
                     <th>Concept</th>
-                    <th>Receipt #</th>
-                    <th>Sales Date</th>
+                    <th>Inventory Date</th>
                     <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
+                    
                 {{-- @foreach($rows as $row)
                     <tr>
                     <td>{{ $row->reference_number }}</td>
@@ -201,7 +222,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Sales</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('digits-sales.export') }}" autocomplete="off">
+            <form method='post' target='_blank' action="{{ route('store-inventory.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))
@@ -356,7 +377,7 @@
             </div>
 
             {{-- <form method='post' target='_blank' id="exportForm"> --}}
-        <form method='post' target='_blank' action="{{ route('digits-sales.export') }}">
+        <form method='post' target='_blank' action="{{ route('store-inventory.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' id="receiptNumber">
             <input type='hidden' name='channels_id' id="channelId">
@@ -379,11 +400,53 @@
         </div>
     </div>
 </div>
+
+<div class='modal fade' tabindex='-1' role='dialog' id='modal-import'>
+    <div class='modal-dialog modal-lg'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <button class='close' aria-label='Close' type='button' data-dismiss='modal'>
+                <span aria-hidden='true'>×</span></button>
+                <h3 class="box-title">Upload a File</h3>
+            </div>
+        
+            <form method='post' id="form" enctype="multipart/form-data" action="{{ route('update-items-save') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <div class="box-body">
+        
+                    <div class='callout callout-success'>
+                        <h4>Welcome to Data Importer Tool</h4>
+                        Before uploading a file, please read below instructions : <br/>
+                        * File format should be : CSV, XLSX file format<br/>
+                    </div>
+        
+                    <label class='col-sm-2 control-label'>Import Template File: </label>
+                    <div class='col-sm-4'>
+                        <a href='{{ CRUDBooster::mainpath() }}/upload-items-template' class="btn btn-primary" role="button">Download Template</a>
+                    </div>
+                    <label for='import_file' class='col-sm-2 control-label'>File to Import: </label>
+                    <div class='col-sm-6'>
+                        <input type='hidden' name='table_name' class='form-control' value="	store_inventories" required/>
+                        <input type='file' name='import_file' class='form-control' required/>
+                        <div class='help-block'>File type supported only : CSV, XLSX</div>
+                    </div>
+        
+                </div><!-- /.box-body -->
+        
+                <div class="box-footer">
+                    <div class='pull-right'>
+                        <a class='btn btn-default'>Cancel</a>
+                        <input type='submit' class='btn btn-primary' name='submit' value='Upload'/>
+                    </div>
+                </div><!-- /.box-footer-->
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('bottom')
     <script>
-
         $(document).ready(function(){
             $('.search').on("click", function() {
             });
@@ -396,14 +459,14 @@
             load_data();
 
             function load_data(start_date = '', end_date = '', channel_id = '', concept_id = '', receipt_number = '') {
-                $('#digits-report-table').DataTable({
+                $('#sales-report-table').DataTable({
                     processing: true,
                     serverSide: true,
                     language: {
                         processing: '<div class="spinner" id="spinner"></div> <span class="span_processing">Processing... Please wait...</span>' // Custom processing text with spinner
                     },
                     ajax: {
-                        url: '{{ route("digits-sales.filter") }}',
+                        url: '{{ route("store-inventory.filter") }}',
                         data: {
                             datefrom: start_date,
                             dateto: end_date
@@ -421,11 +484,9 @@
                         {data: 'organization_name', name: 'organizations.organization_name'},
                         {data: 'report_type', name: 'report_types.report_type'},
                         {data: 'channel_code', name: 'channels.channel_code'},
-                        {data: 'customer_bill_to', name: 'customers.customer_bill_to'},
-                        {data: 'bill_to', name: 'customers.bill_to'},
+                        {data: 'customer_location', name: 'customers.customer_location'},
                         {data: 'concept_name', name: 'concepts.concept_name'},
-                        {data: 'receipt_number', name: 'receipt_number'},
-                        {data: 'sales_date', name: 'sales_date'},
+                        {data: 'inventory_date', name: 'inventory_date'},
                         {data: 'action'}
                     ],
                     order: [[0, 'desc']],
@@ -450,7 +511,7 @@
                 $('#export-sales').hide();
                 $('#export-filtered-sales').show();
                 if(start_date != '' && end_date !='') {
-                    $('#digits-report-table').DataTable().destroy(); 
+                    $('#sales-report-table').DataTable().destroy(); 
                     load_data(start_date, end_date, channel_id, concept_id, receipt_number);
                 } else {
                     alert('Both Date is required');
@@ -473,6 +534,10 @@
 
         function showSalesFilteredReportExport() {
             $('#export-filtered-report').modal('show');
+        }
+
+        function showModalImport() {
+            $('#modal-import').modal('show');
         }
 
         $('#channel').change(function() {
@@ -507,7 +572,7 @@
             $('#export-sales').hide();
             $('.progress-div').show();
             $.ajax({
-                url: '{{ route("digits-sales.export") }}',
+                url: '{{ route("store-inventory.export") }}',
                 type: 'POST',
                 data: $('#exportForm').serialize(),
                 success: function(result){
