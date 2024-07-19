@@ -96,8 +96,8 @@
         .spinner {
             display: none;
             margin: 0 auto;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border: 6px solid #ccc;
             border-top: 6px solid #1d72b8;
             border-radius: 50%;
@@ -109,21 +109,15 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* .dataTables_processing {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            margin-left: -25px;
-            margin-top: -25px;
-            width: 100px;
-            height: 100px;
-            z-index: 100;
-            border: none;
-            background: none;
-            text-align: center;
-            color: #000;
-            font-size: 16px;
-        } */
+        .span_processing{
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .dataTables_wrapper .dataTables_processing {
+            height: 100px !important;
+            opacity: 5 !important;
+        }
 
     </style>
 
@@ -167,7 +161,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <div class="spinner" id="spinner"></div>
                 {{-- @foreach($rows as $row)
                     <tr>
                     <td>{{ $row->reference_number }}</td>
@@ -407,7 +400,7 @@
                     processing: true,
                     serverSide: true,
                     language: {
-                        processing: "<div class='spinner' id='spinner'></div> Processing...please wait while loading..." // Custom processing text with spinner
+                        processing: '<div class="spinner" id="spinner"></div> <span class="span_processing">Processing... Please wait...</span>' // Custom processing text with spinner
                     },
                     ajax: {
                         url: '{{ route("digits-sales.filter") }}',
