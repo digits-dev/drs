@@ -11,7 +11,7 @@
 	use CRUDBooster;
 	use File;
 	use Yajra\DataTables\DataTables;
-	
+
 	class AdminStoreInventoriesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
@@ -429,7 +429,7 @@
 				})
 				->addIndexColumn()
 				->addColumn('action', function($row){
-					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("store_sales/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';
+					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("store_inventories/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';
 					return $actionBtn;
 				})
 				->rawColumns(['action'])
@@ -461,7 +461,7 @@
 				})
 				->addIndexColumn()
 				->addColumn('action', function($row){
-					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("store_sales/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';
+					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("store_inventories/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';
 					return $actionBtn;
 				})
 				->rawColumns(['action'])
