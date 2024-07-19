@@ -140,7 +140,7 @@ return [
         "channel_code"      =>"CHANNEL CODE",
         "inventory_transaction_type"    =>"INVENTORY TYPE",
         "customer_location" =>"CUSTOMER / LOCATION",
-        "store_concept_name"=>"STORE CONCEPT",
+        "concept_name"      =>"STORE CONCEPT",
         "inventory_date"   =>"INVENTORY AS OF DATE",
         "item_code"         =>"ITEM NUMBER",
         "item_description"  =>"ITEM DESCRIPTION",

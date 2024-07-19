@@ -67,35 +67,35 @@ class WarehouseInventory extends Model
         if ($filters['systems_id']) {
             $query->where('warehouse_inventories.systems_id', $filters['systems_id']);
         }
-        if ($search)  {
-            $search_filter = "
-                warehouse_inventories.reference_number like '%$search%' OR
-                systems.system_name like '%$search%' OR
-                report_types.report_type like '%$search%' OR
-                channels.channel_name like '%$search%' OR
-                customers.customer_name like '%$search%' OR
-                concepts.concept_name like '%$search%' OR
-                warehouse_inventories.inventory_date LIKE '%$search%'            
-            ";
+        // if ($search)  {
+        //     $search_filter = "
+        //         warehouse_inventories.reference_number like '%$search%' OR
+        //         systems.system_name like '%$search%' OR
+        //         report_types.report_type like '%$search%' OR
+        //         channels.channel_name like '%$search%' OR
+        //         customers.customer_name like '%$search%' OR
+        //         concepts.concept_name like '%$search%' OR
+        //         warehouse_inventories.inventory_date LIKE '%$search%'            
+        //     ";
 
-            if ($is_upload) {
-                $search_filter .= "
-                    OR customers.customer_name LIKE '%$search%'
-                    OR employees.employee_name LIKE '%$search%'
-                    OR warehouse_inventories.item_code LIKE '%$search%'
-                    OR all_items.item_description LIKE '%$search%'
-                    OR warehouse_inventories.item_description LIKE '%$search%'
-                    OR all_items.margin_category_description LIKE '%$search%'
-                    OR all_items.brand_description LIKE '%$search%'
-                    OR all_items.sku_status_description LIKE '%$search%'
-                    OR all_items.category_description LIKE '%$search%'
-                    OR all_items.margin_category_description LIKE '%$search%'
-                    OR all_items.vendor_type_code LIKE '%$search%'
-                    OR all_items.inventory_type_description LIKE '%$search%'
-                ";
-            }
-            $query->whereRaw("($search_filter)");
-        }
+        //     if ($is_upload) {
+        //         $search_filter .= "
+        //             OR customers.customer_name LIKE '%$search%'
+        //             OR employees.employee_name LIKE '%$search%'
+        //             OR warehouse_inventories.item_code LIKE '%$search%'
+        //             OR all_items.item_description LIKE '%$search%'
+        //             OR warehouse_inventories.item_description LIKE '%$search%'
+        //             OR all_items.margin_category_description LIKE '%$search%'
+        //             OR all_items.brand_description LIKE '%$search%'
+        //             OR all_items.sku_status_description LIKE '%$search%'
+        //             OR all_items.category_description LIKE '%$search%'
+        //             OR all_items.margin_category_description LIKE '%$search%'
+        //             OR all_items.vendor_type_code LIKE '%$search%'
+        //             OR all_items.inventory_type_description LIKE '%$search%'
+        //         ";
+        //     }
+        //     $query->whereRaw("($search_filter)");
+        // }
         return $query;
     }
 
@@ -111,7 +111,7 @@ class WarehouseInventory extends Model
             'channels.channel_code AS channel_code',
             'inventory_transaction_types.inventory_transaction_type',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
-            'concepts.concept_name AS store_concept_name',
+            'concepts.concept_name AS concept_name',
             'warehouse_inventories.inventory_date AS inventory_date',
             'warehouse_inventories.item_code AS item_code',
             'warehouse_inventories.item_description AS item_description',
@@ -157,6 +157,39 @@ class WarehouseInventory extends Model
             $query->whereIn('warehouse_inventories.id', $ids);
         }
         return $query;
+    }
+
+    public function scopeGetYajraDefaultData($query){
+        return $query->leftJoin('systems', 'warehouse_inventories.systems_id', '=', 'systems.id')
+        ->leftJoin('organizations', 'warehouse_inventories.organizations_id', '=', 'organizations.id')
+        ->leftJoin('report_types', 'warehouse_inventories.report_types_id', '=', 'report_types.id')
+        ->leftJoin('channels', 'warehouse_inventories.channels_id', '=', 'channels.id')
+        ->leftJoin('customers', 'warehouse_inventories.customers_id', '=', 'customers.id')
+        ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
+        ->leftJoin('employees', 'warehouse_inventories.employees_id', '=', 'employees.id')
+        ->select(
+            'warehouse_inventories.id',
+            'warehouse_inventories.batch_number',
+            'warehouse_inventories.is_final',
+            'warehouse_inventories.reference_number',
+            'systems.system_name AS system_name',
+            'organizations.organization_name AS organization_name',
+            'report_types.report_type AS report_type',
+            'channels.channel_code AS channel_code',
+            DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
+            'concepts.concept_name AS concept_name',
+            'warehouse_inventories.inventory_date AS inventory_date',
+            'warehouse_inventories.item_code AS item_code',
+            'warehouse_inventories.item_description AS item_description',
+            'warehouse_inventories.store_cost AS store_cost',
+            'warehouse_inventories.qtyinv_sc AS qtyinv_sc',
+            'warehouse_inventories.dtp_rf AS dtp_rf',
+            'warehouse_inventories.qtyinv_rf AS qtyinv_rf',
+            'warehouse_inventories.landed_cost AS landed_cost',
+            'warehouse_inventories.qtyinv_lc AS qtyinv_lc',
+            'warehouse_inventories.dtp_ecom AS dtp_ecom',
+            'warehouse_inventories.qtyinv_ecom as qtyinv_ecom',
+        );
     }
     
     public static function boot()
