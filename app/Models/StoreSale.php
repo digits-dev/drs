@@ -189,6 +189,50 @@ class StoreSale extends Model
         return $query;
     }
 
+    public function scopeGetYajraDefaultData($query){
+        return $query->leftJoin('systems', 'store_sales.systems_id', '=', 'systems.id')
+        ->leftJoin('organizations', 'store_sales.organizations_id', '=', 'organizations.id')
+        ->leftJoin('report_types', 'store_sales.report_types_id', '=', 'report_types.id')
+        ->leftJoin('channels', 'store_sales.channels_id', '=', 'channels.id')
+        ->leftJoin('customers', 'store_sales.customers_id', '=', 'customers.id')
+        ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
+        ->leftJoin('employees', 'store_sales.employees_id', '=', 'employees.id')
+        ->select(
+            'store_sales.id',
+            'store_sales.batch_number',
+            'store_sales.is_final',
+            'store_sales.reference_number',
+            'systems.system_name AS system_name',
+            'organizations.organization_name AS organization_name',
+            'report_types.report_type AS report_type',
+            'channels.channel_code AS channel_code',
+            DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
+            'concepts.concept_name AS concept_name',
+            'store_sales.receipt_number AS receipt_number',
+            'store_sales.sales_date AS sales_date',
+            DB::raw('DATE_FORMAT(store_sales.sales_date, "%Y") AS sales_year'),
+            DB::raw('DATE_FORMAT(store_sales.sales_date, "%m") AS sales_month'),
+            'store_sales.item_code AS item_code',
+            'store_sales.item_description AS item_description',
+            DB::raw('COALESCE(store_sales.digits_code_rr_ref, store_sales.item_code) AS digits_code_rr_ref'),
+            'store_sales.quantity_sold AS quantity_sold',
+            'store_sales.sold_price AS sold_price',
+            'store_sales.qtysold_price AS qtysold_price',
+            'store_sales.store_cost AS store_cost',
+            'store_sales.qtysold_sc AS qtysold_sc',
+            'store_sales.net_sales AS net_sales',
+            'store_sales.sale_memo_reference AS sale_memo_reference',
+            'store_sales.current_srp AS current_srp',
+            'store_sales.qtysold_csrp AS qtysold_csrp',
+            'store_sales.dtp_rf AS dtp_rf',
+            'store_sales.qtysold_rf AS qtysold_rf',
+            'store_sales.landed_cost AS landed_cost',
+            'store_sales.qtysold_lc AS qtysold_lc',
+            'store_sales.dtp_ecom AS dtp_ecom',
+            'store_sales.qtysold_ecom AS qtysold_ecom'
+        );
+    }
+
     public static function boot()
     {
         parent::boot();

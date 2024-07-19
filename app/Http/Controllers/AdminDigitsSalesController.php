@@ -10,6 +10,7 @@
 	use DB;
 	use CRUDBooster;
 	use File;
+	use Yajra\DataTables\DataTables;
 
 	class AdminDigitsSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -328,11 +329,10 @@
             $data['channels'] = Channel::active();
 			$data['concepts'] = Concept::active();
 
-	
-			$data['result'] = DigitsSale::where('is_final', 1)->paginate(10);
-			$ids = $data['result']->pluck('id')->toArray();
-			$data['rows'] = DigitsSale::generateReport($ids)->get();
-			return view('digits-sales.report',$data);
+			// $data['result'] = DigitsSale::where('is_final', 1)->paginate(10);
+			// $ids = $data['result']->pluck('id')->toArray();
+			// $data['rows'] = DigitsSale::generateReport($ids)->get();
+			return view('digits-sales.report-yajra',$data);
 
 		}
 
@@ -357,18 +357,103 @@
 		}
 
 		
+		// public function filterDigitsSales(Request $request) {
+		// 	$data['searchval'] = $request->search;
+		// 	$data['receipt_number'] = $request->receipt_number;
+		// 	$data['channels_id'] = $request->channels_id;
+		// 	$data['datefrom'] = $request->datefrom;
+		// 	$data['dateto'] = $request->dateto;
+		// 	$data['concepts_id'] = $request->concepts_id;
+		// 	$data['result'] = DigitsSale::filterForReport(DigitsSale::generateReport(), $request->all())
+		// 	->where('is_final', 1)
+		// 	->paginate(10);
+		// 	$data['result']->appends($request->except(['_token']));
+		// 	return view('digits-sales.filtered-report',$data);	
+		// }
+
 		public function filterDigitsSales(Request $request) {
+			ini_set('memory_limit', '-1');
+        	ini_set('max_execution_time', 3000);
 			$data['searchval'] = $request->search;
 			$data['receipt_number'] = $request->receipt_number;
 			$data['channels_id'] = $request->channels_id;
 			$data['datefrom'] = $request->datefrom;
 			$data['dateto'] = $request->dateto;
 			$data['concepts_id'] = $request->concepts_id;
-			$data['result'] = DigitsSale::filterForReport(DigitsSale::generateReport(), $request->all())
-			->where('is_final', 1)
-			->paginate(10);
-			$data['result']->appends($request->except(['_token']));
-			return view('digits-sales.filtered-report',$data);	
+		
+			if($request->datefrom && $request->dateto){
+				$query = DigitsSale::filterForReport(DigitsSale::generateReport(), $request->all())
+				->where('is_final', 1);
+				$dt = new DataTables();
+				return $dt->eloquent($query)
+				->filterColumn('systems.system_name', function($query, $keyword) {
+					$query->whereRaw("systems.system_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('organizations.organization_name', function($query, $keyword) {
+					$query->whereRaw("organizations.organization_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('report_types.report_type', function($query, $keyword) {
+					$query->whereRaw("report_types.report_type LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('channels.channel_code', function($query, $keyword) {
+					$query->whereRaw("channels.channel_code LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('customers.customer_name', function($query, $keyword) {
+					$query->whereRaw("customers.customer_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('employees.employee_name', function($query, $keyword) {
+					$query->whereRaw("employees.employee_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('employees.bill_to', function($query, $keyword) {
+					$query->whereRaw("employees.bill_to LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('concepts.concept_name', function($query, $keyword) {
+					$query->whereRaw("concepts.concept_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->addIndexColumn()
+				->addColumn('action', function($row){
+					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("digits_sales/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';
+					return $actionBtn;
+				})
+				->rawColumns(['action'])
+				->toJson();
+			}else{
+				$query = DigitsSale::getYajraDefaultData()->where('is_final', 1);
+				$dt = new DataTables();
+				return $dt->eloquent($query)
+				->filterColumn('systems.system_name', function($query, $keyword) {
+					$query->whereRaw("systems.system_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('organizations.organization_name', function($query, $keyword) {
+					$query->whereRaw("organizations.organization_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('report_types.report_type', function($query, $keyword) {
+					$query->whereRaw("report_types.report_type LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('channels.channel_code', function($query, $keyword) {
+					$query->whereRaw("channels.channel_code LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('customers.customer_name', function($query, $keyword) {
+					$query->whereRaw("customers.customer_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('employees.employee_name', function($query, $keyword) {
+					$query->whereRaw("employees.employee_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('employees.bill_to', function($query, $keyword) {
+					$query->whereRaw("employees.bill_to LIKE ?", ["%{$keyword}%"]);
+				})
+				->filterColumn('concepts.concept_name', function($query, $keyword) {
+					$query->whereRaw("concepts.concept_name LIKE ?", ["%{$keyword}%"]);
+				})
+				->addIndexColumn()
+				->addColumn('action', function($row){
+					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("digits_sales/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';
+					return $actionBtn;
+				})
+				->rawColumns(['action'])
+				->toJson();
+			}
+			// return DataTables::of($data['result'])->make(true);
 		}
 
 		public function concepts(Request $request) {

@@ -56,7 +56,7 @@ return [
         "channel_code"      =>"CHANNEL CODE",
         "customer_bill_to"  =>"CUSTOMER BILL TO",
         "bill_to"           =>"BILL TO",
-        "store_concept_name"=>"STORE CONCEPT",
+        "concept_name"      =>"STORE CONCEPT",
         "receipt_number"    =>"RECEIPT #",
         "sales_date"        =>"SOLD DATE",
         "sales_date_yr_mo"  =>"YR_MO",

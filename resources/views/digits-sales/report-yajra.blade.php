@@ -109,7 +109,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        .dataTables_processing {
+        /* .dataTables_processing {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -123,7 +123,7 @@
             text-align: center;
             color: #000;
             font-size: 16px;
-        }
+        } */
 
     </style>
 
@@ -149,25 +149,8 @@
             </a>
         </div>
         <div class="panel-body">
-            {{-- <form action="{{ route('store-sales.filter') }}">
-                <div class="search-container">
-                    <input
-                        class="search-bar"
-                        autofocus
-                        type="text"
-                        name="search"
-                        placeholder="Search"
-                        value="{{ $searchval }}"
-                    />
-                    <div class="search-btn-container">
-                        <button class="btn btn-info btn-sm pull-right" type="submit">
-                            <i class="fa fa-search"></i>  Search
-                        </button>
-                    </div>
-                </div>
-            </form> --}}
-           
-            <table class="table table-striped table-bordered" id="sales-report-table" style="width:100%">
+        
+            <table class="table table-striped table-bordered" id="digits-report-table" style="width:100%">
                 <thead>
                     <tr>
                     <th>Reference #</th>
@@ -175,7 +158,8 @@
                     <th>Org</th>
                     <th>Report Type</th>
                     <th>Channel</th>
-                    <th>Customer Location</th>
+                    <th>Customer Bill To</th>
+                    <th>Bill To</th>
                     <th>Concept</th>
                     <th>Receipt #</th>
                     <th>Sales Date</th>
@@ -224,7 +208,7 @@
                 <h4 class='modal-title'><i class='fa fa-download'></i> Export Sales</h4>
             </div>
 
-            <form method='post' target='_blank' action="{{ route('store-sales.export') }}" autocomplete="off">
+            <form method='post' target='_blank' action="{{ route('digits-sales.export') }}" autocomplete="off">
             <input type='hidden' name='_token' value="{{ csrf_token() }}">
             {!! CRUDBooster::getUrlParameters() !!}
             @if(!empty($filters))
@@ -379,7 +363,7 @@
             </div>
 
             {{-- <form method='post' target='_blank' id="exportForm"> --}}
-        <form method='post' target='_blank' action="{{ route('store-sales.export') }}">
+        <form method='post' target='_blank' action="{{ route('digits-sales.export') }}">
             <input type='hidden' name='_token' value="{{ csrf_token()}}">
             <input type='hidden' name='receipt_number' id="receiptNumber">
             <input type='hidden' name='channels_id' id="channelId">
@@ -419,14 +403,14 @@
             load_data();
 
             function load_data(start_date = '', end_date = '', channel_id = '', concept_id = '', receipt_number = '') {
-                $('#sales-report-table').DataTable({
+                $('#digits-report-table').DataTable({
                     processing: true,
                     serverSide: true,
                     language: {
                         processing: "<div class='spinner' id='spinner'></div> Processing...please wait while loading..." // Custom processing text with spinner
                     },
                     ajax: {
-                        url: '{{ route("store-sales.filter") }}',
+                        url: '{{ route("digits-sales.filter") }}',
                         data: {
                             datefrom: start_date,
                             dateto: end_date
@@ -444,7 +428,8 @@
                         {data: 'organization_name', name: 'organizations.organization_name'},
                         {data: 'report_type', name: 'report_types.report_type'},
                         {data: 'channel_code', name: 'channels.channel_code'},
-                        {data: 'customer_location', name: 'customers.customer_location'},
+                        {data: 'customer_bill_to', name: 'customers.customer_bill_to'},
+                        {data: 'bill_to', name: 'customers.bill_to'},
                         {data: 'concept_name', name: 'concepts.concept_name'},
                         {data: 'receipt_number', name: 'receipt_number'},
                         {data: 'sales_date', name: 'sales_date'},
@@ -472,7 +457,7 @@
                 $('#export-sales').hide();
                 $('#export-filtered-sales').show();
                 if(start_date != '' && end_date !='') {
-                    $('#sales-report-table').DataTable().destroy(); 
+                    $('#digits-report-table').DataTable().destroy(); 
                     load_data(start_date, end_date, channel_id, concept_id, receipt_number);
                 } else {
                     alert('Both Date is required');
