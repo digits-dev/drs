@@ -26,7 +26,7 @@ class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
         foreach ($rows->toArray() as $row){
             // DB::beginTransaction();
 			// try {
-                Item::updateOrcreate([
+                Item::updateOrCreate([
                     'digits_code' => $row['item_code'] 
                 ],
                 [

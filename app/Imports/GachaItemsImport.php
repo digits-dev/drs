@@ -26,7 +26,7 @@ class GachaItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
         foreach ($rows->toArray() as $row){
             DB::beginTransaction();
 			try {
-                GachaItem::updateOrcreate([
+                GachaItem::updateOrCreate([
                     'digits_code' => $row['item_code'] 
                 ],
                 [

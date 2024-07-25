@@ -26,7 +26,7 @@ class RmaItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
         foreach ($rows->toArray() as $row){
             DB::beginTransaction();
 			try {
-                RmaItem::updateOrcreate([
+                RmaItem::updateOrCreate([
                     'digits_code' => $row['item_code'] 
                 ],
                 [

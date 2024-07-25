@@ -26,7 +26,7 @@ class AdminItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
         foreach ($rows->toArray() as $row){
             DB::beginTransaction();
 			try {
-                AdminItem::updateOrcreate([
+                AdminItem::updateOrCreate([
                     'item_code' => $row['item_code'] 
                 ],
                 [

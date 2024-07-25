@@ -26,7 +26,7 @@ class ServiceItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
         foreach ($rows->toArray() as $row){
             DB::beginTransaction();
 			try {
-                ServiceItem::updateOrcreate([
+                ServiceItem::updateOrCreate([
                     'item_code' => $row['item_code'] 
                 ],
                 [
