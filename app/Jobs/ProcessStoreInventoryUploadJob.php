@@ -66,8 +66,9 @@ class ProcessStoreInventoryUploadJob implements ShouldQueue
     {
         HeadingRowFormatter::default('slug');
         $excel_data = Excel::toArray(new StoreInventoryImport($this->batch_number), $this->excel_path)[0];
-
+  
         $excelReportType = array_unique(array_column($excel_data, "report_type"));
+        
         foreach ($excelReportType as $keyReportType => $valueReportType) {
             if (!in_array($valueReportType, $this->report_type)) {
                 throw new Exception("INVALID REPORT TYPE: $valueReportType");
