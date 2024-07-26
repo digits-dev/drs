@@ -43,7 +43,7 @@ class StoreInventoryImport implements ToModel,
     private $employee;
     private $batch_number;
     private $report_type;
-    private $inventory_type;
+    private $sub_inventory;
 
     public function __construct($batch_number)
     {
@@ -54,7 +54,7 @@ class StoreInventoryImport implements ToModel,
         $this->employee = Employee::active();
         $this->batch_number = $batch_number;
         $this->report_type = ReportType::byName("STORE INVENTORY");
-        $this->inventory_type = InventoryTransactionType::active();
+        $this->sub_inventory = InventoryTransactionType::active();
     }
 
     /**
@@ -69,7 +69,7 @@ class StoreInventoryImport implements ToModel,
         $v_channel = $this->channel->where('channel_code',$row['channel_code'])->first();
         $v_customer = $this->customer->where('customer_name',$row['customer_location'])->first();
         $v_employee = $this->employee->where('employee_name',$row['customer_location'])->first();
-        $v_inv_type = $this->inventory_type->where('inventory_transaction_type',$row['inventory_type'])->first();
+        $v_inv_type = $this->sub_inventory->where('inventory_transaction_type',$row['sub_inventory'])->first();
 
         StoreInventory::updateOrCreate([
             'batch_number'			         => $this->batch_number,

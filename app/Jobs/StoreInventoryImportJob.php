@@ -71,7 +71,7 @@ class StoreInventoryImportJob implements ShouldQueue
             $v_system = $system->where('system_name',$row->system)->first();
             $v_organization = $organization->where('organization_name',$row->org)->first();
             $v_report_type = $report_type->where('report_type',$row->report_type)->first();
-            $v_inventory_transaction_type = $inventory_transaction_type->where('inventory_transaction_type',trim($row->inventory_type))->first();
+            $v_inventory_transaction_type = $inventory_transaction_type->where('inventory_transaction_type',trim($row->sub_inventory))->first();
             $v_channel = $channel->where('channel_code',trim($row->channel_code))->first();
             $v_customer = $customer->where('customer_name',trim($row->customer_location))->first();
             $v_employee = $employee->where('employee_name',trim($row->customer_location))->first();
