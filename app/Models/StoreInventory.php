@@ -142,6 +142,7 @@ class StoreInventory extends Model
             'store_inventories.qtyinv_lc AS qtyinv_lc',
             'store_inventories.dtp_ecom AS dtp_ecom',
             'store_inventories.qtyinv_ecom as qtyinv_ecom',
+            'store_inventories.product_quality as product_quality'
         )
         ->leftJoin('systems', 'store_inventories.systems_id', '=', 'systems.id')
         ->leftJoin('organizations', 'store_inventories.organizations_id', '=', 'organizations.id')

@@ -36,7 +36,8 @@ return [
         'INVENTORY QTY',
         'STORE COST',
         'STORE COST ECOMM',
-        'LANDED COST'
+        'LANDED COST',
+        'PRODUCT QUALITY'
     ],
 
     'digits-sales' => [
@@ -75,7 +76,8 @@ return [
         'INVENTORY QTY',
         'STORE COST',
         'STORE COST ECOMM',
-        'LANDED COST'
+        'LANDED COST',
+        'PRODUCT QUALITY'
     ],
 ];
 

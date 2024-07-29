@@ -88,6 +88,7 @@ class WarehouseInventoryImport implements ToModel,
             'qtyinv_sc'			             => ($row['inventory_qty'])*($row['store_cost']),
             'qtyinv_ecom'			         => ($row['inventory_qty'])*($row['store_cost_ecomm']),
             'landed_cost'			         => $row['landed_cost'],
+            'product_quality'			     => $row['product_quality'],
             'qtyinv_lc'			             => ($row['inventory_qty'])*($row['landed_cost']),
             'batch_number'			         => $this->batch_number,
         ]);

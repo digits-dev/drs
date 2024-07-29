@@ -130,6 +130,7 @@ return [
         "qtyinv_lc"        =>"INV VAL @ LC",
         "dtp_ecom"      =>"SC ECOMM",
         "qtyinv_ecom"      =>"INV VAL @ ECOMM",
+        "product_quality"  => "PRODUCT QUALITY"
     ],
 
     'warehouse_inventories' => [
@@ -167,5 +168,6 @@ return [
         "qtyinv_lc"        =>"INV VAL @ LC",
         "dtp_ecom"      =>"SC ECOMM",
         "qtyinv_ecom"      =>"INV VAL @ ECOMM",
+        "product_quality"  => "PRODUCT QUALITY"
     ],
 ];

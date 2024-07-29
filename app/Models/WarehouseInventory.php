@@ -142,6 +142,7 @@ class WarehouseInventory extends Model
             'warehouse_inventories.qtyinv_lc AS qtyinv_lc',
             'warehouse_inventories.dtp_ecom AS dtp_ecom',
             'warehouse_inventories.qtyinv_ecom as qtyinv_ecom',
+            'warehouse_inventories.product_quality as product_quality'
         )
         ->leftJoin('systems', 'warehouse_inventories.systems_id', '=', 'systems.id')
         ->leftJoin('organizations', 'warehouse_inventories.organizations_id', '=', 'organizations.id')
