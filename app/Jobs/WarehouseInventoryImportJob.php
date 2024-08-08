@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Jobs;
-
+<?php namespace App\Jobs;
 use App\Models\Channel;
 use App\Models\Customer;
 use App\Models\Employee;
