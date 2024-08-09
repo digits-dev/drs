@@ -422,11 +422,11 @@
         
                     <label class='col-sm-2 control-label'>Import Template File: </label>
                     <div class='col-sm-4'>
-                        <a href='{{ CRUDBooster::mainpath() }}/upload-items-template' class="btn btn-primary" role="button">Download Template</a>
+                        <a href='{{ CRUDBooster::mainpath() }}/update-template' class="btn btn-primary" role="button">Download Template</a>
                     </div>
                     <label for='import_file' class='col-sm-2 control-label'>File to Import: </label>
                     <div class='col-sm-6'>
-                        <input type='hidden' name='table_name' class='form-control' value="	store_inventories" required/>
+                        <input type='hidden' name='table_name' class='form-control' value="warehouse_inventories" required/>
                         <input type='file' name='import_file' class='form-control' required/>
                         <div class='help-block'>File type supported only : CSV, XLSX</div>
                     </div>

@@ -23,12 +23,23 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
     public function collection(Collection $rows)
     {
         foreach ($rows->toArray() as $row){
-            DB::table($this->table_name)
-            ->where(['reference_number' => $row['reference_number'],
-                    'item_code' => $row['item_code']])
-            ->update([
-                'customers_id' => $row['customers_id']
-            ]);
+            if($this->table_name === 'warehouse_inventories'){
+                DB::table($this->table_name)
+                ->where(['reference_number' => $row['reference_number'],
+                         'item_code' => $row['item_number'],
+                         'is_final' => 1])
+                ->update([
+                    'product_quality' => $row['product_quality']
+                ]);
+            }else{
+                DB::table($this->table_name)
+                ->where(['reference_number' => $row['reference_number'],
+                         'item_code' => $row['item_number'],
+                         'is_final' => 1])
+                ->update([
+                    'customers_id' => $row['customers_id']
+                ]);
+            }
         }
     }
 }

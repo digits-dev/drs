@@ -45,7 +45,8 @@ class WarehouseInventory extends Model
         'dtp_ecom',
         'qtyinv_ecom',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'product_quality'
     ];
 
     public function scopeGetNextReference($query) {

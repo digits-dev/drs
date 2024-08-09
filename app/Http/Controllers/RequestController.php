@@ -26,7 +26,7 @@ class RequestController extends Controller
         $table_name = $request->table_name;
         try {
             Excel::import(new UpdateItems($table_name),$path);
-            CRUDBooster::redirect(CRUDBooster::adminpath('digits_sales'), trans("Update Successfully!"), 'success');
+            CRUDBooster::redirect(CRUDBooster::adminpath($table_name), trans("Update Successfully!"), 'success');
             
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $failures = $e->failures();
@@ -42,7 +42,7 @@ class RequestController extends Controller
             $errors = collect($error)->unique()->toArray();
     
         }
-        CRUDBooster::redirect(CRUDBooster::adminpath('digits_sales'), $errors[0], 'danger');
+        CRUDBooster::redirect(CRUDBooster::adminpath($table_name), $errors[0], 'danger');
 
 		
         
