@@ -159,4 +159,14 @@ Route::group(['prefix'=>'admin'], function(){
 
     //ITEM update
     Route::post('digits_sales/update-items-save',[RequestController::class, 'updateSaveItem'])->name('update-items-save');
+
+    //submaster upload
+    Route::get('/admin/apple_cutoffs/import-apple', 'AdminAppleCutoffsController@importPage');
+    Route::get('/admin/apple_cutoffs/import-template', 'AdminAppleCutoffsController@importTemplate');
+    Route::post('/admin/apple_cutoffs/import-items','AdminAppleCutoffsController@importExcel')->name('upload.createApple');
+
+
+    Route::get('/admin/non_apple_cutoffs/import-non-apple', 'AdminNonAppleCutoffsController@importPage');
+    Route::get('/admin/non_apple_cutoffs/import-template', 'AdminNonAppleCutoffsController@importTemplate');
+    Route::post('/admin/non_apple_cutoffs/import-items','AdminNonAppleCutoffsController@importExcel')->name('upload.createNonApple');
 });
