@@ -7,6 +7,11 @@
 	use Illuminate\Support\Facades\Input;
 	use Illuminate\Http\Request;
 	use Excel;
+	use PhpOffice\PhpSpreadsheet\Spreadsheet;
+	use PhpOffice\PhpSpreadsheet\Reader\Exception;
+	use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+	use PhpOffice\PhpSpreadsheet\IOFactory;
+	use App\Imports\AppleCutoffImport;
 
 	class AdminAppleCutoffsController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -413,28 +418,76 @@
 	    }
 
 		public function importTemplate() {
-			Excel::create('apple-cutoff-format-'.date("Ymd").'-'.date("h.i.sa"), function ($excel) {
-				$excel->sheet('apple', function ($sheet) {
-					$sheet->row(1, array('SOLD DATE', 'DAY', 'APPLE FY', 'QUARTER', 'WEEK', 'FROM', 'TO'));
-					$sheet->row(2, array('YYYY-MM-DD', 'SATURDAY', '2022', 'Q2', 'WK10', 'YYYY-MM-DD', 'YYYY-MM-DD'));
-			}); 	
-			})->download('csv');	
+			// Excel::create('apple-cutoff-format-'.date("Ymd").'-'.date("h.i.sa"), function ($excel) {
+			// 	$excel->sheet('apple', function ($sheet) {
+			// 		$sheet->row(1, array('SOLD DATE', 'DAY', 'APPLE FY', 'QUARTER', 'WEEK', 'FROM', 'TO'));
+			// 		$sheet->row(2, array('YYYY-MM-DD', 'SATURDAY', '2022', 'Q2', 'WK10', 'YYYY-MM-DD', 'YYYY-MM-DD'));
+			// }); 	
+			// })->download('csv');	
+			
+			$filename = "apple-cutoff-format-"."-".date("Ymd")."-".date("h.i.sa").".csv";
+			$fileHeader = ['SOLD DATE', 'DAY', 'APPLE FY', 'QUARTER', 'WEEK', 'FROM', 'TO'];
+			$fileData = ['YYYY-MM-DD', 'SATURDAY', '2022', 'Q2', 'WK10', 'YYYY-MM-DD', 'YYYY-MM-DD'];
+
+			header("Content-Disposition: attachment; filename=\"$filename\"");
+			header("Content-Type: text/csv; charset=UTF-16LE");
+			$out = fopen("php://output", 'w');
+			$flag = false;
+			if(!$flag) {
+				// display field/column names as first row
+				fputcsv($out, $fileHeader);
+				$flag = true;
+			}
+			fputcsv($out, $fileData);
+			fclose($out);
+			exit;
+			// $arrHeader = [
+			// 	"sold_date" => "SOLD DATE",
+			// 	"day"       => "DAY",
+			// 	"apple_fy"  => "APPLE FY",
+			// 	"quarter"   => "QUARTER",
+			// 	"week"      => "WEEK",
+			// 	"from"      => "FROM",
+			// 	"to"        => "TO"
+			// ];
+			
+			// $arrData = [
+			// 	"sold_date" => "YYYY-MM-DD",
+			// 	"day"       => "SATURDAY",
+			// 	"apple_fy"  => "2022",
+			// 	"quarter"   => "Q2",
+			// 	"week"      => "WK10",
+			// 	"from"      => "YYYY-MM-DD",
+			// 	"to"        => "YYYY-MM-DD"
+			// ];
+			
+			// $spreadsheet = new Spreadsheet();
+			// $sheet = $spreadsheet->getActiveSheet();
+			// $sheet->setTitle('apple');  // Set the sheet name
+			// $sheet->fromArray(array_values($arrHeader), null, 'A1');
+			// $sheet->fromArray($arrData, null, 'A2');
+			
+			// $filename = "apple-cutoff-format-" . date('Ymd') . '-' . date('h.i.sa') . '.xlsx';
+			// header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+			// header('Content-Disposition: attachment;filename="' . $filename . '"');
+			// header('Cache-Control: max-age=0');
+			
+			// $writer = new Xlsx($spreadsheet);
+			// $writer->save('php://output');
+			// exit;
+			
+			
 	    }
 
-
 		public function importExcel(Request $request) {
-
 			ini_set('max_execution_time', 0);
 			ini_set('memory_limit',"-1");
-
-	    	$insert = array();
-	    	$data_saved = false;
-
 			$file = $request->file('import_file');
-			
+			$path_excel = $request->file('import_file')->store('temp');
+			$path = storage_path('app').'/'.$path_excel;
 			$validator = \Validator::make(
 				[
-					'file' => $file,
+					'file' => $path,
 					'extension' => strtolower($file->getClientOriginalExtension()),
 				],
 				[
@@ -442,98 +495,17 @@
 					'extension' => 'required|in:csv',
 				]
 			);
-
+		
 			if ($validator->fails()) {
 				CRUDBooster::redirect(CRUDBooster::mainpath(), trans("Please check excel format."), 'danger');
 			}
-
-
-	    	if ($request->hasFile('import_file')) {
-				$cnt_fail = 0;
-				$item_counter = 0;
-				$path = $request->file('import_file')->getRealPath();
-				$up_option = $request->input('upload_option');
-
-				$data = Excel::load($path, function ($reader) {
-				})->get();
-		
-				$dataExcel = Excel::load($path, function($reader) {
-					$reader->noHeading()->all();			
-				})->skip(1)->get();
-				
-		
-				foreach ($dataExcel as $key => $value) {
-
-					if (empty($value[0])) {
-						$cnt_fail++;
-					}
-					if (empty($value[1])) {
-						$cnt_fail++;
-					}
-					if (empty($value[2])) {
-						$cnt_fail++;
-					}
-					if (empty($value[3])) {
-						$cnt_fail++;
-					}
-					if (empty($value[4])) {
-						$cnt_fail++;
-					}
-					if (empty($value[5])) {
-						$cnt_fail++;
-					}
-					if (empty($value[6])) {
-						$cnt_fail++;
-					}
-
-				}
-
-				if($cnt_fail == 0) {
-
-						foreach ($data as $key => $value) {
-						    
-						  //  $existingData = AppleCutoff::where('sold_date',$value->sold_date)->first();
-						  //  if(empty($existingData)){
-
-    							AppleCutoff::updateOrInsert(['sold_date' => $value->sold_date],[
-    								'sold_date' =>  		$value->sold_date,
-    								'day_fy' =>  			$value->day,
-    								'year_fy' =>   			$value->apple_fy,
-    								'quarter_fy' =>  		$value->quarter,
-    								'week_fy' =>  			$value->week,
-    								'apple_yr_qtr_wk' =>  $value->apple_fy.' '.$value->quarter.' '.$value->week,
-    								'from_date' =>  		$value->from,
-    								'to_date' =>  			$value->to,
-    								'apple_week_cutoff' =>  $value->from.' to '.$value->to,
-    								'created_by' =>  		CRUDBooster::myId(),
-    								'created_at' =>  		date('Y-m-d H:i:s')
-    							]);
-						  //  }
-						  //  else{
-						  //      AppleCutoff::where('sold_date',$value->sold_date)->update([
-    				// 				'day_fy' =>  			$value->day,
-    				// 				'year_fy' =>   			$value->apple_fy,
-    				// 				'quarter_fy' =>  		$value->quarter,
-    				// 				'week_fy' =>  			$value->week,
-    				// 				'apple_yr_qtr_wk' =>  $value->apple_fy.' '.$value->quarter.' '.$value->week,
-    				// 				'from_date' =>  		$value->from,
-    				// 				'to_date' =>  			$value->to,
-    				// 				'apple_week_cutoff' =>  $value->from.' to '.$value->to,
-    				// 				'updated_by' =>  		CRUDBooster::myId(),
-    				// 				'updated_at' =>  		date('Y-m-d H:i:s')
-    				// 			]);
-						  //  }
-
-						}
-
-					CRUDBooster::redirect(CRUDBooster::mainpath(), trans("Apple cuttoff upload successful!"), 'success');
-
-				}else{
-					CRUDBooster::redirect(CRUDBooster::mainpath(), trans("Please check your file."), 'danger');
-				}
-
+	
+			try {
+				Excel::import(new AppleCutoffImport, $path);
+				CRUDBooster::redirect(CRUDBooster::mainpath(), trans("Apple cutoff upload successful!"), 'success');
+			} catch (\Exception $e) {
+				CRUDBooster::redirect(CRUDBooster::mainpath(), trans("Please check your file." . $e->getMessage()), 'danger');
 			}
-	    }
-
-
+			
+		}
 	}
