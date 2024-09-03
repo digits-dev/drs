@@ -424,8 +424,8 @@
 			// }); 	
 			// })->download('csv');	
 			$filename = "non-apple-cutoff-format-"."-".date("Ymd")."-".date("h.i.sa").".csv";
-			$fileHeader = ['SOLD DATE', 'DAY', 'APPLE CY', 'QUARTER', 'WEEK', 'FROM', 'TO'];
-			$fileData = ['YYYY-MM-DD', 'SATURDAY', 'CY22', '06', 'WK10', 'YYYY-MM-DD', 'YYYY-MM-DD'];
+			$fileHeader = ['SOLD DATE', 'DAY', 'NON APPLE CY', 'MONTH', 'WEEK', 'FROM', 'TO'];
+			$fileData = ['YYYY-MM-DD', 'SATURDAY', 'CY22', '06', 'WK04', 'YYYY-MM-DD', 'YYYY-MM-DD'];
 
 			header("Content-Disposition: attachment; filename=\"$filename\"");
 			header("Content-Type: text/csv; charset=UTF-16LE");
