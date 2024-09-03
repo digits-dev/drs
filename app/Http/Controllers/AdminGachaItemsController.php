@@ -432,18 +432,18 @@
 				
 				$digits_code = $item['digits_code'];
 				
-				$is_existing = DB::table('rma_items')
+				$is_existing = DB::table('gacha_items')
 					->where('digits_code', $digits_code)
 					->exists();
 
 				if ($is_existing) {
 					$to_be_inserted['updated_at'] = date('Y-m-d H:i:s');
-					DB::table('rma_items')
+					DB::table('gacha_items')
 						->where('digits_code', $item['digits_code'])
 						->update($to_be_inserted);
 				} else {
 					$to_be_inserted['created_at'] = date('Y-m-d H:i:s');
-					DB::table('rma_items')->insert($to_be_inserted);
+					DB::table('gacha_items')->insert($to_be_inserted);
 				}
 			}
 		}
