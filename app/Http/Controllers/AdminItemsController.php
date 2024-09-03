@@ -41,6 +41,7 @@
 			$this->col[] = ["label"=>"Upc Code4","name"=>"upc_code4"];
 			$this->col[] = ["label"=>"Upc Code5","name"=>"upc_code5"];
 			$this->col[] = ["label"=>"Item Description","name"=>"item_description"];
+			$this->col[] = ["label"=>"Created Date","name"=>"created_at"];
 			# END COLUMNS DO NOT REMOVE THIS LINE
 
 			# START FORM DO NOT REMOVE THIS LINE
