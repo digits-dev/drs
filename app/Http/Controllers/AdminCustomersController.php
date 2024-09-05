@@ -307,6 +307,7 @@
 	    */
 	    public function hook_before_add(&$postdata) {
 	        //Your code here
+			$postdata['bill_to']=$postdata['customer_bill_to'];
             $postdata['created_by']=CRUDBooster::myId();
 	    }
 
@@ -332,6 +333,7 @@
 	    */
 	    public function hook_before_edit(&$postdata,$id) {
 	        //Your code here
+			$postdata['bill_to']=$postdata['customer_bill_to'];
             $postdata['updated_by']=CRUDBooster::myId();
 	    }
 
