@@ -28,6 +28,8 @@ use App\Http\Controllers\AdminItemsController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\AdminAppleCutoffsController;
 use App\Http\Controllers\AdminNonAppleCutoffsController;
+use App\Http\Controllers\AdminGashaponStoreSalesUploadsController;
+use App\Http\Controllers\GashaponStoreSalesController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -171,4 +173,17 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('non_apple_cutoffs/import-non-apple', [AdminNonAppleCutoffsController::class, 'importPage']);
     Route::get('non_apple_cutoffs/import-template', [AdminNonAppleCutoffsController::class, 'importTemplate']);
     Route::post('non_apple_cutoffs/import-items',[AdminNonAppleCutoffsController::class, 'importExcel'])->name('upload.createNonApple');
+
+    //GASHAPON SALES
+    Route::post('gashapon_store_sales_uploads/import-upload',[GashaponStoreSalesController::class, 'storeSalesUpload'])->name('gashapon_store_sales_uploads.upload');
+    Route::get('gashapon_store_sales_uploads/import',[GashaponStoreSalesController::class, 'storeSalesUploadView'])->name('gashapon_store_sales_uploads.upload-view');
+    Route::get('gashapon_store_sales_uploads/template',[GashaponStoreSalesController::class, 'uploadTemplate'])->name('gashapon_store_sales_uploads.template');
+    Route::post('gashapon_store_sales_uploads/export',[GashaponStoreSalesController::class, 'exportSales'])->name('gashapon_store_sales_uploads.export');
+    Route::get('gashapon_store_sales_uploads/store_sales/batch/{batch_id}',[GashaponStoreSalesController::class, 'getBatchDetails']);
+    Route::get('gashapon_store_sales_uploads/batch/{batch_id}',[GashaponStoreSalesController::class, 'getBatchDetails']);
+    Route::get('gashapon_store_sales_uploads/generate-file/{id}',[AdminGashaponStoreSalesUploadsController::class, 'generateFile']);
+    Route::get('gashapon_store_sales_uploads/export-batch/{id}',[AdminGashaponStoreSalesUploadsController::class, 'exportBatch']);
+    Route::get('gashapon_store_sales_uploads/regenerate-file/{id}',[AdminGashaponStoreSalesUploadsController::class, 'regenerateFile']);
+    Route::get('gashapon_store_sales_uploads/download-uploaded-file/{id}',[AdminGashaponStoreSalesUploadsController::class, 'downloadUploadedFile']);
+    Route::get('gashapon_store_sales_uploads/detail/{id}', [AdminGashaponStoreSalesUploadsController::class, 'getDetail'])->name('store_sales.detail');
 });

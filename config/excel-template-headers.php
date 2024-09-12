@@ -22,6 +22,27 @@ return [
         'SALE MEMO REF'
     ],
 
+    'gashapon-store-sales' => [
+        'REFERENCE NUMBER',
+        'SYSTEM',
+        'ORG',
+        'REPORT TYPE',
+        'CHANNEL CODE',
+        'CUSTOMER LOCATION',
+        'RECEIPT NUMBER',
+        'SOLD DATE',
+        'ITEM NUMBER',
+        'RR REF',
+        'ITEM DESCRIPTION',
+        'QTY SOLD',
+        'SOLD PRICE',
+        'NET SALES',
+        'STORE COST',
+        'STORE COST ECOMM',
+        'LANDED COST',
+        'SALE MEMO REF'
+    ],
+
     'store-inventory' => [
         'REFERENCE NUMBER',
         'SYSTEM',
