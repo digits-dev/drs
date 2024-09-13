@@ -359,6 +359,7 @@ use App\Models\ReportType;
             $data['privileges'] = CRUDBooster::isSuperAdmin() ? UserPrivilege::all() : UserPrivilege::privileges();
             $data['tables'] = [
                 'store_sales'=>'STORE SALES',
+				'gashapon_store_sales'=>'GASHAPON STORE SALES',
                 'digits_sales'=>'DIGITS SALES',
                 'store_inventories'=>'STORE INVENTORY',
                 'warehouse_inventories'=>'WAREHOUSE INVENTORY'

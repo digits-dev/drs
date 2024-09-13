@@ -422,7 +422,7 @@
 				$to_be_inserted['current_srp']                 = $item['current_srp'];
 				$to_be_inserted['initial_wrr_date']            = $item['initial_wrr_date'];
 				$to_be_inserted['brand_status']                = $item['brand_status'];
-				$to_be_inserted['status']               	   = $item['sku_status_description'];
+				$to_be_inserted['sku_status_description']      = $item['sku_status_description'];
 				
 				$digits_code = $item['digits_code'];
 				
