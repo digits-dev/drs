@@ -25,7 +25,7 @@ class GashaponStoreSalesUploadBatchExport implements FromQuery, WithHeadings, Wi
     public function __construct($batch) {
         $this->batch = $batch;
         GashaponStoreSalesUpload::where('batch', $batch)->update(['status' => 'GENERATING FILE']);
-        $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+        $this->userReport = ReportPrivilege::myReport(8,CRUDBooster::myPrivilegeId());
     }
 
     public function headings(): array {

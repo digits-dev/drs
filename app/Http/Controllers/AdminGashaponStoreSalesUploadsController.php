@@ -4,7 +4,7 @@
 	use Request;
 	use DB;
 	use CRUDBooster;
-	use App\Models\GashaponStoreSale;
+	use App\Models\GashaponStoreSales;
 	use App\Models\GashaponStoreSalesReport;
 	use App\Models\GashaponStoreSalesUpload;
 	use App\Models\GashaponStoreSalesUploadLine;
@@ -212,7 +212,7 @@
 					"label"=>"Upload Sales",
 					"icon"=>"fa fa-upload",
 					"color"=>"success",
-					"url"=>route('gashapon_store_sales_uploads.upload-view')
+					"url"=>route('gashapon-store-sales.upload-view')
 				];
 			}
 

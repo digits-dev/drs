@@ -58,4 +58,8 @@ class AdminCmsUsersController extends CBController {
 	public function hook_before_add(&$postdata) {
 
 	}
+
+	public function postUpdatePassword(Request $request) {
+		dd(Request::all());
+	}
 }

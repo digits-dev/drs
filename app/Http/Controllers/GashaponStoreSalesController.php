@@ -41,7 +41,7 @@ class GashaponStoreSalesController extends Controller
     public function __construct(){
         DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping("enum", "string");
         $this->report_type = ['GASHAPON STORE SALES'];
-        $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+        $this->userReport = ReportPrivilege::myReport(8,CRUDBooster::myPrivilegeId());
     }
     /**
      * Display a listing of the resource.
@@ -125,8 +125,8 @@ class GashaponStoreSalesController extends Controller
 
         $data = [];
         $data['page_title'] = 'Upload Gashapon Store Sales';
-        $data['uploadRoute'] = route('gashapon_store_sales_uploads.upload');
-        $data['uploadTemplate'] = route('gashapon_store_sales_uploads.template');
+        $data['uploadRoute'] = route('gashapon-store-sales.upload');
+        $data['uploadTemplate'] = route('gashapon-store-sales.template');
         $data['nextSeries'] = GashaponStoreSales::getNextReference();
         return view('sales.upload',$data);
     }
@@ -160,7 +160,7 @@ class GashaponStoreSalesController extends Controller
         $batch_number = $time;
 
         if (!empty($unMatch)) {
-            return redirect(route('gashapon_store_sales_uploads.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
+            return redirect(route('gashapon-store-sales.upload-view'))->with(['message_type' => 'danger', 'message' => trans("crudbooster.alert_mismatched_headers")]);
         }
 
         $args = [
@@ -196,6 +196,45 @@ class GashaponStoreSalesController extends Controller
         $header = config('excel-template-headers.gashapon-store-sales');
         $export = new ExcelTemplate([$header]);
         return Excel::download($export, 'gashapon-store-sales-'.date("Ymd").'-'.date("h.i.sa").'.xlsx');
+    }
+
+    public function exportSales(Request $request) {
+        $filename = $request->input('filename').'.tsv';
+        $filters = $request->all();
+        $userReport = ReportPrivilege::myReport(8,CRUDBooster::myPrivilegeId());
+        $query = GashaponStoreSales::filterForReport(GashaponStoreSales::generateReport(), $filters)
+            ->where('is_final', 1);
+
+        $headers = [
+            'Content-Type' => 'text/tab-separated-values',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+  
+        // Open a stream to write the response body
+        $callback = function () use($userReport, $query) {
+            $handle = fopen('php://output', 'w');
+            
+            // Write headers
+            fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
+
+            // Query and stream data
+            $query->chunk(10000, function ($data) use ($handle, $userReport) {
+                    $sales = explode("`,`",$userReport->report_query);
+                    foreach($data as $value_data){
+                        $salesData = [];
+                        foreach ($sales as $key => $value) {
+                            array_push($salesData, $value_data->$value);
+                        }
+                        fputcsv($handle,$salesData, "\t");
+                    }
+            });
+            
+            fclose($handle);
+        };
+    
+        // Return the streamed response
+        return Response::stream($callback, 200, $headers);
+    
     }
 }
 
