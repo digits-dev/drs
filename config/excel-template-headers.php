@@ -61,6 +61,24 @@ return [
         'PRODUCT QUALITY'
     ],
 
+    'supplier-intransit-inventory' => [
+        'REFERENCE NUMBER',
+        'SYSTEM',
+        'ORG',
+        'REPORT TYPE',
+        'CHANNEL CODE',
+        'SUB INVENTORY',
+        'CUSTOMER LOCATION',
+        'INVENTORY AS OF DATE',
+        'ITEM NUMBER',
+        'ITEM DESCRIPTION',
+        'INVENTORY QTY',
+        'STORE COST',
+        'STORE COST ECOMM',
+        'LANDED COST',
+        'PRODUCT QUALITY'
+    ],
+
     'digits-sales' => [
         'REFERENCE NUMBER',
         'SYSTEM',

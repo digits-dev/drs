@@ -3,9 +3,10 @@
 use Session;
 use Request;
 use DB;
-use CRUDbooster;
 use crocodicstudio\crudbooster\controllers\CBController;
-
+use Illuminate\Support\Facades\Hash;
+use CRUDbooster;
+use Carbon\Carbon;
 class AdminCmsUsersController extends CBController {
 
 
@@ -60,6 +61,41 @@ class AdminCmsUsersController extends CBController {
 	}
 
 	public function postUpdatePassword(Request $request) {
-		dd(Request::all());
+		$fields = Request::all();
+		$user = DB::table('cms_users')->where('id',$fields['user_id'])->first();
+		if (Hash::check($fields['current_password'], $user->password)){
+			$validatedData = Request::validate([
+				'current_password' => 'required',
+				'new_password' => 'required',
+				'confirm_password' => 'required|same:new_password'
+			]);
+			DB::table('cms_users')->where('id', $fields['user_id'])->update(['password'=>Hash::make($fields['new_password']),'last_password_updated' => now()->format('Y-m-d')]);
+			$newPass = DB::table('cms_users')->where('id',$fields['user_id'])->first();
+			Session::put('admin_password', $newPass->password);
+			$passwordLastUpdated = Carbon::parse($newPass->last_password_updated);
+			if ($passwordLastUpdated->diffInMonths(Carbon::now()) > 3) {
+				Session::put('password_is_old', $newPass->last_password_updated);
+			}else{
+				Session::put('password_is_old', '');
+			}
+			Session::put('message_type', 'success');
+			return redirect()->to('admin/statistic_builder/dashboard')->with('info', 'Password Updated, You Will Be Logged-Out.');
+		}else{
+			return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Incorrect Current Password.');
+		}
+		
+	}
+
+	public function checkPassword(Request $request) {
+		$data = [];
+		$fields = Request::all();
+		$user = DB::table('cms_users')->where('id',$fields['id'])->first();
+		if (Hash::check($fields['password'], $user->password)){
+			$data['items'] = 1;
+		}else{
+			$data['items'] = 0;
+		}
+	
+		return json_encode($data);
 	}
 }

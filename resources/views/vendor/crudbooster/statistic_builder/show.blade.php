@@ -19,23 +19,23 @@
 		}
 
 		.progress-bar {
-			width: 30%;
-			height: 5px;
+			width: 32%;
+			height: 8px;
 			background-color: lightgray;
-			margin-right: 5px;
 			transition: background-color 0.3s;
+			border-radius: 5px;
 		}
 
 		#bar1.active {
-			background-color: red; /* Weak */
+			background-color: #dd4b39 ; /* Weak */
 		}
 
 		#bar2.active {
-			background-color: orange; /* Strong */
+			background-color: #f39c12 ; /* Strong */
 		}
 
 		#bar3.active {
-			background-color: green; /* Excellent */
+			background-color: #00a65a; /* Excellent */
 		}
 	</style>
 @endpush
@@ -44,9 +44,12 @@
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header btn-primary" style="text-center">
-					<h4 class="modal-title"><b> <i class="fa fa-lock"></i> Please change your password!</b></h4>
+					<h4 class="modal-title" id="pass_qwerty"><b> <i class="fa fa-lock"></i> Please change your password!</b></h4>
+					<h4 class="modal-title" id="pass_old"><b> <i class="fa fa-lock"></i> <span class="label label-danger">Your password is out of date, Please change it!</span> </b></h4>
 				</div>
-				<form action="POST" action="{{ route('update_password') }}" id="changePasswordForm">
+				<form method="POST" action="{{ route('update_password') }}" id="changePasswordForm">
+					@csrf
+					<input type="hidden" value="{{Session::get('admin_id')}}" name="user_id">
 					<div class="modal-body">
 						<div class="form-group">
 							<label for="current_password">Current Password</label>
@@ -101,13 +104,26 @@
 @endsection
 @push('bottom')
     <script type="text/javascript">
-        // $(window).on('load',function(){
-        //     @if (Hash::check('qwerty',Session::get('admin_password')))
-        //         $('#tos-modal').modal('show');
-        //     @endif     
-        // });
+        $(window).on('load',function(){
+            @if (Hash::check('qwerty',Session::get('admin_password')))
+                $('#tos-modal').modal('show');
+				$('#pass_old').hide();
+			@elseif(Session::get('password_is_old'))
+				$('#tos-modal').modal('show');
+				$('#pass_old').show();
+				$('#pass_qwerty').hide();
+            @endif     
+        });
 
 		$(document).ready(function() {
+			const admin_path = "{{CRUDBooster::adminPath()}}"
+			const msg_type = "{{ session('message_type') }}";
+			if (msg_type == 'success'){
+				setTimeout(function(){
+					location.assign(admin_path+'/logout');
+				}, 2000);
+			}
+
 			$('#btnSubmit').attr('disabled',true);
 			// Toggle for current password
 			$('#toggleCurrentPassword').on('click', function() {
@@ -133,35 +149,44 @@
 				$(this).toggleClass('fa-eye fa-eye-slash');
 			});
 
-			// Password strength validation and loading bar
-			$('#new_password, #confirm_password, #current_password').on('input', function() {
-				let password = $(this).val();
-				let strength = checkPasswordStrength(password);
-				// Reset bars
-				$('#bar1, #bar2, #bar3').removeClass('active');
-
-				// Activate bars based on password strength
-				if (strength === 'Weak') {
-					$('#bar1').addClass('active');
-					$('#btnSubmit').attr('disabled',true);
-				} else if (strength === 'Strong') {
-					$('#bar1, #bar2').addClass('active');
-					$('#btnSubmit').attr('disabled',true);
-				} else if (strength === 'Excellent' && validateInputs()) {
-					$('#bar1, #bar2, #bar3').addClass('active');
-				}
+			$(document).on('input', '#new_password, #current_password, #confirm_password', function() {
+				validateInputs();
 			});
 
-			// $(document).on('input', '#current_password, #new_password, #confirm_password', function() {
-			// 	validateInputs();
-			// });
-
-			// $(document).on('input', '#confirm_password', function() {
-			// 	confirmPassword();
-			// });
-
-			$('#btnSubmit').on('click', function(event) {
-				$("#changePasswordForm").submit();                                                   
+			$("#btnSubmit").click(function(event) {
+				event.preventDefault();
+				$.ajaxSetup({
+					headers: {
+							'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+					}
+				});
+				$.ajax({
+					url: "{{ route('check-current-password') }}",
+					dataType: "json",
+					type: "POST",
+					data: {
+						"password": $('#current_password').val(),
+						"id": '{{session()->get("admin_id")}}'
+					},
+					success: function (data) {
+						console.log(data.items);
+					  if(data.items === 0){
+						swal({
+							type: 'error',
+							title: 'Current password invalid!',
+							icon: 'error',
+							confirmButtonColor: "#367fa9",
+						}); 
+						event.preventDefault();
+						return false;
+					  } else{
+							$("#changePasswordForm").submit();       
+							$('#btnSubmit').attr('disabled',true);         
+					  }
+						
+					}
+				});
+			                                                
 			});
 
 			// Function to check password strength
@@ -186,31 +211,50 @@
 				}
 			}
 
-			function confirmPassword(){
-				let isDisabled = true;
-				const new_pass = $('#new_password').val();
-				const confirm_pass = $('#confirm_password').val();
-				if(new_pass != confirm_pass){
-					isDisabled = false;
-					$('.match_pass').css('border', '2px solid red');
-					$('#pass_not_match').show();
-				}else{
-					$('.match_pass').css('border', '');
-					$('#pass_not_match').hide();
-				}
-				
-				$('#btnSubmit').attr('disabled',!isDisabled);
-			}
-
 			function validateInputs(){
 				const inputs = $('.inputs').get();
 				let isDisabled = true;
+			
+
+				let password = $('#new_password').val();
+				if(password){
+					let strength = checkPasswordStrength(password);
+					// Reset bars
+					$('#bar1, #bar2, #bar3').removeClass('active');
+	
+					// Activate bars based on password strength
+					if (strength === 'Weak') {
+						$('#bar1').addClass('active');
+						isDisabled = false;
+					} else if (strength === 'Strong') {
+						$('#bar1, #bar2').addClass('active');
+						isDisabled = false;
+					} else if (strength === 'Excellent') {
+						$('#bar1, #bar2, #bar3').addClass('active');
+						isDisabled = true;
+					}
+				}
+
+				const new_pass = $('#new_password').val();
+				const confirm_pass = $('#confirm_password').val();
+				if(new_pass && confirm_pass){
+					if(new_pass != confirm_pass){
+						isDisabled = false;
+						$('.match_pass').css('border', '2px solid red');
+						$('#pass_not_match').show();
+					}else{
+						$('.match_pass').css('border', '');
+						$('#pass_not_match').hide();
+					}
+				}
+
 				inputs.forEach(input =>{
 					const currentVal = $(input).val(); 
 					if(!currentVal){
 						isDisabled = false;
 					}
 				});
+
 				$('#btnSubmit').attr('disabled',!isDisabled);
 			}
 		});

@@ -32,6 +32,9 @@ use App\Http\Controllers\AdminNonAppleCutoffsController;
 use App\Http\Controllers\AdminGashaponStoreSalesUploadsController;
 use App\Http\Controllers\GashaponStoreSalesController;
 use App\Http\Controllers\AdminGashaponStoreSalesController;
+use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
+use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
+use App\Http\Controllers\SupplierIntransitInventoryController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -181,7 +184,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('gashapon_store_sales_uploads/import',[GashaponStoreSalesController::class, 'storeSalesUploadView'])->name('gashapon-store-sales.upload-view');
     Route::get('gashapon_store_sales_uploads/template',[GashaponStoreSalesController::class, 'uploadTemplate'])->name('gashapon-store-sales.template');
     Route::post('gashapon_store_sales_uploads/export',[GashaponStoreSalesController::class, 'exportSales'])->name('gashapon-store-sales.export');
-    Route::get('gashapon_store_sales_uploads/store_sales/batch/{batch_id}',[GashaponStoreSalesController::class, 'getBatchDetails']);
+    Route::get('gashapon_store_sales_uploads/batch/{batch_id}',[GashaponStoreSalesController::class, 'getBatchDetails']);
     Route::get('gashapon_store_sales_uploads/batch/{batch_id}',[GashaponStoreSalesController::class, 'getBatchDetails']);
     Route::get('gashapon_store_sales_uploads/generate-file/{id}',[AdminGashaponStoreSalesUploadsController::class, 'generateFile']);
     Route::get('gashapon_store_sales_uploads/export-batch/{id}',[AdminGashaponStoreSalesUploadsController::class, 'exportBatch']);
@@ -191,6 +194,22 @@ Route::group(['prefix'=>'admin'], function(){
     Route::any('gashapon_store_sales_uploads/filter',[AdminGashaponStoreSalesController::class, 'filterGashaponStoreSales'])->name('gashapon-store-sales.filter');
     Route::post('gashapon-store-concepts',[AdminGashaponStoreSalesController::class, 'concepts'])->name('gashapon-store-concepts');
 
+    //SUPPLIER INTRANSIT INVENTORY
+    Route::post('supplier_intransit_inventory_uploads/import-upload',[SupplierIntransitInventoryController::class, 'supplierIntransitInventoryUpload'])->name('supplier-intransit-inventory.upload');
+    Route::get('supplier_intransit_inventory_uploads/import',[SupplierIntransitInventoryController::class, 'supplierIntransitInventoryUploadView'])->name('supplier-intransit-inventory.upload-view');
+    Route::get('supplier_intransit_inventory_uploads/template',[SupplierIntransitInventoryController::class, 'uploadTemplate'])->name('supplier-intransit-inventory.template');
+    Route::post('supplier_intransit_inventory_uploads/export',[SupplierIntransitInventoryController::class, 'exportSupplierIntransitInventory'])->name('supplier-intransit-inventory.export');
+    Route::get('supplier_intransit_inventory_uploads/batch/{batch_id}',[SupplierIntransitInventoryController::class, 'getBatchDetails']);
+    Route::get('supplier_intransit_inventory_uploads/batch/{batch_id}',[SupplierIntransitInventoryController::class, 'getBatchDetails']);
+    Route::get('supplier_intransit_inventory_uploads/generate-file/{id}',[AdminSupplierIntransitInventoryUploadsController::class, 'generateFile']);
+    Route::get('supplier_intransit_inventory_uploads/export-batch/{id}',[AdminSupplierIntransitInventoryUploadsController::class, 'exportBatch']);
+    Route::get('supplier_intransit_inventory_uploads/regenerate-file/{id}',[AdminSupplierIntransitInventoryUploadsController::class, 'regenerateFile']);
+    Route::get('supplier_intransit_inventory_uploads/download-uploaded-file/{id}',[AdminSupplierIntransitInventoryUploadsController::class, 'downloadUploadedFile']);
+    Route::get('supplier_intransit_inventory/detail/{id}', [AdminSupplierIntransitInventoryUploadsController::class, 'getDetail'])->name('supplier_intransit_inventory.detail');
+    Route::any('supplier_intransit_inventory/filter',[AdminSupplierIntransitInventoriesController::class, 'filterGashaponSupplierIntransitInventory'])->name('supplier-intransit-inventory.filter');
+    Route::post('supplier-intransit-inventory-concepts',[AdminSupplierIntransitInventoriesController::class, 'concepts'])->name('supplier-intransit-inventory-concepts');
+   
     //Update Password
     Route::post('change-password', [AdminCmsUsersController::class, 'postUpdatePassword'])->name('update_password');
+    Route::post('check-password', [AdminCmsUsersController::class, 'checkPassword'])->name('check-current-password');
 });

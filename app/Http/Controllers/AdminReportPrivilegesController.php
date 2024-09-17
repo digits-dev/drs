@@ -362,6 +362,7 @@ use App\Models\ReportType;
 				'gashapon_store_sales'=>'GASHAPON STORE SALES',
                 'digits_sales'=>'DIGITS SALES',
                 'store_inventories'=>'STORE INVENTORY',
+				'supplier_intransit_inventories'=>'SUPPLIER INTRANSIT INVENTORY',
                 'warehouse_inventories'=>'WAREHOUSE INVENTORY'
             ];
 
