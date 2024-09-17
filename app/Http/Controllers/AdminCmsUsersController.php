@@ -78,9 +78,12 @@ class AdminCmsUsersController extends CBController {
 			}else{
 				Session::put('password_is_old', '');
 			}
-			Session::put('message_type', 'success');
+			session()->flash('message_type', 'success');
+			session()->flash('message', 'Password Updated, You Will Be Logged-Out.');
 			return redirect()->to('admin/statistic_builder/dashboard')->with('info', 'Password Updated, You Will Be Logged-Out.');
 		}else{
+			session()->flash('message_type', 'danger');
+			session()->flash('message', 'Incorrect Current Password.');
 			return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Incorrect Current Password.');
 		}
 		

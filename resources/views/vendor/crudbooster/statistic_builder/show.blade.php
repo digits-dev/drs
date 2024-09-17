@@ -37,13 +37,22 @@
 		#bar3.active {
 			background-color: #00a65a; /* Excellent */
 		}
+		#text1.active {
+			color: #00a65a; /* Excellent */
+		}
+		#text2.active {
+			color: #00a65a; /* Excellent */
+		}
+		#text3.active {
+			color: #00a65a; /* Excellent */
+		}
 	</style>
 @endpush
     @include('crudbooster::statistic_builder.index')
 	<div class="modal fade" id="tos-modal" role="dialog" data-keyboard="false" data-backdrop="static">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<div class="modal-header btn-primary" style="text-center">
+				<div class="modal-header btn-danger" style="text-center">
 					<h4 class="modal-title" id="pass_qwerty"><b> <i class="fa fa-lock"></i> Please change your password!</b></h4>
 					<h4 class="modal-title" id="pass_old"><b> <i class="fa fa-lock"></i> <span class="label label-danger">Your password is out of date, Please change it!</span> </b></h4>
 				</div>
@@ -71,12 +80,18 @@
 								<input type="password" class="form-control inputs match_pass" id="new_password" name="new_password" placeholder="New password" required>
 							</div>
 							<i class="fa fa-eye" id="toggleNewPassword" style="cursor: pointer; position: absolute; right: 25px; top: 125px; z-index: 10000"></i>
-							   <!-- Password strength progress bar -->
-							   <div id="passwordStrengthBar" style="margin-top: 10px;">
-									<div class="progress-bar" id="bar1"></div>
-									<div class="progress-bar" id="bar2"></div>
-									<div class="progress-bar" id="bar3"></div>
-								</div>
+							<!-- Password strength progress bar -->
+							<div id="passwordStrengthBar" style="margin-top: 10px;">
+								<div class="progress-bar" id="bar1"></div>
+								<div class="progress-bar" id="bar2"></div>
+								<div class="progress-bar" id="bar3"></div>
+							</div>
+							<!-- Password strength progress bar -->
+							<div style="margin-top: 10px;">
+								<div class="progress-text" id="text1"> <i class="fa fa-check-circle"></i> Atlest Uppercase and 8 long character</div>
+								<div class="progress-text" id="text2"> <i class="fa fa-check-circle"></i> Atlest Numbers</div>
+								<div class="progress-text" id="text3"> <i class="fa fa-check-circle"></i> Atlest Special Character</div>
+							</div>
 						</div>
 	
 						<div class="form-group">
@@ -93,7 +108,8 @@
 					</div>
 	
 					<div class="modal-footer">
-						<button type="button" class="btn btn-primary" id="btnSubmit"><i class="fa fa-key"></i> Change password</button>
+						<button type="button" class="btn btn-danger" id="btnWaive"><i class="fa fa-refresh"></i> Waive</button>
+						<button type="button" class="btn btn-danger" id="btnSubmit"><i class="fa fa-key"></i> Change password</button>
 					</div>
 				</form>
 			</div>
@@ -228,9 +244,11 @@
 						isDisabled = false;
 					} else if (strength === 'Strong') {
 						$('#bar1, #bar2').addClass('active');
+						$('#text1, #text2').addClass('active');
 						isDisabled = false;
 					} else if (strength === 'Excellent') {
 						$('#bar1, #bar2, #bar3').addClass('active');
+						$('#text1, #text2, #text3').addClass('active');
 						isDisabled = true;
 					}
 				}
