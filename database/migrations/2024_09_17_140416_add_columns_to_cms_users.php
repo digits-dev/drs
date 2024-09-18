@@ -15,6 +15,7 @@ class AddColumnsToCmsUsers extends Migration
     {
         Schema::table('cms_users', function (Blueprint $table) {
             $table->date('last_password_updated')->nullable()->after('updated_at');
+            $table->integer('waiver_count')->nullable()->after('last_password_updated');
         });
     }
 
@@ -27,6 +28,7 @@ class AddColumnsToCmsUsers extends Migration
     {
         Schema::table('cms_users', function (Blueprint $table) {
             $table->dropColumn('last_password_updated');
+            $table->dropColumn('waiver_count');
         });
     }
 }

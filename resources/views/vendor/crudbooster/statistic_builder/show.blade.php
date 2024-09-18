@@ -37,13 +37,16 @@
 		#bar3.active {
 			background-color: #00a65a; /* Excellent */
 		}
-		#text1.active {
+		#textUppercase.active {
 			color: #00a65a; /* Excellent */
 		}
-		#text2.active {
+		#textLength.active {
 			color: #00a65a; /* Excellent */
 		}
-		#text3.active {
+		#textNumber.active {
+			color: #00a65a; /* Excellent */
+		}
+		#textChar.active {
 			color: #00a65a; /* Excellent */
 		}
 	</style>
@@ -52,14 +55,19 @@
 	<div class="modal fade" id="tos-modal" role="dialog" data-keyboard="false" data-backdrop="static">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<div class="modal-header btn-danger" style="text-center">
+				<div class="modal-header btn-danger" style="text-center;">
 					<h4 class="modal-title" id="pass_qwerty"><b> <i class="fa fa-lock"></i> Please change your password!</b></h4>
 					<h4 class="modal-title" id="pass_old"><b> <i class="fa fa-lock"></i> <span class="label label-danger">Your password is out of date, Please change it!</span> </b></h4>
 				</div>
+			
 				<form method="POST" action="{{ route('update_password') }}" id="changePasswordForm">
 					@csrf
 					<input type="hidden" value="{{Session::get('admin_id')}}" name="user_id">
+					<input type="hidden" id="type" name="type">
 					<div class="modal-body">
+							@if(Session::get('message_type') == "danger_exist")
+								<span class="text-center" style="color: #dd4b39; font-size: 16px; font-weight:bold; font-style:italic"> Password already used! please use another password.</span>
+							@endif
 						<div class="form-group">
 							<label for="current_password">Current Password</label>
 							<div class="input-group">
@@ -79,7 +87,7 @@
 								</div>
 								<input type="password" class="form-control inputs match_pass" id="new_password" name="new_password" placeholder="New password" required>
 							</div>
-							<i class="fa fa-eye" id="toggleNewPassword" style="cursor: pointer; position: absolute; right: 25px; top: 125px; z-index: 10000"></i>
+							<i class="fa fa-eye" id="toggleNewPassword" style="cursor: pointer; position: absolute; right: 25px; top: 124px; z-index: 10000"></i>
 							<!-- Password strength progress bar -->
 							<div id="passwordStrengthBar" style="margin-top: 10px;">
 								<div class="progress-bar" id="bar1"></div>
@@ -88,9 +96,10 @@
 							</div>
 							<!-- Password strength progress bar -->
 							<div style="margin-top: 10px;">
-								<div class="progress-text" id="text1"> <i class="fa fa-check-circle"></i> Atlest Uppercase and 8 long character</div>
-								<div class="progress-text" id="text2"> <i class="fa fa-check-circle"></i> Atlest Numbers</div>
-								<div class="progress-text" id="text3"> <i class="fa fa-check-circle"></i> Atlest Special Character</div>
+								<div class="progress-text" id="textUppercase" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast 1 Uppercase</span></div>
+								<div class="progress-text" id="textLength" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast 8 length</span></div>
+								<div class="progress-text" id="textNumber" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast Contain a Number</span></div>
+								<div class="progress-text" id="textChar" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast Contain a Special Character</span></div>
 							</div>
 						</div>
 	
@@ -102,7 +111,7 @@
 								</div>
 								<input type="password" class="form-control inputs match_pass" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
 							</div>
-							<i class="fa fa-eye" id="toggleConfirmPassword" style="cursor: pointer; position: absolute; right: 25px; top: 214px; z-index: 10000"></i>
+							<i class="fa fa-eye" id="toggleConfirmPassword" style="cursor: pointer; position: absolute; right: 25px; top: 310px; z-index: 10000"></i>
 							<span id="pass_not_match" style="display: none; color:red; font-size:15px">Password not match!</span>
 						</div>
 					</div>
@@ -115,13 +124,15 @@
 			</div>
 		</div>
 	</div>
-	
-	
+
 @endsection
 @push('bottom')
     <script type="text/javascript">
         $(window).on('load',function(){
             @if (Hash::check('qwerty',Session::get('admin_password')))
+                $('#tos-modal').modal('show');
+				$('#pass_old').hide();
+			@elseif (Hash::check('qwerty1234',Session::get('admin_password')))
                 $('#tos-modal').modal('show');
 				$('#pass_old').hide();
 			@elseif(Session::get('password_is_old'))
@@ -169,6 +180,7 @@
 				validateInputs();
 			});
 
+			//CHANGE PASS
 			$("#btnSubmit").click(function(event) {
 				event.preventDefault();
 				$.ajaxSetup({
@@ -196,6 +208,7 @@
 						event.preventDefault();
 						return false;
 					  } else{
+							$('#type').val(1);
 							$("#changePasswordForm").submit();       
 							$('#btnSubmit').attr('disabled',true);         
 					  }
@@ -205,6 +218,43 @@
 			                                                
 			});
 
+			//WAIVE
+			$("#btnWaive").click(function(event) {
+				event.preventDefault();
+				$.ajaxSetup({
+					headers: {
+							'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+					}
+				});
+				$.ajax({
+					url: "{{ route('check-waive-count') }}",
+					dataType: "json",
+					type: "POST",
+					data: {
+						"password": $('#current_password').val(),
+						"id": '{{session()->get("admin_id")}}'
+					},
+					success: function (data) {
+						console.log(data.items);
+					  if(data.items === 0){
+						swal({
+							type: 'error',
+							title: 'You cannot waive more than 3 times!',
+							icon: 'error',
+							confirmButtonColor: "#367fa9",
+						}); 
+						event.preventDefault();
+						return false;
+					  } else{
+							$('#type').val(0);
+							$("#changePasswordForm").submit();       
+							$('#btnWaive').attr('disabled',true);         
+					  }
+						
+					}
+				});
+			                                                
+			});
 			// Function to check password strength
 			function checkPasswordStrength(password) {
 				// Check if password has at least 8 characters, and contains uppercase, lowercase, digit, and special character
@@ -214,7 +264,7 @@
 				const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>;]/.test(password); 
 
 				// Password length check and classification based on conditions
-				if (password.length < 6) {
+				if (password.length < 6 && password.length !== 0) {
 					return 'Weak';
 				} else if (password.length >= 6 && password.length < 8 && hasLowerCase && hasNumber) {
 					return 'Strong';
@@ -222,36 +272,77 @@
 					return 'Excellent';
 				} else if (password.length >= 8 && hasLowerCase && hasNumber) {
 					return 'Strong'; // Handle cases where it is strong but not excellent
-				} else {
-					return 'Weak'; // Return weak if none of the conditions above are met
+				} else{
+					return 'Weak';
 				}
+			}
+
+			//Function to check text active
+			function checkPasswordTextActive(password){
+				const hasUpperCase = /[A-Z]/.test(password); // Uppercase letter
+				const hasLowerCase = /[a-z]/.test(password); // Lowercase letter
+				const hasNumber = /\d/.test(password); // Digit
+				const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>;]/.test(password); 
+				const allCharacters = []; // Array to store password strength criteria
+
+				if (hasUpperCase) {
+					allCharacters.push('Uppercase');
+				}
+				if (password.length >= 8) {
+					allCharacters.push('Length');
+				}
+				if (hasNumber) {
+					allCharacters.push('Number');
+				}
+				if (hasSpecialChar) {
+					allCharacters.push('Character');
+				}
+				return allCharacters;
 			}
 
 			function validateInputs(){
 				const inputs = $('.inputs').get();
 				let isDisabled = true;
-			
-
 				let password = $('#new_password').val();
-				if(password){
-					let strength = checkPasswordStrength(password);
-					// Reset bars
-					$('#bar1, #bar2, #bar3').removeClass('active');
-	
-					// Activate bars based on password strength
-					if (strength === 'Weak') {
-						$('#bar1').addClass('active');
-						isDisabled = false;
-					} else if (strength === 'Strong') {
-						$('#bar1, #bar2').addClass('active');
-						$('#text1, #text2').addClass('active');
-						isDisabled = false;
-					} else if (strength === 'Excellent') {
-						$('#bar1, #bar2, #bar3').addClass('active');
-						$('#text1, #text2, #text3').addClass('active');
-						isDisabled = true;
-					}
+				
+				//BARS
+				let strength = checkPasswordStrength(password);
+				// Reset bars
+				$('#bar1, #bar2, #bar3').removeClass('active');
+				// Activate bars based on password strength
+				if (strength === 'Weak') {
+					$('#bar1').addClass('active');
+					isDisabled = false;
+				} else if (strength === 'Strong') {
+					$('#bar1, #bar2').addClass('active');
+					isDisabled = false;
+				} else if (strength === 'Excellent') {
+					$('#bar1, #bar2, #bar3').addClass('active');
+					$('#text1, #text2, #text3').addClass('active');
+					isDisabled = true;
 				}
+				
+				//TEXT
+				let textActive = checkPasswordTextActive(password);
+				const textActiveMap = {
+					'Uppercase': '#textUppercase',
+					'Length': '#textLength',
+					'Number': '#textNumber',
+					'Character': '#textChar'
+				};
+				
+				// First, remove 'active' class from all selectors in textActiveMap
+				Object.values(textActiveMap).forEach(function(selector) {
+					$(selector).removeClass('active');
+				});
+
+				// Then, iterate through the textActive array and add 'active' class to corresponding selectors
+				textActive.forEach(function(value) {
+					const selector = textActiveMap[value];
+					if (selector) {
+						$(selector).addClass('active');
+					}
+				});
 
 				const new_pass = $('#new_password').val();
 				const confirm_pass = $('#confirm_password').val();

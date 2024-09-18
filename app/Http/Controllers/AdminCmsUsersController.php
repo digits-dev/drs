@@ -63,13 +63,58 @@ class AdminCmsUsersController extends CBController {
 	public function postUpdatePassword(Request $request) {
 		$fields = Request::all();
 		$user = DB::table('cms_users')->where('id',$fields['user_id'])->first();
-		if (Hash::check($fields['current_password'], $user->password)){
-			$validatedData = Request::validate([
-				'current_password' => 'required',
-				'new_password' => 'required',
-				'confirm_password' => 'required|same:new_password'
+		if($fields['type'] == 1){
+			if (Hash::check($fields['current_password'], $user->password)){
+				//Check if password exist in history
+				$passwordHistory = DB::table('cms_password_histories')->where('cms_user_id',$fields['user_id'])->get()->toArray();
+				$isExist = array_column($passwordHistory, 'cms_user_old_pass');
+				if(!self::checkPasswordInArray($fields['new_password'], $isExist)) {
+					$validatedData = Request::validate([
+						'current_password' => 'required',
+						'new_password' => 'required',
+						'confirm_password' => 'required|same:new_password'
+					]);
+					DB::table('cms_users')->where('id', $fields['user_id'])
+					->update([
+						'password'=>Hash::make($fields['new_password']),
+						'last_password_updated' => now()->format('Y-m-d'),
+						'waiver_count' => 0
+					]);
+					$newPass = DB::table('cms_users')->where('id',$fields['user_id'])->first();
+					Session::put('admin_password', $newPass->password);
+					$passwordLastUpdated = Carbon::parse($newPass->last_password_updated);
+					if ($passwordLastUpdated->diffInMonths(Carbon::now()) > 3) {
+						Session::put('password_is_old', $newPass->last_password_updated);
+					}else{
+						Session::put('password_is_old', '');
+					}
+					
+					//Save password history
+					DB::table('cms_password_histories')->insert([
+						'cms_user_id' => $newPass->id,
+						'cms_user_old_pass' => $newPass->password,
+						'created_at' => date('Y-m-d h:i:s')
+					]);
+
+					session()->flash('message_type', 'success');
+					session()->flash('message', 'Password Updated, You Will Be Logged-Out.');
+					return redirect()->to('admin/statistic_builder/dashboard')->with('info', 'Password Updated, You Will Be Logged-Out.');
+				}else{
+					session()->flash('message_type', 'danger_exist');
+					session()->flash('message', 'Password already useed! Please try another password');
+					return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Password already useed! Please try another password');
+				}
+			}else{
+				session()->flash('message_type', 'danger');
+				session()->flash('message', 'Incorrect Current Password.');
+				return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Incorrect Current Password.');
+			}
+		}else{
+			DB::table('cms_users')->where('id', $fields['user_id'])
+			->update([
+				'last_password_updated' => now()->format('Y-m-d'),
+				'waiver_count' => DB::raw('COALESCE(waiver_count, 0) + 1')
 			]);
-			DB::table('cms_users')->where('id', $fields['user_id'])->update(['password'=>Hash::make($fields['new_password']),'last_password_updated' => now()->format('Y-m-d')]);
 			$newPass = DB::table('cms_users')->where('id',$fields['user_id'])->first();
 			Session::put('admin_password', $newPass->password);
 			$passwordLastUpdated = Carbon::parse($newPass->last_password_updated);
@@ -78,15 +123,10 @@ class AdminCmsUsersController extends CBController {
 			}else{
 				Session::put('password_is_old', '');
 			}
-			session()->flash('message_type', 'success');
-			session()->flash('message', 'Password Updated, You Will Be Logged-Out.');
-			return redirect()->to('admin/statistic_builder/dashboard')->with('info', 'Password Updated, You Will Be Logged-Out.');
-		}else{
-			session()->flash('message_type', 'danger');
-			session()->flash('message', 'Incorrect Current Password.');
-			return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Incorrect Current Password.');
+			session()->flash('message_type', 'info');
+			session()->flash('message', 'Waive completed!');
+			return redirect()->to('admin/statistic_builder/dashboard')->with('info', 'Waive completed!');
 		}
-		
 	}
 
 	public function checkPassword(Request $request) {
@@ -100,5 +140,28 @@ class AdminCmsUsersController extends CBController {
 		}
 	
 		return json_encode($data);
+	}
+
+	public function checkWaive(Request $request) {
+		$data = [];
+		$fields = Request::all();
+		$user = DB::table('cms_users')->where('id',$fields['id'])->first();
+		if ($user->waiver_count === 3){
+			$data['items'] = 0;
+		}else{
+			$data['items'] = 1;
+		}
+	
+		return json_encode($data);
+	}
+
+	// Function to check if the new password matches any hashed password
+	function checkPasswordInArray($newPassword, $hashedPasswords) {
+		foreach ($hashedPasswords as $hashedPassword) {
+			if (Hash::check($newPassword, $hashedPassword)) {
+				return true; // Password exists in the array
+			}
+		}
+		return false; // Password does not exist
 	}
 }
