@@ -50,7 +50,7 @@
 		}
 
         
-        #toggleCurrentPassword{
+        /* #toggleCurrentPassword{
             cursor: pointer; 
             position: absolute; 
             right: 45px; 
@@ -72,20 +72,20 @@
             right: 45px; 
             top: 543px; 
             z-index: 10000
-        }
+        } */
         @media (min-width:729px){
            .panel-danger{
                 width:40% !important; 
                 margin:auto !important;
            }
 
-           #toggleCurrentPassword{
-                right: 495px; 
+           /* #toggleCurrentPassword{
+                right: 425px; 
                 top: 197px; 
                 z-index: 10000
            }
            #toggleNewPassword{
-                right: 495px; 
+                right: 425px; 
                 top: 270px; 
                 z-index: 10000
            }
@@ -93,10 +93,10 @@
            #toggleConfirmPassword{
                 cursor: pointer; 
                 position: absolute; 
-                right: 495px; 
+                right: 425px; 
                 top: 459px; 
                 z-index: 10000
-           }
+           } */
         }
     </style>
 @endpush
@@ -128,8 +128,10 @@
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
                     <input type="password" class="form-control inputs" id="current_password" name="current_password" placeholder="Current password" required>
+                    <div class="input-group-addon">
+                        <i class="fa fa-eye" id="toggleCurrentPassword"></i>
+                    </div>
                 </div>
-                <i class="fa fa-eye" id="toggleCurrentPassword"></i>
             </div>
 
             <div class="form-group">
@@ -139,8 +141,10 @@
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
                     <input type="password" class="form-control inputs match_pass" id="new_password" name="new_password" placeholder="New password" required>
+                    <div class="input-group-addon">
+                        <i class="fa fa-eye" id="toggleNewPassword"></i>
+                    </div>
                 </div>
-                <i class="fa fa-eye" id="toggleNewPassword"></i>
                 
                 <!-- Password strength progress bar -->
                 <div id="passwordStrengthBar" style="margin-top: 10px;">
@@ -172,8 +176,10 @@
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
                     <input type="password" class="form-control inputs match_pass" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+                    <div class="input-group-addon">
+                        <i class="fa fa-eye" id="toggleConfirmPassword"></i>
+                    </div>
                 </div>
-                <i class="fa fa-eye" id="toggleConfirmPassword"></i>
                 <span id="pass_not_match" style="display: none; color:red; font-size:15px">Password does not match!</span>
             </div>
         </form>
