@@ -213,4 +213,5 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('change-password', [AdminCmsUsersController::class, 'postUpdatePassword'])->name('update_password');
     Route::post('check-password', [AdminCmsUsersController::class, 'checkPassword'])->name('check-current-password');
     Route::post('check-waive', [AdminCmsUsersController::class, 'checkWaive'])->name('check-waive-count');
+    Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
 });

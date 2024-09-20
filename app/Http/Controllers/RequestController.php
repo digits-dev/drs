@@ -43,8 +43,11 @@ class RequestController extends Controller
     
         }
         CRUDBooster::redirect(CRUDBooster::adminpath($table_name), $errors[0], 'danger');
-
-		
         
     }
+
+    public function showChangePassword(){
+		$data['page_title'] = 'Change Password';
+		return view('user/change-password',$data);
+	}
 }

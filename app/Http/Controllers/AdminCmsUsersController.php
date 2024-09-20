@@ -18,6 +18,11 @@ class AdminCmsUsersController extends CBController {
 		$this->button_action_style = 'button_icon';
 		$this->button_import 	   = FALSE;
 		$this->button_export 	   = FALSE;
+		if(CRUDBooster::isSuperadmin()) {
+		    $this->button_add = true;
+		}else{
+			$this->button_add = false;
+		}
 		# END CONFIGURATION DO NOT REMOVE THIS LINE
 
 		# START COLUMNS DO NOT REMOVE THIS LINE
@@ -30,11 +35,18 @@ class AdminCmsUsersController extends CBController {
 
 		# START FORM DO NOT REMOVE THIS LINE
 		$this->form = array();
-		$this->form[] = array("label"=>"Name","name"=>"name",'validation'=>'required|alpha_spaces|min:3');
-		$this->form[] = array("label"=>"Email","name"=>"email",'type'=>'email','validation'=>'required|email|unique:cms_users,email,'.CRUDBooster::getCurrentId());
-		$this->form[] = array("label"=>"Photo","name"=>"photo","type"=>"upload","help"=>"Recommended resolution is 200x200px",'validation'=>'required|image|max:1000','resize_width'=>90,'resize_height'=>90);
-		$this->form[] = array("label"=>"Privilege","name"=>"id_cms_privileges","type"=>"select","datatable"=>"cms_privileges,name",'validation'=>'required');
-		$this->form[] = array("label"=>"Password","name"=>"password","type"=>"password","help"=>"Please leave empty if not changed");
+		// if(CRUDBooster::isSuperadmin()){
+		// 	$this->form[] = array("label"=>"Name","name"=>"name",'validation'=>'required|alpha_spaces|min:3');
+		// 	$this->form[] = array("label"=>"Email","name"=>"email",'type'=>'email','validation'=>'required|email|unique:cms_users,email,'.CRUDBooster::getCurrentId());
+		// 	$this->form[] = array("label"=>"Photo","name"=>"photo","type"=>"upload","help"=>"Recommended resolution is 200x200px",'validation'=>'required|image|max:1000','resize_width'=>90,'resize_height'=>90);
+		// 	$this->form[] = array("label"=>"Privilege","name"=>"id_cms_privileges","type"=>"select","datatable"=>"cms_privileges,name",'validation'=>'required');
+		// 	$this->form[] = array("label"=>"Password","name"=>"password","type"=>"password","help"=>"Please leave empty if not changed");
+		// }else{
+			$this->form[] = array("label"=>"Name","name"=>"name",'validation'=>'required|alpha_spaces|min:3', 'readonly'=>true);
+			$this->form[] = array("label"=>"Email","name"=>"email",'type'=>'email','validation'=>'required|email|unique:cms_users,email,'.CRUDBooster::getCurrentId(), 'readonly'=>true);
+			$this->form[] = array("label"=>"Photo","name"=>"photo","type"=>"upload","help"=>"Recommended resolution is 200x200px",'validation'=>'required|image|max:1000','resize_width'=>90,'resize_height'=>90, 'readonly'=>true);
+			$this->form[] = array("label"=>"Privilege","name"=>"id_cms_privileges","type"=>"select","datatable"=>"cms_privileges,name",'validation'=>'required', 'readonly'=>true);
+		// }
 		# END FORM DO NOT REMOVE THIS LINE
 
 	}
@@ -46,6 +58,7 @@ class AdminCmsUsersController extends CBController {
 		$this->button_show    = FALSE;
 		$this->button_add     = FALSE;
 		$this->button_delete  = FALSE;
+		$this->button_save    = FALSE;
 		$this->hide_form 	  = ['id_cms_privileges'];
 
 		$data['page_title'] = cbLang("label_button_profile");
@@ -100,9 +113,9 @@ class AdminCmsUsersController extends CBController {
 					session()->flash('message', 'Password Updated, You Will Be Logged-Out.');
 					return redirect()->to('admin/statistic_builder/dashboard')->with('info', 'Password Updated, You Will Be Logged-Out.');
 				}else{
-					session()->flash('message_type', 'danger_exist');
+					session()->flash('message_type', 'danger');
 					session()->flash('message', 'Password already useed! Please try another password');
-					return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Password already useed! Please try another password');
+					return redirect()->to('admin/statistic_builder/dashboard')->with('danger', 'Password already used! Please try another password');
 				}
 			}else{
 				session()->flash('message_type', 'danger');
@@ -146,7 +159,7 @@ class AdminCmsUsersController extends CBController {
 		$data = [];
 		$fields = Request::all();
 		$user = DB::table('cms_users')->where('id',$fields['id'])->first();
-		if ($user->waiver_count === 3){
+		if ($user->waiver_count === 4){
 			$data['items'] = 0;
 		}else{
 			$data['items'] = 1;
@@ -164,4 +177,6 @@ class AdminCmsUsersController extends CBController {
 		}
 		return false; // Password does not exist
 	}
+
+	
 }

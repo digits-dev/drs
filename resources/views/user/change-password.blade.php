@@ -1,8 +1,7 @@
 @extends('crudbooster::admin_template')
-@section('content')
 @push('head')
-	<style>
-		.modal-content {
+    <style type="text/css">
+        .modal-content {
 			-webkit-border-radius: 10px !important;
 			-moz-border-radius: 10px !important;
 			border-radius: 10px !important; 
@@ -49,86 +48,144 @@
 		#textChar.active {
 			color: #00a65a; /* Excellent */
 		}
-	</style>
-@endpush
-    @include('crudbooster::statistic_builder.index')
-	<div class="modal fade" id="tos-modal" role="dialog" data-keyboard="false" data-backdrop="static">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header btn-danger" style="text-center; font-size:14px">
-					<h4 class="modal-title" id="pass_qwerty"><b> <i class="fa fa-lock"></i> System detect password using qwerty, Please change your password!</b></h4>
-					<h4 class="modal-title" id="pass_old"><b> <i class="fa fa-lock"></i> <span class="label label-danger">Your password is out of date, Please change it!</span> </b></h4>
-				</div>
-			
-				<form method="POST" action="{{ route('update_password') }}" id="changePasswordForm">
-					@csrf
-					<input type="hidden" value="{{Session::get('admin_id')}}" name="user_id">
-					<input type="hidden" id="type" name="type">
-					<div class="modal-body">
-							@if(Session::get('message_type') == "danger")
-								<span class="text-center" style="color: #dd4b39; font-size: 16px; font-weight:bold; font-style:italic"> Password already used! please use another password.</span>
-							@endif
-						<div class="form-group">
-							<label for="current_password">Current Password</label>
-							<div class="input-group">
-								<div class="input-group-addon">
-									<span class="glyphicon glyphicon-lock"></span>
-								</div>
-								<input type="password" class="form-control inputs" id="current_password" name="current_password" placeholder="Current password" required>
-							</div>
-							<i class="fa fa-eye" id="toggleCurrentPassword" style="cursor: pointer; position: absolute; right: 25px; top: 50px; z-index: 10000"></i>
-						</div>
-	
-						<div class="form-group">
-							<label for="new_password">New Password</label>
-							<div class="input-group">
-								<div class="input-group-addon">
-									<span class="glyphicon glyphicon-lock"></span>
-								</div>
-								<input type="password" class="form-control inputs match_pass" id="new_password" name="new_password" placeholder="New password" required>
-							</div>
-							<i class="fa fa-eye" id="toggleNewPassword" style="cursor: pointer; position: absolute; right: 25px; top: 124px; z-index: 10000"></i>
-							<!-- Password strength progress bar -->
-							<div id="passwordStrengthBar" style="margin-top: 10px;">
-								<div class="progress-bar" id="bar1"></div>
-								<div class="progress-bar" id="bar2"></div>
-								<div class="progress-bar" id="bar3"></div>
-							</div>
-							<!-- Password strength progress bar -->
-							<div style="margin-top: 10px;">
-								<div class="progress-text" id="textUppercase" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast 1 Uppercase</span></div>
-								<div class="progress-text" id="textLength" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast 8 length</span></div>
-								<div class="progress-text" id="textNumber" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast Contain a Number</span></div>
-								<div class="progress-text" id="textChar" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast Contain a Special Character</span></div>
-							</div>
-						</div>
-	
-						<div class="form-group">
-							<label for="confirm_password">Confirm Password</label>
-							<div class="input-group">
-								<div class="input-group-addon">
-									<span class="glyphicon glyphicon-lock"></span>
-								</div>
-								<input type="password" class="form-control inputs match_pass" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
-							</div>
-							<i class="fa fa-eye" id="toggleConfirmPassword" style="cursor: pointer; position: absolute; right: 25px; top: 310px; z-index: 10000"></i>
-							<span id="pass_not_match" style="display: none; color:red; font-size:15px">Password not match!</span>
-						</div>
-					</div>
-	
-					<div class="modal-footer">
-						<button type="button" class="btn btn-danger" id="btnWaive"><i class="fa fa-refresh"></i> Waive</button>
-						<button type="button" class="btn btn-danger" id="btnSubmit"><i class="fa fa-key"></i> Change password</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
 
+        
+        #toggleCurrentPassword{
+            cursor: pointer; 
+            position: absolute; 
+            right: 45px; 
+            top: 284px; 
+            z-index: 10000
+        }
+
+        #toggleNewPassword{
+            cursor: pointer; 
+            position: absolute; 
+            right: 45px; 
+            top: 357px; 
+            z-index: 10000
+        }
+
+        #toggleConfirmPassword{
+            cursor: pointer; 
+            position: absolute; 
+            right: 45px; 
+            top: 543px; 
+            z-index: 10000
+        }
+        @media (min-width:729px){
+           .panel-danger{
+                width:40% !important; 
+                margin:auto !important;
+           }
+
+           #toggleCurrentPassword{
+                right: 495px; 
+                top: 197px; 
+                z-index: 10000
+           }
+           #toggleNewPassword{
+                right: 495px; 
+                top: 270px; 
+                z-index: 10000
+           }
+
+           #toggleConfirmPassword{
+                cursor: pointer; 
+                position: absolute; 
+                right: 495px; 
+                top: 459px; 
+                z-index: 10000
+           }
+        }
+    </style>
+@endpush
+@section('content')
+<div class="panel panel-danger">
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <b><i class="fa fa-lock"></i> 
+            <span class="label label-danger">Change Password</span>
+            </b>
+        </h4>
+    </div>
+    <div class="panel-body">
+        <form method="POST" action="{{ route('update_password') }}" id="changePasswordForm">
+            @csrf
+            <input type="hidden" value="{{Session::get('admin_id')}}" name="user_id">
+            <input type="hidden" id="type" name="type">
+
+            @if(Session::get('message_type') == "danger_exist")
+            <span class="text-center" style="color: #dd4b39; font-size: 16px; font-weight:bold; font-style:italic"> 
+                Password already used! Please use another password.
+            </span>
+            @endif
+
+            <div class="form-group">
+                <label for="current_password">Current Password</label>
+                <div class="input-group">
+                    <div class="input-group-addon">
+                        <span class="glyphicon glyphicon-lock"></span>
+                    </div>
+                    <input type="password" class="form-control inputs" id="current_password" name="current_password" placeholder="Current password" required>
+                </div>
+                <i class="fa fa-eye" id="toggleCurrentPassword"></i>
+            </div>
+
+            <div class="form-group">
+                <label for="new_password">New Password</label>
+                <div class="input-group">
+                    <div class="input-group-addon">
+                        <span class="glyphicon glyphicon-lock"></span>
+                    </div>
+                    <input type="password" class="form-control inputs match_pass" id="new_password" name="new_password" placeholder="New password" required>
+                </div>
+                <i class="fa fa-eye" id="toggleNewPassword"></i>
+                
+                <!-- Password strength progress bar -->
+                <div id="passwordStrengthBar" style="margin-top: 10px;">
+                    <div class="progress-bar" id="bar1"></div>
+                    <div class="progress-bar" id="bar2"></div>
+                    <div class="progress-bar" id="bar3"></div>
+                </div>
+                <!-- Password strength text -->
+                <div style="margin-top: 10px;">
+                    <div class="progress-text" id="textUppercase" style="font-size: 15px">
+                        <i class="fa fa-check-circle"></i> <span style="font-style: italic"> At least 1 Uppercase</span>
+                    </div>
+                    <div class="progress-text" id="textLength" style="font-size: 15px">
+                        <i class="fa fa-check-circle"></i> <span style="font-style: italic"> At least 8 characters long</span>
+                    </div>
+                    <div class="progress-text" id="textNumber" style="font-size: 15px">
+                        <i class="fa fa-check-circle"></i> <span style="font-style: italic"> At least 1 Number</span>
+                    </div>
+                    <div class="progress-text" id="textChar" style="font-size: 15px">
+                        <i class="fa fa-check-circle"></i> <span style="font-style: italic"> At least 1 Special Character</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <div class="input-group">
+                    <div class="input-group-addon">
+                        <span class="glyphicon glyphicon-lock"></span>
+                    </div>
+                    <input type="password" class="form-control inputs match_pass" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+                </div>
+                <i class="fa fa-eye" id="toggleConfirmPassword"></i>
+                <span id="pass_not_match" style="display: none; color:red; font-size:15px">Password does not match!</span>
+            </div>
+        </form>
+    </div>
+    <div class="panel-footer">
+        <button type="button" class="btn btn-danger" id="btnSubmit"><i class="fa fa-key"></i> Change password</button>
+    </div>
+</div>
 @endsection
 @push('bottom')
-    <script type="text/javascript">
-        $(window).on('load',function(){
+    <script>
+         $(window).on('load',function(){
             @if (Hash::check('qwerty',Session::get('admin_password')))
                 $('#tos-modal').modal('show');
 				$('#pass_old').hide();
@@ -368,6 +425,5 @@
 				$('#btnSubmit').attr('disabled',!isDisabled);
 			}
 		});
-
     </script>
-@endpush 
+@endpush
