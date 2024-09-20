@@ -96,10 +96,10 @@
 							</div>
 							<!-- Password strength progress bar -->
 							<div style="margin-top: 10px;">
-								<div class="progress-text" id="textUppercase" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast 1 Uppercase</span></div>
-								<div class="progress-text" id="textLength" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast 8 length</span></div>
-								<div class="progress-text" id="textNumber" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast Contain a Number</span></div>
-								<div class="progress-text" id="textChar" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Atleast Contain a Special Character</span></div>
+								<div class="progress-text" id="textUppercase" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Must include at least one uppercase letter.</span></div>
+								<div class="progress-text" id="textLength" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Minimum length of 8 characters.</span></div>
+								<div class="progress-text" id="textNumber" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Must contain at least one number.</span></div>
+								<div class="progress-text" id="textChar" style="font-size: 15px"> <i class="fa fa-check-circle"></i> <span style="font-style: italic"> Must include at least one special character.</span></div>
 							</div>
 						</div>
 	
