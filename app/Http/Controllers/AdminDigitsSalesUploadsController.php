@@ -342,6 +342,7 @@ use Maatwebsite\Excel\Facades\Excel;
 				foreach ($id_selected as $id) {
 					$batch = DigitsSalesUpload::find($id);
 					$batch = $batch->getBatchDetails();
+					
 					if (!$batch->finished_at) {
 						return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has not finished importing.", 'danger');
 					}
@@ -361,6 +362,7 @@ use Maatwebsite\Excel\Facades\Excel;
 						'tagged_as_final_at' => date('Y-m-d H:i:s'),
 						'tagged_as_final_by' => CRUDBooster::myId(),
 					]);
+
 					$digit_sales = DigitsSale::where('batch_number', $batch->batch)->update(['is_final' => 1]);
 				}
 
