@@ -1,4 +1,4 @@
-@props(['channel' => 'Total',])
+@props(['channel' => 'Total', 'data', 'yearFrom', 'yearTo', 'dataFrom', 'dataTo', 'dataLastThreeDaysFrom', 'dataLastThreeDaysTo'])
 
 <style type="text/css">
     .sales-report {
@@ -87,12 +87,45 @@
         }
 
 
-    .channel-width{
-        width: 100px;
+    .leftside-width{
+        width: 110px;
+    }
+    .rightside-width{
+        width: 125px;
     }
     
 </style>
 
+@php
+    // dump($dataTo);
+    // dump($dataFrom);
+
+    
+    $totalSalesOfDataTo = array_sum(array_map(function($item) {
+        return $item['sum_of_net_sales'];
+    }, $dataTo));
+
+    // dump($totalSalesOfDataTo);
+
+    $totalSalesOfDataFrom = array_sum(array_map(function($item) {
+        return $item['sum_of_net_sales'];
+    }, $dataFrom));
+
+    // dump($totalSalesOfDataFrom);
+
+
+    $totalIncDecPercentage = $totalSalesOfDataFrom ? (($totalSalesOfDataTo - $totalSalesOfDataFrom) / $totalSalesOfDataFrom) * 100 : 0;
+    // dump($totalIncDecPercentage);
+
+    $totalRounded = round($totalIncDecPercentage);
+    // dump($totalRounded);
+
+    $totalStyle = $totalRounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
+
+
+    // dump($dataLastThreeDaysFrom);
+    // dump($dataLastThreeDaysTo);
+@endphp
 <div>
 
     <div class="sales-report">
@@ -100,17 +133,17 @@
             <thead>
                 <tr>
                     {{-- <th rowspan="1">{{strtoupper($channel) }}</th> --}}
-                    <th class="channel-width" >{{strtoupper($channel) }}</th>
-                    <th >YEAR</th>
+                    <th class="leftside-width" >{{strtoupper($channel) }}</th>
+                    <th class="leftside-width" >YEAR</th>
                     <th class="none">&nbsp;</th>
-                    <th >RUNNING</th>
-                    <th >WEEK 1</th>
-                    <th >WEEK 2</th>
-                    <th >WEEK 3</th>
-                    <th >WEEK 4</th>
-                    <th>22-Sep</th>
-                    <th>23-Sep</th>
-                    <th>24-Sep</th>
+                    <th class="rightside-width">RUNNING</th>
+                    <th class="rightside-width">WEEK 1</th>
+                    <th class="rightside-width">WEEK 2</th>
+                    <th class="rightside-width">WEEK 3</th>
+                    <th class="rightside-width">WEEK 4</th>
+                    <th class="rightside-width">{{$dataLastThreeDaysTo[0]['date_of_the_day']}}</th>
+                    <th class="rightside-width">{{$dataLastThreeDaysTo[1]['date_of_the_day']}}</th>
+                    <th class="rightside-width">{{$dataLastThreeDaysTo[2]['date_of_the_day']}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -118,40 +151,86 @@
                     <td>&nbsp;</td>
                     <td>% GROWTH</td>
                     <td class="none">&nbsp;</td>
-                    <td class="none">57%</td>
-                    <td class="none">59%</td>
-                    <td class="none">67%</td>
-                    <td class="none">48%</td>
-                    <td class="none">55%</td>
-                    <td class="none">93%</td>
-                    <td class="none">45%</td>
-                    <td class="none">28%</td>
+                    <td class="none" style="{{$totalStyle}}">{{$totalRounded}}%</td>
+
+                    @foreach (range(0,3) as $number)
+
+                        @php
+                            $sum2024 = $dataTo[$number]['sum_of_net_sales'] ?? 0;
+                            $sum2023 = $dataFrom[$number]['sum_of_net_sales'] ?? 0;
+
+                            $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0;
+
+                            $rounded = round($incDecPercentage);
+                            $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
+                        @endphp
+
+                        <td class="none" style="{{$style}}">{{$rounded}}%</td>
+                    @endforeach
+
+                    @foreach (range(0,2) as $number)
+
+                        @php
+                            $sum2024 = $dataLastThreeDaysTo[$number]['sum_of_net_sales'] ?? 0;
+                            $sum2023 = $dataLastThreeDaysFrom[$number]['sum_of_net_sales'] ?? 0;
+
+
+                            $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0;
+                            $rounded = round($incDecPercentage);
+                            $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
+                        @endphp
+
+                        <td class="none" style="{{$style}}">{{$rounded}}%</td>
+                    @endforeach
                 </tr>
                 <tr>
-                    <td><b>TOTAL</b></td>
-                    <td><b>2023</b></td>
+                    <td><b>{{strtoupper($channel) }}</b></td>
+                    <td><b>{{$yearFrom}}</b></td>
                     <td class="none">&nbsp;</td>
-                    <td><b>364,066,960.69</b></td>
-                    <td><b>90,776,862.44</b></td>
-                    <td><b>88,247,412.64</b></td>
-                    <td><b>128,512,623.84</b></td>
-                    <td><b>56,530,061.77</b></td>
-                    <td><b>19,322,158.40</b></td>
-                    <td><b>15,543,198.50</b></td>
-                    <td><b>21,664,704.87</b></td>
+                    <td><b>{{number_format($totalSalesOfDataFrom, 2)}}</b></td>
+                    {{-- sometimes it has 5 weeks  --}}
+                    @foreach (range(0,3) as $number)
+                        @php
+                            $curr = $dataFrom[$number]['sum_of_net_sales'];
+                        @endphp
+
+                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+
+                    @endforeach
+
+                    @foreach (range(0,2) as $number)
+                        @php
+                            $curr = $dataLastThreeDaysFrom[$number]['sum_of_net_sales'];
+                        @endphp
+
+                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+
+                    @endforeach
+
                 </tr>
                 <tr>
-                    <td><b>TOTAL</b></td>
-                    <td><b>2024</b></td>
+                    <td><b>{{strtoupper($channel) }}</b></td>
+                    <td><b>{{$yearTo}}</b></td>
                     <td class="none">&nbsp;</td>
-                    <td><b>569,851,305.99</b></td>
-                    <td><b>144,294,728.28</b></td>
-                    <td><b>147,706,921.38</b></td>
-                    <td><b>190,414,056.34</b></td>
-                    <td><b>87,435,599.99</b></td>
-                    <td><b>37,196,599.03</b></td>
-                    <td><b>22,522,368.21</b></td>
-                    <td><b>27,716,632.75</b></td>
+                    <td><b>{{number_format($totalSalesOfDataTo, 2)}}</b></td>
+                    {{-- sometimes it has 5 weeks  --}}
+                    @foreach (range(0,3) as $number)
+                        @php
+                            $curr = $dataTo[$number]['sum_of_net_sales'];
+                        @endphp
+
+                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+
+                    @endforeach
+
+                    @foreach (range(0,2) as $number)
+                        @php
+                            $curr = $dataLastThreeDaysTo[$number]['sum_of_net_sales'];
+                        @endphp
+
+                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+
+                    @endforeach
                 </tr>
             </tbody>
         </table>

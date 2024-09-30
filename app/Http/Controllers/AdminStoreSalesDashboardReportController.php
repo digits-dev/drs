@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+	use App\Models\StoreSalesDashboardReport;
 	use Session;
 	use Request;
 	use DB;
@@ -413,15 +414,156 @@
 	    //By the way, you can still create your own method in here... :) 
 
 		
-		public function getIndex(Request $request) {
+		public function getIndex() {
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 			
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
+			$data['summary'] = [];
+			$data['channel_codes'] = [];
+			$data['last_three_days'] = [];
+			$data['summary_last_three_days'] = [];
+
+			$storeSalesDR = new StoreSalesDashboardReport(2023,2);
+
+			// Create temp table for 2023 and get summary
+			StoreSalesDashboardReport::createTempTable(2023, 2); // month 1 (January)
+			$sumFor2023 = StoreSalesDashboardReport::getSalesSummary()->toArray();
+			$data['summary']['2023'] = $sumFor2023;
+
+
+			//per channel 2023
+			$sumPerChannel = StoreSalesDashboardReport::getSalesWeeklyPerChannel()->toArray();
+
+			// Organize the results
+			foreach ($sumPerChannel as $sale) {
+				if (!isset($data['channel_codes'][$sale['channel_code']])) {
+					$data['channel_codes'][$sale['channel_code']] = [];
+				}
+				
+				$data['channel_codes'][$sale['channel_code']]['2023']['weeks'][] = [
+					'week_cy' => $sale['week_cy'],
+					'sum_of_net_sales' => $sale['sum_of_net_sales'],
+				];
+			}
+
+			
+
+			$lastthreedays = StoreSalesDashboardReport::getSalesSummaryForLastThreeDays(2023,2)->toArray();
+
+			$data['summary_last_three_days']['2023'] = $lastthreedays;
+
+			$lastThreedaysPerchannel = StoreSalesDashboardReport::getSalesSummaryForLastThreeDaysPerChannel(2023,2)->toArray();
+
+			// Organize the results
+			foreach ($lastThreedaysPerchannel as $sale) {
+				if (!isset($data['channel_codes'][$sale['channel_code']])) {
+					$data['channel_codes'][$sale['channel_code']] = [];
+				}
+				
+				$data['channel_codes'][$sale['channel_code']]['2023']['last_three_days'][] = [
+					'date_of_the_day' => $sale['date_of_the_day'],
+					'day' => $sale['day'],
+					'sum_of_net_sales' => $sale['sum_of_net_sales'],
+				];
+			}
+
+
+
+			// dump($lastThreedaysPerchannel);
+			// dump($lastthreedays);
+
+
+			// dd($data['last_three_days']);
 	
+
+
+
+	
+			// Drop the temporary table
+			StoreSalesDashboardReport::dropTempTable();
+	
+			// Create temp table for 2024 and get summary
+			StoreSalesDashboardReport::createTempTable(2024, 2); // month 1 (January)
+			$sumFor2024 = StoreSalesDashboardReport::getSalesSummary()->toArray();
+			$data['summary']['2024'] = $sumFor2024;
+
+
+			//per channel 2024
+			$sumPerChannel = StoreSalesDashboardReport::getSalesWeeklyPerChannel()->toArray();
+
+			// Organize the results
+			foreach ($sumPerChannel as $sale) {
+				if (!isset($data['channel_codes'][$sale['channel_code']])) {
+					$data['channel_codes'][$sale['channel_code']] = [];
+				}
+				
+				$data['channel_codes'][$sale['channel_code']]['2024']['weeks'][] = [
+					'week_cy' => $sale['week_cy'],
+					'sum_of_net_sales' => $sale['sum_of_net_sales'],
+				];
+			}
+
+			// dd($data['channel_codes']);
+
+			// $lastthreedays = StoreSalesDashboardReport::getSalesSummaryForLastThreeDays(2024,2)->toArray();
+
+			// $lastThreedaysPerchannel = StoreSalesDashboardReport::getSalesSummaryForLastThreeDaysPerChannel(2024,2)->toArray();
+
+			// dump($lastThreedaysPerchannel);
+
+			// dd($lastthreedays);
+
+			$lastthreedays = StoreSalesDashboardReport::getSalesSummaryForLastThreeDays(2024,2)->toArray();
+
+			$data['summary_last_three_days']['2024'] = $lastthreedays;
+
+			$lastThreedaysPerchannel = StoreSalesDashboardReport::getSalesSummaryForLastThreeDaysPerChannel(2024,2)->toArray();
+
+			// Organize the results
+			foreach ($lastThreedaysPerchannel as $sale) {
+				if (!isset($data['channel_codes'][$sale['channel_code']])) {
+					$data['channel_codes'][$sale['channel_code']] = [];
+				}
+				
+				$data['channel_codes'][$sale['channel_code']]['2024']['last_three_days'][] = [
+					'date_of_the_day' => $sale['date_of_the_day'],
+					'day' => $sale['day'],
+					'sum_of_net_sales' => $sale['sum_of_net_sales'],
+				];
+			}
+
+
+			// dd($data['channel_codes']);
+
+			// dump($lastThreedaysPerchannel);
+			// dump($lastthreedays);
+
+
+			// dd($data['summary_last_three_days']);
+			// dd($data['last_three_days']);
+
+
 			return view('dashboard-report.store-sales.index', $data);
 		}
+
+
+		// for clean up later 
+
+		// $data['summary'] = [];
+
+		// // Helper function to create temp table, get summary, and drop table
+		// function getYearlySummary($year, $month) {
+		// 	StoreSalesDashboardReport::createTempTable($year, $month);
+		// 	$summary = StoreSalesDashboardReport::getSalesSummary();
+		// 	StoreSalesDashboardReport::dropTempTable();
+		// 	return $summary;
+		// }
+
+		// // Get summaries for 2023 and 2024
+		// $data['summary'][] = ['sumFor2023' => getYearlySummary(2023, 1)];
+		// $data['summary'][] = ['sumFor2024' => getYearlySummary(2024, 1)];
 
 
 	}
