@@ -93,26 +93,53 @@
     .rightside-width{
         width: 125px;
     }
+
+    th,tr,td,td b{
+        font-size: 13px;
+    }
+    .font-size{
+        font-size: 13px !important;
+    }
     
 </style>
 
 @php
+    $weeks = ['WK01', 'WK02', 'WK03', 'WK04'];
     // dump($dataTo);
     // dump($dataFrom);
 
+    $totalSalesOfDataTo = 0; // Default value
+
+    if (!empty($dataTo)) { // Check if dataTo has data
+        $totalSalesOfDataTo = array_sum(array_map(function($item) {
+            // Return the value if it's not null or empty
+            return !empty($item['sum_of_net_sales']) ? $item['sum_of_net_sales'] : 0;
+        }, $dataTo));
+    }
+
+
+    $totalSalesOfDataFrom = 0; // Default value
+
+    if (!empty($dataFrom)) { // Check if dataTo has data
+        $totalSalesOfDataFrom = array_sum(array_map(function($item) {
+            // Return the value if it's not null or empty
+            return !empty($item['sum_of_net_sales']) ? $item['sum_of_net_sales'] : 0;
+        }, $dataFrom));
+    }
     
-    $totalSalesOfDataTo = array_sum(array_map(function($item) {
-        return $item['sum_of_net_sales'];
-    }, $dataTo));
+    // $totalSalesOfDataTo = array_sum(array_map(function($item) {
+    //     return $item['sum_of_net_sales'];
+    // }, $dataTo));
 
-    // dump($totalSalesOfDataTo);
+    // // dump($totalSalesOfDataTo);
 
-    $totalSalesOfDataFrom = array_sum(array_map(function($item) {
-        return $item['sum_of_net_sales'];
-    }, $dataFrom));
+    // $totalSalesOfDataFrom = array_sum(array_map(function($item) {
+    //     return $item['sum_of_net_sales'];
+    // }, $dataFrom));
 
     // dump($totalSalesOfDataFrom);
 
+// dd('stop');
 
     $totalIncDecPercentage = $totalSalesOfDataFrom ? (($totalSalesOfDataTo - $totalSalesOfDataFrom) / $totalSalesOfDataFrom) * 100 : 0;
     // dump($totalIncDecPercentage);
@@ -132,7 +159,6 @@
         <table>
             <thead>
                 <tr>
-                    {{-- <th rowspan="1">{{strtoupper($channel) }}</th> --}}
                     <th class="leftside-width" >{{strtoupper($channel) }}</th>
                     <th class="leftside-width" >YEAR</th>
                     <th class="none">&nbsp;</th>
@@ -149,15 +175,15 @@
             <tbody>
                 <tr>
                     <td>&nbsp;</td>
-                    <td>% GROWTH</td>
-                    <td class="none">&nbsp;</td>
-                    <td class="none" style="{{$totalStyle}}">{{$totalRounded}}%</td>
+                    <td class="font-size">% GROWTH</td>
+                    <td class="none" style="width: 10px">&nbsp;</td>
+                    <td class="none font-size" style="{{$totalStyle}}">{{$totalRounded}}%</td>
 
-                    @foreach (range(0,3) as $number)
+                    @foreach ($weeks as $week)
 
                         @php
-                            $sum2024 = $dataTo[$number]['sum_of_net_sales'] ?? 0;
-                            $sum2023 = $dataFrom[$number]['sum_of_net_sales'] ?? 0;
+                            $sum2024 = $dataTo[$week]['sum_of_net_sales'] ?? 0;
+                            $sum2023 = $dataFrom[$week]['sum_of_net_sales'] ?? 0;
 
                             $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0;
 
@@ -165,7 +191,7 @@
                             $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
                         @endphp
 
-                        <td class="none" style="{{$style}}">{{$rounded}}%</td>
+                        <td class="none font-size" style="{{$style}}">{{$rounded}}%</td>
                     @endforeach
 
                     @foreach (range(0,2) as $number)
@@ -180,18 +206,18 @@
                             $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
                         @endphp
 
-                        <td class="none" style="{{$style}}">{{$rounded}}%</td>
+                        <td class="none font-size" style="{{$style}}">{{$rounded}}%</td>
                     @endforeach
                 </tr>
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
                     <td><b>{{$yearFrom}}</b></td>
-                    <td class="none">&nbsp;</td>
+                    <td class="none" style="width: 10px">&nbsp;</td>
                     <td><b>{{number_format($totalSalesOfDataFrom, 2)}}</b></td>
-                    {{-- sometimes it has 5 weeks  --}}
-                    @foreach (range(0,3) as $number)
+
+                    @foreach ($weeks as $week)
                         @php
-                            $curr = $dataFrom[$number]['sum_of_net_sales'];
+                            $curr = $dataFrom[$week]['sum_of_net_sales'];
                         @endphp
 
                         <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
@@ -211,12 +237,12 @@
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
                     <td><b>{{$yearTo}}</b></td>
-                    <td class="none">&nbsp;</td>
+                    <td class="none" style="width: 10px">&nbsp;</td>
                     <td><b>{{number_format($totalSalesOfDataTo, 2)}}</b></td>
-                    {{-- sometimes it has 5 weeks  --}}
-                    @foreach (range(0,3) as $number)
+
+                    @foreach ($weeks as $week)
                         @php
-                            $curr = $dataTo[$number]['sum_of_net_sales'];
+                            $curr = $dataTo[$week]['sum_of_net_sales'];
                         @endphp
 
                         <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>

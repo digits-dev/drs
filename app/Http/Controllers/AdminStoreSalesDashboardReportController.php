@@ -417,24 +417,30 @@
 		public function getIndex() {
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-			
+
+			$year1 = 2023;
+			$month1 = 2;
+
+			$year2 = 2024;
+			$month2 = 2;
+
 			$data = [];
+			$data = ['yearMonthData' => ['year1' => $year1, 'month1' => $month1, 'year2' => $year2, 'month2' => $month2]];
 			$data['page_title'] = 'Store Sales Dashboard Report';
 			$data['summary'] = [];
 			$data['channel_codes'] = [];
 			$data['last_three_days'] = [];
 			$data['summary_last_three_days'] = [];
 
-			$storeSalesDR = new StoreSalesDashboardReport(2023,2);
+			$storeSalesDR = new StoreSalesDashboardReport(['year' => $year1, 'month' => $month1]);
 
 			// Create temp table for 2023 and get summary
-			StoreSalesDashboardReport::createTempTable(2023, 2); // month 1 (January)
-			$sumFor2023 = StoreSalesDashboardReport::getSalesSummary()->toArray();
-			$data['summary']['2023'] = $sumFor2023;
-
+			$storeSalesDR->createTempTable();
+			$sumFor2023 = $storeSalesDR->getSalesSummary()->toArray();
+			$data['summary'][$year1] = $sumFor2023;
 
 			//per channel 2023
-			$sumPerChannel = StoreSalesDashboardReport::getSalesWeeklyPerChannel()->toArray();
+			$sumPerChannel = $storeSalesDR->getSalesWeeklyPerChannel()->toArray();
 
 			// Organize the results
 			foreach ($sumPerChannel as $sale) {
@@ -442,84 +448,65 @@
 					$data['channel_codes'][$sale['channel_code']] = [];
 				}
 				
-				$data['channel_codes'][$sale['channel_code']]['2023']['weeks'][] = [
-					'week_cy' => $sale['week_cy'],
+				$data['channel_codes'][$sale['channel_code']][$year1]['weeks'][$sale['week_cutoff']] = 
+				['sum_of_net_sales' => $sale['sum_of_net_sales']];
+			
+			}
+
+			$lastthreedays = $storeSalesDR->getSalesSummaryForLastThreeDays()->toArray();
+
+			$data['summary_last_three_days'][$year1] = $lastthreedays;
+
+			$lastThreedaysPerchannel = $storeSalesDR->getSalesSummaryForLastThreeDaysPerChannel()->toArray();
+
+			// Organize the results
+			foreach ($lastThreedaysPerchannel as $sale) {
+				if (!isset($data['channel_codes'][$sale['channel_code']])) {
+					$data['channel_codes'][$sale['channel_code']] = [];
+				}
+				
+				$data['channel_codes'][$sale['channel_code']][$year1]['last_three_days'][] = [
+					'date_of_the_day' => $sale['date_of_the_day'],
+					'day' => $sale['day'],
 					'sum_of_net_sales' => $sale['sum_of_net_sales'],
 				];
 			}
 
 			
-
-			$lastthreedays = StoreSalesDashboardReport::getSalesSummaryForLastThreeDays(2023,2)->toArray();
-
-			$data['summary_last_three_days']['2023'] = $lastthreedays;
-
-			$lastThreedaysPerchannel = StoreSalesDashboardReport::getSalesSummaryForLastThreeDaysPerChannel(2023,2)->toArray();
-
-			// Organize the results
-			foreach ($lastThreedaysPerchannel as $sale) {
-				if (!isset($data['channel_codes'][$sale['channel_code']])) {
-					$data['channel_codes'][$sale['channel_code']] = [];
-				}
-				
-				$data['channel_codes'][$sale['channel_code']]['2023']['last_three_days'][] = [
-					'date_of_the_day' => $sale['date_of_the_day'],
-					'day' => $sale['day'],
-					'sum_of_net_sales' => $sale['sum_of_net_sales'],
-				];
-			}
-
-
-
-			// dump($lastThreedaysPerchannel);
-			// dump($lastthreedays);
-
-
-			// dd($data['last_three_days']);
-	
-
-
-
-	
 			// Drop the temporary table
-			StoreSalesDashboardReport::dropTempTable();
+			$storeSalesDR->dropTempTable();
+
+
+			//Create data for 2024
+			$storeSalesDR_2 = new StoreSalesDashboardReport(['year' => $year2, 'month' => $month2]);
 	
 			// Create temp table for 2024 and get summary
-			StoreSalesDashboardReport::createTempTable(2024, 2); // month 1 (January)
-			$sumFor2024 = StoreSalesDashboardReport::getSalesSummary()->toArray();
-			$data['summary']['2024'] = $sumFor2024;
+			$storeSalesDR_2->createTempTable(); 
+
+			$sumFor2024 = $storeSalesDR_2->getSalesSummary()->toArray();
+			$data['summary'][$year2] = $sumFor2024;
 
 
 			//per channel 2024
-			$sumPerChannel = StoreSalesDashboardReport::getSalesWeeklyPerChannel()->toArray();
+			$sumPerChannel = $storeSalesDR_2->getSalesWeeklyPerChannel()->toArray();
 
 			// Organize the results
 			foreach ($sumPerChannel as $sale) {
 				if (!isset($data['channel_codes'][$sale['channel_code']])) {
 					$data['channel_codes'][$sale['channel_code']] = [];
 				}
+
 				
-				$data['channel_codes'][$sale['channel_code']]['2024']['weeks'][] = [
-					'week_cy' => $sale['week_cy'],
-					'sum_of_net_sales' => $sale['sum_of_net_sales'],
-				];
+				$data['channel_codes'][$sale['channel_code']][$year2]['weeks'][$sale['week_cutoff']] = 
+				['sum_of_net_sales' => $sale['sum_of_net_sales']];
 			}
 
-			// dd($data['channel_codes']);
 
-			// $lastthreedays = StoreSalesDashboardReport::getSalesSummaryForLastThreeDays(2024,2)->toArray();
+			$lastthreedays = $storeSalesDR_2->getSalesSummaryForLastThreeDays()->toArray();
 
-			// $lastThreedaysPerchannel = StoreSalesDashboardReport::getSalesSummaryForLastThreeDaysPerChannel(2024,2)->toArray();
+			$data['summary_last_three_days'][$year2] = $lastthreedays;
 
-			// dump($lastThreedaysPerchannel);
-
-			// dd($lastthreedays);
-
-			$lastthreedays = StoreSalesDashboardReport::getSalesSummaryForLastThreeDays(2024,2)->toArray();
-
-			$data['summary_last_three_days']['2024'] = $lastthreedays;
-
-			$lastThreedaysPerchannel = StoreSalesDashboardReport::getSalesSummaryForLastThreeDaysPerChannel(2024,2)->toArray();
+			$lastThreedaysPerchannel = $storeSalesDR_2->getSalesSummaryForLastThreeDaysPerChannel()->toArray();
 
 			// Organize the results
 			foreach ($lastThreedaysPerchannel as $sale) {
@@ -527,7 +514,7 @@
 					$data['channel_codes'][$sale['channel_code']] = [];
 				}
 				
-				$data['channel_codes'][$sale['channel_code']]['2024']['last_three_days'][] = [
+				$data['channel_codes'][$sale['channel_code']][$year2]['last_three_days'][] = [
 					'date_of_the_day' => $sale['date_of_the_day'],
 					'day' => $sale['day'],
 					'sum_of_net_sales' => $sale['sum_of_net_sales'],
@@ -535,15 +522,10 @@
 			}
 
 
+
 			// dd($data['channel_codes']);
 
-			// dump($lastThreedaysPerchannel);
-			// dump($lastthreedays);
-
-
-			// dd($data['summary_last_three_days']);
-			// dd($data['last_three_days']);
-
+	
 
 			return view('dashboard-report.store-sales.index', $data);
 		}

@@ -5,6 +5,7 @@ namespace App\Models;
 use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Log;
 
 class StoreSalesDashboardReport extends Model
 {
@@ -14,80 +15,95 @@ class StoreSalesDashboardReport extends Model
 
     public $timestamps = false;
 
-    private $year;
-    private $month;
+    protected $fillable = ['year', 'month'];
 
-    public function __construct($year, $month){
-        $this->year = $year;
-        $this->month = $month;
+    protected $year;
+    protected $month;
+    protected $yearMonth;
+    protected $startDate;
+    protected $endDate;
+
+    public function __construct(array $attributes = []){
+        parent::__construct($attributes);
+        
+        // Initialize year and month, and set properties
+        if (isset($attributes['year']) && isset($attributes['month'])) {
+            $this->year = $attributes['year'];
+            $this->month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT); // always two digits
+
+            $this->yearMonth = "{$this->year}-{$this->month}";
+            $this->startDate = "{$this->year}-{$this->month}-01";
+            $this->endDate = date("Y-m-d", strtotime("last day of {$this->startDate}"));
+        }
+
+        Log::info("Month $this->month");
+        Log::info("Year $this->year");
+        Log::info("YearMonth $this->yearMonth");
+        Log::info("StartDate $this->startDate");
+        Log::info("EndDate $this->endDate");
+
     }
 
-    public static function createTempTable($year, $month){
-
-        // Normalize the month to always be two digits
-    $month = str_pad($month, 2, '0', STR_PAD_LEFT);
-    // Define the first day of the month
-    $startDate = "{$year}-{$month}-01";
-
-    // Create a DateTime object for the first day of the next month
-    // $nextMonth = str_pad(($month % 12) + 1, 2, '0', STR_PAD_LEFT);
-    // $nextMonthStart = "{$year}-{$nextMonth}-01";
-    
-    // Calculate the end date for the current month
-    $endDate = date("Y-m-d", strtotime("last day of {$startDate}"));
-    // dump($endDate);
+    public function createTempTable(){
 
     DB::statement("
         CREATE TEMPORARY TABLE temp_store_sales AS
         SELECT 
             store_sales.*,
-            non_apple_cutoffs.week_cy,
-            non_apple_cutoffs.from_date,
-            non_apple_cutoffs.sold_date,
             channels.channel_code
         FROM store_sales 
-        LEFT JOIN non_apple_cutoffs ON store_sales.sales_date = non_apple_cutoffs.sold_date
         LEFT JOIN channels ON store_sales.channels_id = channels.id
         WHERE store_sales.is_final = 1 
-            AND non_apple_cutoffs.sold_date BETWEEN '{$startDate}' AND '{$endDate}'
+            AND store_sales.sales_date BETWEEN '{$this->startDate}' AND '{$this->endDate}'
             AND store_sales.quantity_sold > 0
             AND store_sales.net_sales IS NOT NULL
             AND store_sales.sold_price > 0
     ");
-    // AND non_apple_cutoffs.week_cy IN ('WK01', 'WK02', 'WK03', 'WK04')
 
     }
 
-    public static function dropTempTable(){
+    public function dropTempTable(){
         DB::statement('DROP TEMPORARY TABLE IF EXISTS temp_store_sales');
     }
 
-    public static function getSalesSummary()
+    public function getSalesSummary()
     {
-     
-        return self::select(
-                'week_cy',
-                DB::raw('SUM(net_sales) AS sum_of_net_sales')
-            )->groupBy('week_cy')
-            ->get();
+
+        return self::select(DB::raw("
+            CASE 
+                WHEN sales_date BETWEEN '{$this->startDate}' AND '{$this->yearMonth}-07' THEN 'WK01'
+                WHEN sales_date BETWEEN '{$this->yearMonth}-08' AND '{$this->yearMonth}-14' THEN 'WK02'
+                WHEN sales_date BETWEEN '{$this->yearMonth}-15' AND '{$this->yearMonth}-21' THEN 'WK03'
+                WHEN sales_date BETWEEN '{$this->yearMonth}-22' AND '{$this->endDate}' THEN 'WK04'
+            END AS week_cutoff,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->groupBy('week_cutoff')
+        ->get();
 
     }
 
-    public static function getSalesWeeklyPerChannel()
+    public function getSalesWeeklyPerChannel()
     {
-        return self::select(
-                'week_cy',
-                DB::raw('SUM(net_sales) AS sum_of_net_sales'),
-                'channel_code',
-            )
-            ->groupBy('week_cy', 'channel_code')
-            ->get();
+
+        return self::select(DB::raw("
+            CASE 
+                WHEN sales_date BETWEEN '{$this->startDate}' AND '{$this->yearMonth}-07' THEN 'WK01'
+                WHEN sales_date BETWEEN '{$this->yearMonth}-08' AND '{$this->yearMonth}-14' THEN 'WK02'
+                WHEN sales_date BETWEEN '{$this->yearMonth}-15' AND '{$this->yearMonth}-21' THEN 'WK03'
+                WHEN sales_date BETWEEN '{$this->yearMonth}-22' AND '{$this->endDate}' THEN 'WK04'
+            END AS week_cutoff,
+            SUM(net_sales) AS sum_of_net_sales,
+            channel_code
+        "))
+        ->groupBy('week_cutoff', 'channel_code')
+        ->get();
     }
 
-    public static function getLastThreeDaysOfMonth($year, $month)
+    public function getLastThreeDaysOfMonth()
     {
         // Create a DateTime object for the first day of the next month
-        $date = new \DateTime("{$year}-{$month}-01");
+        $date = new \DateTime("{$this->yearMonth}-01");
         // Modify the date to the last day of the current month
         $date->modify('last day of this month');
         
@@ -101,12 +117,12 @@ class StoreSalesDashboardReport extends Model
         return $lastThreeDays;
     }
 
-    public static function getLastThreeDaysWithSales($year, $month)
+    public function getLastThreeDaysWithSales()
     {
         // Fetch distinct sales dates with sales data for the given month
         $salesDates = self::select('sales_date')
-            ->whereYear('sales_date', $year)
-            ->whereMonth('sales_date', $month)
+            ->whereYear('sales_date', $this->year)
+            ->whereMonth('sales_date', $this->month)
             ->distinct()
             ->orderBy('sales_date', 'desc')
             ->limit(3)
@@ -117,9 +133,9 @@ class StoreSalesDashboardReport extends Model
         return $salesDates;
     }
 
-    public static function getSalesSummaryForLastThreeDays($year, $month)
+    public function getSalesSummaryForLastThreeDays()
     {
-        $lastThreeDays = self::getLastThreeDaysOfMonth($year, $month);
+        $lastThreeDays = self::getLastThreeDaysWithSales();
 
         // Fetch the sales summary for those days
         return self::select(
@@ -134,10 +150,10 @@ class StoreSalesDashboardReport extends Model
             });;
     }
 
-    public static function getSalesSummaryForLastThreeDaysPerChannel($year, $month)
+    public function getSalesSummaryForLastThreeDaysPerChannel()
     {
 
-        $lastThreeDays = self::getLastThreeDaysOfMonth($year, $month);
+        $lastThreeDays = self::getLastThreeDaysWithSales();
 
         // Fetch the sales summary for those days
         return self::select(

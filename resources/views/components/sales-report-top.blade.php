@@ -61,9 +61,9 @@
             <tbody>
                 <tr>
                     <td>&nbsp;</td>
-                    <td>% GROWTH</td>
-                    <td class="none">&nbsp;</td>
-                    <td class="none" style="{{$totalStyle}}">{{$totalRounded}}%</td>
+                    <td class="font-size">% GROWTH</td>
+                    <td class="none" style="width: 10px">&nbsp;</td>
+                    <td class="none font-size" style="{{$totalStyle}}">{{$totalRounded}}%</td>
 
                     @foreach (range(0,3) as $number)
 
@@ -71,12 +71,12 @@
                             $sum2024 = $data[$yearTo][$number]['sum_of_net_sales'] ?? 0;
                             $sum2023 = $data[$yearFrom][$number]['sum_of_net_sales'] ?? 0;
 
-                            $incDecPercentage = (($sum2024 - $sum2023) / $sum2023 ) * 100 ;
+                            $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0 ;
                             $rounded = round($incDecPercentage);
                             $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
                         @endphp
 
-                        <td class="none" style="{{$style}}">{{$rounded}}%</td>
+                        <td class="none font-size" style="{{$style}}">{{$rounded}}%</td>
                     @endforeach
 
                     @foreach (range(0,2) as $number)
@@ -85,19 +85,19 @@
                             $sum2024 = $dataLastThreeDays[$yearTo][$number]['sum_of_net_sales'] ?? 0;
                             $sum2023 = $dataLastThreeDays[$yearFrom][$number]['sum_of_net_sales'] ?? 0;
 
-                            $incDecPercentage = (($sum2024 - $sum2023) / $sum2023 ) * 100 ;
+                            $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0;
                             $rounded = round($incDecPercentage);
                             $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
                         @endphp
 
-                        <td class="none" style="{{$style}}">{{$rounded}}%</td>
+                        <td class="none font-size" style="{{$style}}">{{$rounded}}%</td>
                     @endforeach
                     
                 </tr>
                 <tr>
                     <td><b>TOTAL</b></td>
                     <td><b>{{$yearFrom}}</b></td>
-                    <td class="none">&nbsp;</td>
+                    <td class="none" style="width: 10px">&nbsp;</td>
                     <td><b>{{number_format($totalSalesOfYearFrom, 2)}}</b></td>
 
                     {{-- sometimes it has 5 weeks  --}}
@@ -124,7 +124,7 @@
                 <tr>
                     <td><b>TOTAL</b></td>
                     <td><b>{{$yearTo}}</b></td>
-                    <td class="none">&nbsp;</td>
+                    <td class="none" style="width: 10px">&nbsp;</td>
                     <td><b>{{number_format($totalSalesOfYearTo, 2)}}</b></td>
 
                     {{-- sometimes it has 5 weeks  --}}
