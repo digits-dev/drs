@@ -333,7 +333,7 @@
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 			
 			$data = [];
-			$data['page_title'] = 'Store Sales';
+			$data['page_title'] = 'Gashapon Store Sales';
 			$data['channels'] = Channel::active();
 			$data['concepts'] = Concept::active();
 			$data['datefrom'] = $request->datefrom;
