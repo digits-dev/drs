@@ -13,23 +13,35 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithConditionalSheets;
 use DB;
 use CRUDBooster;
+use App\Models\System;
 class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
 {
     protected $table_name;
+    private $system;
     public function __construct($table_name) {
         $this->table_name = $table_name;
-  
+        $this->system = System::active();
     }
     public function collection(Collection $rows)
     {
         foreach ($rows->toArray() as $row){
-            if($this->table_name === 'warehouse_inventories'){
+            $v_system = $this->system->where('system_name',$row['system'])->first();
+            if($this->table_name == 'warehouse_inventories'){
                 DB::table($this->table_name)
                 ->where(['reference_number' => $row['reference_number'],
                          'item_code' => $row['item_number'],
                          'is_final' => 1])
                 ->update([
-                    'product_quality' => $row['product_quality']
+                    'inventory_transaction_types_id' => $row['inventory_type']
+                ]);
+            }else if($this->table_name == 'store_sales'){
+                DB::table($this->table_name)
+                ->where(['reference_number' => $row['reference_number'],
+                         'item_code' => $row['item_number'],
+                         'is_final' => 1])
+                ->update([
+                    'systems_id' => $v_system->id,
+                    'receipt_number' => $row['receipt_number']
                 ]);
             }else{
                 DB::table($this->table_name)
