@@ -20,13 +20,11 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
     private $system;
     public function __construct($table_name) {
         $this->table_name = $table_name;
-        $this->system = System::active();
     }
     public function collection(Collection $rows)
     {
         foreach ($rows->toArray() as $row){
         
-            $v_system = $this->system->where('system_name',$row['system'])->first();
      
             // if($this->table_name == 'warehouse_inventories'){
             //     DB::table($this->table_name)
@@ -42,7 +40,7 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
                 ->where(['reference_number' => $row['reference_number'],
                          'is_final' => 1])
                 ->update([
-                    'systems_id' => $v_system->id,
+                    'systems_id' => $row['system'],
                     'receipt_number' => $row['receipt_number']
                 ]);
             // }
