@@ -28,15 +28,16 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
         
             $v_system = $this->system->where('system_name',$row['system'])->first();
      
-            if($this->table_name == 'warehouse_inventories'){
-                DB::table($this->table_name)
-                ->where(['reference_number' => $row['reference_number'],
-                         'item_code' => $row['item_number'],
-                         'is_final' => 1])
-                ->update([
-                    'inventory_transaction_types_id' => $row['inventory_type']
-                ]);
-            }else if($this->table_name == 'store_sales'){
+            // if($this->table_name == 'warehouse_inventories'){
+            //     DB::table($this->table_name)
+            //     ->where(['reference_number' => $row['reference_number'],
+            //              'item_code' => $row['item_number'],
+            //              'is_final' => 1])
+            //     ->update([
+            //         'inventory_transaction_types_id' => $row['inventory_type']
+            //     ]);
+            // }else 
+            if($this->table_name == 'store_sales'){
                 DB::table($this->table_name)
                 ->where(['reference_number' => $row['reference_number'],
                          'is_final' => 1])
@@ -44,15 +45,16 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     'systems_id' => $v_system->id,
                     'receipt_number' => $row['receipt_number']
                 ]);
-            }else{
-                DB::table($this->table_name)
-                ->where(['reference_number' => $row['reference_number'],
-                         'item_code' => $row['item_number'],
-                         'is_final' => 1])
-                ->update([
-                    'customers_id' => $row['customers_id']
-                ]);
             }
+            // else{
+            //     DB::table($this->table_name)
+            //     ->where(['reference_number' => $row['reference_number'],
+            //              'item_code' => $row['item_number'],
+            //              'is_final' => 1])
+            //     ->update([
+            //         'customers_id' => $row['customers_id']
+            //     ]);
+            // }
         }
     }
 }
