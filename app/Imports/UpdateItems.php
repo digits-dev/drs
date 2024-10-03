@@ -36,13 +36,23 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
             //     ]);
             // }else 
             // if($this->table_name == 'store_sales'){
+                DB::beginTransaction();
+            	try {
                 DB::table($this->table_name)
-                ->where(['reference_number' => $row['reference_number'],
-                         'is_final' => 1])
+                ->where([
+                        'reference_number' => $row['reference_number'],
+                        'batch_number' => $row['batch_number']
+                        ]
+                        )
                 ->update([
                     'systems_id' => $row['system'],
                     'receipt_number' => $row['receipt_number']
                 ]);
+                DB::commit();
+                } catch (\Exception $e) {
+                    \Log::debug($row['reference_number'].$e);
+                    DB::rollback();
+                }
             // }
             // else{
             //     DB::table($this->table_name)
