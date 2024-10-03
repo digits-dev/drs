@@ -37,7 +37,7 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
             //         'inventory_transaction_types_id' => $row['inventory_type']
             //     ]);
             // }else 
-            if($this->table_name == 'store_sales'){
+            // if($this->table_name == 'store_sales'){
                 DB::table($this->table_name)
                 ->where(['reference_number' => $row['reference_number'],
                          'is_final' => 1])
@@ -45,7 +45,7 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     'systems_id' => $v_system->id,
                     'receipt_number' => $row['receipt_number']
                 ]);
-            }
+            // }
             // else{
             //     DB::table($this->table_name)
             //     ->where(['reference_number' => $row['reference_number'],
