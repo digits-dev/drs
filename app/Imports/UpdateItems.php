@@ -25,7 +25,9 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
     public function collection(Collection $rows)
     {
         foreach ($rows->toArray() as $row){
+        
             $v_system = $this->system->where('system_name',$row['system'])->first();
+     
             if($this->table_name == 'warehouse_inventories'){
                 DB::table($this->table_name)
                 ->where(['reference_number' => $row['reference_number'],
@@ -37,7 +39,6 @@ class UpdateItems implements ToCollection, SkipsEmptyRows, WithHeadingRow
             }else if($this->table_name == 'store_sales'){
                 DB::table($this->table_name)
                 ->where(['reference_number' => $row['reference_number'],
-                         'item_code' => $row['item_number'],
                          'is_final' => 1])
                 ->update([
                     'systems_id' => $v_system->id,
