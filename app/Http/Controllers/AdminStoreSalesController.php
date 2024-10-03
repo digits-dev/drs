@@ -437,28 +437,7 @@
 			}else{
 				$query = StoreSale::getYajraDefaultData()->where('is_final', 1);
 				$dt = new DataTables();
-				return $dt->eloquent($query)
-				->filterColumn('systems.system_name', function($query, $keyword) {
-					$query->whereRaw("systems.system_name LIKE ?", ["%{$keyword}%"]);
-				})
-				->filterColumn('organizations.organization_name', function($query, $keyword) {
-					$query->whereRaw("organizations.organization_name LIKE ?", ["%{$keyword}%"]);
-				})
-				->filterColumn('report_types.report_type', function($query, $keyword) {
-					$query->whereRaw("report_types.report_type LIKE ?", ["%{$keyword}%"]);
-				})
-				->filterColumn('channels.channel_code', function($query, $keyword) {
-					$query->whereRaw("channels.channel_code LIKE ?", ["%{$keyword}%"]);
-				})
-				->filterColumn('customers.customer_name', function($query, $keyword) {
-					$query->whereRaw("customers.customer_name LIKE ?", ["%{$keyword}%"]);
-				})
-				->filterColumn('employees.employee_name', function($query, $keyword) {
-					$query->whereRaw("employees.employee_name LIKE ?", ["%{$keyword}%"]);
-				})
-				->filterColumn('concepts.concept_name', function($query, $keyword) {
-					$query->whereRaw("concepts.concept_name LIKE ?", ["%{$keyword}%"]);
-				})
+				return $dt->collection($query)
 				->addIndexColumn()
 				->addColumn('action', function($row){
 					$actionBtn = '<a class="btn-detail" title="Detail" href="'.CRUDBooster::adminpath("store_sales/detail/".$row["id"]).'"><i class="fa fa-eye"></i></a>';

@@ -230,7 +230,7 @@ class StoreSale extends Model
             'store_sales.qtysold_lc AS qtysold_lc',
             'store_sales.dtp_ecom AS dtp_ecom',
             'store_sales.qtysold_ecom AS qtysold_ecom'
-        );
+        )->limit(10)->get();
     }
 
     public static function boot()

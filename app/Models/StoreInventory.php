@@ -190,7 +190,7 @@ class StoreInventory extends Model
             'store_inventories.qtyinv_lc AS qtyinv_lc',
             'store_inventories.dtp_ecom AS dtp_ecom',
             'store_inventories.qtyinv_ecom as qtyinv_ecom',
-        );
+        )->limit(10)->get();
     }
 
     public static function boot()

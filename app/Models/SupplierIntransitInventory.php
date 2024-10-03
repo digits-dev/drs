@@ -187,7 +187,7 @@ class SupplierIntransitInventory extends Model
             'supplier_intransit_inventories.qtyinv_lc AS qtyinv_lc',
             'supplier_intransit_inventories.dtp_ecom AS dtp_ecom',
             'supplier_intransit_inventories.qtyinv_ecom as qtyinv_ecom',
-        );
+        )->limit(10)->get();
     }
 
     public static function boot()
