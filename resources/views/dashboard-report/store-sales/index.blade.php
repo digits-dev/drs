@@ -19,6 +19,8 @@
         :yearFrom="$yearMonthData['year1']" 
         :yearTo="$yearMonthData['year2']" 
         :dataLastThreeDays="$summary_last_three_days"
+        :lastThreeDaysAsDate="$lastThreeDaysAsDate"
+        :lastThreeDays="$lastThreeDays"
     />
 
     @foreach ($channel_codes as $channel => $years)
@@ -26,6 +28,10 @@
             $dataFrom = $years[$yearMonthData['year1']]['weeks'];
             $dataTo = $years[$yearMonthData['year2']]['weeks'];
         @endphp
+
+        @if ($channel == 'OTHER')
+            @continue
+        @endif
         
         <x-sales-report :channel="$channel" 
             :dataFrom="$dataFrom" 
@@ -34,6 +40,7 @@
             :yearTo="$yearMonthData['year2']"
             :dataLastThreeDaysFrom="$years['2023']['last_three_days']"
             :dataLastThreeDaysTo="$years['2024']['last_three_days']"
+            :lastThreeDaysAsDate="$lastThreeDaysAsDate"
         />
     @endforeach
 

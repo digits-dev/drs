@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,10 +16,11 @@ class StoreSalesDashboardReport extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['year', 'month'];
+    protected $fillable = ['year', 'month', 'day'];
 
     protected $year;
     protected $month;
+    protected $day;
     protected $yearMonth;
     protected $startDate;
     protected $endDate;
@@ -27,9 +29,10 @@ class StoreSalesDashboardReport extends Model
         parent::__construct($attributes);
         
         // Initialize year and month, and set properties
-        if (isset($attributes['year']) && isset($attributes['month'])) {
+        if (isset($attributes['year']) && isset($attributes['month']) && isset($attributes['day'])) {
             $this->year = $attributes['year'];
             $this->month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT); // always two digits
+            $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT); // always two digits
 
             $this->yearMonth = "{$this->year}-{$this->month}";
             $this->startDate = "{$this->year}-{$this->month}-01";
@@ -93,28 +96,23 @@ class StoreSalesDashboardReport extends Model
                 WHEN sales_date BETWEEN '{$this->yearMonth}-15' AND '{$this->yearMonth}-21' THEN 'WK03'
                 WHEN sales_date BETWEEN '{$this->yearMonth}-22' AND '{$this->endDate}' THEN 'WK04'
             END AS week_cutoff,
+
+            CASE 
+                WHEN channel_code LIKE '%ONL%' THEN 'ECOMM'
+                WHEN channel_code IN ('DLR', 'CRP') THEN 'DLR/CRP'
+                WHEN channel_code LIKE '%RTL%' THEN 'TOTAL-RTL'
+                WHEN channel_code LIKE '%FRA%' THEN 'FRA-DR'
+                WHEN channel_code LIKE '%SVC%' THEN 'SC'
+                WHEN channel_code LIKE '%CON%' THEN 'CON'
+                ELSE 'OTHER'
+            END AS channel_classification,
+
             SUM(net_sales) AS sum_of_net_sales,
-            channel_code
+            MIN(reference_number) AS min_reference_number
         "))
-        ->groupBy('week_cutoff', 'channel_code')
+        ->groupBy('week_cutoff', 'channel_classification')
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
         ->get();
-    }
-
-    public function getLastThreeDaysOfMonth()
-    {
-        // Create a DateTime object for the first day of the next month
-        $date = new \DateTime("{$this->yearMonth}-01");
-        // Modify the date to the last day of the current month
-        $date->modify('last day of this month');
-        
-        // Get the last three days
-        $lastThreeDays = [];
-        for ($i = 2; $i >= 0; $i--) {
-            $lastThreeDays[] = $date->format('Y-m-d');
-            $date->modify('-1 day');
-        }
-
-        return $lastThreeDays;
     }
 
     public function getLastThreeDaysWithSales()
@@ -135,39 +133,105 @@ class StoreSalesDashboardReport extends Model
 
     public function getSalesSummaryForLastThreeDays()
     {
-        $lastThreeDays = self::getLastThreeDaysWithSales();
+        $lastThreeDays = $this->getLastThreeDaysDates("{$this->year}-{$this->month}-{$this->day}");
 
-        // Fetch the sales summary for those days
-        return self::select(
-            DB::raw("DATE_FORMAT(sales_date, '%d-%b') AS date_of_the_day"),
+        $salesSummary  = self::select(
+            DB::raw("DATE_FORMAT(sales_date, '%Y-%m-%d') AS date_of_the_day"),
                 DB::raw('SUM(net_sales) AS sum_of_net_sales')
             )
             ->whereIn('sales_date', $lastThreeDays) // Filter by the last three days
             ->groupBy('sales_date') // Group by sales_date
-            ->get()->map(function ($item) {
+            ->get()->sortBy('date_of_the_day')->map(function ($item) {
                 $item->day = date('D', strtotime($item->date_of_the_day));
                 return $item;
-            });;
+            })->keyBy('date_of_the_day');
+
+        // Prepare the final summary
+        $summary = [];
+        
+        foreach ($lastThreeDays as $date) {
+            $formattedDate = date('Y-m-d', strtotime($date));
+            if (isset($salesSummary[$formattedDate])) {
+                $summary[] =  [
+                    'date_of_the_day' => $salesSummary[$formattedDate]->date_of_the_day,
+                    'sum_of_net_sales' => $salesSummary[$formattedDate]->sum_of_net_sales,
+                    'day' => date('D', strtotime($date)),
+                ];
+            } else {
+                // If no sales found for this date, add a placeholder with 0
+                $summary[] =  [
+                    'date_of_the_day' => $formattedDate,
+                    'sum_of_net_sales' => 0,
+                    'day' => date('D', strtotime($date)),
+                ];
+            }
+        }
+
+        // dump($summary);
+
+        return $summary;
     }
 
     public function getSalesSummaryForLastThreeDaysPerChannel()
     {
+        $lastThreeDays = $this->getLastThreeDaysDates("{$this->year}-{$this->month}-{$this->day}");
 
-        $lastThreeDays = self::getLastThreeDaysWithSales();
+        $salesSummary = self::select(
+            DB::raw("
+            DATE_FORMAT(sales_date, '%Y-%m-%d') AS date_of_the_day,
+            SUM(net_sales) AS sum_of_net_sales,
+            CASE 
+                WHEN channel_code LIKE '%ONL%' THEN 'ECOMM'
+                WHEN channel_code IN ('DLR', 'CRP') THEN 'DLR/CRP'
+                WHEN channel_code LIKE '%RTL%' THEN 'TOTAL-RTL'
+                WHEN channel_code LIKE '%FRA%' THEN 'FRA-DR'
+                WHEN channel_code LIKE '%SVC%' THEN 'SC'
+                WHEN channel_code LIKE '%CON%' THEN 'CON'
+                ELSE 'OTHER'
+            END AS channel_classification
+            
+            "),
+        )
+        ->whereIn('sales_date', $lastThreeDays) // Filter by the last three days
+        ->groupBy('sales_date', 'channel_classification') // Group by sales_date
+        ->get()->sortBy('date_of_the_day')->map(function ($item) {
+            $item->day = date('D', strtotime($item->date_of_the_day));
+            return $item;
+        });
 
-        // Fetch the sales summary for those days
-        return self::select(
-                DB::raw("DATE_FORMAT(sales_date, '%d-%b') AS date_of_the_day"),
-                DB::raw('SUM(net_sales) AS sum_of_net_sales'),
-                'channel_code'
-            )
-            ->whereIn('sales_date', $lastThreeDays) // Filter by the last three days
-            ->groupBy('sales_date', 'channel_code') // Group by sales_date
-            ->get()->map(function ($item) {
-                $item->day = date('D', strtotime($item->date_of_the_day));
-                return $item;
-            });;
+
+        return $salesSummary;
     }
+
+
+    public function getLastThreeDaysDates($date = null)
+    {
+        // Use the provided date or default to today
+        $today = $date ? Carbon::parse($date) : Carbon::today();
+        
+        // Initialize an array to hold the last three previous dates
+        $lastThreeDays = [];
+    
+        // If today is the 1st, 2nd, or 3rd, include those days
+        if ($today->day <= 3) {
+            for ($i = 0; $i < $today->day; $i++) {
+                $day = $today->copy()->subDays($i);
+                $lastThreeDays[] =  "{$this->yearMonth}-{$day->format('d')}";
+            }
+        } else {
+            // Get the last three days prior to the provided date
+            for ($i = 1; $i <= 3; $i++) {
+                $day = $today->copy()->subDays($i);
+                $lastThreeDays[] =  "{$this->yearMonth}-{$day->format('d')}";
+            }
+        }
+    
+        // Sort the array in ascending order
+        sort($lastThreeDays);
+        
+        return $lastThreeDays;
+    }
+    
 
 
 }

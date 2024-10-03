@@ -1,10 +1,12 @@
 <?php namespace App\Http\Controllers;
 
 	use App\Models\StoreSalesDashboardReport;
+	use Log;
 	use Session;
 	use Request;
 	use DB;
 	use CRUDBooster;
+	use Carbon\Carbon;
 
 	class AdminStoreSalesDashboardReportController extends \crocodicstudio\crudbooster\controllers\CBController {
 
@@ -417,135 +419,186 @@
 		public function getIndex() {
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-
-			$year1 = 2023;
-			$month1 = 2;
-
-			$year2 = 2024;
-			$month2 = 2;
+			
+		
 
 			$data = [];
-			$data = ['yearMonthData' => ['year1' => $year1, 'month1' => $month1, 'year2' => $year2, 'month2' => $month2]];
 			$data['page_title'] = 'Store Sales Dashboard Report';
-			$data['summary'] = [];
-			$data['channel_codes'] = [];
-			$data['last_three_days'] = [];
-			$data['summary_last_three_days'] = [];
 
-			$storeSalesDR = new StoreSalesDashboardReport(['year' => $year1, 'month' => $month1]);
+			// $currentDay = date('d');
+			// $currentMonth = date('m');
+			// $currentYear = date('Y'); 
+			// $previousYear = date('Y', strtotime('-1 year'));
+			$currentMonth = 9;
+			$currentYear = 2024; 
+			$previousYear = 2023;
+			$currentDay = 05;
 
-			// Create temp table for 2023 and get summary
-			$storeSalesDR->createTempTable();
-			$sumFor2023 = $storeSalesDR->getSalesSummary()->toArray();
-			$data['summary'][$year1] = $sumFor2023;
 
-			//per channel 2023
-			$sumPerChannel = $storeSalesDR->getSalesWeeklyPerChannel()->toArray();
-
-			// Organize the results
-			foreach ($sumPerChannel as $sale) {
-				if (!isset($data['channel_codes'][$sale['channel_code']])) {
-					$data['channel_codes'][$sale['channel_code']] = [];
-				}
-				
-				$data['channel_codes'][$sale['channel_code']][$year1]['weeks'][$sale['week_cutoff']] = 
-				['sum_of_net_sales' => $sale['sum_of_net_sales']];
+			$years = [
+				['year' => $previousYear, 'month' => $currentMonth],
+				['year' => $currentYear, 'month' => $currentMonth],
+			];
 			
-			}
+			$data = [
+				'yearMonthData' => [
+					'year1' => $years[0]['year'],
+					'month1' => $years[0]['month'],
+					'year2' => $years[1]['year'],
+					'month2' => $years[1]['month'],
+				],
+				'summary' => [],
+				'channel_codes' => [],
+				'summary_last_three_days' => [],
+			];
 
-			$lastthreedays = $storeSalesDR->getSalesSummaryForLastThreeDays()->toArray();
-
-			$data['summary_last_three_days'][$year1] = $lastthreedays;
-
-			$lastThreedaysPerchannel = $storeSalesDR->getSalesSummaryForLastThreeDaysPerChannel()->toArray();
-
-			// Organize the results
-			foreach ($lastThreedaysPerchannel as $sale) {
-				if (!isset($data['channel_codes'][$sale['channel_code']])) {
-					$data['channel_codes'][$sale['channel_code']] = [];
-				}
-				
-				$data['channel_codes'][$sale['channel_code']][$year1]['last_three_days'][] = [
-					'date_of_the_day' => $sale['date_of_the_day'],
-					'day' => $sale['day'],
-					'sum_of_net_sales' => $sale['sum_of_net_sales'],
-				];
-			}
-
+			$data['lastThreeDays'] = self::getLastThreeDaysOrDates('day', "{$currentYear}-{$currentMonth}-{$currentDay}");
+			$data['lastThreeDaysAsDate'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
 			
-			// Drop the temporary table
-			$storeSalesDR->dropTempTable();
-
-
-			//Create data for 2024
-			$storeSalesDR_2 = new StoreSalesDashboardReport(['year' => $year2, 'month' => $month2]);
-	
-			// Create temp table for 2024 and get summary
-			$storeSalesDR_2->createTempTable(); 
-
-			$sumFor2024 = $storeSalesDR_2->getSalesSummary()->toArray();
-			$data['summary'][$year2] = $sumFor2024;
-
-
-			//per channel 2024
-			$sumPerChannel = $storeSalesDR_2->getSalesWeeklyPerChannel()->toArray();
-
-			// Organize the results
-			foreach ($sumPerChannel as $sale) {
-				if (!isset($data['channel_codes'][$sale['channel_code']])) {
-					$data['channel_codes'][$sale['channel_code']] = [];
-				}
-
-				
-				$data['channel_codes'][$sale['channel_code']][$year2]['weeks'][$sale['week_cutoff']] = 
-				['sum_of_net_sales' => $sale['sum_of_net_sales']];
+			foreach ($years as $yearData) {
+				self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
 			}
-
-
-			$lastthreedays = $storeSalesDR_2->getSalesSummaryForLastThreeDays()->toArray();
-
-			$data['summary_last_three_days'][$year2] = $lastthreedays;
-
-			$lastThreedaysPerchannel = $storeSalesDR_2->getSalesSummaryForLastThreeDaysPerChannel()->toArray();
-
-			// Organize the results
-			foreach ($lastThreedaysPerchannel as $sale) {
-				if (!isset($data['channel_codes'][$sale['channel_code']])) {
-					$data['channel_codes'][$sale['channel_code']] = [];
-				}
-				
-				$data['channel_codes'][$sale['channel_code']][$year2]['last_three_days'][] = [
-					'date_of_the_day' => $sale['date_of_the_day'],
-					'day' => $sale['day'],
-					'sum_of_net_sales' => $sale['sum_of_net_sales'],
-				];
-			}
-
-
 
 			// dd($data['channel_codes']);
 
-	
+			// dd($data['channel_codes']);
+
+			Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.index', $data);
 		}
 
 
-		// for clean up later 
 
-		// $data['summary'] = [];
+		function processYearData($year, $month, $day, &$data) {
+			$storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
 
-		// // Helper function to create temp table, get summary, and drop table
-		// function getYearlySummary($year, $month) {
-		// 	StoreSalesDashboardReport::createTempTable($year, $month);
-		// 	$summary = StoreSalesDashboardReport::getSalesSummary();
-		// 	StoreSalesDashboardReport::dropTempTable();
-		// 	return $summary;
-		// }
+			// Create temp table and get summary
+			$storeSalesDR->createTempTable();
 
-		// // Get summaries for 2023 and 2024
-		// $data['summary'][] = ['sumFor2023' => getYearlySummary(2023, 1)];
-		// $data['summary'][] = ['sumFor2024' => getYearlySummary(2024, 1)];
+			// Get and store sales summary
+			$data['summary'][$year] = $storeSalesDR->getSalesSummary()->toArray();
+			
+			// Process sales per channel
+			$sumPerChannel = $storeSalesDR->getSalesWeeklyPerChannel();
+
+			foreach ($sumPerChannel as $sale) {
+				$channelCode = $sale['channel_classification'];
+
+
+				if (!isset($data['channel_codes'][$channelCode])) {
+					$data['channel_codes'][$channelCode] = [];
+				}
+
+				// dump($channelCode);
+
+				$data['channel_codes'][$channelCode][$year]['weeks'][$sale['week_cutoff']] = [
+					'sum_of_net_sales' => $sale['sum_of_net_sales'],
+				];
+			}
+			
+			// Last three days summary
+			$data['summary_last_three_days'][$year] = $storeSalesDR->getSalesSummaryForLastThreeDays();
+			
+			// Last three days per channel
+			$lastThreeDaysPerChannel = $storeSalesDR->getSalesSummaryForLastThreeDaysPerChannel();
+
+
+			$lastThreeDaysDates = $storeSalesDR->getLastThreeDaysDates("{$year}-{$month}-{$day}");
+
+			foreach ($lastThreeDaysPerChannel as $sale) {
+				$channelCode = $sale['channel_classification'];
+
+				if (!isset($data['channel_codes'][$channelCode])) {
+					$data['channel_codes'][$channelCode] = [];
+				}
+
+				$data['channel_codes'][$channelCode][$year]['last_three_days'][] = [
+					'date_of_the_day' => $sale['date_of_the_day'],
+					'day' => $sale['day'],
+					'sum_of_net_sales' => $sale['sum_of_net_sales'],
+				];
+			}
+
+
+			// Now add entries for any missing dates with a sum_of_net_sales of 0
+			foreach ($lastThreeDaysDates as $date) {
+				foreach ($data['channel_codes'] as $channelCode => &$years) {
+					if (!isset($years[$year]['last_three_days'])) {
+						$years[$year]['last_three_days'] = [];
+					}
+
+					// Check if the date already exists in last_three_days
+					$exists = false;
+					foreach ($years[$year]['last_three_days'] as $entry) {
+						if ($entry['date_of_the_day'] === $date) {
+							$exists = true;
+							break;
+						}
+					}
+
+					// If it doesn't exist, add it with a sum_of_net_sales of 0
+					if (!$exists) {
+						$dayName = (new \DateTime($date))->format('D'); // Get the day name
+						$years[$year]['last_three_days'][] = [
+							'date_of_the_day' => $date,
+							'day' => $dayName,
+							'sum_of_net_sales' => 0,
+						];
+					}
+				}
+			}
+
+			foreach ($data['channel_codes'] as $channelCode => &$years) {
+				foreach ($years as $year => &$yearData) {
+					if (isset($yearData['last_three_days'])) {
+						usort($yearData['last_three_days'], function($a, $b) {
+							return strtotime($a['date_of_the_day']) - strtotime($b['date_of_the_day']);
+						});
+					}
+				}
+			}
+			
+			// Drop the temporary table
+			$storeSalesDR->dropTempTable();
+		}
+
+		
+		public function getLastThreeDaysOrDates($type = 'day', $date = null)
+		{
+			// Use the provided date or default to today
+			$today = $date ? Carbon::parse($date) : Carbon::today();
+			
+			// Initialize an array to hold the last three previous dates
+			$lastThreeDays = [];
+			
+			// If today is the 1st, 2nd, or 3rd, include those days
+			if ($today->day <= 3) {
+				for ($i = 0; $i < $today->day; $i++) {
+					$day = $today->copy()->subDays($i);
+					$lastThreeDays[] = $day; // Store as Carbon objects
+				}
+			} else {
+				// Get the last three days prior to the provided date
+				for ($i = 1; $i <= 3; $i++) {
+					$day = $today->copy()->subDays($i);
+					$lastThreeDays[] = $day; // Store as Carbon objects
+				}
+			}
+			
+			// Sort the array of Carbon objects in ascending order
+			usort($lastThreeDays, function($a, $b) {
+				return $a->gt($b) ? 1 : -1;
+			});
+			
+			// Format the dates for output
+			$formattedDays = [];
+			foreach ($lastThreeDays as $day) {
+				$formattedDays[] = $type === 'date' ? $day->format('d-M') : $day->format('D');
+			}
+
+			return $formattedDays;
+		}
 
 
 	}
