@@ -13,6 +13,13 @@
 
 @section('content')
 
+{{-- 'yearMonthData' => [
+    'year1' => $years[0]['year'],
+    'month1' => $years[0]['month'],
+    'year2' => $years[1]['year'],
+    'month2' => $years[1]['month'],
+], --}}
+
 <div class="dashboard">
     <x-sales-report-top 
         :data="$summary" 
@@ -38,8 +45,8 @@
             :dataTo="$dataTo" 
             :yearFrom="$yearMonthData['year1']" 
             :yearTo="$yearMonthData['year2']"
-            :dataLastThreeDaysFrom="$years['2023']['last_three_days']"
-            :dataLastThreeDaysTo="$years['2024']['last_three_days']"
+            :dataLastThreeDaysFrom="$years[$yearMonthData['year1']]['last_three_days']"
+            :dataLastThreeDaysTo="$years[$yearMonthData['year2']]['last_three_days']"
             :lastThreeDaysAsDate="$lastThreeDaysAsDate"
         />
     @endforeach

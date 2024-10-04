@@ -425,14 +425,15 @@
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
 
-			// $currentDay = date('d');
-			// $currentMonth = date('m');
-			// $currentYear = date('Y'); 
-			// $previousYear = date('Y', strtotime('-1 year'));
-			$currentMonth = 9;
-			$currentYear = 2024; 
-			$previousYear = 2023;
-			$currentDay = 05;
+			$currentDay = date('d');
+			$currentMonth = date('m');
+			$currentYear = date('Y'); 
+			$previousYear = date('Y', strtotime('-1 year'));
+			
+			// $currentMonth = 2;
+			// $previousYear = 2023;
+			// $currentYear = 2024; 
+			// $currentDay = 29;
 
 
 			$years = [
@@ -503,11 +504,11 @@
 			// Last three days per channel
 			$lastThreeDaysPerChannel = $storeSalesDR->getSalesSummaryForLastThreeDaysPerChannel();
 
-
-			$lastThreeDaysDates = $storeSalesDR->getLastThreeDaysDates("{$year}-{$month}-{$day}");
-
 			foreach ($lastThreeDaysPerChannel as $sale) {
 				$channelCode = $sale['channel_classification'];
+				// dump('inside of per channel last three days');
+				// dump($sale);
+				// dump($channelCode);
 
 				if (!isset($data['channel_codes'][$channelCode])) {
 					$data['channel_codes'][$channelCode] = [];
@@ -520,6 +521,11 @@
 				];
 			}
 
+			// dump("{$year}-{$month}-{$day}");
+
+			$lastThreeDaysDates = $storeSalesDR->getLastThreeDaysDates("{$year}-{$month}-{$day}");
+
+			// dump($data['channel_codes']);
 
 			// Now add entries for any missing dates with a sum_of_net_sales of 0
 			foreach ($lastThreeDaysDates as $date) {
@@ -539,16 +545,15 @@
 
 					// If it doesn't exist, add it with a sum_of_net_sales of 0
 					if (!$exists) {
-						$dayName = (new \DateTime($date))->format('D'); // Get the day name
 						$years[$year]['last_three_days'][] = [
 							'date_of_the_day' => $date,
-							'day' => $dayName,
 							'sum_of_net_sales' => 0,
 						];
 					}
 				}
 			}
 
+			// Sort by date 
 			foreach ($data['channel_codes'] as $channelCode => &$years) {
 				foreach ($years as $year => &$yearData) {
 					if (isset($yearData['last_three_days'])) {
@@ -559,6 +564,8 @@
 				}
 			}
 			
+			// dump($data['channel_codes']);
+
 			// Drop the temporary table
 			$storeSalesDR->dropTempTable();
 		}

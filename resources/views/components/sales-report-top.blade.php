@@ -17,14 +17,10 @@
         return $item['sum_of_net_sales'];
     }, $data[$yearFrom]));
 
-    if($totalSalesOfYearFrom !== 0 && $totalSalesOfYearTo !== 0){
-        $totalIncDecPercentage = $totalSalesOfYearFrom ? (($totalSalesOfYearTo - $totalSalesOfYearFrom) / $totalSalesOfYearFrom) * 100 : 0;
-        $totalRounded = round($totalIncDecPercentage) . "%";
-        $totalStyle = $totalRounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
-    } else {
-        $totalRounded = '';
-        $totalStyle = '';
-    }
+   
+    $totalIncDecPercentage = $totalSalesOfYearFrom ? (($totalSalesOfYearTo - $totalSalesOfYearFrom) / $totalSalesOfYearFrom) * 100 : 0;
+    $totalRounded = round($totalIncDecPercentage) . "%";
+    $totalStyle = $totalRounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
 
 
 @endphp
@@ -105,30 +101,25 @@
                     @foreach (range(0, 3) as $number)
 
                         @php
-                            $sum2024 = $data[$yearTo][$number]['sum_of_net_sales'] ?? null; // Changed to null
-                            $sum2023 = $data[$yearFrom][$number]['sum_of_net_sales'] ?? null; // Changed to null
+                            $sum2024 = $data[$yearTo][$number]['sum_of_net_sales'] ?? 0; // Changed to null
+                            $sum2023 = $data[$yearFrom][$number]['sum_of_net_sales'] ?? 0; // Changed to null
 
-                            // Check if both sums are not null before calculating
-                            if ($sum2023 !== null && $sum2024 !== null) {
-                                $incDecPercentage = (($sum2024 - $sum2023) / $sum2023) * 100;
-                                $rounded = round($incDecPercentage);
-                                $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
-                                $output = "{$rounded}%";
-                            } else {
-                                $style = ''; // No specific style needed for blank
-                                $output = ''; // Leave blank if there's no partner
-                            }
+                            $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0 ;
+                        $rounded = round($incDecPercentage);
+                        $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
+
+                  
                         @endphp
 
-                        <td class="none font-size" style="{{$style}}">{{$output}}</td>
+                        <td class="none font-size" style="{{$style}}">{{$rounded}}%</td>
                     @endforeach
+
 
 
                     @foreach (range(0, 2) as $number)
                         @php
                             $sum2024 = $dataLastThreeDays[$yearTo][$number]['sum_of_net_sales'] ?? null;
                             $sum2023 = $dataLastThreeDays[$yearFrom][$number]['sum_of_net_sales'] ?? null;
-
                     
                             $style = '';
                             $rounded = '';
@@ -138,23 +129,9 @@
                                 $sum2023Date = (new DateTime($dataLastThreeDaysFrom[$number]['date_of_the_day']))->format('d-M');
                                 
                                 if ($sum2023Date === $sum2024Date) {
-                                        if($sum2024 == 0 &&  $sum2023 == 0){
-                                            $style = '';
-                                            $rounded = ''; 
-                                        }else if ($sum2024 == 0){
-                                            $style = '';
-                                            $rounded = '';
-                                        }else if ($sum2023 == 0){
-                                            $style = '';
-                                            $rounded = '';
-                                        }
-                                        
-                                        
-                                        else{
-                                            $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023) * 100 : 0;
+                                    $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023) * 100 : 0;
                                     $rounded = round($incDecPercentage) . '%';
                                     $style = $rounded < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : '';
-                                }
                                 
                                 } 
                             } 
@@ -169,31 +146,68 @@
                     <td><b>TOTAL</b></td>
                     <td><b>{{$yearFrom}}</b></td>
                     <td class="none" style="width: 10px">&nbsp;</td>
-                    <td><b>{{$totalSalesOfYearFrom ? number_format($totalSalesOfYearFrom, 2) : ''}}</b></td>
+                    <td><b>{{$totalSalesOfYearFrom ? number_format($totalSalesOfYearFrom, 2) : ' ' }}</b></td>
 
                     @foreach (range(0,3) as $number)
                         @php
                             $curr = $data[$yearFrom][$number]['sum_of_net_sales'];
                         @endphp
 
-                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+                        <td><b>{{$curr ? number_format($curr, 2) : ""}}</b></td>
 
                     @endforeach
 
-                    @foreach (range(0,2) as $number)
+                    {{-- @foreach (range(0,2) as $number)
                         @php
                             $curr = $dataLastThreeDays[$yearFrom][$number]['sum_of_net_sales'];
                         @endphp
 
-                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
-                    @endforeach
+                        <td><b>{{number_format($curr, 2)}}</b></td>
+                    @endforeach --}}
+
+
+                    @php
+                    // Ensure $dataLastThreeDaysFrom is set and is an array
+                    if (!is_array($dataLastThreeDays[$yearFrom])) {
+                        $dataLastThreeDays[$yearFrom] = []; // Set to empty array if not valid
+                    }
+
+                    // Initialize sales data
+                    $salesDate = $lastThreeDaysAsDate; // This should contain exactly three date entries
+                    $salesData = []; // Initialize as an empty array
+
+                    // Loop through the sales data
+                    foreach ($dataLastThreeDays[$yearFrom] as $entry) {
+                        // Format the date from YYYY-MM-DD to DD-MMM
+                        $formattedDate = (new DateTime($entry['date_of_the_day']))->format('d-M');
+
+                        foreach ($salesDate as $index => $date) {
+                            // Compare formatted date
+                            if ($formattedDate === $date) {
+                                $salesData[$index] = $entry['sum_of_net_sales'];
+                                break; 
+                            }
+                        }
+                    }
+                @endphp
+
+
+                @for ($i = 0; $i < 3; $i++)
+                    <td>
+                        <b>
+                            {{-- {{ isset($salesData[$i]) ? number_format($salesData[$i], 2) : '' }} --}}
+                            {{ isset($salesData[$i]) && $salesData[$i] !== null && $salesData[$i] !== 0 ? number_format($salesData[$i], 2) : '' }}
+
+                        </b>
+                    </td>
+                @endfor
                 
                 </tr>
                 <tr>
                     <td><b>TOTAL</b></td>
                     <td><b>{{$yearTo}}</b></td>
                     <td class="none" style="width: 10px">&nbsp;</td>
-                    <td><b>{{$totalSalesOfYearTo ? number_format($totalSalesOfYearTo, 2) : ''}}</b></td>
+                    <td><b>{{ $totalSalesOfYearTo ? number_format($totalSalesOfYearTo, 2) : " "}}</b></td>
 
 
                     @foreach (range(0,3) as $number)
@@ -205,14 +219,52 @@
 
                     @endforeach
 
-                    @foreach (range(0,2) as $number)
+                    {{-- @foreach (range(0,2) as $number)
                         @php
                             $curr = $dataLastThreeDays[$yearTo][$number]['sum_of_net_sales'];
                         @endphp
 
-                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+                        <td><b>{{number_format($curr, 2)}}</b></td>
 
-                    @endforeach
+                    @endforeach --}}
+
+
+
+                    @php
+                    // Ensure $dataLastThreeDaysFrom is set and is an array
+                    if (!is_array($dataLastThreeDays[$yearTo])) {
+                        $dataLastThreeDays[$yearTo] = []; // Set to empty array if not valid
+                    }
+
+                    // Initialize sales data
+                    $salesDate = $lastThreeDaysAsDate; // This should contain exactly three date entries
+                    $salesData = []; // Initialize as an empty array
+
+                    // Loop through the sales data
+                    foreach ($dataLastThreeDays[$yearTo] as $entry) {
+                        // Format the date from YYYY-MM-DD to DD-MMM
+                        $formattedDate = (new DateTime($entry['date_of_the_day']))->format('d-M');
+
+                        foreach ($salesDate as $index => $date) {
+                            // Compare formatted date
+                            if ($formattedDate === $date) {
+                                $salesData[$index] = $entry['sum_of_net_sales'];
+                                break; 
+                            }
+                        }
+                    }
+                @endphp
+
+
+                @for ($i = 0; $i < 3; $i++)
+                    <td>
+                        <b>
+                            {{-- {{ isset($salesData[$i]) ? number_format($salesData[$i], 2) : '' }} --}}
+                            {{ isset($salesData[$i]) && $salesData[$i] !== null && $salesData[$i] !== 0 ? number_format($salesData[$i], 2) : '' }}
+
+                        </b>
+                    </td>
+                @endfor
                 </tr>
             </tbody>
         </table>
