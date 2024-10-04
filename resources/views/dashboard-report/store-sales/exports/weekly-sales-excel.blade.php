@@ -1,15 +1,18 @@
-@extends('crudbooster::admin_template')
 
-@push('head')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.24/dist/sweetalert2.min.css" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
 
     <style>
-        /* .dashboard{
-            background: white;
-            padding: 5px 15px;
-        } */
+     *{
+        font-size: 10px;
+     }
 
-        .export{
+     .export{
             padding:10px;
             display: flex;
             gap:10px;
@@ -25,30 +28,10 @@
             gap: 10px;
         }
     </style>
-@endpush
-
-@section('content')
-
-{{-- 'yearMonthData' => [
-    'year1' => $years[0]['year'],
-    'month1' => $years[0]['month'],
-    'year2' => $years[1]['year'],
-    'month2' => $years[1]['month'],
-], --}}
-
-<div class="weekly-section">
-
-    <div class="export">
-        <a href="{{route('weekly_export_excel')}}" id="search-filter" class="btn btn-primary btn-sm pull-right">
-            <i class="fa fa-download" aria-hidden="true"></i> Export to Excel
-        </a>
-        <a href="" id="search-filter" class="btn btn-primary btn-sm pull-right" >
-            <i class="fa fa-download" aria-hidden="true"></i> Export to PDF
-        </a>
-    </div>
-    
+</head>
+<body>
     <div class="dashboard">
-        <x-sales-report-top 
+        <x-excels.sales-report-top 
             :data="$summary" 
             :yearFrom="$yearMonthData['year1']" 
             :yearTo="$yearMonthData['year2']" 
@@ -67,7 +50,7 @@
                 @continue
             @endif
             
-            <x-sales-report :channel="$channel" 
+            <x-excels.sales-report :channel="$channel" 
                 :dataFrom="$dataFrom" 
                 :dataTo="$dataTo" 
                 :yearFrom="$yearMonthData['year1']" 
@@ -79,13 +62,8 @@
         @endforeach
 
     </div>
-</div>
+</body>
+</html>
 
 
-
-
-
-
-
-@endsection
 

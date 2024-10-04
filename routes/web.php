@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\AdminStoreSalesDashboardReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminCmsUsersController;
 use App\Http\Controllers\AdminReportPrivilegesController;
@@ -214,4 +215,14 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('check-password', [AdminCmsUsersController::class, 'checkPassword'])->name('check-current-password');
     Route::post('check-waive', [AdminCmsUsersController::class, 'checkWaive'])->name('check-waive-count');
     Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
+
+
+
+    //DASHBOARD REPORT
+    Route::get('/pdf_show', [AdminStoreSalesDashboardReportController::class, 'showPDF'] );
+    Route::get('/pdf', [AdminStoreSalesDashboardReportController::class, 'exportPDF'] );
+    Route::get('/custom_excel', [AdminStoreSalesDashboardReportController::class, 'exportExcel'] )->name('weekly_export_excel');
+    Route::get('/custom_excel_view', [AdminStoreSalesDashboardReportController::class, 'showExcel'] );
+
+
 });
