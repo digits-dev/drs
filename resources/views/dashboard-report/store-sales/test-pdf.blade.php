@@ -15,14 +15,26 @@
 </head>
 <body>
     <div class="dashboard">
-        <x-sales-report-top-test/>
-        <x-sales-report-test channel="Ecomm" message="test" />
-        <x-sales-report-test channel="Retail" />
-        <x-sales-report-test channel="SC" />
-        <x-sales-report-test channel="Out" />
-        <x-sales-report-test channel="Con" />
-        <x-sales-report-test channel="Fra" />
-        <x-sales-report-test channel="Gashapon" />
+     
+
+        @foreach ($channel_codes as $channel => $channelData)
+
+        @if ($channel == 'OTHER' || $channel == '')
+            @continue
+        @endif
+        
+        <x-sales-report 
+            :isTopOpen="$loop->first"
+            :channel="$channel" 
+            :data="$channelData"
+            :prevYear="$yearData['previousYear']" 
+            :currYear="$yearData['currentYear']"
+            :lastThreeDaysDates="$lastThreeDaysDates"
+
+        />
+      
+    @endforeach
+
     </div>
 </body>
 </html>

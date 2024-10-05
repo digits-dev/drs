@@ -29,13 +29,6 @@
 
 @section('content')
 
-{{-- 'yearMonthData' => [
-    'year1' => $years[0]['year'],
-    'month1' => $years[0]['month'],
-    'year2' => $years[1]['year'],
-    'month2' => $years[1]['month'],
-], --}}
-
 <div class="weekly-section">
 
     <div class="export">
@@ -48,34 +41,23 @@
     </div>
     
     <div class="dashboard">
-        <x-sales-report-top 
-            :data="$summary" 
-            :yearFrom="$yearMonthData['year1']" 
-            :yearTo="$yearMonthData['year2']" 
-            :dataLastThreeDays="$summary_last_three_days"
-            :lastThreeDaysAsDate="$lastThreeDaysAsDate"
-            :lastThreeDays="$lastThreeDays"
-        />
+     
+        @foreach ($channel_codes as $channel => $channelData)
 
-        @foreach ($channel_codes as $channel => $years)
-            @php
-                $dataFrom = $years[$yearMonthData['year1']]['weeks'];
-                $dataTo = $years[$yearMonthData['year2']]['weeks'];
-            @endphp
-
-            @if ($channel == 'OTHER')
+            @if ($channel == 'OTHER' || $channel == '')
                 @continue
             @endif
             
-            <x-sales-report :channel="$channel" 
-                :dataFrom="$dataFrom" 
-                :dataTo="$dataTo" 
-                :yearFrom="$yearMonthData['year1']" 
-                :yearTo="$yearMonthData['year2']"
-                :dataLastThreeDaysFrom="$years[$yearMonthData['year1']]['last_three_days']"
-                :dataLastThreeDaysTo="$years[$yearMonthData['year2']]['last_three_days']"
-                :lastThreeDaysAsDate="$lastThreeDaysAsDate"
+            <x-sales-report 
+                :isTopOpen="$loop->first"
+                :channel="$channel" 
+                :data="$channelData"
+                :prevYear="$yearData['previousYear']" 
+                :currYear="$yearData['currentYear']"
+                :lastThreeDaysDates="$lastThreeDaysDates"
+
             />
+          
         @endforeach
 
     </div>

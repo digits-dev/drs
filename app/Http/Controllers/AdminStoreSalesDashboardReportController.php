@@ -2,7 +2,8 @@
 
 	use App\Exports\WeeklySalesExport;
 	use App\Models\StoreSalesDashboardReport;
-	use Barryvdh\DomPDF\Facade as PDF;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade as PDF;
 	use Log;
 	use Maatwebsite\Excel\Facades\Excel;
 	use Session;
@@ -12,6 +13,9 @@
 	use Carbon\Carbon;
 
 	class AdminStoreSalesDashboardReportController extends \crocodicstudio\crudbooster\controllers\CBController {
+		
+
+		protected $myData;
 
 	    public function cbInit() {
 
@@ -423,24 +427,40 @@
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 			
-		
 
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
 
+			$generatedData = self::generateDailySalesReport();
+
+			$data = array_merge($data, $generatedData);
+
+			// dd($data['channel_codes']);
+
+			// dd($data);
+
+
+			Log::info(json_encode($data, JSON_PRETTY_PRINT));
+
+			return view('dashboard-report.store-sales.index', $data);
+		}
+
+		public function generateDailySalesReport(){
+
+			
 			// $currentDay = date('d');
 			// $currentMonth = date('m');
 			// $currentYear = date('Y'); 
 			// $previousYear = date('Y', strtotime('-1 year'));
 			
-			// $currentMonth = 2;
-			// $previousYear = 2023;
-			// $currentYear = 2024; 
+			// $currentMonth = 3;
+			// $previousYear = 2019;
+			// $currentYear = 2020; 
 			// $currentDay = 29;
 
-			$currentMonth = 2;
-			$previousYear = 2019;
-			$currentYear = 2020; 
+			$currentMonth = 9;
+			$previousYear = 2023;
+			$currentYear = 2024; 
 			$currentDay = 24;
 
 
@@ -450,31 +470,21 @@
 			];
 			
 			$data = [
-				'yearMonthData' => [
-					'year1' => $years[0]['year'],
-					'month1' => $years[0]['month'],
-					'year2' => $years[1]['year'],
-					'month2' => $years[1]['month'],
+				'yearData' => [
+					'previousYear' => $years[0]['year'],
+					'currentYear' => $years[1]['year'],
 				],
-				'summary' => [],
 				'channel_codes' => [],
-				'summary_last_three_days' => [],
 			];
 
-			$data['lastThreeDays'] = self::getLastThreeDaysOrDates('day', "{$currentYear}-{$currentMonth}-{$currentDay}");
-			$data['lastThreeDaysAsDate'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
-			
+			$data['lastThreeDaysDates'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
+
 			foreach ($years as $yearData) {
 				self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
 			}
 
-			// dd($data['channel_codes']);
+			return $data;
 
-			// dd($data['channel_codes']);
-
-			Log::info(json_encode($data, JSON_PRETTY_PRINT));
-
-			return view('dashboard-report.store-sales.index', $data);
 		}
 
 
@@ -486,7 +496,11 @@
 			$storeSalesDR->createTempTable();
 
 			// Get and store sales summary
-			$data['summary'][$year] = $storeSalesDR->getSalesSummary()->toArray();
+			$data['channel_codes']['TOTAL'][$year]['weeks'] = $storeSalesDR->getSalesSummary()->toArray();
+
+			// Last three days summary
+			$data['channel_codes']['TOTAL'][$year]['last_three_days'] = $storeSalesDR->getSalesSummaryForLastThreeDays();
+
 			
 			// Process sales per channel
 			$sumPerChannel = $storeSalesDR->getSalesWeeklyPerChannel();
@@ -499,24 +513,17 @@
 					$data['channel_codes'][$channelCode] = [];
 				}
 
-				// dump($channelCode);
-
 				$data['channel_codes'][$channelCode][$year]['weeks'][$sale['week_cutoff']] = [
 					'sum_of_net_sales' => $sale['sum_of_net_sales'],
 				];
 			}
 			
-			// Last three days summary
-			$data['summary_last_three_days'][$year] = $storeSalesDR->getSalesSummaryForLastThreeDays();
 			
 			// Last three days per channel
 			$lastThreeDaysPerChannel = $storeSalesDR->getSalesSummaryForLastThreeDaysPerChannel();
 
 			foreach ($lastThreeDaysPerChannel as $sale) {
 				$channelCode = $sale['channel_classification'];
-				// dump('inside of per channel last three days');
-				// dump($sale);
-				// dump($channelCode);
 
 				if (!isset($data['channel_codes'][$channelCode])) {
 					$data['channel_codes'][$channelCode] = [];
@@ -529,11 +536,7 @@
 				];
 			}
 
-			// dump("{$year}-{$month}-{$day}");
-
 			$lastThreeDaysDates = $storeSalesDR->getLastThreeDaysDates("{$year}-{$month}-{$day}");
-
-			// dump($data['channel_codes']);
 
 			// Now add entries for any missing dates with a sum_of_net_sales of 0
 			foreach ($lastThreeDaysDates as $date) {
@@ -572,7 +575,6 @@
 				}
 			}
 			
-			// dump($data['channel_codes']);
 
 			// Drop the temporary table
 			$storeSalesDR->dropTempTable();
@@ -600,7 +602,7 @@
 					$lastThreeDays[] = $day; // Store as Carbon objects
 				}
 			}
-			
+
 			// Sort the array of Carbon objects in ascending order
 			usort($lastThreeDays, function($a, $b) {
 				return $a->gt($b) ? 1 : -1;
@@ -609,63 +611,26 @@
 			// Format the dates for output
 			$formattedDays = [];
 			foreach ($lastThreeDays as $day) {
-				$formattedDays[] = $type === 'date' ? $day->format('d-M') : $day->format('D');
+				// $formattedDays[] = $type === 'date' ? $day->format('d-M') : $day->format('D');
+				$formattedDays[$day->format('d-M')] = $day->format('D');
 			}
 
 			return $formattedDays;
 		}
 
 		public function exportPDF(){
-// dd('test');
-// $data = ['title' => 'Welcome to Laravel PDF'];
+			$data = [];
+			$generatedData = self::generateDailySalesReport();
 
+			$data = array_merge($data, $generatedData);
 
-$data = [];
-$data['page_title'] = 'Store Sales Dashboard Report';
-
-$currentDay = date('d');
-$currentMonth = date('m');
-$currentYear = date('Y'); 
-$previousYear = date('Y', strtotime('-1 year'));
-
-// $currentMonth = 2;
-// $previousYear = 2023;
-// $currentYear = 2024; 
-// $currentDay = 29;
-
-
-$years = [
-	['year' => $previousYear, 'month' => $currentMonth],
-	['year' => $currentYear, 'month' => $currentMonth],
-];
-
-$data = [
-	'yearMonthData' => [
-		'year1' => $years[0]['year'],
-		'month1' => $years[0]['month'],
-		'year2' => $years[1]['year'],
-		'month2' => $years[1]['month'],
-	],
-	'summary' => [],
-	'channel_codes' => [],
-	'summary_last_three_days' => [],
-];
-
-$data['lastThreeDays'] = self::getLastThreeDaysOrDates('day', "{$currentYear}-{$currentMonth}-{$currentDay}");
-$data['lastThreeDaysAsDate'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
-
-foreach ($years as $yearData) {
-	self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
-}
-
-
-$pdf = PDF::loadView('dashboard-report.store-sales.test-pdf', $data)->setPaper('A4', 'landscape')->setOptions([
-	'isHtml5ParserEnabled' => true,
-	'isRemoteEnabled' => true,
-	'defaultFont' => 'Arial',
-	'isFontSubsettingEnabled' => true,
-]);;
-return $pdf->download('document.pdf');
+			$pdf = PDF::loadView('dashboard-report.store-sales.test-pdf', $data)->setPaper('A4', 'landscape')->setOptions([
+				'isHtml5ParserEnabled' => true,
+				'isRemoteEnabled' => true,
+				'defaultFont' => 'Arial',
+				'isFontSubsettingEnabled' => true,
+			]);;
+			return $pdf->download('document.pdf');
 		}
 
 		public function showPDF(){
@@ -675,87 +640,19 @@ return $pdf->download('document.pdf');
 			
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
-			
-			$currentDay = date('d');
-			$currentMonth = date('m');
-			$currentYear = date('Y'); 
-			$previousYear = date('Y', strtotime('-1 year'));
-			
-			// $currentMonth = 2;
-			// $previousYear = 2023;
-			// $currentYear = 2024; 
-			// $currentDay = 29;
-			
-			
-			$years = [
-				['year' => $previousYear, 'month' => $currentMonth],
-				['year' => $currentYear, 'month' => $currentMonth],
-			];
-			
-			$data = [
-				'yearMonthData' => [
-					'year1' => $years[0]['year'],
-					'month1' => $years[0]['month'],
-					'year2' => $years[1]['year'],
-					'month2' => $years[1]['month'],
-				],
-				'summary' => [],
-				'channel_codes' => [],
-				'summary_last_three_days' => [],
-			];
-			
-			$data['lastThreeDays'] = self::getLastThreeDaysOrDates('day', "{$currentYear}-{$currentMonth}-{$currentDay}");
-			$data['lastThreeDaysAsDate'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
-			
-			foreach ($years as $yearData) {
-				self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
-			}
-			
 
+			$generatedData = self::generateDailySalesReport();
+
+			$data = array_merge($data, $generatedData);
+			
 			return view('dashboard-report.store-sales.test-pdf', $data);
 		}
 
 		public function exportExcel(){
-			$data = [];
-			$data['page_title'] = 'Store Sales Dashboard Report';
-			
-			// $currentDay = date('d');
-			// $currentMonth = date('m');
-			// $currentYear = date('Y'); 
-			// $previousYear = date('Y', strtotime('-1 year'));
-			
-			$currentMonth = 2;
-			$previousYear = 2019;
-			$currentYear = 2020; 
-			$currentDay = 24;
-			
-			
-			$years = [
-				['year' => $previousYear, 'month' => $currentMonth],
-				['year' => $currentYear, 'month' => $currentMonth],
-			];
-			
-			$data = [
-				'yearMonthData' => [
-					'year1' => $years[0]['year'],
-					'month1' => $years[0]['month'],
-					'year2' => $years[1]['year'],
-					'month2' => $years[1]['month'],
-				],
-				'summary' => [],
-				'channel_codes' => [],
-				'summary_last_three_days' => [],
-			];
-			
-			$data['lastThreeDays'] = self::getLastThreeDaysOrDates('day', "{$currentYear}-{$currentMonth}-{$currentDay}");
-			$data['lastThreeDaysAsDate'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
-			
-			foreach ($years as $yearData) {
-				self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
-			}
 
+			$data = self::generateDailySalesReport();
+		
 			return Excel::download(new WeeklySalesExport($data), 'custom-excel.xlsx');
-
 		}
 
 		public function showExcel(){
@@ -763,4 +660,6 @@ return $pdf->download('document.pdf');
 		}
 
 
+
+	
 	}

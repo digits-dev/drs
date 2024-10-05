@@ -91,8 +91,13 @@ class StoreSalesDashboardReport extends Model
             END AS week_cutoff,
             SUM(net_sales) AS sum_of_net_sales
         "))
-        ->groupBy('week_cutoff')
-        ->get();
+        ->groupBy(DB::raw('week_cutoff WITH ROLLUP'))
+        ->get()->map(function($item) {
+            if(is_null($item->week_cutoff)){
+                $item->week_cutoff = 'TOTAL';
+            }
+            return $item;
+        })->keyBy('week_cutoff');
 
     }
 
@@ -120,37 +125,21 @@ class StoreSalesDashboardReport extends Model
             SUM(net_sales) AS sum_of_net_sales,
             MIN(reference_number) AS min_reference_number
         "))
-        ->groupBy('week_cutoff', 'channel_classification')
+        ->groupBy('channel_classification', DB::raw('week_cutoff WITH ROLLUP'))
         ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
-        ->get();
+        ->get()->map(function($item){
+            if(is_null($item->week_cutoff)){
+                $item->week_cutoff = 'TOTAL';
+            }
+            return $item;
+        });
     }
 
-    public function getLastThreeDaysWithSales()
-    {
-        // Fetch distinct sales dates with sales data for the given month
-        $salesDates = self::select('sales_date')
-            ->whereYear('sales_date', $this->year)
-            ->whereMonth('sales_date', $this->month)
-            ->distinct()
-            ->orderBy('sales_date', 'desc')
-            ->limit(3)
-            ->pluck('sales_date')
-            ->toArray();
-
-        // Return the last three sales dates
-        return $salesDates;
-    }
 
     public function getSalesSummaryForLastThreeDays()
     {
 
-        // dump($this->currentDayAsDate);
-
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
-
-        // dump($lastThreeDays);
-
-     
 
         $salesSummary  = self::select(
             DB::raw("
@@ -159,8 +148,8 @@ class StoreSalesDashboardReport extends Model
                 SUM(net_sales) AS sum_of_net_sales
             "),
             )
-            ->whereIn('sales_date', $lastThreeDays) // Filter by the last three days
-            ->groupBy('sales_date') // Group by sales_date
+            ->whereIn('sales_date', $lastThreeDays) 
+            ->groupBy('sales_date') 
             ->get()->sortBy('date_of_the_day')->keyBy('date_of_the_day');
 
         // Prepare the final summary
@@ -184,20 +173,13 @@ class StoreSalesDashboardReport extends Model
             }
         }
 
-        // dump($summary);
-
         return $summary;
     }
 
     public function getSalesSummaryForLastThreeDaysPerChannel()
     {
 
-        // dump($this->currentDayAsDate);
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
-
-        // dump('ito per channel');
-        // dump($lastThreeDays);
-
 
         $salesSummary = self::select(
             DB::raw("
@@ -217,12 +199,9 @@ class StoreSalesDashboardReport extends Model
             
             "),
         )
-        ->whereIn('sales_date', $lastThreeDays) // Filter by the last three days
-        ->groupBy('sales_date', 'channel_classification') // Group by sales_date
+        ->whereIn('sales_date', $lastThreeDays) 
+        ->groupBy('sales_date', 'channel_classification') 
         ->get()->sortBy('date_of_the_day');
-
-        // dump($salesSummary);
-
 
         return $salesSummary;
     }
