@@ -1,60 +1,74 @@
 @props([
-    'channel' => 'Total', 
-    'data', 
-    'yearFrom', 
-    'yearTo', 
-    'dataFrom', 
-    'dataTo', 
-    'dataLastThreeDaysFrom', 
-    'dataLastThreeDaysTo',
-    'lastThreeDaysAsDate'
+    'isTopOpen' => false,
+    'channel' => 'TOTAL', 
+    'data',
+    'prevYear', 
+    'currYear', 
+    'lastThreeDaysDates',
 ])
-
 @php
     $weeks = [
+        'TOTAL' => 'RUNNING',
         'WK01' => 'WEEK 1', 
         'WK02' => 'WEEK 2', 
         'WK03' => 'WEEK 3', 
         'WK04' => 'WEEK 4'
     ];
 
-    $totalSalesOfDataTo = 0; // Default value
+    //Previous Year Data
+    $prevYearWeeksData = $data[$prevYear]['weeks'];
+    $prevYearLastThreeDays = $data[$prevYear]['last_three_days'];
 
-    if (!empty($dataTo)) { // Check if dataTo has data
-        $totalSalesOfDataTo = array_sum(array_map(function($item) {
-            // Return the value if it's not null or empty
-            return !empty($item['sum_of_net_sales']) ? $item['sum_of_net_sales'] : 0;
-        }, $dataTo));
-    }
-
-    $totalSalesOfDataFrom = 0; // Default value
-
-    if (!empty($dataFrom)) { // Check if dataTo has data
-        $totalSalesOfDataFrom = array_sum(array_map(function($item) {
-            // Return the value if it's not null or empty
-            return !empty($item['sum_of_net_sales']) ? $item['sum_of_net_sales'] : 0;
-        }, $dataFrom));
-    }
-    
-  
-    $totalIncDecPercentage = $totalSalesOfDataFrom ? (($totalSalesOfDataTo - $totalSalesOfDataFrom) / $totalSalesOfDataFrom) * 100 : 0;
-
-    $totalRounded = round($totalIncDecPercentage) . "%";
-
-    $totalStyle = $totalRounded < 0 ? 'background-color:#f7c2c2; color:#880808;' : '';
-  
-    // dump($dataLastThreeDaysFrom);
-    // dump($dataLastThreeDaysTo);
-    // dump($lastThreeDaysAsDate);
-
-
+    //Current Year Data
+    $currYearWeeksData = $data[$currYear]['weeks'];
+    $currYearLastThreeDays = $data[$currYear]['last_three_days'];
 
 @endphp
+
 <div style="width: 100%; font-family: Arial, sans-serif; ">
 
     <div style="width: 100%;">
-        {{-- <table style="width: 100%; border-collapse: collapse;  border-spacing: 0;"> --}}
+        {{-- <table> --}}
             <thead>
+                
+                @if ($isTopOpen)
+               
+                    <tr>
+                        <th style="font-weight: bold; background-color: white; text-align: left; height: 20px; vertical-align:middle; font-size:12px;" colspan="4" rowspan="2"><b>DAILY SALES REPORT</b></th>
+                        
+                        @foreach (range(0,3) as $item)
+                            <th style="font-weight: bold; background-color: #d9eaf9; color: black; text-decoration: underline; text-align: center; height: 20px; vertical-align:middle;">CUT OFF</th>
+                        @endforeach
+
+                        <th style="background-color: white; text-align: center;">&nbsp;</th>
+                    </tr>
+
+                    <tr>
+                        <th style="font-weight: bold; background-color: #d9eaf9; color: black; text-decoration: underline; text-align: center; height: 20px; vertical-align:middle;">1-7</th>
+                        <th style="font-weight: bold; background-color: #d9eaf9; color: black; text-decoration: underline; text-align: center; height: 20px; vertical-align:middle;">8-14</th>
+                        <th style="font-weight: bold; background-color: #d9eaf9; color: black; text-decoration: underline; text-align: center; height: 20px; vertical-align:middle;">15-21</th>
+                        <th style="font-weight: bold; background-color: #d9eaf9; color: black; text-decoration: underline; text-align: center; height: 20px; vertical-align:middle;">22 onwards</th>
+
+                        {{-- Display Days like Thu, Fri, Sat  --}}
+                        @php
+                            $lastThreeDaysDates = is_array($lastThreeDaysDates) ? $lastThreeDaysDates : [];
+                            $count = count($lastThreeDaysDates);
+                            $blanks = 3 - $count; 
+                        @endphp
+
+                        {{-- Display if it has data  --}}
+                        @foreach ($lastThreeDaysDates as $key => $day)
+                            <th style="font-weight: bold; background-color: white; text-align: center; vertical-align:middle;">{{$day}}</th>
+                        @endforeach
+
+                        {{-- Display the blanks th --}}
+                        @for ($i = 0; $i < $blanks; $i++)
+                            <th style="font-weight: bold; background-color: white; text-align: center; vertical-align:middle;"></th> 
+                        @endfor
+
+                    </tr>
+                @endif
+
                 @php
                     switch ($channel) {
                         case 'TOTAL-RTL':
@@ -73,194 +87,160 @@
 
                 <tr>
                     <th style="width: 80px; background-color: #004b87; color: white; font-weight: bold; text-align: center; vertical-align:middle;">{{strtoupper($channelCode) }}</th>
-                    <th style="width: 80px; background-color: #004b87; color: white; text-align: center; border-right:1px solid lightgray; vertical-align:middle;" >YEAR</th>
+                    <th style="width: 80px; background-color: #004b87; color: white; text-align: center; border-right:1px solid lightgray; vertical-align:middle;">YEAR</th>
                     <th style="width: 10px;">&nbsp;</th>
-                    <th style="width: 120px; background-color: #004b87; color: white; text-align: center;  vertical-align:middle;">RUNNING</th>
 
                     {{-- Display Weeks like WEEK1, WEEK2, etc.  --}}
-
                     @foreach ($weeks as $week)
                         <th style="width: 120px; background-color: #004b87; color: white; text-align: center;  vertical-align:middle;">{{$week}}</th>
                     @endforeach
 
-
                     {{-- Display Date like 01-Oct, 02-Oct  --}}
                     @php
-                        $lastThreeDaysAsDate = is_array($lastThreeDaysAsDate) ? $lastThreeDaysAsDate : [];
+                        $lastThreeDaysDates = is_array($lastThreeDaysDates) ? $lastThreeDaysDates : [];
 
-                        $count = count($lastThreeDaysAsDate);
+                        $count = count($lastThreeDaysDates);
                         $blanks = 3 - $count; 
                     @endphp
 
-                    @foreach ($lastThreeDaysAsDate as $day)
-                        <th style="width: 120px; background-color: #d4edda; color: 155724; text-align: center;  vertical-align:middle;"><b>{{$day}}</b></th>
+                    {{-- Display if it has data  --}}
+                    @foreach ($lastThreeDaysDates as $key => $day)
+                        <th style="width: 120px; background-color: #d4edda; color: 155724; text-align: center;  vertical-align:middle;">{{$key}}</th>
                     @endforeach
 
+                    {{-- Display the blanks th --}}
                     @for ($i = 0; $i < $blanks; $i++)
                         <th style="width: 120px; background-color: #d4edda; color: 155724; text-align: center;  vertical-align:middle;"></th> 
                     @endfor
-
                 </tr>
             </thead>
             <tbody>
+                {{-- ROW 1  --}}
                 <tr>
                     <td style="text-align: center; vertical-align:middle;">&nbsp;</td>
                     <td style="text-align: center; border-right:1px solid lightgray; vertical-align:middle;">% GROWTH</td>
                     <td style="background-color: white;">&nbsp;</td>
-                    <td style="text-align: center; border-left:1px solid lightgray; vertical-align:middle; {{$totalStyle}}">{{$totalRounded}}</td>
 
                     @foreach ($weeks as $key => $week)
-
                         @php
-                        $sum2024 = $dataTo[$key]['sum_of_net_sales'] ?? 0;
-                        $sum2023 =  $dataFrom[$key]['sum_of_net_sales'] ?? 0;
-                
-                        $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023 ) * 100 : 0 ;
-                        $rounded = round($incDecPercentage);
-                        $style = $rounded < 0 ? 'background-color:#f7c2c2; color:#880808;' : '';
-                    @endphp
+                            $previousYear =  $prevYearWeeksData[$key]['sum_of_net_sales'] ?? 0;
+                            $currentYear = $currYearWeeksData[$key]['sum_of_net_sales'] ?? 0;
+
+                            $incDecPercentage = $previousYear ? (($currentYear - $previousYear) / $previousYear ) * 100 : 0 ;
+                            $roundedVal = round($incDecPercentage);
+                            $style = $roundedVal < 0 ? 'background-color:#f7c2c2; color:#880808;' : '';
+                        @endphp
             
-                    <td style="text-align: center; vertical-align:middle; {{$style}}">{{$rounded}}%</td>
+                        <td style="text-align: center; border-left:1px solid lightgray; vertical-align:middle; {{$style}}">{{$roundedVal}}%</td>
                     @endforeach
 
 
                     @foreach (range(0, 2) as $number)
                         @php
-                 
-                            $sum2024 = $dataLastThreeDaysTo[$number]['sum_of_net_sales'] ?? null;
-                            $sum2023 = $dataLastThreeDaysFrom[$number]['sum_of_net_sales'] ?? 0;
-
-                    
+                            $previousYear = $prevYearLastThreeDays[$number]['sum_of_net_sales'] ?? 0;
+                            $currentYear = $currYearLastThreeDays[$number]['sum_of_net_sales'] ?? null;
                             $style = '';
                             $rounded = '';
-                    
-                            if ($sum2024 !== null && $sum2023 !== null) {
-                                $sum2024Date = (new DateTime($dataLastThreeDaysTo[$number]['date_of_the_day']))->format('d-M');
-                                $sum2023Date = (new DateTime($dataLastThreeDaysFrom[$number]['date_of_the_day']))->format('d-M');
-                                
-                                if ($sum2023Date === $sum2024Date) {
-                                    $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023) * 100 : 0;
-                                            $rounded = round($incDecPercentage) . '%';
-                                            $style = $rounded < 0 ? 'background-color:#f7c2c2; color:#880808;' : '';
-                                } else if ($sum2024 !== null && $sum2023 === 0){
-                                    $incDecPercentage = $sum2023 ? (($sum2024 - $sum2023) / $sum2023) * 100 : 0;
-                                            $rounded = round($incDecPercentage) . '%';
-                                            $style = $rounded < 0 ? 'background-color:#f7c2c2; color:#880808;' : '';
+
+                            // Only process if both previous and current year data exist
+                            if ($currentYear !== null && $previousYear !== null) {
+                                // Extract and format the dates for both years
+                                $currentYearDate = (new DateTime($currYearLastThreeDays[$number]['date_of_the_day']))->format('d-M');
+                                $previousYearDate = (new DateTime($prevYearLastThreeDays[$number]['date_of_the_day']))->format('d-M');
+
+                                // Compare the dates
+                                if ($previousYearDate === $currentYearDate) {
+                                    // Calculate percentage change if both previous and current data are available
+                                    $incDecPercentage = $previousYear ? (($currentYear - $previousYear) / $previousYear) * 100 : 0;
+                                } elseif ($previousYear === 0) {
+                                    // Handle the case where the previous year is 0, to avoid division by zero
+                                    $incDecPercentage = 200; // If previousYear is 0, the change is 100%
+                                } else {
+                                    $incDecPercentage = 0;
                                 }
-                            } 
-                    
+
+                                // Round the percentage and determine style
+                                $rounded = round($incDecPercentage) . '%';
+                                $style = $incDecPercentage < 0 ? 'background-color:#f7c2c2; color:#880808;' : '';
+                            }
                         @endphp
-                
-                        <td style="text-align: center; vertical-align:middle; {{$style}}">{{$rounded}}</td>
+
+                        <td style="text-align: center; vertical-align:middle; {{$style}}">{{ $rounded }}</td>
                     @endforeach
 
-
                 </tr>
+
+                {{-- ROW 2  --}}
                 <tr>
                     <td style="color:black; font-weight: bold; text-align: center; vertical-align:middle;"><b>{{strtoupper($channel) }}</b></td>
-                    <td style="color:black; font-weight: bold; text-align: center; border-right:1px solid lightgray; vertical-align:middle;"><b>{{$yearFrom}}</b></td>
+                    <td style="color:black; font-weight: bold; text-align: center; border-right:1px solid lightgray; vertical-align:middle;"><b>{{$prevYear}}</b></td>
                     <td style="color:black; background-color: white; vertical-align:middle;">&nbsp;</td>
-                    <td style="color:black; font-weight: bold; text-align: center; border-left:1px solid lightgray; vertical-align:middle;"><b>{{$totalSalesOfDataFrom ? number_format($totalSalesOfDataFrom, 2) : ''}}</b></td>
-
 
                     @foreach ($weeks as $key => $week)
                         @php
-                            $curr = $dataFrom[$key]['sum_of_net_sales'];
+                            $curr = $prevYearWeeksData[$key]['sum_of_net_sales'];
                         @endphp
 
-                        <td style="color:black; font-weight: bold; text-align: center; vertical-align:middle;"><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+                        <td style="color:black; font-weight: bold; text-align: center; border-left:1px solid lightgray; vertical-align:middle;"><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
 
                     @endforeach
 
 
-    
                     @php
-                        // Ensure $dataLastThreeDaysFrom is set and is an array
-                        if (!is_array($dataLastThreeDaysFrom)) {
-                            $dataLastThreeDaysFrom = []; // Set to empty array if not valid
-                        }
+                        // Ensure $prevYearLastThreeDays is set and is an array, defaulting to empty if invalid
+                        $prevYearLastThreeDays = is_array($prevYearLastThreeDays) ? $prevYearLastThreeDays : [];
 
-                        // Initialize sales data
-                        $salesDate = $lastThreeDaysAsDate; // This should contain exactly three date entries
-                        $salesData = []; // Initialize as an empty array
+                        // Initialize the sales data array, mapping sales dates to sales amounts
+                        $salesData = collect($prevYearLastThreeDays)->mapWithKeys(function ($entry) use ($lastThreeDaysDates) {
+                            // dump($entry);
 
-                        // Loop through the sales data
-                        foreach ($dataLastThreeDaysFrom as $entry) {
-                            // Format the date from YYYY-MM-DD to DD-MMM
+                            // Format the date from YYYY-MM-DD to d-M
                             $formattedDate = (new DateTime($entry['date_of_the_day']))->format('d-M');
 
-                            foreach ($salesDate as $index => $date) {
-                                // Compare formatted date
-                                if ($formattedDate === $date) {
-                                    $salesData[$index] = $entry['sum_of_net_sales'];
-                                    break; 
-                                }
-                            }
-                        }
+                            return isset($lastThreeDaysDates[$formattedDate]) ? [$formattedDate => $entry['sum_of_net_sales']] : [];
+                        })->toArray(); 
+
                     @endphp
 
-
-                    @for ($i = 0; $i < 3; $i++)
-                        <td style="font-weight: bold; text-align: center; vertical-align:middle; color:black;">
-                            <b>
-                                {{-- {{ isset($salesData[$i]) ? number_format($salesData[$i], 2) : '' }} --}}
-                                {{ isset($salesData[$i]) && $salesData[$i] !== null && $salesData[$i] !== 0 ? number_format($salesData[$i], 2) : '' }}
-                            </b>
-                        </td>
-                    @endfor
+                    @foreach ($salesData as $saleData)
+                        <td style="font-weight: bold; text-align: center; vertical-align:middle; color:black;"><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
+                    @endforeach
 
                 </tr>
+
+                {{-- ROW 3  --}}
                 <tr>
                     <td style="color:black; font-weight: bold; text-align: center; vertical-align:middle;"><b>{{strtoupper($channel) }}</b></td>
-                    <td style="color:black; font-weight: bold; text-align: center; border-right:1px solid lightgray; vertical-align:middle;"><b>{{$yearTo}}</b></td>
+                    <td style="color:black; font-weight: bold; text-align: center; border-right:1px solid lightgray; vertical-align:middle;"><b>{{$currYear}}</b></td>
                     <td style="color:black; background-color: white; vertical-align:middle;">&nbsp;</td>
 
-                    <td style="color:black; font-weight: bold; text-align: center; border-left:1px solid lightgray; vertical-align:middle;"><b>{{ $totalSalesOfDataTo ? number_format($totalSalesOfDataTo, 2) : ""}}</b></td>
 
                     @foreach ($weeks as $key => $week)
                         @php
-                            $curr = $dataTo[$key]['sum_of_net_sales'];
+                            $curr = $currYearWeeksData[$key]['sum_of_net_sales'];
                         @endphp
 
-                        <td style="color:black; font-weight: bold; text-align: center; vertical-align:middle;"><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+                        <td style="color:black; font-weight: bold; text-align: center; border-left:1px solid lightgray; vertical-align:middle;"><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
 
                     @endforeach
 
-                       @php
-                       // Ensure $dataLastThreeDaysFrom is set and is an array
-                       if (!is_array($dataLastThreeDaysTo)) {
-                           $dataLastThreeDaysTo = []; // Set to empty array if not valid
-                       }
+                    @php
+                        // Ensure $prevYearLastThreeDays is set and is an array, defaulting to empty if invalid
+                        $currYearLastThreeDays = is_array($currYearLastThreeDays) ? $currYearLastThreeDays : [];
 
-                       // Initialize sales data
-                       $salesDate = $lastThreeDaysAsDate; // This should contain exactly three date entries
-                       $salesData = []; // Initialize as an empty array
+                        // Initialize the sales data array, mapping sales dates to sales amounts
+                        $salesData = collect($currYearLastThreeDays)->mapWithKeys(function ($entry) use ($lastThreeDaysDates) {
+                            // dump($entry);
+                            // Format the date from YYYY-MM-DD to d-M
+                            $formattedDate = (new DateTime($entry['date_of_the_day']))->format('d-M');
 
-                       // Loop through the sales data
-                       foreach ($dataLastThreeDaysTo as $entry) {
-                           // Format the date from YYYY-MM-DD to DD-MMM
-                           $formattedDate = (new DateTime($entry['date_of_the_day']))->format('d-M');
+                            return isset($lastThreeDaysDates[$formattedDate]) ? [$formattedDate => $entry['sum_of_net_sales']] : [];
+                        })->toArray();  
+                    @endphp
 
-                           foreach ($salesDate as $index => $date) {
-                               // Compare formatted date
-                               if ($formattedDate === $date) {
-                                   $salesData[$index] = $entry['sum_of_net_sales'];
-                                   break; 
-                               }
-                           }
-                       }
-                   @endphp
-
-
-                    @for ($i = 0; $i < 3; $i++)
-                        <td style="color:black; font-weight: bold; text-align: center; vertical-align:middle;">
-                            <b>
-                                {{-- {{ isset($salesData[$i]) ? number_format($salesData[$i], 2) : '' }} --}}
-                                {{ isset($salesData[$i]) && $salesData[$i] !== null && $salesData[$i] !== 0 ? number_format($salesData[$i], 2) : '' }}
-
-                            </b>
-                        </td>
-                    @endfor
+                    @foreach ($salesData as $saleData)
+                        <td style="color:black; font-weight: bold; text-align: center; vertical-align:middle;"><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
+                    @endforeach
 
                 </tr>
             </tbody>
