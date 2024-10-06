@@ -80,11 +80,19 @@
     </div>
 
     <div>
-    <h3>Bar Graph</h3>
+    <h3>Line Graph</h3>
 
     <div class="charts">
         <canvas id="myChart" style="width: 50%; height:100%;"></canvas>
         <canvas id="myChart2" style="width: 50%; height:100%;"></canvas>
+      </div>
+    </div>
+    <div>
+    <h3>Bar Graph</h3>
+
+    <div class="charts">
+        <canvas id="myChart3" style="width: 50%; height:100%;"></canvas>
+        <canvas id="myChart4" style="width: 50%; height:100%;"></canvas>
       </div>
     </div>
 
@@ -100,8 +108,12 @@
 <script>
     const ctx = document.getElementById('myChart');
     const ctx2 = document.getElementById('myChart2');
-    const chart1data = generateChartData(2023);
-    const chart2data = generateChartData(2024);
+    const ctx3 = document.getElementById('myChart3');
+    const ctx4 = document.getElementById('myChart4');
+    const chart1data = generateChartData(2023, 'line');
+    const chart2data = generateChartData(2024, 'line');
+    const chart3data = generateChartData(2023, 'bar');
+    const chart4data = generateChartData(2024, 'bar');
     console.log(chart1data);
     console.log(chart2data);
 
@@ -109,7 +121,9 @@
     new Chart(ctx, chart1data);
     new Chart(ctx2, chart2data);
 
-    function generateChartData(year){
+    new Chart(ctx3, chart3data);
+    new Chart(ctx4, chart4data);
+    function generateChartData(year, chartType){
         console.log(year);
         let datasets = [];
 
@@ -159,7 +173,7 @@
 
 
         return {
-        type: 'line',
+        type: chartType,
         data: {
             labels: labels,
             datasets: newData
@@ -242,5 +256,6 @@
 
 
     //testing 
+
   </script>
 @endpush

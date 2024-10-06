@@ -6,6 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
 
+
+
     <style>
         * {
             font-size: 10px;
@@ -27,6 +29,8 @@
             place-content: center;
         }
     </style>
+
+<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
 </head>
 <body>
     <div class="dashboard">
@@ -34,7 +38,7 @@
             @if ($channel == 'OTHER' || $channel == '')
                 @continue
             @endif
-            <x-sales-report 
+            <x-sales-report-pdf 
                 :isTopOpen="$loop->first"
                 :channel="$channel" 
                 :data="$channelData"
@@ -47,7 +51,7 @@
 
     <div class="page-break"></div>
     
-        <img src="{{$test1}}" alt="" style="display:block; margin-top:100px; width:1000px; height:700px;">
+        {{-- <img src="{{$test1}}" alt="" style="display:block; margin-top:100px; width:1000px; height:700px;"> --}}
     
 
     {{-- <div class="page-break"></div>
@@ -83,8 +87,8 @@
         <img id="canvasImage2" class="canvas-image" />
     </div> --}}
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
+
+    {{-- <script>
         const ctx = document.getElementById('myChart').getContext('2d');
         const ctx2 = document.getElementById('myChart2').getContext('2d');
         const chart1data = generateChartData(2024);
@@ -133,6 +137,11 @@
                         y: {
                             beginAtZero: true
                         }
+                    },
+                    animations:{
+                        onComplete: function() {
+                            URI = chart.toBase64Image();
+                        }
                     }
                 }
             };
@@ -158,6 +167,6 @@
             // Call export function after charts are rendered
             exportCanvasToImage();
         };
-    </script>
+    </script> --}}
 </body>
 </html>

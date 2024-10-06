@@ -619,7 +619,6 @@ use QuickChart;
 
 			return $formattedDays;
 		}
-
 		public function exportPDF()
 		{
 			$data = [];
@@ -629,16 +628,42 @@ use QuickChart;
 			$data = array_merge($data, $generatedData);
 
 
-			$chart = new QuickChart(array(
-				'width' => 1000,
-				'height' => 700,
-			  ));
+			// $chart = new QuickChart(array(
+			// 	'width' => 1000,
+			// 	'height' => 700,
+			//   ));
 			  
-			$chart->setConfig('{"type":"line","data":{"labels":["WEEK 1","WEEK 2","WEEK 3","WEEK 4"],"datasets":[{"label":"ECOMM","data":[19897245,16476039.83,14485540,22433607.900000002],"borderWidth":1},{"label":"TOTAL-RTL","data":[65506610.190000005,70960019.11,71478592,90899858.93],"borderWidth":1},{"label":"SC","data":[309880,450125,661786,782352.15],"borderWidth":1},{"label":"DLR/CRP","data":[5509638.7,985270.5199999999,2728548.3,2277052.06],"borderWidth":1},{"label":"CON","data":[14972.65,0,0,0],"borderWidth":1},{"label":"FRA-DR","data":[18280313.79,18162475,21202927,27324391],"borderWidth":1}]},"options":{ 
-						"title": {
-				"display": true,
-				"text": "2023",
-				},"scales":{"y":{"beginAtZero":true}}}}');
+			//   $chart->setConfig('{
+			// 	"type": "line",
+			// 	"data": {
+			// 	  "labels": ["WEEK 1", "WEEK 2", "WEEK 3", "WEEK 4"],
+			// 	  "datasets": [
+			// 		{"label": "ECOMM", "data": [19897245, 16476039.83, 14485540, 22433607.900000002], "borderWidth": 1},
+			// 		{"label": "TOTAL-RTL", "data": [65506610.190000005, 70960019.11, 71478592, 90899858.93], "borderWidth": 1},
+			// 		{"label": "SC", "data": [309880, 450125, 661786, 782352.15], "borderWidth": 1},
+			// 		{"label": "DLR/CRP", "data": [5509638.7, 985270.5199999999, 2728548.3, 2277052.06], "borderWidth": 1},
+			// 		{"label": "CON", "data": [14972.65, 0, 0, 0], "borderWidth": 1},
+			// 		{"label": "FRA-DR", "data": [18280313.79, 18162475, 21202927, 27324391], "borderWidth": 1}
+			// 	  ]
+			// 	},
+			// 	"options": {
+			// 	  "title": {
+			// 		"display": true,
+			// 		"text": "2023"
+			// 	  },
+			// 	  "scales": {
+			// 		"y": {
+			// 		  "beginAtZero": true,
+			// 		  "ticks": {
+			// 			"callback": function(value) {
+			// 			  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+			// 			}
+			// 		  }
+			// 		}
+			// 	  }
+			// 	}
+			//   }');
+			  
 
 			// 		$chart2 = new QuickChart(array(
 			// 			'width' => 800,
@@ -652,7 +677,7 @@ use QuickChart;
 			//   "text": "2024",
 			// },"scales":{"y":{"beginAtZero":true}}}}');
 
-			$data['test1'] = $chart->getShortUrl();
+			// $data['test1'] = $chart->getShortUrl();
 		
 
 			// Load the view and generate the PDF
@@ -670,8 +695,6 @@ use QuickChart;
 			return $pdf->download('document.pdf');
 		}
 	
-		
-
 		public function showPDF(){
 			// dd('test');
 			// $data = ['title' => 'Welcome to Laravel PDF'];
