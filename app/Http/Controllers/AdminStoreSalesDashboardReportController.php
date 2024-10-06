@@ -11,6 +11,8 @@ use Barryvdh\DomPDF\Facade as PDF;
 	use DB;
 	use CRUDBooster;
 	use Carbon\Carbon;
+use Exception;
+use QuickChart;
 
 	class AdminStoreSalesDashboardReportController extends \crocodicstudio\crudbooster\controllers\CBController {
 		
@@ -458,10 +460,10 @@ use Barryvdh\DomPDF\Facade as PDF;
 			// $currentYear = 2020; 
 			// $currentDay = 29;
 
-			$currentMonth = 9;
+			$currentMonth = 3;
 			$previousYear = 2023;
 			$currentYear = 2024; 
-			$currentDay = 24;
+			$currentDay = 31;
 
 
 			$years = [
@@ -618,20 +620,57 @@ use Barryvdh\DomPDF\Facade as PDF;
 			return $formattedDays;
 		}
 
-		public function exportPDF(){
+		public function exportPDF()
+		{
 			$data = [];
 			$generatedData = self::generateDailySalesReport();
-
+		
+			// Merge the generated data into the data array
 			$data = array_merge($data, $generatedData);
 
-			$pdf = PDF::loadView('dashboard-report.store-sales.test-pdf', $data)->setPaper('A4', 'landscape')->setOptions([
-				'isHtml5ParserEnabled' => true,
-				'isRemoteEnabled' => true,
-				'defaultFont' => 'Arial',
-				'isFontSubsettingEnabled' => true,
-			]);;
+
+			$chart = new QuickChart(array(
+				'width' => 1000,
+				'height' => 700,
+			  ));
+			  
+			$chart->setConfig('{"type":"line","data":{"labels":["WEEK 1","WEEK 2","WEEK 3","WEEK 4"],"datasets":[{"label":"ECOMM","data":[19897245,16476039.83,14485540,22433607.900000002],"borderWidth":1},{"label":"TOTAL-RTL","data":[65506610.190000005,70960019.11,71478592,90899858.93],"borderWidth":1},{"label":"SC","data":[309880,450125,661786,782352.15],"borderWidth":1},{"label":"DLR/CRP","data":[5509638.7,985270.5199999999,2728548.3,2277052.06],"borderWidth":1},{"label":"CON","data":[14972.65,0,0,0],"borderWidth":1},{"label":"FRA-DR","data":[18280313.79,18162475,21202927,27324391],"borderWidth":1}]},"options":{ 
+						"title": {
+				"display": true,
+				"text": "2023",
+				},"scales":{"y":{"beginAtZero":true}}}}');
+
+			// 		$chart2 = new QuickChart(array(
+			// 			'width' => 800,
+			// 			'height' => 500,
+			// 			'format' => 'svg'
+
+			// 		  ));
+					
+			// 		$chart2->setConfig('{"type":"pie","data":{"labels":["WEEK 1","WEEK 2","WEEK 3","WEEK 4"],"datasets":[{"label":"ECOMM","data":[19897245,16476039.83,14485540,22433607.900000002],"borderWidth":1},{"label":"TOTAL-RTL","data":[65506610.190000005,70960019.11,71478592,90899858.93],"borderWidth":1},{"label":"SC","data":[309880,450125,661786,782352.15],"borderWidth":1},{"label":"DLR/CRP","data":[5509638.7,985270.5199999999,2728548.3,2277052.06],"borderWidth":1},{"label":"CON","data":[14972.65,0,0,0],"borderWidth":1},{"label":"FRA-DR","data":[18280313.79,18162475,21202927,27324391],"borderWidth":1}]},"options":{"title": {
+			//   "display": true,
+			//   "text": "2024",
+			// },"scales":{"y":{"beginAtZero":true}}}}');
+
+			$data['test1'] = $chart->getShortUrl();
+		
+
+			// Load the view and generate the PDF
+			$pdf = PDF::loadView('dashboard-report.store-sales.test-pdf', $data)
+					   ->setPaper('A4', 'landscape')
+					   ->setOptions( [
+						   'isHtml5ParserEnabled' => true,
+						   'isJavascriptEnabled' => true,
+						   'isRemoteEnabled' => true,
+						   'defaultFont' => 'Arial',
+						   'isFontSubsettingEnabled' => true,
+					   ]);
+		
+			// Return the PDF as a download
 			return $pdf->download('document.pdf');
 		}
+	
+		
 
 		public function showPDF(){
 			// dd('test');
