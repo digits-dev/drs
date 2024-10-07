@@ -59,7 +59,7 @@ class GashaponStoreSalesImport implements ToModel,
         // $this->apple_cutoff = AppleCutoff::active();
         // $this->non_apple_cutoff = NonAppleCutoff::active();
         $this->batch_number = $batch_number;
-        $this->report_type = ReportType::byName("GASHAPON STORE SALES");
+        $this->report_type = ReportType::byName("GASHAPON SALES");
     }
 
     /**

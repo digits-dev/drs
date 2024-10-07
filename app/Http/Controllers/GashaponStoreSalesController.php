@@ -40,7 +40,7 @@ class GashaponStoreSalesController extends Controller
     private $userReport;
     public function __construct(){
         DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping("enum", "string");
-        $this->report_type = ['GASHAPON STORE SALES'];
+        $this->report_type = ['GASHAPON SALES'];
         $this->userReport = ReportPrivilege::myReport(8,CRUDBooster::myPrivilegeId());
     }
     /**
@@ -124,7 +124,7 @@ class GashaponStoreSalesController extends Controller
         if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 
         $data = [];
-        $data['page_title'] = 'Upload Gashapon Store Sales';
+        $data['page_title'] = 'Upload Gashapon Sales';
         $data['uploadRoute'] = route('gashapon-store-sales.upload');
         $data['uploadTemplate'] = route('gashapon-store-sales.template');
         $data['nextSeries'] = GashaponStoreSales::getNextReference();
