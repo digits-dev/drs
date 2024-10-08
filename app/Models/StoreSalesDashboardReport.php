@@ -114,7 +114,7 @@ class StoreSalesDashboardReport extends Model
 
             CASE 
                 WHEN channel_code = 'ONL' THEN 'ECOMM'
-                WHEN channel_code IN ('DLR', 'CRP') THEN 'DLR/CRP'
+                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
                 WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
                 WHEN channel_code = 'FRA' THEN 'FRA-DR'
                 WHEN channel_code = 'SVC' THEN 'SC'
@@ -189,7 +189,7 @@ class StoreSalesDashboardReport extends Model
             MIN(reference_number) as min_reference_number,
             CASE 
                 WHEN channel_code = 'ONL' THEN 'ECOMM'
-                WHEN channel_code IN ('DLR', 'CRP') THEN 'DLR/CRP' -- Include 'OUT' if needed, or else it become others
+                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP' -- Include 'OUT' if needed, or else it become others
                 WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
                 WHEN channel_code = 'FRA' THEN 'FRA-DR'
                 WHEN channel_code = 'SVC' THEN 'SC'

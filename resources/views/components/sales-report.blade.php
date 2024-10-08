@@ -35,6 +35,7 @@
     .sales-report table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
     }
 
     .sales-report th, .sales-report td {
@@ -83,29 +84,62 @@
         width: 50%;
         background: black; 
     }
+
+    
     /* width for first two th  */
-    .sales-report tr th:nth-child(-n+2) {
+    /* .sales-report tr th:nth-child(-n+2) {
         width: 110px;
 
-    }
+    } */
     /* width for 4th col to end */
-    .sales-report th:nth-child(n+4),
+    /* .sales-report th:nth-child(n+4),
     .sales-report td:nth-child(n+4) {
         width: 125px;
-    }
+    } */
+
+
+    .border-right {
+    position: relative;
+}
+
+.border-right::after {
+    content: ' ';
+    position: absolute;
+    top: 0;
+    right: -2.5px;
+    height: 105%;
+    width: 10px; /* Corrected from 'widows' to 'width' */
+    border-left: 1px solid #e1e1e1;
+    border-right: 1px solid #e1e1e1;
+    background: white;
+}
+
+.no-border-right {
+    border-right: unset !important;
+}
+
+.no-border-right::after {
+    border-right: unset !important;
+}
+
 
 </style>
 
 <div>
 
     <div class="sales-report">
+        <colgroup>
+        <col span="2" style="width:110px;">
+        <col style="width:10px;">
+        <col span="8" style="width:125px;">
+        </colgroup>
         <table>
             <thead>
                 
                 @if ($isTopOpen)
                
                     <tr>
-                        <th  class="none" style="text-align: left; font-size:14px;" colspan="4" rowspan="2"><b>DAILY SALES REPORT</b></th>
+                        <th  class="none" style="text-align: left; font-size:14px;" colspan="3" rowspan="2"><b>DAILY SALES REPORT</b></th>
                         
                         @foreach (range(0,3) as $item)
                             <th class="bg-light-blue underline">CUT OFF</th>
@@ -158,8 +192,8 @@
 
                 <tr>
                     <th>{{strtoupper($channelCode) }}</th>
-                    <th>YEAR</th>
-                    <th class="none">&nbsp;</th>
+                    <th class="border-right">YEAR</th>
+                    {{-- <th class="none">&nbsp;</th> --}}
 
                     {{-- Display Weeks like WEEK1, WEEK2, etc.  --}}
                     @foreach ($weeks as $week)
@@ -189,8 +223,8 @@
                 {{-- ROW 1  --}}
                 <tr>
                     <td>&nbsp;</td>
-                    <td class="font-size">% GROWTH</td>
-                    <td class="none" style="width: 10px">&nbsp;</td>
+                    <td class="font-size border-right no-border-right" >% GROWTH</td>
+                    {{-- <td class="none" style="width: 10px">&nbsp;</td> --}}
 
                     @foreach ($weeks as $key => $week)
                         @php
@@ -225,7 +259,7 @@
                                     $incDecPercentage = $previousYear ? (($currentYear - $previousYear) / $previousYear) * 100 : 0;
                                 } elseif ($previousYear === 0) {
                                     // Handle the case where the previous year is 0, to avoid division by zero
-                                    $incDecPercentage = 200; // If previousYear is 0, the change is 100%
+                                    $incDecPercentage = 0; // If previousYear is 0, the change is 100%
                                 } else {
                                     $incDecPercentage = 0;
                                 }
@@ -244,8 +278,8 @@
                 {{-- ROW 2  --}}
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
-                    <td><b>{{$prevYear}}</b></td>
-                    <td class="none" style="width: 10px">&nbsp;</td>
+                    <td class="border-right"><b>{{$prevYear}}</b></td>
+                    {{-- <td class="none" style="width: 10px">&nbsp;</td> --}}
 
                     @foreach ($weeks as $key => $week)
                         @php
@@ -277,13 +311,19 @@
                         <td><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
                     @endforeach
 
+                    @if (empty($salesData))
+                        @foreach (range(0,2) as $blank)
+                            <td><b>{{''}}</b></td>
+                        @endforeach
+                    @endif
+
                 </tr>
 
                 {{-- ROW 3  --}}
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
-                    <td><b>{{$currYear}}</b></td>
-                    <td class="none" style="width: 10px">&nbsp;</td>
+                    <td class="border-right"><b>{{$currYear}}</b></td>
+                    {{-- <td class="none" style="width: 10px">&nbsp;</td> --}}
 
 
                     @foreach ($weeks as $key => $week)
@@ -312,6 +352,12 @@
                     @foreach ($salesData as $saleData)
                         <td><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
                     @endforeach
+
+                    @if (empty($salesData))
+                        @foreach (range(0,2) as $blank)
+                            <td><b>{{''}}</b></td>
+                        @endforeach
+                    @endif
 
                 </tr>
             </tbody>

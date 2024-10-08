@@ -164,7 +164,7 @@
                                     $incDecPercentage = $previousYear ? (($currentYear - $previousYear) / $previousYear) * 100 : 0;
                                 } elseif ($previousYear === 0) {
                                     // Handle the case where the previous year is 0, to avoid division by zero
-                                    $incDecPercentage = 200; // If previousYear is 0, the change is 100%
+                                    $incDecPercentage = 0; // If previousYear is 0, the change is 100%
                                 } else {
                                     $incDecPercentage = 0;
                                 }
@@ -216,6 +216,12 @@
                         <td><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
                     @endforeach
 
+                    @if (empty($salesData))
+                        @foreach (range(0,2) as $blank)
+                            <td><b>{{''}}</b></td>
+                        @endforeach
+                    @endif
+
                 </tr>
 
                 {{-- ROW 3  --}}
@@ -251,6 +257,12 @@
                     @foreach ($salesData as $saleData)
                         <td><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
                     @endforeach
+
+                    @if (empty($salesData))
+                        @foreach (range(0,2) as $blank)
+                            <td><b>{{''}}</b></td>
+                        @endforeach
+                    @endif
 
                 </tr>
             </tbody>

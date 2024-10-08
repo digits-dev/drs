@@ -220,7 +220,7 @@ Route::group(['prefix'=>'admin'], function(){
 
     //DASHBOARD REPORT
     Route::get('/pdf_show', [AdminStoreSalesDashboardReportController::class, 'showPDF'] );
-    Route::get('/pdf', [AdminStoreSalesDashboardReportController::class, 'exportPDF'] );
+    Route::get('/pdf', [AdminStoreSalesDashboardReportController::class, 'exportPDF'] )->name('weekly_export_pdf');
     Route::get('/custom_excel', [AdminStoreSalesDashboardReportController::class, 'exportExcel'] )->name('weekly_export_excel');
     Route::get('/custom_excel_view', [AdminStoreSalesDashboardReportController::class, 'showExcel'] );
 

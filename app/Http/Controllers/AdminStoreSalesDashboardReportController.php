@@ -460,10 +460,10 @@ use QuickChart;
 			// $currentYear = 2020; 
 			// $currentDay = 29;
 
-			$currentMonth = 3;
+			$currentMonth = 9;
 			$previousYear = 2023;
 			$currentYear = 2024; 
-			$currentDay = 31;
+			$currentDay = 30;
 
 
 			$years = [
@@ -484,6 +484,8 @@ use QuickChart;
 			foreach ($years as $yearData) {
 				self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
 			}
+
+			// dd($data['channel_codes']);
 
 			return $data;
 
@@ -507,7 +509,13 @@ use QuickChart;
 			// Process sales per channel
 			$sumPerChannel = $storeSalesDR->getSalesWeeklyPerChannel();
 
+	
+
 			foreach ($sumPerChannel as $sale) {
+				// if($sale['channel_classification'] == 'OTHER'){
+				// 	dump($sale['week_cutoff']);
+				// 	dump($sale['min_reference_number']);
+				// }
 				$channelCode = $sale['channel_classification'];
 
 

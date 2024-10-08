@@ -28,6 +28,9 @@
             display: grid;
             place-content: center;
         }
+        .dashboard{
+            margin-top: 100px;
+        }
     </style>
 
 <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
