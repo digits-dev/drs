@@ -48,6 +48,6 @@ class RequestController extends Controller
 
     public function showChangePassword(){
 		$data['page_title'] = 'Change Password';
-		return view('user/change-password',$data);
+		return view('user-account.change-password',$data);
 	}
 }

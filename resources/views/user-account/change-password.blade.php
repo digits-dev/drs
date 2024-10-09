@@ -49,54 +49,11 @@
 			color: #00a65a; /* Excellent */
 		}
 
-        
-        /* #toggleCurrentPassword{
-            cursor: pointer; 
-            position: absolute; 
-            right: 45px; 
-            top: 284px; 
-            z-index: 10000
-        }
-
-        #toggleNewPassword{
-            cursor: pointer; 
-            position: absolute; 
-            right: 45px; 
-            top: 357px; 
-            z-index: 10000
-        }
-
-        #toggleConfirmPassword{
-            cursor: pointer; 
-            position: absolute; 
-            right: 45px; 
-            top: 543px; 
-            z-index: 10000
-        } */
         @media (min-width:729px){
            .panel-danger{
                 width:40% !important; 
                 margin:auto !important;
            }
-
-           /* #toggleCurrentPassword{
-                right: 425px; 
-                top: 197px; 
-                z-index: 10000
-           }
-           #toggleNewPassword{
-                right: 425px; 
-                top: 270px; 
-                z-index: 10000
-           }
-
-           #toggleConfirmPassword{
-                cursor: pointer; 
-                position: absolute; 
-                right: 425px; 
-                top: 459px; 
-                z-index: 10000
-           } */
         }
     </style>
 @endpush

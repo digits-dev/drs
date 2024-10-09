@@ -35,6 +35,7 @@ use App\Http\Controllers\AdminGashaponStoreSalesController;
 use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
 use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
 use App\Http\Controllers\SupplierIntransitInventoryController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -50,7 +51,26 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::group(['prefix'=>'admin'], function(){
+Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
+    Route::post('login', [\App\Http\Controllers\CBHook::class, 'postLogin'])->name('postLogin');
+});
+
+//RESET PASSWORD
+Route::get('/reset_password_email/{email}', [AdminCmsUsersController::class, 'getResetView'])->name('reset_password_email');
+Route::post('/send_resetpass_email/reset',[AdminCmsUsersController::class, 'postSaveResetPassword'])->name('postResetPassword');
+
+//Update Password
+Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
+    Route::get('change-password', [AdminCmsUsersController::class, 'showChangeForcePasswordForm'])->name('show-change-force-password');
+    Route::post('save-change-password', [AdminCmsUsersController::class, 'postUpdatePassword'])->name('update_password');
+    Route::post('check-password', [AdminCmsUsersController::class, 'checkPassword'])->name('check-current-password');
+    Route::post('check-waive', [AdminCmsUsersController::class, 'checkWaive'])->name('check-waive-count');
+    Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
+    Route::post('reset-password', [AdminCmsUsersController::class, 'postSendEmailResetPassword'])->name('reset-password');
+    Route::post('waive-change-password',[AdminCmsUsersController::class, 'waiveChangePassword'])->name('waive-change-password');
+});
+
+Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CBBackend','check.user'], 'prefix'=>'admin'], function(){
 
     //import store sales
     Route::post('sales_upload/import-upload',[StoreSaleController::class, 'storeSalesUpload'])->name('store-sales.upload');
@@ -209,9 +229,10 @@ Route::group(['prefix'=>'admin'], function(){
     Route::any('supplier_intransit_inventory/filter',[AdminSupplierIntransitInventoriesController::class, 'filterGashaponSupplierIntransitInventory'])->name('supplier-intransit-inventory.filter');
     Route::post('supplier-intransit-inventory-concepts',[AdminSupplierIntransitInventoriesController::class, 'concepts'])->name('supplier-intransit-inventory-concepts');
    
-    //Update Password
-    Route::post('change-password', [AdminCmsUsersController::class, 'postUpdatePassword'])->name('update_password');
-    Route::post('check-password', [AdminCmsUsersController::class, 'checkPassword'])->name('check-current-password');
-    Route::post('check-waive', [AdminCmsUsersController::class, 'checkWaive'])->name('check-waive-count');
-    Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
+   
+    
+    
+    
+   
 });
+
