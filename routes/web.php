@@ -36,6 +36,11 @@ use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
 use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
 use App\Http\Controllers\SupplierIntransitInventoryController;
 use App\Http\Controllers\CBHook;
+use App\Http\Controllers\EtpBirReportController;
+use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
+use App\Http\Controllers\EtpStoreSyncReportController;
+use App\Http\Controllers\EtpTenderReportController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -231,6 +236,11 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
    
    
     
+    // ETP ROUTES
+    Route::get('etp_bir_report', [EtpBirReportController::class, 'getIndex'])->name('etp_bir_report');
+    Route::get('etp_tender_report', [EtpTenderReportController::class, 'getIndex'])->name('etp_tender_report');
+    Route::get('etp_storesync_report', [EtpStoreSyncReportController::class, 'getIndex'])->name('etp_storesync_report');
+    Route::get('etp_storeinventorydetailed_report', [EtpStoreInventoryDetailedReportController::class, 'getIndex'])->name('etp_storeinventorydetailed_report');
     
     
    
