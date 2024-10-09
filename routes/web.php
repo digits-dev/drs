@@ -35,7 +35,7 @@ use App\Http\Controllers\AdminGashaponStoreSalesController;
 use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
 use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
 use App\Http\Controllers\SupplierIntransitInventoryController;
-
+use App\Http\Controllers\CBHook;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -52,7 +52,7 @@ Route::get('/', function () {
 });
 
 Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
-    Route::post('login', [\App\Http\Controllers\CBHook::class, 'postLogin'])->name('postLogin');
+    Route::post('login', [CBHook::class, 'postLogin'])->name('postLogin');
 });
 
 //RESET PASSWORD
