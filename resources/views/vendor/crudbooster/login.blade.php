@@ -137,12 +137,6 @@
                                 href='{{route("getForgot")}}'>{{cbLang("click_here")}}</a></p></div>
             </div>
             
-             @if($alertmessage == 1)
-                <script type="text/javascript">
-                    alert("Asset has been received successfully!");
-                </script>
-
-            @endif
         </form>
 
 

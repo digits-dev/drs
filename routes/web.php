@@ -51,9 +51,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
-//     Route::post('login', [\App\Http\Controllers\CBHook::class, 'postLogin'])->name('postLogin');
-// });
+Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
+    Route::post('login', [\App\Http\Controllers\CBHook::class, 'postLogin'])->name('postLogin');
+});
 
 //RESET PASSWORD
 Route::get('/reset_password_email/{email}', [AdminCmsUsersController::class, 'getResetView'])->name('reset_password_email');
