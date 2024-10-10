@@ -9,6 +9,14 @@
 
 
     <style>
+        @page {
+    margin: 100px; /* Set all margins to 20mm */
+}
+
+        .content {
+            height: 100%;
+            width: 100%;
+        }
         * {
             font-size: 10px;
         }
@@ -29,7 +37,39 @@
             place-content: center;
         }
         .dashboard{
+            margin-top: 90px;
+        }
+
+        /* .charts{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap:10px;
+            padding:10px;
+            background:lightgray;
+            width: 100%;
+            height: 100%;
+        } */
+/* 
+        img{
             margin-top: 100px;
+            margin-left: 20px;
+            display:block; 
+            margin: 0 auto;
+            width:1000px; 
+            height:600px;
+            border: 1px solid #ccc;
+        } */
+
+        /* .margin{
+            margin-top: 100px;
+        } */
+
+        .test{
+            display:flex; 
+            justify-content:center; 
+            align-items:center; 
+            width: 100%;
         }
     </style>
 
@@ -53,9 +93,114 @@
     </div>
 
     <div class="page-break"></div>
-    
-        {{-- <img src="{{$test1}}" alt="" style="display:block; margin-top:100px; width:1000px; height:700px;"> --}}
-    
+
+    <div class="content">
+        <img src="{{$quickChartUrl}}" 
+        alt="" 
+        style="
+            width:100%;
+            height:700px;
+            border: 1px solid #ccc;">
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="content">
+        <img src="{{$quickChartUrl2}}" 
+        alt="" 
+        style="
+            width:100%;
+            height:700px;
+            border: 1px solid #ccc;">
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="content">
+        <img src="{{$quickChartUrl3}}" 
+        alt="" 
+        style="
+            width:100%;
+            height:700px;
+            border: 1px solid #ccc;">
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="content">
+        <img src="{{$quickChartUrl4}}" 
+        alt="" 
+        style="
+            width:100%;
+            height:700px;
+            border: 1px solid #ccc;">
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="content">
+        <img src="{{$quickChartUrl5}}" 
+        alt="" 
+        style="
+            width:100%;
+            height:700px;
+            border: 1px solid #ccc;">
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="content">
+        <img src="{{$quickChartUrl6}}" 
+        alt="" 
+        style="
+            width:100%;
+            height:700px;
+            border: 1px solid #ccc;">
+    </div>
+{{-- 
+
+
+    <div class="page-break" style="margin-top: 50px; margin-left: 18px; ">
+        <img src="{{$quickChartUrl}}" 
+        
+        alt="" style="
+                width:1000px; 
+                height:600px;
+                border: 1px solid #ccc;">
+    </div>
+    <div class="page-break" style="margin-top: 50px; margin-left: 18px; ">
+        <img src="{{$quickChartUrl2}}" alt="" style="
+                width:1000px; 
+                height:600px;
+                border: 1px solid #ccc;">
+    </div>
+    <div class="page-break" style="margin-top: 50px; margin-left: 18px; ">
+        <img src="{{$quickChartUrl3}}" alt="" style="
+                width:1000px; 
+                height:600px;
+                border: 1px solid #ccc;">
+    </div>
+    <div class="page-break" style="margin-top: 50px; margin-left: 18px; ">
+        <img src="{{$quickChartUrl4}}" alt="" style="
+                width:1000px; 
+                height:600px;
+                border: 1px solid #ccc;">
+    </div>
+    <div class="page-break" style="margin-top: 50px; margin-left: 18px; ">
+        <img src="{{$quickChartUrl5}}" alt="" style="
+                width:1000px; 
+                height:600px;
+                border: 1px solid #ccc;">
+    </div>
+ 
+    <div  style="margin-top: 50px; margin-left: 18px; ">
+        <img src="{{$quickChartUrl6}}" alt="" style="
+                width:1000px; 
+                height:600px;
+                border: 1px solid #ccc;">
+    </div> --}}
+
+
 
     {{-- <div class="page-break"></div>
 

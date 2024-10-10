@@ -224,5 +224,8 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('/custom_excel', [AdminStoreSalesDashboardReportController::class, 'exportExcel'] )->name('weekly_export_excel');
     Route::get('/custom_excel_view', [AdminStoreSalesDashboardReportController::class, 'showExcel'] );
 
+    Route::get('/pdf_snap', [AdminStoreSalesDashboardReportController::class, 'generatePDF2'] );
+
+
 
 });

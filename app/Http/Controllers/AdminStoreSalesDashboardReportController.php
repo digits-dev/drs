@@ -3,21 +3,29 @@
 	use App\Exports\WeeklySalesExport;
 	use App\Models\StoreSalesDashboardReport;
 use App\Models\User;
+use App\Services\StoreSalesDashboardReportService;
 use Barryvdh\DomPDF\Facade as PDF;
-	use Log;
+
+use Log;
 	use Maatwebsite\Excel\Facades\Excel;
 	use Session;
-	use Request;
+
 	use DB;
 	use CRUDBooster;
 	use Carbon\Carbon;
 use Exception;
 use QuickChart;
+use Illuminate\Http\Request;
+use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
 
 	class AdminStoreSalesDashboardReportController extends \crocodicstudio\crudbooster\controllers\CBController {
 		
 
-		protected $myData;
+		protected $dashboardService;
+
+		public function __construct(StoreSalesDashboardReportService $dashboardService){
+			$this->dashboardService = $dashboardService;
+		}
 
 	    public function cbInit() {
 
@@ -448,7 +456,6 @@ use QuickChart;
 		}
 
 		public function generateDailySalesReport(){
-
 			
 			// $currentDay = date('d');
 			// $currentMonth = date('m');
@@ -460,10 +467,10 @@ use QuickChart;
 			// $currentYear = 2020; 
 			// $currentDay = 29;
 
-			$currentMonth = 9;
-			$previousYear = 2023;
-			$currentYear = 2024; 
-			$currentDay = 30;
+			$currentMonth = 2;
+			$previousYear = 2021;
+			$currentYear = 2022; 
+			$currentDay = 23;
 
 
 			$years = [
@@ -627,94 +634,96 @@ use QuickChart;
 
 			return $formattedDays;
 		}
-		public function exportPDF()
+		// public function exportPDF()
+		// {
+		// 	$data = [];
+		// 	$generatedData = self::generateDailySalesReport();
+		
+		// 	// Merge the generated data into the data array
+		// 	$data = array_merge($data, $generatedData);
+
+		// 	$data['quickChartUrl'] = self::generateQuickChart("bar");
+		// 	$data['quickChartUrl2'] = self::generateQuickChart('line');
+		// 	$data['quickChartUrl3'] = self::generateQuickChart('pie');
+		// 	$data['quickChartUrl4'] = self::generateQuickChart('outlabeledPie');
+
+		
+
+		// 	// Load the view and generate the PDF
+		// 	$pdf = PDF::loadView('dashboard-report.store-sales.test-pdf', $data)
+		// 			   ->setPaper('A4', 'landscape')
+		// 			   ->setOptions( [
+		// 				   'isHtml5ParserEnabled' => true,
+		// 				   'isJavascriptEnabled' => true,
+		// 				   'isRemoteEnabled' => true,
+		// 				   'defaultFont' => 'Arial',
+		// 				   'isFontSubsettingEnabled' => true,
+		// 			   ]);
+		
+		// 	// Return the PDF as a download
+		// 	return $pdf->download('document.pdf');
+		// }
+
+		public function exportPDF(Request $request)
 		{
+
 			$data = [];
 			$generatedData = self::generateDailySalesReport();
-		
+			$dataCategory = $request->query('category') ?? 'total';
+			$isPerChannel = $request->boolean('perChannel', false);
+			
 			// Merge the generated data into the data array
 			$data = array_merge($data, $generatedData);
 
-
-			// $chart = new QuickChart(array(
-			// 	'width' => 1000,
-			// 	'height' => 700,
-			//   ));
-			  
-			//   $chart->setConfig('{
-			// 	"type": "line",
-			// 	"data": {
-			// 	  "labels": ["WEEK 1", "WEEK 2", "WEEK 3", "WEEK 4"],
-			// 	  "datasets": [
-			// 		{"label": "ECOMM", "data": [19897245, 16476039.83, 14485540, 22433607.900000002], "borderWidth": 1},
-			// 		{"label": "TOTAL-RTL", "data": [65506610.190000005, 70960019.11, 71478592, 90899858.93], "borderWidth": 1},
-			// 		{"label": "SC", "data": [309880, 450125, 661786, 782352.15], "borderWidth": 1},
-			// 		{"label": "DLR/CRP", "data": [5509638.7, 985270.5199999999, 2728548.3, 2277052.06], "borderWidth": 1},
-			// 		{"label": "CON", "data": [14972.65, 0, 0, 0], "borderWidth": 1},
-			// 		{"label": "FRA-DR", "data": [18280313.79, 18162475, 21202927, 27324391], "borderWidth": 1}
-			// 	  ]
-			// 	},
-			// 	"options": {
-			// 	  "title": {
-			// 		"display": true,
-			// 		"text": "2023"
-			// 	  },
-			// 	  "scales": {
-			// 		"y": {
-			// 		  "beginAtZero": true,
-			// 		  "ticks": {
-			// 			"callback": function(value) {
-			// 			  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-			// 			}
-			// 		  }
-			// 		}
-			// 	  }
-			// 	}
-			//   }');
-			  
-
-			// 		$chart2 = new QuickChart(array(
-			// 			'width' => 800,
-			// 			'height' => 500,
-			// 			'format' => 'svg'
-
-			// 		  ));
+			// Generate chart URLs
+			$data['quickChartUrl'] = self::generateQuickChart($generatedData['yearData']['previousYear'], 'bar', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl2'] = self::generateQuickChart($generatedData['yearData']['currentYear'], 'bar', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl3'] = self::generateQuickChart($generatedData['yearData']['previousYear'], 'line', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl4'] = self::generateQuickChart($generatedData['yearData']['currentYear'], 'line', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl5'] = self::generateQuickChart($generatedData['yearData']['previousYear'], 'pie', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl6'] = self::generateQuickChart($generatedData['yearData']['currentYear'], 'pie', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			
+			
+			try {
+				// Load the view and generate the PDF
+				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf', $data)
+						->setPaper('A4', 'landscape')
+						->setOptions(['margin-top' => 25, 'margin-right' => 10, 'margin-bottom' => 10, 'margin-left' => 10]);
 					
-			// 		$chart2->setConfig('{"type":"pie","data":{"labels":["WEEK 1","WEEK 2","WEEK 3","WEEK 4"],"datasets":[{"label":"ECOMM","data":[19897245,16476039.83,14485540,22433607.900000002],"borderWidth":1},{"label":"TOTAL-RTL","data":[65506610.190000005,70960019.11,71478592,90899858.93],"borderWidth":1},{"label":"SC","data":[309880,450125,661786,782352.15],"borderWidth":1},{"label":"DLR/CRP","data":[5509638.7,985270.5199999999,2728548.3,2277052.06],"borderWidth":1},{"label":"CON","data":[14972.65,0,0,0],"borderWidth":1},{"label":"FRA-DR","data":[18280313.79,18162475,21202927,27324391],"borderWidth":1}]},"options":{"title": {
-			//   "display": true,
-			//   "text": "2024",
-			// },"scales":{"y":{"beginAtZero":true}}}}');
-
-			// $data['test1'] = $chart->getShortUrl();
-		
-
-			// Load the view and generate the PDF
-			$pdf = PDF::loadView('dashboard-report.store-sales.test-pdf', $data)
-					   ->setPaper('A4', 'landscape')
-					   ->setOptions( [
-						   'isHtml5ParserEnabled' => true,
-						   'isJavascriptEnabled' => true,
-						   'isRemoteEnabled' => true,
-						   'defaultFont' => 'Arial',
-						   'isFontSubsettingEnabled' => true,
-					   ]);
-		
-			// Return the PDF as a download
-			return $pdf->download('document.pdf');
+				// Return the PDF as a download
+				\Log::info('Data for PDF: ');
+				Log::info(json_encode($data, JSON_PRETTY_PRINT));
+				return $pdf->download('document.pdf');
+			} catch (\Exception $e) {
+				// Handle exceptions and log errors
+				\Log::error('PDF Generation Error: ' . $e->getMessage());
+				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+			}
 		}
+
 	
-		public function showPDF(){
-			// dd('test');
-			// $data = ['title' => 'Welcome to Laravel PDF'];
-			
-			
+		public function showPDF(Request $request){
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
-
 			$generatedData = self::generateDailySalesReport();
+			$dataCategory = $request->query('category') ?? 'total';
+			$isPerChannel = $request->boolean('perChannel', false);
+
+			// dd($isPerChannel);
 
 			$data = array_merge($data, $generatedData);
+
+			// $max = self::calculateMaxValues('total', $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+
 			
+			// Generate chart URLs
+			$data['quickChartUrl'] = self::generateQuickChart($generatedData['yearData']['previousYear'], 'bar', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl2'] = self::generateQuickChart($generatedData['yearData']['currentYear'], 'bar', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl3'] = self::generateQuickChart($generatedData['yearData']['previousYear'], 'line', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl4'] = self::generateQuickChart($generatedData['yearData']['currentYear'], 'line', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl5'] = self::generateQuickChart($generatedData['yearData']['previousYear'], 'pie', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+			$data['quickChartUrl6'] = self::generateQuickChart($generatedData['yearData']['currentYear'], 'pie', $dataCategory ,$isPerChannel, $generatedData['channel_codes'], $generatedData['lastThreeDaysDates']);
+
 			return view('dashboard-report.store-sales.test-pdf', $data);
 		}
 
@@ -730,6 +739,303 @@ use QuickChart;
 		}
 
 
+		public function generateQuickChart($year, $chartType, $dataCategory, $isPerChannel, $channelCodes, $lastThreeDays){
 
-	
+			$chartData = self::generateChartData($year, $chartType, $dataCategory, $isPerChannel, $channelCodes, $lastThreeDays);
+			
+			// Encode the chart configuration as a JSON string
+			$chartConfigJson = json_encode($chartData);
+			
+			// Create the QuickChart URL with specified width and height
+			$width = 1000;  
+			$height = 600;
+
+			$quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height;
+
+			return $quickChartUrl;
+		}
+
+		public function generateChartData2($year, $chartType, $isPerChannel = true, $channelCodes, $lastThreeDaysDates) {
+			
+			$weeks = ['RUNNING', 'WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
+			$keyDates = array_keys($lastThreeDaysDates);
+		
+			$labels = array_merge($weeks, $keyDates);
+			$datasets = [];
+		
+			foreach ($channelCodes as $channelCode => $channelData) {
+				if ($isPerChannel && $channelCode && $channelCode !== "TOTAL") {
+					$dataStorage = [];
+					$weekData = $channelData[$year]['weeks'] ?? [];
+					$lastThreeDayData = $channelData[$year]['last_three_days'] ?? [];
+		
+					// Aggregate weekly data
+					$keys = ['TOTAL', 'WK01', 'WK02', 'WK03', 'WK04'];
+					foreach ($keys as $key) {
+						$netSales = $weekData[$key]['sum_of_net_sales'] ?? 0;
+						$dataStorage[] = $netSales;
+					}
+		
+					// Aggregate last three days data
+					foreach ($lastThreeDayData as $day) {
+						$netSales = $day['sum_of_net_sales'] ?? 0;
+						$dataStorage[] = $netSales;
+					}
+		
+					$datasets[] = [
+						'label' => $channelCode,
+						'data' => $dataStorage,
+						'borderWidth' => 2,
+						'fill' => false, 
+					];
+				}
+			}
+		
+			return [
+				'type' => $chartType,
+				'data' => [
+					'labels' => $labels,
+					'datasets' => $datasets,
+				],
+				'options' => [
+					'layout' => [
+						'padding' => 20,
+					],
+					'title' => [
+						'display' => true,
+						'text' => "$year Sales Data",
+						'fontSize' => 16,
+						'padding' => 20
+					],
+					'legend' => [
+						'display' => true,
+						'position' => 'right',
+						'labels' => [
+							'boxWidth' => 10
+						]
+					],
+					'plugins' => [
+						'tickFormat' => [
+							'locale' => 'en-US',
+							'useGrouping' => true,
+						],
+						// "datalabels" => [
+						// 	"anchor" => "end",
+						// 	"align" => "end",
+						// 	"color" => "#000",
+						// ],
+					],
+					// 'scales' => [
+					// 	'yAxes' => [['ticks'=> ['max' => 100, 'beginAtZero'=>true]],
+					// 	],
+					// ],
+				],
+			];
+		}
+		
+
+		public function generateChartData($year, $chartType = 'bar', $dataCategory = "total", $isPerChannel = true, $channelCodes, $lastThreeDays) {
+			$datasets = [];
+			// dd($isPerChannel);
+			$weeks = ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
+			$keyDates = array_keys($lastThreeDays);
+			$labels = $this->getLabels($year, $dataCategory, $weeks, $keyDates);
+		
+			$dataEntries = [];
+			foreach ($channelCodes as $channelCode => $channelData) {
+				$entry = $this->generateDataEntry($channelCode, $channelData[$year], $dataCategory, $isPerChannel);
+				if ($entry !== null) {
+					$dataEntries[] = $entry;
+				}
+			}
+		
+			return [
+				'type' => $chartType,
+				'data' => [
+					'labels' => $labels,
+					'datasets' => $dataEntries,
+				],
+				'options' => $this->getChartOptions($year, $chartType),
+			];
+		}
+		
+		private function getLabels($year, $dataCategory, $weeks, $keyDates) {
+			switch ($dataCategory) {
+				case 'total':
+					return [date('Y') == $year ? 'RUNNING' : 'TOTAL'];
+				case 'weekly':
+					return $weeks;
+				case 'last_three_days':
+					return $keyDates;
+				default:
+					return [];
+			}
+		}
+		
+		private function generateDataEntry($channelCode, $yearData, $dataCategory, $isPerChannel) {
+			$dataStorage = [];
+			$weeks = $yearData['weeks'] ?? [];
+			$lastThreeDays = $yearData['last_three_days'] ?? [];
+		
+			switch ($channelCode) {
+				case 'TOTAL-RTL':
+					$channelCode = 'RETAIL';
+					break;
+				case 'DLR/CRP':
+					$channelCode = 'OUT';
+					break;
+				case 'FRA-DR':
+					$channelCode = 'FRA';
+					break;
+			}
+		
+			if ($isPerChannel && $channelCode && $channelCode !== "TOTAL") {
+				$maxVal = $this->fillDataStorage($dataStorage, $weeks, $dataCategory, $lastThreeDays);
+				return [
+					'label' => $channelCode,
+					'data' => $dataStorage,
+					'borderWidth' => 2,
+					'pointBorderWidth' => 5,
+					'maxVal' => $maxVal,
+					'fill' => false,
+						// 	'datalabels' => [
+						// 	'color' => "#fff",
+						// ],
+					// 'backgroundColor' => '#9BD0F5'
+					// 'backgroundColor' => '#000'
+				];
+			} elseif (!$isPerChannel && $channelCode === 'TOTAL') {
+				$maxVal = $this->fillDataStorage($dataStorage, $weeks, $dataCategory, $lastThreeDays);
+				$channelTotal = date('Y') == $yearData['year'] ? 'RUNNING' : 'TOTAL';
+				return [
+					'label' => $channelTotal,
+					'data' => $dataStorage,
+					'borderWidth' => 2,
+					'pointBorderWidth' => 5,
+					'maxVal' => $maxVal,
+					'fill' => false,
+						// 	'datalabels' => [
+						// 	'color' => "#fff",
+						// ],
+					// 'backgroundColor' => '#000'
+					// 'backgroundColor' => '#9BD0F5'
+
+				];
+			}
+			return null;
+		}
+		
+		private function fillDataStorage(&$dataStorage, $weeks, $dataCategory, $lastThreeDays) {
+			$keys = $dataCategory === 'total' ? ['TOTAL'] : ($dataCategory === 'weekly' ? ['WK01', 'WK02', 'WK03', 'WK04'] : array_column($lastThreeDays, 'date_of_the_day'));
+		
+			if ($dataCategory === 'last_three_days') {
+				foreach ($lastThreeDays as $day) {
+					$netSales = $day['sum_of_net_sales'] ?? 0;
+					$dataStorage[] = $netSales;
+				}
+			} else {
+				foreach ($keys as $key) {
+					$netSales = $weeks[$key]['sum_of_net_sales'] ?? 0;
+					$dataStorage[] = $netSales;
+				}
+			}
+		
+			return count($dataStorage) > 0 ? max($dataStorage) : 0;
+		}
+		
+		private function getChartOptions($year, $chartType) {
+
+			return [
+					'layout' => [
+						'padding' => 20,
+					],
+					'title' => [
+						'display' => true,
+						'text' => "$year Sales Data",
+						'fontSize' => 16,
+						'padding' => 20
+					],
+					'legend' => [
+						'display' => true,
+						'position' => 'right',
+						'labels' => [
+							'boxWidth' => 10
+						]
+					],
+					'plugins' => [
+						'tickFormat' => [
+							'locale' => 'en-US',
+							'useGrouping' => true,
+							'applyToDataLabels' => true,
+						],
+						"datalabels" => [
+							"anchor" => "end",
+							"align" => "end",
+							"color" => "#000",
+						],
+						// 'datalabels' => [
+						// 	'color' => "#fff",
+						// ],
+					
+					],
+					// 'scales' => [
+					// 	'yAxes' => [
+					// 		'display' => $chartType !== 'pie',
+					// 		['ticks'=> [
+					// 			'max' => 100, 
+					// 			// 'beginAtZero' => true,
+					// 			// 'color' => '#000'
+					// 			]
+					// 		],
+					// 	],
+					// ],
+				];
+
+				// 'scales' => [
+				// 	'y' => $chartType === 'pie' ? [
+				// 		'display' => false,
+				// 	] 
+		}
+		
+		public function calculateMaxValues($categoryVal, $prevYear, $currYear, $channelCodes, $lastThreeDays) {
+			$maxValues = [];
+			$chartConfigs2 = [
+				['year' => $prevYear, 'type' => 'line', 'category' => $categoryVal, 'canvasId' => 'myChart'],
+				['year' => $currYear, 'type' => 'line', 'category' => $categoryVal, 'canvasId' => 'myChart2'],
+			];
+		
+			foreach ($chartConfigs2 as $config) {
+				// $isPerChannel = request('dataDisplay') === 'perChannel';
+				$isPerChannel = true;
+				$chartData = $this->generateChartData($config['year'], $config['type'], $config['category'], $isPerChannel, $channelCodes, $lastThreeDays);
+				$dataEntries = $chartData['data']['datasets'];
+		
+				foreach ($dataEntries as $dataset) {
+					$maxVal = $dataset['maxVal'];
+					if (!isset($maxValues[$config['category']]) || $maxVal > $maxValues[$config['category']]) {
+						$buffer = $maxVal * 0.2; // 20% buffer
+						$maxValues[$config['category']] = $maxVal + $buffer;
+					}
+				}
+			}
+		
+			return $maxValues;
+		}
+
+
+		public function generatePDF2()
+		{
+
+			$data = ['title' => 'Welcome to Laravel PDF Export'];
+
+			// Load a view and pass data to it
+			$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-snappy', $data);
+		
+			// Download the generated PDF
+			return $pdf->download('document.pdf');
+			
+		}
+
+
+
 	}
