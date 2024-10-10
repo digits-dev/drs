@@ -40,7 +40,6 @@ use App\Http\Controllers\EtpBirReportController;
 use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
 use App\Http\Controllers\EtpStoreSyncReportController;
 use App\Http\Controllers\EtpTenderReportController;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -55,6 +54,8 @@ use App\Http\Controllers\EtpTenderReportController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/query', [StoreSaleController::class, 'StoresSalesFromPosEtp']);
 
 Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
     Route::post('login', [CBHook::class, 'postLogin'])->name('postLogin');
