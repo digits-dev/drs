@@ -233,6 +233,32 @@ class StoreSale extends Model
         )->limit(10)->get();
     }
 
+    //FROM ETP
+    public function scopeGetStoresSalesFromPosEtp(){
+        $data = 
+        //DB::connection('sqlsrv')->select(DB::raw('exec [SP_Custom_SalesReport] 100,"100","0572",20240919,20241004'));
+        DB::connection('sqlsrv')->select(DB::raw("
+            SELECT 
+                C.Warehouse AS 'STORE ID',
+                C.InvoiceNumber AS 'RECEIPT #',
+                C.CreateDate AS 'SOLD DATE',
+                C.ItemNumber AS 'ITEM NUMBER',
+                C.InvoiceQuantity AS 'QTY SOLD',
+                C.SalesPrice AS 'SOLD PRICE',
+                C.LotNumber AS 'ITEM SERIAL',
+                C.SalesPerson AS 'SALES PERSON'
+            FROM CashOrderTrn C (nolock)
+            WHERE 
+                C.Company = 100
+                AND C.Division = '100'
+                AND C.InvoiceType = 31
+                AND C.CreateDate BETWEEN '20240919' AND '20240921'
+                AND C.FreeField2 = '0'
+        "));
+        
+        return $data;
+    }
+
     public static function boot()
     {
         parent::boot();

@@ -78,6 +78,54 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'imfs' => [
+            'driver' => 'mysql',
+            'host' => env('DB_IMFS_HOST', '127.0.0.1'),
+            'port' => env('DB_IMFS_PORT', '3306'),
+            'database' => env('DB_IMFS_DATABASE', 'dtc_digits_imfs_v3'),
+            'username' => env('DB_IMFS_USERNAME', 'root'),
+            'password' => env('DB_IMFS_PASSWORD', ''),
+            'unix_socket' => env('DB_IMFS_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+            'modes' => [
+                //'ONLY_FULL_GROUP_BY', // Disable this to allow grouping by one column
+                'STRICT_TRANS_TABLES',
+                'NO_ZERO_IN_DATE',
+                'NO_ZERO_DATE',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                // 'NO_AUTO_CREATE_USER',
+                'NO_ENGINE_SUBSTITUTION'
+            ],
+        ],
+
+        'masterfile' => [
+            'driver' => 'mysql',
+            'host' => env('DB_MASTERFILE_HOST', '127.0.0.1'),
+            'port' => env('DB_MASTERFILE_PORT', '3306'),
+            'database' => env('DB_MASTERFILE_DATABASE', 'dtc_digits_masterfile'),
+            'username' => env('DB_MASTERFILE_USERNAME', 'root'),
+            'password' => env('DB_MASTERFILE_PASSWORD', ''),
+            'unix_socket' => env('DB_MASTERFILE_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+            'modes' => [
+                //'ONLY_FULL_GROUP_BY', // Disable this to allow grouping by one column
+                'STRICT_TRANS_TABLES',
+                'NO_ZERO_IN_DATE',
+                'NO_ZERO_DATE',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                // 'NO_AUTO_CREATE_USER',
+                'NO_ENGINE_SUBSTITUTION'
+            ],
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DATABASE_URL'),

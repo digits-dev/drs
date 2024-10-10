@@ -33,6 +33,7 @@ use Mail;
 use App\Models\ReportPrivilege;
 use Illuminate\Support\Facades\Response;
 use Rap2hpoutre\FastExcel\FastExcel;
+use App\Models\Counter;
 
 class StoreSaleController extends Controller
 {
@@ -245,22 +246,25 @@ class StoreSaleController extends Controller
         // Group sales data by store ID
         $groupedSalesData = collect($result)->groupBy('STORE ID');
 
-        $toExcel = [];
-        $toExcelContent = [];
-     
         foreach ($groupedSalesData as $storeId => $storeData) {
             $time = microtime(true);
             $batch_number = str_replace('.', '', $time);;
             $folder_name = "$batch_number-" . Str::random(5);
             $dateNow = Carbon::now()->format('Ymd');
             $excel_file_name = "stores-sales-$dateNow.xlsx";
-            $excel_path = "store-sales-upload-test/$folder_name/$excel_file_name";
+            $excel_path = "store-sales-upload/$folder_name/$excel_file_name";
     
-            if (!file_exists(storage_path("app/store-sales-upload-test/$folder_name"))) {
-                mkdir(storage_path("app/store-sales-upload-test/$folder_name"), 0777, true);
+            if (!file_exists(storage_path("app/store-sales-upload/$folder_name"))) {
+                mkdir(storage_path("app/store-sales-upload/$folder_name"), 0777, true);
             }
+            $toExcelContent = [];
+            // Initialize the cache arrays
+            $itemMasterCache = [];
+            $masterfileCache = [];
             // Create Excel Data
+
             foreach($storeData as &$excel){
+                $counter = Counter::where('id',1)->value('reference_code');
                 $modified = [];
                 foreach ($excel as $key => $value) {
                     // Replace spaces with underscores in keys
@@ -268,26 +272,49 @@ class StoreSaleController extends Controller
                     $modified[$newKey] = $value;
                 }
                 $excel = $modified;
-                $toExcel['reference_number'] = 1;
+                // ITEM MASTERS CACHING
+                $itemNumber = $excel['ITEM_NUMBER'];
+                if (isset($itemMasterCache[$itemNumber])) {
+                    // Retrieve from cache if exists
+                    $item_master = $itemMasterCache[$itemNumber];
+                } else {
+                    // Query the database and store in cache
+                    $item_master = DB::connection('imfs')->table('item_masters')->where('digits_code', $itemNumber)->first();
+                    $itemMasterCache[$itemNumber] = $item_master;
+                }
+
+                // MASTERFILE CACHING
+                $cusCode = "CUS-" . $excel['STORE_ID'];
+                if (isset($masterfileCache[$cusCode])) {
+                    // Retrieve from cache if exists
+                    $masterfile = $masterfileCache[$cusCode];
+                } else {
+                    // Query the database and store in cache
+                    $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
+                    $masterfileCache[$cusCode] = $masterfile;
+                }
+                $toExcel = [];
+                $toExcel['reference_number'] = $counter;
                 $toExcel['system'] = 'POS';
                 $toExcel['org'] = 'DIGITS';
                 $toExcel['report_type'] = 'STORE SALES';
-                $toExcel['channel_code'] = 'RTL';
-                $toExcel['customer_location'] = 'RTL';
-                $toExcel['receipt_number'] = 'RTL';
-                $toExcel['sold_date'] = 'RTL';
-                $toExcel['channel_code'] = 'RTL';
+                $toExcel['channel_code'] = $masterfile->channel_code_id;
+                $toExcel['customer_location'] = $masterfile->cutomer_name;
+                $toExcel['receipt_number'] = $excel['RECEIPT_#'];
+                $toExcel['sold_date'] = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
-                $toExcel['rr_ref'] = 'RTL';
-                $toExcel['item_description'] = 'RTL';
-                $toExcel['qty_sold'] = 'RTL';
-                $toExcel['sold_price'] = 'RTL';
-                $toExcel['net_sales'] = 'RTL';
-                $toExcel['store_cost'] = 'RTL';
-                $toExcel['store_cost_eccom'] = 'RTL';
-                $toExcel['landed_cost'] = 'RTL';
+                $toExcel['rr_ref'] = $item_master->current_srp ? $item_master->digits_code : 'GWP';
+                $toExcel['item_description'] = $item_master->item_description;
+                $toExcel['qty_sold'] = $excel['QTY_SOLD'];
+                $toExcel['sold_price'] = $excel['SOLD_PRICE'];
+                $toExcel['net_sales'] = $excel['SOLD_PRICE'];
+                $toExcel['store_cost'] = $item_master->current_srp;
+                $toExcel['store_cost_eccom'] = $excel['ecom_price'];
+                $toExcel['landed_cost'] = $item_master->landed_cost;
                 $toExcel['sales_memo_ref'] = 'RTL';
                 $toExcelContent[] = $toExcel;
+
+                Counter::where('id',1)->increment('reference_code');
             }
             // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
             Excel::store(new StoreSalesExcel($toExcelContent), $excel_path, 'local');
@@ -311,7 +338,5 @@ class StoreSaleController extends Controller
             // Dispatch the processing job for each store
             ProcessStoreSalesUploadJob::dispatch($args);
         }
-
-        return 'Success';
     }
 }
