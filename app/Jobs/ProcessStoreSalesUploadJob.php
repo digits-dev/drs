@@ -6,6 +6,7 @@ use App\Imports\StoreSalesImport;
 use App\Models\StoreSalesUpload;
 use App\Models\StoreSalesUploadLine;
 use App\Jobs\StoreSalesImportJob;
+use App\Jobs\StoreSalesImportJobPull;
 use Exception;
 use Facade\FlareClient\Stacktrace\File;
 use Illuminate\Bus\Queueable;
@@ -31,6 +32,7 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
     public $timeout = 3600;
     public $from_date;
     public $to_date;
+    public $data_type;
     public $store_sales_uploads_id;
 
     /**
@@ -50,6 +52,7 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
         $this->created_by = $args['created_by'];
         $this->from_date = $args['from_date'];
         $this->to_date = $args['to_date'];
+        $this->data_type = $args['data_type'] ?? NULL;
         $store_sales_upload = StoreSalesUpload::create([
             'batch' => $this->batch_number,
             'folder_name' => $this->folder_name,
@@ -103,7 +106,11 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
 
             $store_sales_upload_line->save();
 
-            $batch->add(new StoreSalesImportJob($store_sales_upload_line->id));
+            if($this->data_type == '' || $this->data_type == NULL){
+                $batch->add(new StoreSalesImportJob($store_sales_upload_line->id));
+            }else{
+                $batch->add(new StoreSalesImportJobPull($store_sales_upload_line->id));
+            }
         }
 
         $store_sales_upload->update(['status' => 'IMPORTING']);

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Exports\StoreSalesExport;
 use App\Exports\StoreTestExportBatches;
+use App\Exports\StoreSalesExcel;
 use App\Imports\StoreSalesImport;
 use App\Jobs\ProcessStoreSalesUploadJob;
 use App\Jobs\StoreSalesImportJob;
@@ -198,55 +199,7 @@ class StoreSaleController extends Controller
         return Excel::download($export, 'store-sales-'.date("Ymd").'-'.date("h.i.sa").'.xlsx');
     }
 
-    // public function exportSales(Request $request) {
-   
-    //     $filename = $request->input('filename').'.csv';
-    //     $filters = $request->all();
-    //     // $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-    //     //     ->where('is_final', 1)->limit(100)->get();
-    //     $storeSalesCount = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-    //     ->where('is_final', 1)->count();
-    //     $chunkSize = 10000;
-    //     $numberOfChunks = ceil($storeSalesCount / $chunkSize);
-    //     $folder = 'store-sales'.'-'.now()->toDateString() . '-' . str_replace(':', '-', now()->toTimeString()) . '-' . CRUDBooster::myId();
-    //     $batches = [
-    //         new ExportStoreSalesCreateFileJob($chunkSize, $folder, $filters, $filename)
-    //     ];
-    
-    //     if ($storeSalesCount > $chunkSize) {
-    //         $numberOfChunks = $numberOfChunks - 1;
-    //         for ($numberOfChunks; $numberOfChunks > 0; $numberOfChunks--) {
-    //             $batches[] = new AppendMoreStoreSalesJob($numberOfChunks, $chunkSize, $folder, $filters, $filename);
-    //         }
-    //     }
-    
-    //     $batch = Bus::batch($batches)
-    //         ->name('Export Store Sales')
-    //         ->then(function (Batch $batch) use ($folder) {
-    //             $path = "exports/{$folder}/ExportStoreSales.csv";
-    //             // upload file to s3
-    //             $file = storage_path("app/{$folder}/ExportStoreSales.csv");
-    //             Storage::disk('s3')->put($path, file_get_contents($file));
-    //             // send email to admin
-    //         })
-    //         ->catch(function (Batch $batch, Throwable $e) {
-    //             // send email to admin or log error
-    //         })
-    //         ->finally(function (Batch $batch) use ($folder) {
-    //             // delete local file
-    //             // Storage::disk('local')->deleteDirectory($folder);
-    //         })
-    //         ->dispatch();
-
-    //     session()->put('lastBatchId',$batch->id);
-    //     session()->put('folder',$folder);
-    //     // session()->put('filename',$filename);
-
-    //     return [
-    //         'batch_id' => $batch->id,
-    //         'folder' => $folder
-    //     ];
-    // }
+  
     public function exportSales(Request $request) {
         $filename = $request->input('filename').'.tsv';
         $filters = $request->all();
@@ -286,83 +239,79 @@ class StoreSaleController extends Controller
     
     }
 
-    // public function exportSales(Request $request) {
-    //     $filename = $request->input('filename') . '.xlsx';
-    //     $filters = $request->all();
-    //     $userReport = ReportPrivilege::myReport(1, CRUDBooster::myPrivilegeId());
-    //     $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-    //         ->where('is_final', 1)->get();
+    //PULL FROM ETP
+    public function StoresSalesFromPosEtp(){
+        $result = StoreSale::getStoresSalesFromPosEtp();
+        // Group sales data by store ID
+        $groupedSalesData = collect($result)->groupBy('STORE ID');
 
-    //     // Prepare data for export
-    //     $sales = explode("`,`", $userReport->report_query);
-    //     $headerRow = explode(",", $userReport->report_header);
-
-    //     // // Collect data including headers
-    //     $data = $query->map(function ($item) use ($sales, $headerRow) {
-    //         $salesData = [];
-    //         foreach ($sales as $key => $value) {
-    //             $salesData[$headerRow[$key]] = $item->$value;
-    //         }
-    //         return $salesData;
-    //     })->values()->toArray();
-        
-    //     // Create and return the response using FastExcel
-    //     return (new FastExcel($data))->download($filename);
-    // }
-
-    // public function exportSales(Request $request) {
-    //     $filename = $request->input('filename') . '.xlsx';
-    //     $filters = $request->all();
-    //     $userReport = ReportPrivilege::myReport(1, CRUDBooster::myPrivilegeId());
-    //     $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
-    //         ->where('is_final', 1)->take(100);
+        $toExcel = [];
+        $toExcelContent = [];
+     
+        foreach ($groupedSalesData as $storeId => $storeData) {
+            $time = microtime(true);
+            $batch_number = str_replace('.', '', $time);;
+            $folder_name = "$batch_number-" . Str::random(5);
+            $dateNow = Carbon::now()->format('Ymd');
+            $excel_file_name = "stores-sales-$dateNow.xlsx";
+            $excel_path = "store-sales-upload-test/$folder_name/$excel_file_name";
     
-    //     // Create a callback to process data in chunks
-    //     $dataCallback = function () use ($query, $userReport) {
-    //         $chunkSize = 10; // Define your chunk size here
-    //         $query->chunk(10, function ($items) use ($userReport) {
-    //             // Prepare data for export
-    //             $sales = explode("`,`", $userReport->report_query);
-    //             $headerRow = explode(",", $userReport->report_header);
-    //             foreach ($items as $item) {
-    //                 $salesData = [];
-    //                 foreach ($sales as $key => $value) {
-    //                     $salesData[$headerRow[$key]] = $item->$value;
-    //                 }
-    //                 yield $salesData;
-    //             }
-    //         });
-    //     };
-    //     dd($dataCallback);
-    //     // Create and return the response using FastExcel
-    //     return (new FastExcel($dataCallback))->download($filename);
-    // }
-
-    public function progressExport(Request $request){
-        try{
-            $batchId = $request->batchId ?? session()->get('lastBatchId');
-            if(DB::table('job_batches')->where('id', $batchId)->count()){
-                $response = DB::table('job_batches')->where('id', $batchId)->first();
-                return response()->json($response);
+            if (!file_exists(storage_path("app/store-sales-upload-test/$folder_name"))) {
+                mkdir(storage_path("app/store-sales-upload-test/$folder_name"), 0777, true);
             }
-        }catch(Exception $e){
-            Log::error($e);
-            dd($e);
+            // Create Excel Data
+            foreach($storeData as &$excel){
+                $modified = [];
+                foreach ($excel as $key => $value) {
+                    // Replace spaces with underscores in keys
+                    $newKey = str_replace(' ', '_', $key);
+                    $modified[$newKey] = $value;
+                }
+                $excel = $modified;
+                $toExcel['reference_number'] = 1;
+                $toExcel['system'] = 'POS';
+                $toExcel['org'] = 'DIGITS';
+                $toExcel['report_type'] = 'STORE SALES';
+                $toExcel['channel_code'] = 'RTL';
+                $toExcel['customer_location'] = 'RTL';
+                $toExcel['receipt_number'] = 'RTL';
+                $toExcel['sold_date'] = 'RTL';
+                $toExcel['channel_code'] = 'RTL';
+                $toExcel['item_number'] = $excel['ITEM_NUMBER'];
+                $toExcel['rr_ref'] = 'RTL';
+                $toExcel['item_description'] = 'RTL';
+                $toExcel['qty_sold'] = 'RTL';
+                $toExcel['sold_price'] = 'RTL';
+                $toExcel['net_sales'] = 'RTL';
+                $toExcel['store_cost'] = 'RTL';
+                $toExcel['store_cost_eccom'] = 'RTL';
+                $toExcel['landed_cost'] = 'RTL';
+                $toExcel['sales_memo_ref'] = 'RTL';
+                $toExcelContent[] = $toExcel;
+            }
+            // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
+            Excel::store(new StoreSalesExcel($toExcelContent), $excel_path, 'local');
+
+            // Full path of the stored Excel file
+            $full_excel_path = storage_path('app') . '/' . $excel_path;
+
+            // Prepare arguments for the job
+            $args = [
+                'batch_number' => $batch_number,
+                'excel_path' => $full_excel_path,
+                'report_type' => $this->report_type,
+                'folder_name' => $folder_name,
+                'file_name' => $excel_file_name,
+                'created_by' => CRUDBooster::myId(),
+                'from_date' => $from_date,
+                'to_date' => $to_date,
+                'data_type' => 'PULL'
+            ];
+
+            // Dispatch the processing job for each store
+            ProcessStoreSalesUploadJob::dispatch($args);
         }
-    }
 
-    public function sendEmail(Request $request){
-        // Retrieve data from the request
-        $data = [];
-        $data['folder'] = $request->folderName;
-        $data['filename'] = $request->filename;
-        $email = DB::table('cms_users')->where('id', CRUDBooster::myId())->first();
-        $data['employee'] = $email->name;
-        
-        // Send email with attachment
-        Mail::to($email->email)->send(new SendSalesToEmail($data));
-
-        // You can return a response if needed
-        return response()->json(['message' => 'Email sent successfully']);
+        return 'Success';
     }
 }
