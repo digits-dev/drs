@@ -1,10 +1,87 @@
 @extends('crudbooster::admin_template')
 @push('head')
-    <style>
-
-        body{
-                overflow: hidden;
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style type="text/css">
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+        .form-content {
+                display: flex;
+                background: #fff;
+                flex-direction: column;
+                font-family: 'Poppins', sans-serif !important;
+                border-radius: 10px;
             }
+        body{
+                overflow: scroll;
+            }
+
+            .header-title{
+        background: #3C8DBC !important;
+        color: #fff !important;
+        font-size: 16px;
+        font-weight: 500;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    
+    .content-panel{
+        padding: 15px;
+    }
+    
+    .inputs-container{
+        display: flex;
+        gap: 10px;
+    }
+    
+    .input-container{
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+    }
+    
+    /* DATE PICKER */
+    
+    .date-input{
+        padding: 10px;
+        border: 1px solid #3C8DBC;
+        border-radius: 7px;
+    }
+    
+    .date-input:focus {
+        border: 2px solid #3C8DBC; /* Change this to your desired focus color */
+        outline: none; /* Optional: remove the default outline */
+    }
+    
+    
+    .select2-container--default .select2-selection--multiple {
+        border-color: #3498db !important;
+        border-radius: 7px;
+        padding: 6px 0 8px 10px;
+    }
+    
+    .select2-container--default .select2-selection__choice {
+        background-color: #3498db !important; 
+        color: #ffffff !important; 
+        border: 1px solid #2980b9 !important; 
+    }
+    
+    .select2-container--default .select2-selection__choice:hover {
+        background-color: #2980b9 !important;
+        color: #ffffff !important;
+        
+    }
+    
+    .form-button .btn-submit{
+        padding: 9px 20px;
+        background: #3C8DBC;
+        border: 1.5px solid #1d699c;
+        border-radius: 10px;
+        color: white;
+    }
+
+    .form-button .btn-submit:hover{
+        opacity: 0.7;
+    }
+
     
         ::-webkit-scrollbar {
             width: 8px;
@@ -165,49 +242,61 @@
     </style>
 @endpush
 @section('content')
-    <div class="panel panel-default" style="border-radius: 10px">
-        <div class="panel-body">
 
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <form action="">
-                        <div class="row">
-                            <div class="col-md-4">
+<form class="panel panel-default form-content">
+    <div class="panel-heading header-title">Filter Data</div>
+    <div class="content-panel">
+        <p><span style="color: red">Note:</span> Please fill all the fields</p>
+        <div class="inputs-container">
+            <div class="input-container">
+                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name</p>
+                <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple">
+                    <option selected value="all">All</option>
+                    @foreach ($customers as $customer)
+                        <option value="{{ str_replace('CUS-', '', $customer->customer_code) }}">{{$customer->cutomer_name}}</option>
+                    @endforeach
+                </select>
 
-                                <label for="">Param1</label>
-                                <div class="input-group">
-                                    <input type="date" class="form-control" name="p1" id="p1">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                
-                        <label for="">Param1</label>
-                        <div class="input-group">
-                            <input type="date" class="form-control" name="p2" id="p2">
-                        </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="">Action</label>
-                                <div class="input-group">
-                                    <button class="btn btn-primary btn-sm form-control" id="sBtn">Filter</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                    </form>
-                </div>
+                @php
+                    $customerCodes = $customers->pluck('customer_code')->toArray();
+                    $customerCodesWithoutPrefix = array_map(function($code) {
+                        return str_replace('CUS-', '', $code);
+                    }, $customerCodes);
+
+                    $all = implode(', ', $customerCodesWithoutPrefix);
+                @endphp
+
+                <textarea id="all_customer" style="display: none">{{ $all }}</textarea>    
             </div>
-
-            <div class="panel panel-default" style="padding: 0px; border: none; display: none;" id="rawData">
+            <div class="input-container">
+                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From</p>
+                <input class="date-input" type="date" required placeholder="Select Date" name="date_from" id="date_from" required>
+            </div>
+            <div class="input-container">
+                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To</p>
+                <input class="date-input" type="date" required placeholder="Select Date" name="date_to" id="date_to" required>
+            </div>
+        </div>
+        <div>
+            <div class="form-button pull-right" style="margin-top: 15px;">
+                <button class="btn-submit" id="btn-submit">Search</button>
+            </div>
+        </div>
+    </div>
+</form>
+            <div class="panel panel-default" style="padding: 15px; border-radius: 10px; display: none;" id="rawData">
                 <div style="overflow-x: scroll;">
                     <table class="table" id="tender_report">
                         <thead>
                             <tr>
                                 <th>Date</th>
+                                <th>Time</th>
                                 <th>Store ID</th>
+                                <th>Account ID</th>
                                 <th>Receipt#</th>
-                                <th>Name of Customer</th>
+                                <th>Name</th>
                                 <th>Amount</th>
+                                <th>Posted</th>
                                 <th>Tender</th>
                                 <th>Credit Card Name</th>
                                 <th>Credit Card Number</th>
@@ -215,20 +304,31 @@
                                 <th>EDC</th>
                                 <th>Expiry</th>
                                 <th>AP No</th>
-                                <th>Commission %</th>
+                                <th>MDR</th>
                                 <th>OP ID</th>
-                                <th>User</th>
+                                <th>Details</th>
+                                <th>Cashier</th>
+                                <th>Branch</th>
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                                $customerMap = [];
+                                foreach ($customers as $customer) {
+                                    $customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
+                                }
+                            @endphp
                             @if (!empty($tender_data) && is_array($tender_data))
                                 @foreach ($tender_data as $row)
                                     <tr>
                                         <td>{{ $row->DATE }}</td>
-                                        <td>{{ $row->{'STORE ID'} }}</td>
+                                        <td>{{ $row->TIME }}</td>
+                                        <td>{{  $row->{'STORE ID'} }}</td>
+                                        <td></td>
                                         <td>{{ $row->{'RECEIPT#'} }}</td>
                                         <td>{{ $row->{'Name of Customer'} }}</td>
                                         <td>{{ $row->AMOUNT }}</td>
+                                        <td></td>
                                         <td>{{ $row->TENDER }}</td>
                                         <td>{{ $row->{'Credit Card Name'} }}</td>
                                         <td>{{ $row->{'Credit Card Number'} }}</td>
@@ -238,7 +338,9 @@
                                         <td>{{ $row->{'AP NO'} }}</td>
                                         <td>{{ $row->{'Commission %'} }}</td>
                                         <td>{{ $row->{'OP ID'} }}</td>
+                                        <td></td>
                                         <td>{{ $row->User }}</td>
+                                        <td>{{ $row->customerName }}</td>
                                     </tr>
                                 @endforeach
                             @endif
@@ -246,9 +348,6 @@
                     </table>
                 </div>
             </div>
-
-        </div>
-    </div>
 
     <div class="spinner-overlay" id="spinner" style="display: none;">
         <div class="spinner">
@@ -258,6 +357,7 @@
 @endsection
 
 @push('bottom')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- DataTables Buttons JS -->
 <script src="https://cdn.datatables.net/buttons/2.3.1/js/dataTables.buttons.min.js"></script>
 <!-- JSZip for Excel export -->
@@ -265,6 +365,10 @@
 <!-- Buttons for Excel export -->
 <script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
     <script>
+        $('.js-example-basic-multiple').select2({
+            placeholder: "Select Store",
+        });
+
         $(document).ready(function() {
             $('#tender_report').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
@@ -288,77 +392,17 @@
             });
         });
 
-        $(document).ready(function() {
-            const table = $('#tender_report').DataTable();
-
-            $('#tender_report tbody').on('click', 'td', function() {
-                const cellData = $(this).text();
-
-                $(this).css('background-color', '#c8e6c9');
-
-                // Check if the Clipboard API is supported
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(cellData)
-                        .then(() => {
-                            // Create a note element
-                            const note = $(
-                            '<br><span class="copy-note"> <i class="fa fa-check"></i> Copied </span>');
-
-                            // Append the note to the clicked cell
-                            $(this).append(note);
-
-                            // Hide note after 1 second
-                            setTimeout(() => {
-                                note.remove(); // Remove the note
-                            }, 1000);
-
-                            // Reset cell color after 1 second
-                            setTimeout(() => {
-                                $(this).css('background-color', ''); // Reset background color
-                            }, 1000);
-                        })
-                        .catch(err => {
-                            console.error('Failed to copy: ', err);
-                        });
-                } else {
-                    // Fallback for older browsers
-                    const textarea = document.createElement('textarea');
-                    textarea.value = cellData;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                        document.execCommand('copy');
-
-                        // Create a note element
-                        const note = $(
-                            '<br><span class="copy-note"> <i class="fa fa-check"></i> Copied </span>');
-
-                        // Append the note to the clicked cell
-                        $(this).append(note);
-
-                        // Hide note after 1 second
-                        setTimeout(() => {
-                            note.remove(); // Remove the note
-                        }, 1000);
-
-                        // Reset cell color after 1 second
-                        setTimeout(() => {
-                            $(this).css('background-color', ''); // Reset background color
-                        }, 1000);
-                    } catch (err) {
-                        console.error('Failed to copy using execCommand: ', err);
-                    } finally {
-                        document.body.removeChild(textarea);
-                    }
-                }
-            });
-        });
-
-        $('#sBtn').on('click', function(event) {
+        $('#btn-submit').on('click', function(event) {
             event.preventDefault(); 
+
+            let customer = $('#customer').val();
+            if (customer == 'all'){
+                const allcustomer = $('#all_customer').val().split(',').map(item => item.trim());
+                customer = allcustomer;
+            }
             
-            var p1 = $('#p1').val();
-            var p2 = $('#p2').val();
+            const dateFrom = $('#date_from').val();
+            const dateTo = $('#date_to').val();
 
             $('#spinner').show();
 
@@ -366,8 +410,9 @@
                 url: 'generateTender/report',
                 method: 'POST',
                 data: { 
-                    p1: p1,
-                    p2: p2,
+                    customer: customer,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
                     _token: '{{ csrf_token() }}',
                 },
                 success: function(response) {
@@ -378,10 +423,13 @@
                     response.forEach(function(row) {
                         var tr = '<tr>' +
                             '<td>' + row.DATE + '</td>' +
+                            '<td>' + row.TIME + '</td>' +
                             '<td>' + row['STORE ID'] + '</td>' +
+                            '<td></td>' +
                             '<td>' + row['RECEIPT#'] + '</td>' +
                             '<td>' + row['Name of Customer'] + '</td>' +
                             '<td>' + row.AMOUNT + '</td>' +
+                            '<td></td>' +
                             '<td>' + row.TENDER + '</td>' +
                             '<td>' + row['Credit Card Name'] + '</td>' +
                             '<td>' + row['Credit Card Number'] + '</td>' +
@@ -391,7 +439,9 @@
                             '<td>' + row['AP NO'] + '</td>' +
                             '<td>' + row['Commission %'] + '</td>' +
                             '<td>' + row['OP ID'] + '</td>' +
+                            '<td></td>' +
                             '<td>' + row.User + '</td>' +
+                            '<td>' + row.customerName + '</td>' +
                             '</tr>';
                         tbody.append(tr); // Add the new row to the table body
                     });
