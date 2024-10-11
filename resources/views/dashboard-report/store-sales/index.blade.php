@@ -57,7 +57,7 @@
         <a href="{{ route('weekly_export_excel') }}" class="btn btn-primary btn-sm pull-right">
             <i class="fa fa-download" aria-hidden="true"></i> Export to Excel
         </a>
-        <a href="{{ route('weekly_export_pdf') }}" class="btn btn-primary btn-sm pull-right">
+        <a id="exportPDF" href="{{ route('weekly_export_pdf') }}?perChannel=false&category=total" class="btn btn-primary btn-sm pull-right">
             <i class="fa fa-download" aria-hidden="true"></i> Export to PDF
         </a>
     </div>
@@ -219,10 +219,27 @@
     //     radio.addEventListener('change', renderCharts);
     // });
 
-    document.getElementById('updateChartButton').addEventListener('click', function() {
-        const selectedCategory = document.getElementById('categorySelector').value;
-        updateCharts(selectedCategory);
+
+
+    $('#updateChartButton').on('click', function() {
+        const selectedCategory = $('#categorySelector').val();
+        const isPerChannel = $('input[name="dataDisplay"]:checked').val() === 'perChannel'; 
+        const pdfLink = `{{ route('weekly_export_pdf') }}?perChannel=${isPerChannel}&category=${selectedCategory}`;
+
+        updateCharts(selectedCategory); 
+
+        $('#exportPDF').attr('href', pdfLink); 
     });
+
+    // document.getElementById('updateChartButton').addEventListener('click', function() {
+    //     const selectedCategory = document.getElementById('categorySelector').value;
+    //     const isPerChannel = document.querySelector('input[name="dataDisplay"]:checked').value === 'perChannel'; 
+    //     const pdfLink = `{{ route('weekly_export_pdf') }}?perChannel=${isPerChannel}&category=${selectedCategory}`;
+
+    //     updateCharts(selectedCategory);
+
+    //     document.getElementById('exportPDF').setAttribute('href', pdfLink);
+    // });
 
     // Initial rendering of charts
     renderCharts();
@@ -230,6 +247,8 @@
   
     function renderCharts(selectedCategory) {
         const isPerChannel = document.querySelector('input[name="dataDisplay"]:checked').value === 'perChannel'; 
+
+
 
         if(isPerChannel){
             $('.canvas1').show();
@@ -240,13 +259,16 @@
             // Calculate maximum values
             const maxValue = calculateMaxValues(selectedCategory)[selectedCategory];
             const buffer = maxValue * 0.15; 
-            const maxValWithBuffer = maxValue + buffer
+            // const maxValWithBuffer = Math.floor(maxValue + buffer);
+            // const maxValWithBuffer = Math.round((maxValue + buffer) / 1000) * 1000;
+            const maxValWithBuffer = Math.round((maxValue + buffer) / 1000000) * 1000000;
+            
 
             chartConfigs.forEach(config => {
 
                 const category = selectedCategory ? selectedCategory : config.category;
 
-                const chartData = generateDataForPerChannel(config.type, true, category, config.year);
+                const chartData = generateDataPerChannel(config.type, true, category, config.year);
 
                 const ctx = document.getElementById(config.canvasId);
                 
@@ -304,14 +326,14 @@
         const maxValues = {};
 
         const chartConfigs2 = [
-            { year: '2021', type: 'line', category: categoryVal },
-            { year: '2022', type: 'line', category: categoryVal },
+            { year: prevYear, type: 'line', category: categoryVal },
+            { year: currYear, type: 'line', category: categoryVal },
         ];
 
 
         chartConfigs2.forEach(config => {
 
-            const chartData = generateDataForPerChannel(config.type, true, config.category, config.year);
+            const chartData = generateDataPerChannel(config.type, true, config.category, config.year);
 
             const dataEntries = chartData.data.datasets;
 
@@ -520,7 +542,6 @@
 
         // const pieLabels = [`${prevYear}`, `${currYear}`];
 
-
         return {
             type: chartType,
             data: {
@@ -572,7 +593,7 @@
             }
         }
     }
-    function generateDataForPerChannel(chartType, isPerChannel = true, dataCategory = 'total', year){
+    function generateDataPerChannel(chartType, isPerChannel = true, dataCategory = 'total', year){
 
         let labels;
         const datasets = [];
@@ -603,6 +624,12 @@
             const weeks = channel[1][year]?.weeks;
             const lastThreeDays = channel[1][year]?.last_three_days;
 
+            console.group(channelCode)
+                console.log(weeks);
+                console.log(lastThreeDays);
+                console.log(channel);
+            console.groupEnd();
+
             switch (channelCode) {
                 case 'TOTAL-RTL':
                     channelCode = 'RETAIL';
@@ -632,14 +659,16 @@
                 }
 
                 if(dataCategory === 'last_three_days'){
-                    lastThreeDays.forEach(day => {
-                        const netSales = day?.sum_of_net_sales ?? 0;
+                    lastThreeDays && lastThreeDays.forEach(day => {
+                        // const netSales = day?.sum_of_net_sales ?? 0;
+                        // dataStorage.push(netSales);
+                        const netSales = day.sum_of_net_sales ?? 0;
                         dataStorage.push(netSales);
                     });
                 } else {
                     keys.forEach(key => {
-                    const netSales = weeks[key]?.sum_of_net_sales ?? 0;
-                    dataStorage.push(netSales);
+                        const netSales = weeks && weeks[key] ? weeks[key]?.sum_of_net_sales : 0;
+                        dataStorage.push(netSales);
                     });
                 }
 
@@ -715,6 +744,8 @@
         }
     }
 
+    
+
     // All Data Charts
     // const all = document.getElementById('all');
     // const alldata = generateDataForOverallTotal('line', false, 'last_three_days', '2021', '2022');
@@ -722,11 +753,11 @@
 
 
     // const all2 = document.getElementById('all2');
-    // const alldata2 = generateDataForPerChannel('bar', true, 'last_three_days', '2021');
+    // const alldata2 = generateDataPerChannel('bar', true, 'last_three_days', '2021');
     // new Chart(all2, alldata2);
 
     // const all3 = document.getElementById('all3');
-    // const alldata3 = generateDataForPerChannel('bar', true, 'last_three_days', '2022');
+    // const alldata3 = generateDataPerChannel('bar', true, 'last_three_days', '2022');
     // new Chart(all3, alldata3);
 
 });
