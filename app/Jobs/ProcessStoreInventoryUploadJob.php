@@ -2,18 +2,19 @@
 
 namespace App\Jobs;
 
-use App\Imports\StoreInventoryImport;
-use App\Models\StoreInventoryUpload;
-use App\Models\StoreInventoryUploadLine;
 use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Bus;
+use App\Models\StoreInventoryUpload;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\StoreInventoryImport;
+use App\Jobs\StoreInventoryImportJob;
+use Illuminate\Queue\SerializesModels;
+use App\Models\StoreInventoryUploadLine;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Bus;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 class ProcessStoreInventoryUploadJob implements ShouldQueue
@@ -27,6 +28,7 @@ class ProcessStoreInventoryUploadJob implements ShouldQueue
     public $created_by;
     public $timeout = 3600;
     public $from_date;
+    public $data_type;
     public $store_inventory_uploads_id;
 
     /**
@@ -45,6 +47,7 @@ class ProcessStoreInventoryUploadJob implements ShouldQueue
         $this->file_path = $args['file_path'];
         $this->created_by = $args['created_by'];
         $this->from_date = $args['from_date'];
+        $this->data_type = $args['data_type'] ?? NULL;
         $store_inventory_upload = StoreInventoryUpload::create([
             'batch' => $this->batch_number,
             'folder_name' => $this->folder_name,
@@ -99,7 +102,12 @@ class ProcessStoreInventoryUploadJob implements ShouldQueue
 
             $store_inventory_upload_line->save();
 
-            $batch->add(new StoreInventoryImportJob($store_inventory_upload_line->id));
+            if($this->data_type == '' || $this->data_type == NULL){
+                $batch->add(new StoreInventoryImportJob($store_inventory_upload_line->id));
+            }else{
+                $batch->add(new StoreInventoryImportJobPull($store_inventory_upload_line->id));
+            }
+
         }
 
         $store_inventory_upload->update(['status' => 'IMPORTING']);
