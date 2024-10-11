@@ -335,14 +335,14 @@ class StoreInventoryController extends Controller
                 // ITEM MASTERS CACHING
                 $itemNumber = $excel['ITEM_NUMBER'];
 
+                
+
                 if (isset($itemMasterCache[$itemNumber])) {
-                    // Retrieve from cache if exists
                     $item_master = $itemMasterCache[$itemNumber];
                 } else {
-                    // Query the database and store in cache
-                    $item_master = DB::connection('imfs')->table('item_masters')->where('digits_code', $itemNumber)->first();
-                    $itemMasterCache[$itemNumber] = $item_master;
+                    $itemMasterCache[$itemNumber] = $this->fetchItemData($itemNumber);
                 }
+
 
 
                 // MASTERFILE CACHING
@@ -359,20 +359,21 @@ class StoreInventoryController extends Controller
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
                 $toExcel['system'] = 'POS';
-                $toExcel['org'] = 'DIGITS';
+                $toExcel['org'] = $itemMasterCache[$itemNumber]['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
                 $toExcel['sub_inventory'] = "POS - GOOD";
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
-                $toExcel['item_description'] = $item_master->item_description;
+                $toExcel['item_description'] = $itemMasterCache[$itemNumber]['item_description'];
                 $toExcel['total_qty'] = $excel['TOTAL_QTY'];
-                $toExcel['store_cost'] = $item_master->dtp_rf;
-                $toExcel['store_cost_eccom'] = $item_master->ecom_store_margin;
-                $toExcel['landed_cost'] = $item_master->landed_cost;
+                $toExcel['store_cost'] = $itemMasterCache[$itemNumber]['store_cost'];
+                $toExcel['store_cost_eccom'] = $itemMasterCache[$itemNumber]['store_cost_eccom'];
+                $toExcel['landed_cost'] = $itemMasterCache[$itemNumber]['landed_cost'];
                 $toExcel['product_quality'] = $this->productQuality($item_master->inventory_types_id, "GOOD");
 
+                // dd($toExcel);
 
                 $toExcelContent[] = $toExcel;
 
@@ -442,6 +443,58 @@ class StoreInventoryController extends Controller
         }
 
         return null;
+    }
+
+    function prepareItemData($item, $orgName, $ecomStoreMargin = 0) {
+        return [
+            'org' => $orgName,
+            'item_description' => $item->item_description,
+            'store_cost' => $item->dtp_rf,
+            'store_cost_eccom' => $ecomStoreMargin,
+            'landed_cost' => $item->landed_cost,
+        ];
+    }
+    
+    function fetchItemData($itemNumber) {
+        // Check the 'item_masters' table
+        $itemMaster = DB::connection('imfs')
+            ->table('item_masters')
+            ->where('digits_code', $itemNumber)
+            ->first();
+        
+        if ($itemMaster) {
+            return $this->prepareItemData($itemMaster, 'DIGITS', $itemMaster->ecom_store_margin);
+        }
+    
+        // Check the 'rma_item_masters' table
+        $rmaItemMaster = DB::connection('imfs')
+            ->table('rma_item_masters')
+            ->where('digits_code', $itemNumber)
+            ->first();
+        
+        if ($rmaItemMaster) {
+            return $this->prepareItemData($rmaItemMaster, 'RMA');
+        }
+    
+        // Check the 'digits_imfs' table
+        $aimfsItemMaster = DB::connection('aimfs')
+            ->table('digits_imfs')
+            ->where('digits_code', $itemNumber)
+            ->first();
+        
+        if ($aimfsItemMaster) {
+
+            return $this->prepareItemData($aimfsItemMaster, 'ADMIN');
+        }
+    
+        // Return default values if no match is found
+        return [
+            'org' => null,
+            'item_description' => null,
+            'store_cost' => null,
+            'store_cost_eccom' => null,
+            'landed_cost' => null
+        ];
     }
 
 
