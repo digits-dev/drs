@@ -193,6 +193,23 @@ class StoreInventory extends Model
         )->limit(10)->get();
     }
 
+    //FROM ETP
+    public function scopeGetStoresSalesFromPosEtp(){
+        $data = 
+        //DB::connection('sqlsrv')->select(DB::raw('exec [SP_Custom_InventoryReportSummary] 100,'100','0572';'));
+        DB::connection('sqlsrv')->select(DB::raw("
+            select P.WareHouse 'STORE ID',
+            P.LastIssueDate 'DATE',
+            P.ItemNumber 'ITEM NUMBER',
+            P.BalanceApproved 'TOTAL QTY'
+            From ProductLocationBalance P (Nolock)
+            where P.Company= 100
+            --and P.LastIssueDate between @FromDate and @ToDate
+        "));
+        
+        return $data;
+    }
+
     public static function boot()
     {
         parent::boot();
