@@ -78,6 +78,8 @@ Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PAT
 
 Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CBBackend','check.user'], 'prefix'=>'admin'], function(){
 
+    Route::post('generateTender/report', [EtpTenderReportController::class, 'getIndex']);
+
     //import store sales
     Route::post('sales_upload/import-upload',[StoreSaleController::class, 'storeSalesUpload'])->name('store-sales.upload');
     Route::get('sales_upload/import',[StoreSaleController::class, 'storeSalesUploadView'])->name('store-sales.upload-view');
