@@ -1,6 +1,11 @@
 @extends('crudbooster::admin_template')
 @push('head')
     <style>
+
+        body{
+                overflow: hidden;
+            }
+    
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;

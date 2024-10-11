@@ -78,7 +78,7 @@ Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PAT
 
 Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CBBackend','check.user'], 'prefix'=>'admin'], function(){
 
-    Route::post('generateTender/report', [EtpTenderReportController::class, 'getIndex']);
+
 
     //import store sales
     Route::post('sales_upload/import-upload',[StoreSaleController::class, 'storeSalesUpload'])->name('store-sales.upload');
@@ -237,14 +237,15 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::any('supplier_intransit_inventory/filter',[AdminSupplierIntransitInventoriesController::class, 'filterGashaponSupplierIntransitInventory'])->name('supplier-intransit-inventory.filter');
     Route::post('supplier-intransit-inventory-concepts',[AdminSupplierIntransitInventoriesController::class, 'concepts'])->name('supplier-intransit-inventory-concepts');
    
-   
     
     // ETP ROUTES
     Route::get('etp_bir_report', [EtpBirReportController::class, 'getIndex'])->name('etp_bir_report');
     Route::get('etp_tender_report', [EtpTenderReportController::class, 'getIndex'])->name('etp_tender_report');
     Route::get('etp_storesync_report', [EtpStoreSyncReportController::class, 'getIndex'])->name('etp_storesync_report');
     Route::get('etp_storeinventorydetailed_report', [EtpStoreInventoryDetailedReportController::class, 'getIndex'])->name('etp_storeinventorydetailed_report');
-    
+
+    // TENDER REPORT
+    Route::post('generateTender/report', [EtpTenderReportController::class, 'getIndex']);
     
    
 });
