@@ -152,6 +152,29 @@
 
         </div>
     </div>
+
+
+    <div class="chart-channel">
+        <h2>Pie Chart1</h2>
+        <div class="charts">
+            <canvas id="myChart10" width="500" height="700"  ></canvas>
+            <canvas id="myChart11" width="500" height="700"  ></canvas>
+        </div>
+    </div>
+    <div class="chart-channel">
+        <h2>Pie Chart2</h2>
+        <div class="charts">
+            <canvas id="myChart12" width="500" height="700"  ></canvas>
+            <canvas id="myChart13" width="500" height="700"  ></canvas>
+        </div>
+    </div>
+    <div class="chart-channel">
+        <h2>Pie Chart3</h2>
+        <div class="charts">
+            <canvas id="myChart14" width="500" height="700"  ></canvas>
+            <canvas id="myChart15" width="500" height="700"  ></canvas>
+        </div>
+    </div>
 {{-- 
     <div class="chart-total">
         <h2>Total1</h2>
@@ -200,6 +223,7 @@
     const channelCodes = @json($channel_codes);
     const lastThreeDays = @json($lastThreeDaysDates);
     const chartInstances = {};
+    const chartInstancesPie = {};
 
     const chartConfigs = [
         { year: prevYear, type: 'line', category: 'total', canvasId: 'myChart' },
@@ -214,11 +238,46 @@
         { prevYear: prevYear, currYear: currYear, type: 'bar', category: 'total', canvasId: 'myChart8' },
         { prevYear: prevYear, currYear: currYear, type: 'pie', category: 'total', canvasId: 'myChart9' },
     ];
+    const channelsKey = [
+        {key: 'ECOMM', canvasId: 'myChart10'},
+        {key: 'TOTAL-RTL', canvasId: 'myChart11'},
+        {key: 'SC', canvasId: 'myChart12'},
+        {key: 'DLR/CRP', canvasId: 'myChart13'},
+        {key: 'CON', canvasId: 'myChart14'},
+        {key: 'FRA-DR', canvasId: 'myChart15'},
+    ];
+
+    renderPie();
+
+    function renderPie(selectedCategory = 'total') {
+
+        channelsKey.forEach(channelPie => {
+            const test = generateDataForPiePerChannel('pie', true, selectedCategory, prevYear, currYear, channelPie.key);
+            console.log('test', test);
+
+            // const category = selectedCategory ? selectedCategory : config.category;
+
+            // const chartData = generateDataForOverallTotal(config.type, false, category, config.prevYear, config.currYear);
+
+            // console.log(chartData);
+
+            const ctx = document.getElementById(channelPie.canvasId);
+
+            // Destroy existing chart if it exists
+            if (chartInstancesPie[channelPie.canvasId]) {
+                chartInstancesPie[channelPie.canvasId].destroy();
+            }
+
+            // Create new chart instance
+            chartInstancesPie[channelPie.canvasId] = new Chart(ctx, test);
+        })
+    }
 
     // document.querySelectorAll('input[name="dataDisplay"]').forEach((radio) => {
     //     radio.addEventListener('change', renderCharts);
     // });
 
+    // const test = generateDataForPiePerChannel('pie',true, 'weekly', prevYear, currYear);
 
 
     $('#updateChartButton').on('click', function() {
@@ -227,6 +286,7 @@
         const pdfLink = `{{ route('weekly_export_pdf') }}?perChannel=${isPerChannel}&category=${selectedCategory}`;
 
         updateCharts(selectedCategory); 
+        renderPie(selectedCategory);
 
         $('#exportPDF').attr('href', pdfLink); 
     });
@@ -303,6 +363,8 @@
                 const category = selectedCategory ? selectedCategory : config.category;
 
                 const chartData = generateDataForOverallTotal(config.type, false, category, config.prevYear, config.currYear);
+
+                console.log(chartData);
 
                 const ctx = document.getElementById(config.canvasId);
                 
@@ -601,6 +663,7 @@
         const lastThreeDays = @json($lastThreeDaysDates);
         const keyDates = Object.keys(lastThreeDays);
 
+
         //LABELS
         switch(dataCategory) {
             case 'total':
@@ -624,11 +687,11 @@
             const weeks = channel[1][year]?.weeks;
             const lastThreeDays = channel[1][year]?.last_three_days;
 
-            console.group(channelCode)
-                console.log(weeks);
-                console.log(lastThreeDays);
-                console.log(channel);
-            console.groupEnd();
+            // console.group(channelCode)
+            //     console.log(weeks);
+            //     console.log(lastThreeDays);
+            //     console.log(channel);
+            // console.groupEnd();
 
             switch (channelCode) {
                 case 'TOTAL-RTL':
@@ -691,6 +754,8 @@
 
         }).filter(data => data !== null);
 
+        // console.log(newData);
+
 
         return {
             type: chartType,
@@ -736,6 +801,176 @@
                         //         maximumSignificantDigits: 3
                         //     }).format(value),
                         // },
+                        beginAtZero: true,
+                    }
+
+                }
+            }
+        }
+    }
+
+    function generateDataForPiePerChannel(chartType = 'pie', isPerChannel = true, dataCategory = 'weekly', prevYear, currYear, key){
+        let labels;
+        let pieLabels = [];
+        const datasets = [];
+        const channelCodes = @json($channel_codes);
+        const lastThreeDays = @json($lastThreeDaysDates);
+        const keyDates = Object.keys(lastThreeDays);
+
+        //LABELS
+        switch(dataCategory) {
+            case 'total':
+                labels = ['TOTAL'];
+                // pieLabels = [prevYear + " TOTAL", currYear + " TOTAL"];
+                break;
+            case 'weekly':
+                labels =  ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
+                // pieLabels = [
+                //             prevYear + " WK01", currYear + " WK01",
+                //             prevYear + " WK02", currYear + " WK02",
+                //             prevYear + " WK03", currYear + " WK03",
+                //             prevYear + " WK04", currYear + " WK04",
+                //         ];
+                break;
+            case 'last_three_days':
+                labels = keyDates;
+                // keyDates.forEach(date => {
+                //         pieLabels.push(prevYear + ' ' + date, currYear + ' ' + date) 
+                //     });
+                
+                break;
+            default:
+                labels = [];
+        }
+
+        // console.log(channelCodes);
+
+        const pieData = Object.entries(channelCodes).map(channel => {
+            const dataStorage = [];
+            const channelCode = channel[0]; //ex. ECOMM, RTL
+
+            const weeks = channel[1][prevYear]?.weeks;
+            const lastThreeDays = channel[1][prevYear]?.last_three_days;
+
+            const weeks2 = channel[1][currYear]?.weeks;
+            const lastThreeDays2 = channel[1][currYear]?.last_three_days;
+
+
+            if(isPerChannel && channelCode == key){
+                let keys  = [];
+
+                switch(dataCategory) {
+                    case 'total':
+                        keys = ['TOTAL'];
+                        break;
+                    case 'weekly':
+                        keys = ['WK01', 'WK02', 'WK03', 'WK04'];
+                        break;
+                    default:
+                        keys = [];
+                }
+
+                if(dataCategory == 'last_three_days'){
+                    lastThreeDays.forEach(day => {
+                        const netSales = day?.sum_of_net_sales ?? 0;
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+                            pieLabels.push(prevYear + ' ' + day?.date_of_the_day);
+                        }
+                    });
+
+                    lastThreeDays2.forEach(day => {
+                        const netSales = day?.sum_of_net_sales ?? 0;
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+                            pieLabels.push(currYear + ' ' + day?.date_of_the_day);
+                        }
+                    });
+           
+                } else {
+                    keys.forEach(key => {
+                        const netSales = weeks[key]?.sum_of_net_sales ?? 0;
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+                            pieLabels.push(prevYear + ' ' + key);
+                        }
+                    });
+
+                    keys.forEach(key => {
+                        const netSales = weeks2[key]?.sum_of_net_sales ?? 0;
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+                            pieLabels.push(currYear + ' ' + key);
+                        }
+                    });
+                }
+
+                return {
+                    label: `${channelCode}`,
+                    data: dataStorage,
+                    borderWidth: 2,
+                }; 
+            } 
+
+            return null;
+
+        }).filter(data => data !== null);
+
+        console.log(pieData);
+
+        // console.log(prevData);
+        // console.log(currData);
+
+        // const pieLabels = [`${prevYear}`, `${currYear}`];
+
+        return {
+            type: chartType,
+            data: {
+                labels: chartType == 'pie' ? pieLabels : labels,
+                datasets: chartType == 'pie' ? pieData : [...prevData, ...currData]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false, 
+                    layout:{
+                    padding: 20
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${key} Sales Data`,
+                        font:{
+                            size: 16,
+                        },
+                        padding: {
+                            top:20,
+                            bottom: 20,
+                        },
+                    },
+                
+                    legend: {
+                        position: 'right',
+                        labels:{
+                            boxWidth: 10
+                        }
+                    }
+                },
+                locale: 'en-PH',
+                scales: {
+                    y: chartType === 'pie' ? {
+                    display: false // Hide y-axis for pie charts
+                    } : {
+                        ticks: {
+                            callback: (value) => new Intl.NumberFormat('en-PH', {
+                                style: 'currency',
+                                currency: 'PHP',
+                                maximumSignificantDigits: 3
+                            }).format(value),
+                        },
                         beginAtZero: true,
                     }
 
