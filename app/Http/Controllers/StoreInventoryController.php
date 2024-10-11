@@ -2,30 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StoreInventory;
-use App\Models\StoreInventoriesReport;
+use DB;
+use CRUDBooster;
+use Carbon\Carbon;
+use App\Models\Counter;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
+use App\Models\StoreInventory;
+use App\Models\ReportPrivilege;
+use Illuminate\Support\Facades\Bus;
+use App\Exports\StoreInventoryExcel;
+use App\Models\StoreInventoryUpload;
+use Illuminate\Support\Facades\File;
+use Maatwebsite\Excel\Facades\Excel;
+use Rap2hpoutre\FastExcel\FastExcel;
 use App\Exports\StoreInventoryExport;
 use App\Imports\StoreInventoryImport;
-use App\Jobs\ProcessStoreInventoryUploadJob;
-use App\Models\StoreInventoryUpload;
+use App\Models\StoreInventoriesReport;
 use App\Rules\ExcelFileValidationRule;
-use CRUDBooster;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Bus;
-use Maatwebsite\Excel\HeadingRowImport;
-use Maatwebsite\Excel\Imports\HeadingRowFormatter;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
-use DB;
-use App\Jobs\ExportStoreInventoryCreateFileJob;
-use App\Jobs\AppendMoreStoreInventoryJob;
 use Illuminate\Support\Facades\Storage;
-use App\Models\ReportPrivilege;
+use Maatwebsite\Excel\HeadingRowImport;
+use App\Models\InventoryTransactionType;
 use Illuminate\Support\Facades\Response;
-use Rap2hpoutre\FastExcel\FastExcel;
+use App\Jobs\AppendMoreStoreInventoryJob;
+use App\Jobs\ProcessStoreInventoryUploadJob;
+use App\Jobs\ExportStoreInventoryCreateFileJob;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 class StoreInventoryController extends Controller
 {
@@ -292,5 +296,153 @@ class StoreInventoryController extends Controller
             dd($e);
         }
     }
+
+    public function StoresInventoryFromPosEtp(){
+        $result = StoreInventory::getStoresSalesFromPosEtp();
+
+        
+        // Group sales data by store ID
+        $groupedSalesData = collect($result)->groupBy('STORE ID');
+
+
+        foreach ($groupedSalesData as $storeId => $storeData) {
+            $time = microtime(true);
+            $batch_number = str_replace('.', '', $time);;
+            $folder_name = "$batch_number-" . Str::random(5);
+            $dateNow = Carbon::now()->format('Ymd');
+            $excel_file_name = "stores-inventory-$dateNow.xlsx";
+            $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
+    
+            if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
+                mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
+            }
+            $toExcelContent = [];
+            // Initialize the cache arrays
+            $itemMasterCache = [];
+            $masterfileCache = [];
+            // Create Excel Data
+
+
+            foreach($storeData as &$excel){
+                $counter = Counter::where('id',1)->value('reference_code');
+                $modified = [];
+                foreach ($excel as $key => $value) {
+                    // Replace spaces with underscores in keys
+                    $newKey = str_replace(' ', '_', $key);
+                    $modified[$newKey] = $value;
+                }
+                $excel = $modified;
+                // ITEM MASTERS CACHING
+                $itemNumber = $excel['ITEM_NUMBER'];
+
+                if (isset($itemMasterCache[$itemNumber])) {
+                    // Retrieve from cache if exists
+                    $item_master = $itemMasterCache[$itemNumber];
+                } else {
+                    // Query the database and store in cache
+                    $item_master = DB::connection('imfs')->table('item_masters')->where('digits_code', $itemNumber)->first();
+                    $itemMasterCache[$itemNumber] = $item_master;
+                }
+
+
+                // MASTERFILE CACHING
+                $cusCode = "CUS-" . $excel['STORE_ID'];
+                if (isset($masterfileCache[$cusCode])) {
+                    // Retrieve from cache if exists
+                    $masterfile = $masterfileCache[$cusCode];
+                } else {
+                    // Query the database and store in cache
+                    $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
+                    $masterfileCache[$cusCode] = $masterfile;
+                }
+
+                $toExcel = [];
+                $toExcel['reference_number'] = $counter;
+                $toExcel['system'] = 'POS';
+                $toExcel['org'] = 'DIGITS';
+                $toExcel['report_type'] = 'STORE INVENTORY';
+                $toExcel['channel_code'] = $masterfile->channel_code_id;
+                $toExcel['sub_inventory'] = "POS - GOOD";
+                $toExcel['customer_location'] = $masterfile->cutomer_name;
+                $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
+                $toExcel['item_number'] = $excel['ITEM_NUMBER'];
+                $toExcel['item_description'] = $item_master->item_description;
+                $toExcel['total_qty'] = $excel['TOTAL_QTY'];
+                $toExcel['store_cost'] = $item_master->dtp_rf;
+                $toExcel['store_cost_eccom'] = $item_master->ecom_store_margin;
+                $toExcel['landed_cost'] = $item_master->landed_cost;
+                $toExcel['product_quality'] = $this->productQuality($item_master->inventory_types_id, "GOOD");
+
+
+                $toExcelContent[] = $toExcel;
+
+                Counter::where('id',1)->increment('reference_code');
+            }
+            // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
+            Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
+
+
+            // Full path of the stored Excel file
+            $full_excel_path = storage_path('app') . '/' . $excel_path;
+
+            // Prepare arguments for the job
+            $args = [
+                'batch_number' => $batch_number,
+                'excel_path' => $full_excel_path,
+                'report_type' => $this->report_type,
+                'folder_name' => $folder_name,
+                'file_name' => $excel_file_name,
+                'created_by' => CRUDBooster::myId(),
+                'from_date' => $from_date,
+                'to_date' => $to_date,
+                'data_type' => 'PULL'
+            ];
+
+            
+
+            // Dispatch the processing job for each store
+            ProcessStoreInventoryUploadJob::dispatch($args);
+        }
+    }
+
+    private function productQuality($inv_type_id, $pos_sub)
+    {
+
+        \Log::info('inventory id' . $inv_type_id);
+
+        $item = DB::connection('imfs')->table('inventory_types')->where('id', $inv_type_id)->first();
+
+        if(!$item){
+            return null;
+        }
+
+        $inv_type = $item->inventory_type_description;
+
+        \Log::info('inventory type' . $inv_type);
+
+
+        if ($inv_type === 'ANY' && $pos_sub === 'RMA') {
+            return 'DEFECTIVE';
+        }
+
+        if ($inv_type === 'HMR' && in_array($pos_sub, ['GOOD', 'DEMO', 'TRANSIT'])) {
+            return 'HMR';
+        }
+
+        if (in_array($inv_type, ['TRADE', 'MARKETING', 'STORE DEMO']) && in_array($pos_sub, ['GOOD', 'DEMO', 'TRANSIT'])) {
+            return 'GOOD';
+        }
+
+        if ($inv_type === 'OTHERS' && $pos_sub === 'OTHERS') {
+            return 'BLANK';
+        }
+
+        if ($inv_type === null && $pos_sub === null) {
+            return null;
+        }
+
+        return null;
+    }
+
 
 }
