@@ -247,6 +247,9 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     // TENDER REPORT
     Route::post('generateTender/report', [EtpTenderReportController::class, 'getIndex']);
     
+    // STORE INVENTORY DETAILED
+    Route::post('generate_store_inventory_detailed/report', [EtpStoreInventoryDetailedReportController::class, 'getIndex']);
+    
    
 });
 

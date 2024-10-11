@@ -164,6 +164,17 @@
             margin-bottom: 10px; /* Space between the top and the table */
         }
 
+        .top {
+            position: sticky;
+            top: 0;
+            background-color: white; /* Ensure it blends with your page */
+            z-index: 100; /* Ensure it appears above other elements */
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .dataTables_wrapper .dt-buttons {
             margin-left: 10px; /* Space between buttons */
         }
@@ -277,29 +288,80 @@
         </div>
     </form>
 
-    <div class="panel panel-default" style="padding: 15px; border: none; display: none; border-radius: 10px !important;" id="rawData">
-        <div style="overflow-x: scroll;">
+    <div class="panel panel-default" style="overflow:hidden; padding: 15px; border: none; display: show; border-radius: 10px !important;" id="rawData">
+      
             <table class="table" id="store-sync">
                 <thead>
                     <tr>
-                        <th>Store ID</th>
                         <th>Date</th>
-                        <th>Time</th>
+                        <th>From</th>
+                        <th>Beginning Balance</th>
+                        <th>Ending Balance</th>
+                        <th>Net Amount</th>
+                        <th>Discount</th>
+                        <th>Returns</th>
+                        <th>Voids</th>
+                        <th>Deductions</th>
+                        <th>Gross Amount</th>
+                        <th>VATable Sales</th>
+                        <th>VAT</th>
+                        <th>Sales VAT-Exempt</th>
+                        <th>Zero Rated</th>
+                        <th>Sales</th>
+                        <th>Reset Counter</th>
+                        <th>Z-Counter</th>
+                        <th>Remark</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>Date</td>
+                        <td>From</td>
+                        <td>Beginning Balance</td>
+                        <td>Ending Balance</td>
+                        <td>Net Amount</td>
+                        <td>Discount</td>
+                        <td>Returns</td>
+                        <td>Voids</td>
+                        <td>Deductions</td>
+                        <td>Gross Amount</td>
+                        <td>VATable Sales</td>
+                        <td>VAT</td>
+                        <td>Sales VAT-Exempt</td>
+                        <td>Zero Rated</td>
+                        <td>Sales</td>
+                        <td>Reset Counter</td>
+                        <td>Z-Counter</td>
+                        <td>Remark</td>
+                    </tr>
                     @if (!empty($store_sync_data) && is_array($store_sync_data))
                         @foreach ($store_sync_data as $row)
                             <tr>
-                                <td>{{ $row->{'Store ID'} }}</td>
-                                <td>{{ $row->Date}}</td>
-                                <td>{{ $row->{'Time'} }}</td>
+                                <td>Date</td>
+                                <td>From</td>
+                                <td>Beginning Balance</td>
+                                <td>Ending Balance</td>
+                                <td>Net Amount</td>
+                                <td>Discount</td>
+                                <td>Returns</td>
+                                <td>Voids</td>
+                                <td>Deductions</td>
+                                <td>Gross Amount</td>
+                                <td>VATable Sales</td>
+                                <td>VAT</td>
+                                <td>Sales VAT-Exempt</td>
+                                <td>Zero Rated</td>
+                                <td>Sales</td>
+                                <td>Reset Counter</td>
+                                <td>Z-Counter</td>
+                                <td>Remark</td>
                             </tr>
                         @endforeach
+                        
                     @endif
                 </tbody>
             </table>
-        </div>
+    
     </div>
 
     <div class="spinner-overlay" id="spinner" style="display: none;">
@@ -326,6 +388,11 @@
 
         $('#store-sync').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
+                scrollY: '400px', // Adjust the height to your needs
+                scrollX: true, // Ensure horizontal scrolling if needed
+                scrollCollapse: true,
+                paging: true,
+                fixedHeader: false,
                 buttons: [
                     {
                         extend: 'csv',
@@ -343,7 +410,7 @@
             const buttons = $('.dt-buttons').detach();
             $('.top').append(buttons);
         }
-            });
+        });
 
 
     });

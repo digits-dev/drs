@@ -20,19 +20,19 @@ class EtpBirReportController extends Controller
 			$date_from = Carbon::parse($request->date_from)->format('Ymd');
 			$date_to = Carbon::parse($request->date_to)->format('Ymd');
 
-			// $store_sync_data = DB::connection('sqlsrv')->select(DB::raw("
-			// 	SELECT 
-			// 		Warehouse,
-			// 		LEFT(MAX(EASTimeStamp), 8) AS Date,
-			// 		RIGHT(MAX(EASTimeStamp), 6) AS Time
-			// 	FROM 
-			// 		CashOrderTrn C (NOLOCK)
-			// 	WHERE 
-			// 		Warehouse  IN ('$customers_list')
-			// 		AND LEFT(EASTimeStamp, 8) BETWEEN '$date_from' AND '$date_to'
-			// 	GROUP BY 
-			// 		Warehouse
-			// "));
+			$store_sync_data = DB::connection('sqlsrv')->select(DB::raw("
+				SELECT 
+					Warehouse,
+					LEFT(MAX(EASTimeStamp), 8) AS Date,
+					RIGHT(MAX(EASTimeStamp), 6) AS Time
+				FROM 
+					CashOrderTrn C (NOLOCK)
+				WHERE 
+					Warehouse  IN ('$customers_list')
+					AND LEFT(EASTimeStamp, 8) BETWEEN '$date_from' AND '$date_to'
+				GROUP BY 
+					Warehouse
+			"));
 
 			// return response()->json($store_sync_data);
 

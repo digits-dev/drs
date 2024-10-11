@@ -173,8 +173,8 @@ body{
 @endpush
 @section('content')
     
-    <div class="panel panel-default" style="padding: 15px; border: none; display: show;" id="rawData " >
-        <div style="overflow-x: scroll;">
+    <div class="panel panel-default" style="overflow:hidden; padding: 15px; border: none; display: show;" id="rawData " >
+        <div>
             <table class="table" id="store-sync">
                 <thead>
                     <tr>
@@ -217,6 +217,11 @@ body{
 
         $('#store-sync').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
+                scrollY: '400px', // Adjust the height to your needs
+                scrollX: true, // Ensure horizontal scrolling if needed
+                scrollCollapse: true,
+                paging: true,
+                fixedHeader: false,
                 buttons: [
                     {
                         extend: 'csv',
@@ -234,7 +239,7 @@ body{
             const buttons = $('.dt-buttons').detach();
             $('.top').append(buttons);
         }
-            });
+        });
 
 
     });
