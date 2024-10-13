@@ -464,9 +464,19 @@
 
 			$chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
 
+			$chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
+
+
 			if($isPerChannel){ 
+				$lastIndex = 0;
 				foreach($chartConfigPerChannel as $index => $chart) {
 					$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
+					$lastIndex = $index;
+				}
+
+				foreach($chartConfigPiePerChannel as $index => $chart){
+					$lastIndex += 1;
+					$chartUrls["quickChartUrl{$lastIndex}"] = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
 				}
 			} else {
 				foreach($chartConfigTotal as $index => $chart) {
@@ -510,9 +520,19 @@
 
 			$chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
 
+			$chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
+
+			// generateQuickChartForPiePerChannel
 			if($isPerChannel){ 
+				$lastIndex = 0;
 				foreach($chartConfigPerChannel as $index => $chart) {
 					$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
+					$lastIndex = $index;
+				}
+
+				foreach($chartConfigPiePerChannel as $index => $chart){
+					$lastIndex += 1;
+					$chartUrls["quickChartUrl{$lastIndex}"] = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
 				}
 			} else {
 				foreach($chartConfigTotal as $index => $chart) {
@@ -605,6 +625,53 @@
 					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
 					'year' => $generatedData['yearData']['currentYear'],
 				], 
+			];
+		}
+
+		private function getChannelsKey($dataCategory, $generatedData){
+			return [
+				[
+					'type' => 'pie',
+					'key' => 'ECOMM',
+					'category' => $dataCategory,
+					'channelCodes' => $generatedData['channel_codes'], 
+					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
+				],
+				[
+					'type' => 'pie',
+					'key' => 'RETAIL',
+					'category' => $dataCategory,
+					'channelCodes' => $generatedData['channel_codes'], 
+					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
+				],
+				[
+					'type' => 'pie',
+					'key' => 'SC',
+					'category' => $dataCategory,
+					'channelCodes' => $generatedData['channel_codes'], 
+					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
+				],
+				[
+					'type' => 'pie',
+					'key' => 'OUT',
+					'category' => $dataCategory,
+					'channelCodes' => $generatedData['channel_codes'], 
+					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
+				],
+				[
+					'type' => 'pie',
+					'key' => 'CON',
+					'category' => $dataCategory,
+					'channelCodes' => $generatedData['channel_codes'], 
+					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
+				],
+				[
+					'type' => 'pie',
+					'key' => 'FRA',
+					'category' => $dataCategory,
+					'channelCodes' => $generatedData['channel_codes'], 
+					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
+				],
 			];
 		}
 

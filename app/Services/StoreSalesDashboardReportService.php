@@ -437,7 +437,7 @@ class StoreSalesDashboardReportService {
         return $dataStorage;
     }
 
-    private static function generateDataPerChannel($chartType, $isPerChannel = true, $dataCategory = 'total', $year, $channelCodes, $lastThreeDaysDates, $yScaleMaxVal) {
+    public static function generateDataPerChannel($chartType, $isPerChannel = true, $dataCategory = 'total', $year, $channelCodes, $lastThreeDaysDates, $yScaleMaxVal) {
         $labels = [];
         $datasets = [];
         $keyDates = $lastThreeDaysDates !== null ? array_keys($lastThreeDaysDates) : [];
@@ -567,7 +567,154 @@ class StoreSalesDashboardReportService {
             ],
         ];
     }
-    
+
+    public static function generateDataForPiePerChannel($chartType, $isPerChannel = true, $dataCategory = 'total', $prevYear, $currYear, $channelCodes, $lastThreeDaysDates, $channelKey){
+$pieLabels = [];
+        $datasets = [];
+
+        foreach ($channelCodes as $channelCode => $channelData) {
+            $dataStorage = [];
+            $weeksPrevYear = $channelData[$prevYear]['weeks'] ?? [];
+            $lastThreeDaysPrevYear = $channelData[$prevYear]['last_three_days'] ?? [];
+            $weeksCurrYear = $channelData[$currYear]['weeks'] ?? [];
+            $lastThreeDaysCurrYear = $channelData[$currYear]['last_three_days'] ?? [];
+
+            switch ($channelCode) {
+                case 'TOTAL-RTL':
+                    $channelCode = 'RETAIL';
+                    break;
+                case 'DLR/CRP':
+                    $channelCode = 'OUT';
+                    break;
+                case 'FRA-DR':
+                    $channelCode = 'FRA';
+                    break;
+                default:
+                    $channelCode;
+            }
+
+            if ($isPerChannel && $channelCode == $channelKey) {
+                $keys = [];
+                switch ($dataCategory) {
+                    case 'total':
+                        $keys = ['TOTAL'];
+                        break;
+                    case 'weekly':
+                        $keys = ['WK01', 'WK02', 'WK03', 'WK04'];
+                        break;
+                    default:
+                        $keys = [];
+                }
+
+                // Handle 'last_three_days' category
+                if ($dataCategory == 'last_three_days') {
+                    foreach ($lastThreeDaysPrevYear as $day) {
+                        $netSales = $day['sum_of_net_sales'] ?? 0;
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
+                            $pieLabels[] = $prevYear . ' ' . $formattedDate;
+                        }
+                    }
+
+                    foreach ($lastThreeDaysCurrYear as $day) {
+                        $netSales = $day['sum_of_net_sales'] ?? 0;
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
+                            $pieLabels[] = $currYear . ' ' . $formattedDate;
+                        }
+                    }
+                } else {
+                    // Handle 'weekly' or 'total' category
+                    foreach ($keys as $key) {
+                        $netSales = $weeksPrevYear[$key]['sum_of_net_sales'] ?? 0;
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $pieLabels[] = $prevYear . ' ' . $key;
+                        }
+                    }
+
+                    foreach ($keys as $key) {
+                        $netSales = $weeksCurrYear[$key]['sum_of_net_sales'] ?? 0;
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $pieLabels[] = $currYear . ' ' . $key;
+                        }
+                    }
+                }
+
+                // Store the pie chart data for the current channel
+                $datasets[] = [
+                    'label' => $channelCode,
+                    'data' => $dataStorage,
+                    'borderWidth' => 2,
+                ];
+            }
+        }
+
+        // Prepare the response data for chart rendering
+        $chartData = [
+            'type' => $chartType,
+            'data' => [
+                'labels' => $chartType == 'pie' ? $pieLabels : [],
+                'datasets' => $chartType == 'pie' ? $datasets : [],
+            ],
+            'options' => [
+                'layout' => [
+                    'padding' => 20
+                ],
+                'title' => [
+                    'display' => true,
+                    'text' => "$channelKey Sales Data",
+                    'fontSize' => 16,
+                    'padding' => 20,
+                ],
+                'legend' => [
+                    'display' => true,
+                    'position' => 'right',
+                    'labels' => [
+                        'boxWidth' => 10
+                    ]
+                ],
+                'plugins' => [
+                    'tickFormat' => [
+                        'locale' => 'en-US',
+                        'useGrouping' => true,
+                        'applyToDataLabels' => true,
+                    ],
+                    "datalabels" => [
+                        "display" => $chartType == 'pie' ? true : false,
+                        "anchor" =>  $chartType == 'pie' ? "center" : "end",
+                        "align" =>  $chartType == 'pie' ? "center" : "end",
+                        "color" => "#000",
+                    ],
+                ],
+                'scales' => [
+                    'yAxes' => [[
+                        'display' => $chartType !== 'pie',
+                        ],
+                    ]
+              
+                ]
+            ]
+        ];
+
+
+
+        // Encode the chart configuration as a JSON string
+        $chartConfigJson = json_encode($chartData);
+        
+        // Create the QuickChart URL with specified width and height
+        $width = 1000;  
+        $height = 600;
+
+        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height;
+
+        return $quickChartUrl;
+    }
+
+   
 
     private static function calculateMaxValues($categoryVal, $channelCodes, $lastThreeDays, $prevYear, $currYear) {
         $maxValues = [];

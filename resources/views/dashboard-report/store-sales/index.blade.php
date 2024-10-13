@@ -240,12 +240,14 @@
     ];
     const channelsKey = [
         {key: 'ECOMM', canvasId: 'myChart10'},
-        {key: 'TOTAL-RTL', canvasId: 'myChart11'},
+        {key: 'RETAIL', canvasId: 'myChart11'},
         {key: 'SC', canvasId: 'myChart12'},
-        {key: 'DLR/CRP', canvasId: 'myChart13'},
+        {key: 'OUT', canvasId: 'myChart13'},
         {key: 'CON', canvasId: 'myChart14'},
-        {key: 'FRA-DR', canvasId: 'myChart15'},
+        {key: 'FRA', canvasId: 'myChart15'},
     ];
+
+    
 
     renderPie();
 
@@ -809,6 +811,16 @@
         }
     }
 
+    function formatDate(date_of_the_day){
+        const date = new Date(date_of_the_day);
+        const dayNum = date.getDate().toString().padStart(2, '0'); // Get day and pad if necessary
+        const month = date.toLocaleString('en-PH', { month: 'short' }); // Get short month name
+
+        const formattedDate = `${dayNum}-${month}`; // Combine to 'DD-MMM'
+
+        return formattedDate;
+    }
+
     function generateDataForPiePerChannel(chartType = 'pie', isPerChannel = true, dataCategory = 'weekly', prevYear, currYear, key){
         let labels;
         let pieLabels = [];
@@ -817,37 +829,12 @@
         const lastThreeDays = @json($lastThreeDaysDates);
         const keyDates = Object.keys(lastThreeDays);
 
-        //LABELS
-        switch(dataCategory) {
-            case 'total':
-                labels = ['TOTAL'];
-                // pieLabels = [prevYear + " TOTAL", currYear + " TOTAL"];
-                break;
-            case 'weekly':
-                labels =  ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
-                // pieLabels = [
-                //             prevYear + " WK01", currYear + " WK01",
-                //             prevYear + " WK02", currYear + " WK02",
-                //             prevYear + " WK03", currYear + " WK03",
-                //             prevYear + " WK04", currYear + " WK04",
-                //         ];
-                break;
-            case 'last_three_days':
-                labels = keyDates;
-                // keyDates.forEach(date => {
-                //         pieLabels.push(prevYear + ' ' + date, currYear + ' ' + date) 
-                //     });
-                
-                break;
-            default:
-                labels = [];
-        }
+    
 
-        // console.log(channelCodes);
 
         const pieData = Object.entries(channelCodes).map(channel => {
             const dataStorage = [];
-            const channelCode = channel[0]; //ex. ECOMM, RTL
+            let channelCode = channel[0]; //ex. ECOMM, RTL
 
             const weeks = channel[1][prevYear]?.weeks;
             const lastThreeDays = channel[1][prevYear]?.last_three_days;
@@ -855,6 +842,19 @@
             const weeks2 = channel[1][currYear]?.weeks;
             const lastThreeDays2 = channel[1][currYear]?.last_three_days;
 
+            switch (channelCode) {
+                case 'TOTAL-RTL':
+                    channelCode = 'RETAIL';
+                    break;
+                case 'DLR/CRP':
+                    channelCode = 'OUT';
+                    break;
+                case 'FRA-DR':
+                    channelCode = 'FRA';
+                    break;
+                default:
+                    channelCode;
+            }
 
             if(isPerChannel && channelCode == key){
                 let keys  = [];
@@ -876,7 +876,10 @@
 
                         if(netSales != 0) {
                             dataStorage.push(netSales);
-                            pieLabels.push(prevYear + ' ' + day?.date_of_the_day);
+
+                            const formattedDate = formatDate(day?.date_of_the_day); 
+
+                            pieLabels.push(prevYear + ' ' + formattedDate);
                         }
                     });
 
@@ -885,7 +888,10 @@
 
                         if(netSales != 0) {
                             dataStorage.push(netSales);
-                            pieLabels.push(currYear + ' ' + day?.date_of_the_day);
+
+                            const formattedDate = formatDate(day?.date_of_the_day); 
+
+                            pieLabels.push(currYear + ' ' + formattedDate);
                         }
                     });
            
@@ -922,10 +928,6 @@
 
         console.log(pieData);
 
-        // console.log(prevData);
-        // console.log(currData);
-
-        // const pieLabels = [`${prevYear}`, `${currYear}`];
 
         return {
             type: chartType,
