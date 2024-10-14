@@ -302,9 +302,9 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Time</th>
-                                <th>Store ID</th>
+                                <th>TM#</th>
+                                <th>Ref#</th>
                                 <th>Account ID</th>
-                                <th>Receipt#</th>
                                 <th>Name</th>
                                 <th>Amount</th>
                                 <th>Posted</th>
@@ -501,8 +501,8 @@
                             '<td>' + row.DATE + '</td>' +
                             '<td>' + row.TIME + '</td>' +
                             '<td>' + row['STORE ID'] + '</td>' +
-                            '<td></td>' +
                             '<td>' + row['RECEIPT#'] + '</td>' +
+                            '<td></td>' +
                             '<td>' + row['Name of Customer'] + '</td>' +
                             '<td>' + row.AMOUNT + '</td>' +
                             '<td></td>' +
