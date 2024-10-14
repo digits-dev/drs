@@ -175,6 +175,8 @@ body{
     
     <div class="panel panel-default" style="overflow:hidden; padding: 15px; border: none; display: show;" id="rawData " >
         <div>
+            <button class="btn btn-primary btn-sm" onclick="location.reload()" style="margin-bottom: 15px;"> <i class="fa fa-refresh"></i> Refresh</button>
+
             <table class="table" id="store-sync">
                 <thead>
                     <tr>

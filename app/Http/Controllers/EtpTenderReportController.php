@@ -92,6 +92,8 @@ class EtpTenderReportController extends Controller
 				foreach ($tender_data as $row) {
 					$customerCode = str_replace('CUS-', '', $row->{'STORE ID'});
 					$row->customerName = $customerMap[$customerCode] ?? 'Unknown';
+					$row->{'DATE'} = Carbon::parse($row->{'DATE'})->format('Y-m-d');
+					$row->{'TIME'} = Carbon::parse($row->{'TIME'})->format('H:i:s');
 				}
 
 			return response()->json($tender_data);

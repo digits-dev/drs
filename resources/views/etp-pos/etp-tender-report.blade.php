@@ -53,7 +53,7 @@
     
     
     .select2-container--default .select2-selection--multiple {
-        border-color: #3498db !important;
+        border-color: #3498db;
         border-radius: 7px;
         padding: 6px 0 8px 10px;
     }
@@ -61,7 +61,7 @@
     .select2-container--default .select2-selection__choice {
         background-color: #3498db !important; 
         color: #ffffff !important; 
-        border: 1px solid #2980b9 !important; 
+        border: 1px solid #2980b9 ; 
     }
     
     .select2-container--default .select2-selection__choice:hover {
@@ -212,6 +212,10 @@
             font-size: 12px;
         }
 
+        .inactive{
+            border: 1px solid rgba(255, 0, 0, 0.853) !important;
+        }
+
         .spinner-overlay {
             position: fixed;
             top: 0;
@@ -249,9 +253,9 @@
         <p><span style="color: red">Note:</span> Please fill all the fields</p>
         <div class="inputs-container">
             <div class="input-container">
-                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name</p>
-                <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple">
-                    <option selected value="all">All</option>
+                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectStore()">
+                    <option selected value="All">All</option>
                     @foreach ($customers as $customer)
                         <option value="{{ str_replace('CUS-', '', $customer->customer_code) }}">{{$customer->cutomer_name}}</option>
                     @endforeach
@@ -269,11 +273,18 @@
                 <textarea id="all_customer" style="display: none">{{ $all }}</textarea>    
             </div>
             <div class="input-container">
-                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From</p>
+                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From 
+                    <small id="dateFromRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                    <small id="invalidDateFrom" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> 'Date From' cannot be after 'Date To'.</small> 
+                    <small id="validDateFrom" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date From parameter.</small> 
+                </p>
                 <input class="date-input" type="date" required placeholder="Select Date" name="date_from" id="date_from" required>
             </div>
             <div class="input-container">
-                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To</p>
+                <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To 
+                    <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                    <small id="validDateTo" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date To parameter.</small> 
+                </p>
                 <input class="date-input" type="date" required placeholder="Select Date" name="date_to" id="date_to" required>
             </div>
         </div>
@@ -284,8 +295,8 @@
         </div>
     </div>
 </form>
-            <div class="panel panel-default" style="padding: 15px; border-radius: 10px; display: none;" id="rawData">
-                <div style="overflow-x: scroll;">
+            <div class="panel panel-default" style="padding: 15px; overflow:hidden; border-radius: 10px; display: none;" id="rawData">
+                <div >
                     <table class="table" id="tender_report">
                         <thead>
                             <tr>
@@ -321,7 +332,7 @@
                             @if (!empty($tender_data) && is_array($tender_data))
                                 @foreach ($tender_data as $row)
                                     <tr>
-                                        <td>{{ $row->DATE }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($row->DATE)->format('Y-m-d') }}</td>
                                         <td>{{ $row->TIME }}</td>
                                         <td>{{  $row->{'STORE ID'} }}</td>
                                         <td></td>
@@ -365,44 +376,106 @@
 <!-- Buttons for Excel export -->
 <script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
     <script>
-        $('.js-example-basic-multiple').select2({
-            placeholder: "Select Store",
-        });
+        $(document).ready(function(){
+            $('.js-example-basic-multiple').select2({
+                placeholder: "Select Store",
+            });
 
-        $(document).ready(function() {
+            $('#customer option:not(:first-child)').prop('disabled', true);
+
             $('#tender_report').DataTable({
-                dom: '<"top"lBf>rt<"bottom"ip><"clear">',
-                buttons: [
-                    {
-                        extend: 'csv',
-                        text: '<i class="fa fa-download"></i> Export CSV',
-                        className: 'btn custom-button'
-                    },
-                    {
-                        extend: 'excel',
-                        text: '<i class="fa fa-download"></i> Download Excel',
-                        className: 'btn custom-button'
-                    }
-                ],
-                initComplete: function() {
-            // Move buttons to the right side
-            const buttons = $('.dt-buttons').detach();
-            $('.top').append(buttons);
-        }
+                    dom: '<"top"lBf>rt<"bottom"ip><"clear">',
+                    // scrollY: '400px', // Adjust the height to your needs
+                    scrollX: true, // Ensure horizontal scrolling if needed
+                    scrollCollapse: true,
+                    paging: true,
+                    fixedHeader: false,
+                    buttons: [
+                        {
+                            extend: 'csv',
+                            text: '<i class="fa fa-download"></i> Export CSV',
+                            className: 'btn custom-button'
+                        },
+                        {
+                            extend: 'excel',
+                            text: '<i class="fa fa-download"></i> Download Excel',
+                            className: 'btn custom-button'
+                        }
+                    ],
+                    initComplete: function() {
+                // Move buttons to the right side
+                const buttons = $('.dt-buttons').detach();
+                $('.top').append(buttons);
+            }
             });
         });
+
+        function selectStore() {
+            const customerSelect = $('#customer').val();
+
+            if (customerSelect && customerSelect.includes('')) {
+                $('#customer option:not(:first)').prop('disabled', true);
+                $('#customer option:first').prop('disabled', false);
+            } else if (customerSelect == 'All') {
+                $('#customer option:not(:first)').prop('disabled', true);
+                $('#customer option:first').prop('disabled', false);
+            } else if (customerSelect === null || customerSelect.length === 0) {
+                $('#customer option:not(:first)').prop('disabled', false);
+                $('#customer option:first').prop('disabled', false);
+            } else {
+                $('#customer option:not(:first)').prop('disabled', false);
+                $('#customer option:first').prop('disabled', true);
+            }
+        }
 
         $('#btn-submit').on('click', function(event) {
             event.preventDefault(); 
 
             let customer = $('#customer').val();
-            if (customer == 'all'){
+            if (customer == 'All'){
                 const allcustomer = $('#all_customer').val().split(',').map(item => item.trim());
                 customer = allcustomer;
             }
             
             const dateFrom = $('#date_from').val();
             const dateTo = $('#date_to').val();
+            const dateFromObj = new Date(dateFrom);
+            const dateToObj = new Date(dateTo);
+
+            if(dateFromObj > dateToObj){
+                $('#date_from').css('border', '1px solid rgba(255, 0, 0, 0.853)');
+                $('#date_to').css('border', '1px solid rgba(255, 0, 0, 0.853)');
+                $('#invalidDateFrom').show();
+            }
+
+            if(customer === null || customer.length === 0){
+                $('#customer').css('border', 'rgba(255, 0, 0, 0.853) !important');
+                $('#customerRequired').show()
+            } else {
+                $('#customer').removeClass('inactive');
+                $('#customerRequired').hide()
+            }
+
+            if(dateFrom == ""){
+                $('#date_from').addClass('inactive');
+                $('#dateFromRequired').show()
+                $('#invalidDateFrom').hide();
+            } else {
+                $('#date_from').removeClass('inactive');
+                $('#dateFromRequired').hide()
+            }
+
+            if(dateTo == ""){
+                $('#date_to').addClass('inactive');
+                $('#dateToRequired').show()
+            } else {
+                $('#date_to').removeClass('inactive');
+                $('#dateToRequired').hide()
+            }
+
+            if(dateFrom == "" || dateTo == "" || customer === null || customer.length === 0 || dateFromObj > dateToObj){
+                return;
+            }
 
             $('#spinner').show();
 
@@ -416,12 +489,15 @@
                     _token: '{{ csrf_token() }}',
                 },
                 success: function(response) {
+                    $('#date_from').css('border', '1px solid #3C8DBC');
+                    $('#date_to').css('border', '1px solid #3C8DBC');
+                    $('#invalidDateFrom').hide();
                     $('#rawData').show();
-                    var tbody = $('#tender_report tbody');
+                    const tbody = $('#tender_report tbody');
                     tbody.empty(); 
 
                     response.forEach(function(row) {
-                        var tr = '<tr>' +
+                        const tr = '<tr>' +
                             '<td>' + row.DATE + '</td>' +
                             '<td>' + row.TIME + '</td>' +
                             '<td>' + row['STORE ID'] + '</td>' +
@@ -446,7 +522,7 @@
                         tbody.append(tr); // Add the new row to the table body
                     });
 
-                    // If you want to refresh the DataTable instance
+                    //for refresh DataTable instance
                     $('#tender_report').DataTable().clear().rows.add(tbody.find('tr')).draw();
                     
                     $('#spinner').hide();

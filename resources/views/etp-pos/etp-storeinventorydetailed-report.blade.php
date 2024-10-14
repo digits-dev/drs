@@ -1,85 +1,88 @@
 @extends('crudbooster::admin_template')
 @push('head')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style type="text/css">
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-    .form-content {
-        display: flex;
-        background: #fff;
-        flex-direction: column;
-        font-family: 'Poppins', sans-serif !important;
-        border-radius: 10px;
-    }
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style type="text/css">
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-    .header-title{
-        background: #3C8DBC !important;
-        color: #fff !important;
-        font-size: 16px;
-        font-weight: 500;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-    }
-    
-    .content-panel{
-        padding: 15px;
-    }
-    
-    .inputs-container{
-        display: flex;
-        gap: 10px;
-    }
-    
-    .input-container{
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-    }
-    
-    /* DATE PICKER */
-    
-    .date-input{
-        padding: 10px;
-        border: 1px solid #3C8DBC;
-        border-radius: 7px;
-    }
-    
-    .date-input:focus {
-        border: 2px solid #3C8DBC; /* Change this to your desired focus color */
-        outline: none; /* Optional: remove the default outline */
-    }
-    
-    
-    .select2-container--default .select2-selection--multiple {
-        border-color: #3498db !important;
-        border-radius: 7px;
-        padding: 6px 0 8px 10px;
-    }
-    
-    .select2-container--default .select2-selection__choice {
-        background-color: #3498db !important; 
-        color: #ffffff !important; 
-        border: 1px solid #2980b9 !important; 
-    }
-    
-    .select2-container--default .select2-selection__choice:hover {
-        background-color: #2980b9 !important;
-        color: #ffffff !important;
-        
-    }
-    
-    .form-button .btn-submit{
-        padding: 9px 20px;
-        background: #3C8DBC;
-        border: 1.5px solid #1d699c;
-        border-radius: 10px;
-        color: white;
-    }
+        .form-content {
+            display: flex;
+            background: #fff;
+            flex-direction: column;
+            font-family: 'Poppins', sans-serif !important;
+            border-radius: 10px;
+        }
 
-    .form-button .btn-submit:hover{
-        opacity: 0.7;
-    }
+        .header-title {
+            background: #3C8DBC !important;
+            color: #fff !important;
+            font-size: 16px;
+            font-weight: 500;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
 
-    ::-webkit-scrollbar {
+        .content-panel {
+            padding: 15px;
+        }
+
+        .inputs-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-container {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        /* DATE PICKER */
+
+        .date-input {
+            padding: 10px;
+            border: 1px solid #3C8DBC;
+            border-radius: 7px;
+        }
+
+        .date-input:focus {
+            border: 2px solid #3C8DBC;
+            /* Change this to your desired focus color */
+            outline: none;
+            /* Optional: remove the default outline */
+        }
+
+
+        .select2-container--default .select2-selection--multiple {
+            border-color: #3498db !important;
+            border-radius: 7px;
+            padding: 6px 0 8px 10px;
+        }
+
+        .select2-container--default .select2-selection__choice {
+            background-color: #3498db !important;
+            color: #ffffff !important;
+            border: 1px solid #2980b9 !important;
+        }
+
+        .select2-container--default .select2-selection__choice:hover {
+            background-color: #2980b9 !important;
+            color: #ffffff !important;
+
+        }
+
+        .form-button .btn-submit {
+            padding: 9px 20px;
+            background: #3C8DBC;
+            border: 1.5px solid #1d699c;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .form-button .btn-submit:hover {
+            opacity: 0.7;
+        }
+
+        ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
@@ -140,30 +143,35 @@
         /* Info and pagination area styling */
         .dataTables_wrapper .dataTables_info,
         .dataTables_wrapper .dataTables_paginate {
-            display: inline-block; 
+            display: inline-block;
             margin-top: 10px;
         }
 
         .dataTables_wrapper .dataTables_info {
-            float: left; 
+            float: left;
         }
 
         .dataTables_wrapper .dataTables_paginate {
-            float: right; 
+            float: right;
         }
 
         .dataTables_wrapper .top {
             display: flex;
-            justify-content: space-between; /* Aligns all items to the right */
-            align-items: center; /* Vertically centers items */
-            margin-bottom: 10px; /* Space between the top and the table */
+            justify-content: space-between;
+            /* Aligns all items to the right */
+            align-items: center;
+            /* Vertically centers items */
+            margin-bottom: 10px;
+            /* Space between the top and the table */
         }
 
         .top {
             position: sticky;
             top: 0;
-            background-color: white; /* Ensure it blends with your page */
-            z-index: 100; /* Ensure it appears above other elements */
+            background-color: white;
+            /* Ensure it blends with your page */
+            z-index: 100;
+            /* Ensure it appears above other elements */
             padding: 10px 0;
             display: flex;
             justify-content: space-between;
@@ -171,52 +179,61 @@
         }
 
         .dataTables_wrapper .dt-buttons {
-            margin-left: 10px; /* Space between buttons */
+            margin-left: 10px;
+            /* Space between buttons */
         }
 
         .dataTables_wrapper .dataTables_length {
-            margin-right: 10px; /* Space between "Show entries" dropdown and buttons */
+            margin-right: 10px;
+            /* Space between "Show entries" dropdown and buttons */
         }
 
         .dataTables_wrapper .dataTables_filter {
             display: flex;
-            align-items: center; /* Center search input vertically */
-            margin-left: 10px; /* Space between buttons and search */
+            align-items: center;
+            /* Center search input vertically */
+            margin-left: 10px;
+            /* Space between buttons and search */
         }
 
         .dataTables_wrapper .dataTables_filter label {
-            margin-right: 5px; /* Space between label and input */
+            margin-right: 5px;
+            /* Space between label and input */
         }
 
         .custom-button {
-            background-color: #28a745; 
-            color: white; 
-            border: 1px solid transparent; 
-            border-radius: 4px; 
-            padding: 6px 7px; 
-            font-size: 13px; 
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
+            background-color: #28a745;
+            color: white;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 6px 7px;
+            font-size: 13px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         .custom-button:hover {
-            background-color: #218838; 
-            border-color: #1e7e34; 
+            background-color: #218838;
+            border-color: #1e7e34;
             color: whitesmoke;
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); 
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
         }
 
         .custom-button:active {
-            background-color: #1e7e34; 
+            background-color: #1e7e34;
             color: white;
-            box-shadow: none; 
+            box-shadow: none;
         }
 
         .copy-note {
             display: inline-block;
             color: green;
             font-size: 12px;
+        }
+
+        .inactive{
+            border: 1px solid rgba(255, 0, 0, 0.853) !important;
         }
 
         .spinner-overlay {
@@ -246,10 +263,7 @@
                 transform: rotate(360deg);
             }
         }
-
-
-</style>
-
+    </style>
 @endpush
 @section('content')
     <form class="panel panel-default form-content">
@@ -258,21 +272,37 @@
             <p><span style="color: red">Note:</span> Please fill all the fields</p>
             <div class="inputs-container">
                 <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name</p>
-                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple">
-                        <option selected value=" ">All</option>
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectStore()">
+                        <option selected value="All">All</option>
                         @foreach ($customers as $customer)
-                            <option value="{{$customer->customer_code}}">{{$customer->cutomer_name}}</option>
+                            <option value="{{ $customer->customer_code }}">{{ $customer->cutomer_name }}</option>
                         @endforeach
                     </select>
+
+                    @php
+                        $customerCodes = $customers->pluck('customer_code')->toArray();
+                        $all = implode(', ', $customerCodes);
+                    @endphp
+
+                    <textarea id="all_customer" style="display: none">{{ $all }}</textarea>    
                 </div>
                 <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From</p>
-                    <input class="date-input" type="date" required placeholder="Select Date" name="date_from" id="date_from" required>
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From 
+                        <small id="dateFromRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                        <small id="invalidDateFrom" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> 'Date From' cannot be after 'Date To'.</small> 
+                        <small id="validDateFrom" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date From parameter.</small> 
+                    </p>
+                    <input class="date-input" type="date" required placeholder="Select Date" name="date_from"
+                        id="date_from" required>
                 </div>
                 <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To</p>
-                    <input class="date-input" type="date" required placeholder="Select Date" name="date_to" id="date_to" required>
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To 
+                    <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                    <small id="validDateTo" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date To parameter.</small> 
+                </p>
+                    <input class="date-input" type="date" required placeholder="Select Date" name="date_to"
+                        id="date_to" required>
                 </div>
             </div>
             <div>
@@ -283,42 +313,42 @@
         </div>
     </form>
 
-    <div class="panel panel-default" style="overflow:hidden; padding: 15px; border: none; display: none; border-radius: 10px !important;" id="rawData">
-      
-            <table class="table" id="store-inventory">
-                <thead>
-                    <tr>
-                        <th>Sub Inventory</th>
-                        <th>Customer/Location</th>
-                        <th>Store Concept</th>
-                        <th>Inventory as of Date</th>
-                        <th>Item Number</th>
-                        <th>Item Description</th>
-                        <th>Serial Number</th>
-                        <th>Inventory Qty</th>
-                        <th>Brand</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!empty($inventory_report) && is_array($inventory_report))
-                        @foreach ($inventory_report as $row)
-                            <tr>
-                                <td></td>
-                                <td>{{ $row->{'STORE ID'} }}</td>
-                                <td></td>
-                                <td>{{ $row->{'DATE'} }}</td>
-                                <td>{{ $row->{'ITEM NUMBER'} }}</td>
-                                <td></td>
-                                <td>{{ $row->{'SERIAL NUMBER'} }}</td>
-                                <td>{{ $row->{'TOTAL QTY'} }}</td>
-                                <td></td>
-                            </tr>
-                        @endforeach
-                        
-                    @endif
-                </tbody>
-            </table>
-    
+    <div class="panel panel-default"
+        style="overflow:hidden; padding: 15px; border: none; display: none; border-radius: 10px !important;" id="rawData">
+
+        <table class="table" id="store-inventory">
+            <thead>
+                <tr>
+                    <th>Sub Inventory</th>
+                    <th>Customer/Location</th>
+                    <th>Store Concept</th>
+                    <th>Inventory as of Date</th>
+                    <th>Item Number</th>
+                    <th>Item Description</th>
+                    <th>Serial Number</th>
+                    <th>Inventory Qty</th>
+                    <th>Brand</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!empty($inventory_report) && is_array($inventory_report))
+                    @foreach ($inventory_report as $row)
+                        <tr>
+                            <td></td>
+                            <td>{{ $row->{'STORE ID'} }}</td>
+                            <td></td>
+                            <td>{{ $row->{'DATE'} }}</td>
+                            <td>{{ $row->{'ITEM NUMBER'} }}</td>
+                            <td></td>
+                            <td>{{ $row->{'SERIAL NUMBER'} }}</td>
+                            <td>{{ $row->{'TOTAL QTY'} }}</td>
+                            <td></td>
+                        </tr>
+                    @endforeach
+                @endif
+            </tbody>
+        </table>
+
     </div>
 
     <div class="spinner-overlay" id="spinner" style="display: none;">
@@ -326,31 +356,30 @@
         </div>
     </div>
 @endsection
-    
 
 @push('bottom')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<!-- DataTables Buttons JS -->
-<script src="https://cdn.datatables.net/buttons/2.3.1/js/dataTables.buttons.min.js"></script>
-<!-- JSZip for Excel export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<!-- Buttons for Excel export -->
-<script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
-<script>
-  
-  $(document).ready(function(){
-        $('.js-example-basic-multiple').select2({
-            placeholder: "Select Store",
-        });
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- DataTables Buttons JS -->
+    <script src="https://cdn.datatables.net/buttons/2.3.1/js/dataTables.buttons.min.js"></script>
+    <!-- JSZip for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <!-- Buttons for Excel export -->
+    <script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.js-example-basic-multiple').select2({
+                placeholder: "Select Store",
+            });
 
-        $('#store-inventory').DataTable({
+            $('#customer option:not(:first-child)').prop('disabled', true);
+
+            $('#store-inventory').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
                 scrollX: true, // Ensure horizontal scrolling if needed
                 scrollCollapse: true,
                 paging: true,
                 fixedHeader: false,
-                buttons: [
-                    {
+                buttons: [{
                         extend: 'csv',
                         text: '<i class="fa fa-download"></i> Export CSV',
                         className: 'btn custom-button'
@@ -362,30 +391,86 @@
                     }
                 ],
                 initComplete: function() {
-            // Move buttons to the right side
-            const buttons = $('.dt-buttons').detach();
-            $('.top').append(buttons);
-        }
+                    // Move buttons to the right side
+                    const buttons = $('.dt-buttons').detach();
+                    $('.top').append(buttons);
+                }
+            });
         });
 
+        function selectStore() {
+            const customerSelect = $('#customer').val();
 
-    });
+            if (customerSelect && customerSelect.includes('')) {
+                $('#customer option:not(:first)').prop('disabled', true);
+                $('#customer option:first').prop('disabled', false);
+            } else if (customerSelect == 'All') {
+                $('#customer option:not(:first)').prop('disabled', true);
+                $('#customer option:first').prop('disabled', false);
+            } else if (customerSelect === null || customerSelect.length === 0) {
+                $('#customer option:not(:first)').prop('disabled', false);
+                $('#customer option:first').prop('disabled', false);
+            } else {
+                $('#customer option:not(:first)').prop('disabled', false);
+                $('#customer option:first').prop('disabled', true);
+            }
+        }
 
+        $('#btn-submit').on('click', function(event) {
+            event.preventDefault();
 
-    $('#btn-submit').on('click', function(event) {
-            event.preventDefault(); 
-            
-            var customer = $('#customer').val();
-            var date_from = $('#date_from').val();
-            var date_to = $('#date_to').val();
+            let customer = $('#customer').val();
+            if (customer == 'All'){
+                const allcustomer = $('#all_customer').val().split(',').map(item => item.trim());
+                customer = allcustomer;
+            }
 
+            const date_from = $('#date_from').val();
+            const date_to = $('#date_to').val();
+            const dateFromObj = new Date(date_from);
+            const dateToObj = new Date(date_to);
+
+            if(dateFromObj > dateToObj){
+                $('#date_from').css('border', '1px solid rgba(255, 0, 0, 0.853)');
+                $('#date_to').css('border', '1px solid rgba(255, 0, 0, 0.853)');
+                $('#invalidDateFrom').show();
+            }
+
+            if(customer === null || customer.length === 0){
+                $('#customer').css('border', 'rgba(255, 0, 0, 0.853) !important');
+                $('#customerRequired').show()
+            } else {
+                $('#customer').removeClass('inactive');
+                $('#customerRequired').hide()
+            }
+
+            if(date_from == ""){
+                $('#date_from').addClass('inactive');
+                $('#dateFromRequired').show()
+                $('#invalidDateFrom').hide();
+            } else {
+                $('#date_from').removeClass('inactive');
+                $('#dateFromRequired').hide()
+            }
+
+            if(date_to == ""){
+                $('#date_to').addClass('inactive');
+                $('#dateToRequired').show()
+            } else {
+                $('#date_to').removeClass('inactive');
+                $('#dateToRequired').hide()
+            }
+
+            if(date_from == "" || date_to == "" || customer === null || customer.length === 0 || dateFromObj > dateToObj){
+                return;
+            }
 
             $('#spinner').show();
 
             $.ajax({
                 url: 'generate_store_inventory_detailed/report',
                 method: 'POST',
-                data: { 
+                data: {
                     customer: customer,
                     date_from: date_from,
                     date_to: date_to,
@@ -393,24 +478,21 @@
                 },
                 success: function(response) {
                     $('#rawData').show();
-                    var tbody = $('#store-inventory tbody');
-                    tbody.empty(); 
-
-                    console.log(response);
-                    
+                    const tbody = $('#store-inventory tbody');
+                    tbody.empty();
 
                     response.forEach(function(row) {
-                        var tr = 
+                        const tr =
                             '<tr>' +
                             '<td>' + '</td>' +
                             '<td>' + row['customerName'] + '</td>' +
-                            '<td>' + row['concept'] +'</td>' +
+                            '<td>' + row['concept'] + '</td>' +
                             '<td>' + row['DATE'] + '</td>' +
                             '<td>' + row['ITEM NUMBER'] + '</td>' +
-                            '<td>' + row['item_description'] +'</td>' +
+                            '<td>' + row['item_description'] + '</td>' +
                             '<td>' + row['SERIAL NUMBER'] + '</td>' +
                             '<td>' + row['TOTAL QTY'] + '</td>' +
-                            '<td>' + row['brand'] +'</td>' +
+                            '<td>' + row['brand'] + '</td>' +
                             '</tr>';
                         tbody.append(tr); // Add the new row to the table body
                     });
@@ -426,8 +508,5 @@
                 }
             });
         });
-
-
-
-</script>
+    </script>
 @endpush

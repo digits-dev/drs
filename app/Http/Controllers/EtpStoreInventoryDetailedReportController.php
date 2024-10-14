@@ -19,7 +19,7 @@ class EtpStoreInventoryDetailedReportController extends Controller
 				return str_replace('CUS-', '', $customer);
 			}, $request->customer);
 
-			$customers_list = implode("','", array_map('addslashes', $customers));
+			$allCustomer = "'" . implode("','", $customers) . "'";
 			$date_from = Carbon::parse($request->date_from)->format('Ymd');
 			$date_to = Carbon::parse($request->date_to)->format('Ymd');
 
@@ -34,7 +34,7 @@ class EtpStoreInventoryDetailedReportController extends Controller
 				ProductLocationBalance P WITH (NOLOCK)
 			WHERE 
 				P.Company = 100
-				AND P.WareHouse IN ($customers_list)
+				AND P.WareHouse IN ($allCustomer)
 				AND P.LastIssueDate BETWEEN $date_from AND $date_to;
 			"));
 
