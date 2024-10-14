@@ -365,6 +365,9 @@ use Illuminate\Support\Facades\Storage;
 					$batch = StoreInventoryUpload::find($id);
 					$batch = $batch->getBatchDetails();
 					if ($batch) {
+						if ($batch->status == 'IMPORTING') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is currently importing.", 'warning');
+						}
 						if ($batch->status == 'IMPORT FAILED') {
 							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has failed importing, and no file was generated.", 'danger');
 						}
