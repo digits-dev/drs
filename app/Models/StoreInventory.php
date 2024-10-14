@@ -201,7 +201,8 @@ class StoreInventory extends Model
             select P.WareHouse 'STORE ID',
             P.LastIssueDate 'DATE',
             P.ItemNumber 'ITEM NUMBER',
-            P.BalanceApproved 'TOTAL QTY'
+            P.BalanceApproved 'TOTAL QTY',
+            P.Allocatable 'ALLOCATABLE'
             From ProductLocationBalance P (Nolock)
             where P.Company= 100
             --and P.LastIssueDate between @FromDate and @ToDate
