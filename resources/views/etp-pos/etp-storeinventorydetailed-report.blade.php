@@ -283,9 +283,9 @@
         </div>
     </form>
 
-    <div class="panel panel-default" style="overflow:hidden; padding: 15px; border: none; display: show; border-radius: 10px !important;" id="rawData">
+    <div class="panel panel-default" style="overflow:hidden; padding: 15px; border: none; display: none; border-radius: 10px !important;" id="rawData">
       
-            <table class="table" id="store-sync">
+            <table class="table" id="store-inventory">
                 <thead>
                     <tr>
                         <th>Sub Inventory</th>
@@ -343,9 +343,8 @@
             placeholder: "Select Store",
         });
 
-        $('#store-sync').DataTable({
+        $('#store-inventory').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
-                scrollY: '400px', // Adjust the height to your needs
                 scrollX: true, // Ensure horizontal scrolling if needed
                 scrollCollapse: true,
                 paging: true,
@@ -380,6 +379,7 @@
             var date_from = $('#date_from').val();
             var date_to = $('#date_to').val();
 
+
             $('#spinner').show();
 
             $.ajax({
@@ -393,27 +393,31 @@
                 },
                 success: function(response) {
                     $('#rawData').show();
-                    var tbody = $('#store-sync tbody');
+                    var tbody = $('#store-inventory tbody');
                     tbody.empty(); 
 
+                    console.log(response);
+                    
+
                     response.forEach(function(row) {
-                        var tr = '<tr>' +
+                        var tr = 
+                            '<tr>' +
                             '<td>' + '</td>' +
-                            '<td>' + row['STORE ID'] + '</td>' +
-                            '<td>' + '</td>' +
-                            '<td>' + row.Date + '</td>' +
+                            '<td>' + row['customerName'] + '</td>' +
+                            '<td>' + row['concept'] +'</td>' +
+                            '<td>' + row['DATE'] + '</td>' +
                             '<td>' + row['ITEM NUMBER'] + '</td>' +
-                            '<td>' + '</td>' +
+                            '<td>' + row['item_description'] +'</td>' +
                             '<td>' + row['SERIAL NUMBER'] + '</td>' +
                             '<td>' + row['TOTAL QTY'] + '</td>' +
-                            '<td>' + '</td>' +
+                            '<td>' + row['brand'] +'</td>' +
                             '</tr>';
                         tbody.append(tr); // Add the new row to the table body
                     });
 
                     // If you want to refresh the DataTable instance
-                    $('#store-sync').DataTable().clear().rows.add(tbody.find('tr')).draw();
-                    
+                    $('#store-inventory').DataTable().clear().rows.add(tbody.find('tr')).draw();
+                    $('#store-inventory').DataTable().columns.adjust();
                     $('#spinner').hide();
                 },
                 error: function(xhr, status, error) {
