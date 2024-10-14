@@ -431,11 +431,6 @@ class StoreInventoryController extends Controller
             return 'GOOD';
         }
 
-
-        if ($inv_type === null && $pos_sub === null) {
-            return null;
-        }
-
         return null;
     }
 
