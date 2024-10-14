@@ -47,20 +47,25 @@ class StoreSalesDashboardReportService {
             // Generate and cache the data here
      
 			
-            // $currentDay = date('d');
-            // $currentMonth = date('m');
-            // $currentYear = date('Y'); 
-            // $previousYear = date('Y', strtotime('-1 year'));
+            $currentDay = date('d');
+            $currentMonth = date('m');
+            $currentYear = date('Y'); 
+            $previousYear = date('Y', strtotime('-1 year'));
             
             // $currentMonth = 3;
             // $previousYear = 2019;
             // $currentYear = 2020; 
             // $currentDay = 29;
 
-            $currentMonth = 2;
-            $previousYear = 2021;
-            $currentYear = 2022; 
-            $currentDay = 23;
+            // $currentMonth = 2;
+            // $previousYear = 2021;
+            // $currentYear = 2022; 
+            // $currentDay = 23;
+
+            // $currentMonth = 2;
+            // $previousYear = 2018;
+            // $currentYear = 2019; 
+            // $currentDay = 23;
 
             
 			// $currentMonth = 8;
@@ -310,36 +315,52 @@ class StoreSalesDashboardReportService {
                 switch ($dataCategory) {
                     case 'total':
                         $keys = ['TOTAL'];
-                        $pieLabels = ["$prevYear TOTAL", "$currYear TOTAL"];
                         break;
                     case 'weekly':
                         $keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        $pieLabels = [
-                            "$prevYear WK01", "$currYear WK01",
-                            "$prevYear WK02", "$currYear WK02",
-                            "$prevYear WK03", "$currYear WK03",
-                            "$prevYear WK04", "$currYear WK04",
-                        ];
                         break;
                 }
     
                 if ($dataCategory === 'last_three_days') {
                     foreach ($lastThreeDaysPrev as $day) {
-                        $dataStorage[] = $day['sum_of_net_sales'] ?? 0;
+                        $netSales = $day['sum_of_net_sales'] ?? 0;
+
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
+                            $pieLabels[] = $prevYear . ' ' . $formattedDate;
+                        }
+
                     }
+
                     foreach ($lastThreeDaysCurr as $day) {
-                        $dataStorage[] = $day['sum_of_net_sales'] ?? 0;
+                        $netSales = $day['sum_of_net_sales'] ?? 0;
+                        
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
+                            $pieLabels[] = $currYear . ' ' . $formattedDate;
+                        }
                     }
-                    foreach ($keyDates as $date) {
-                        $pieLabels[] = "$prevYear $date";
-                        $pieLabels[] = "$currYear $date";
-                    }
+
                 } else {
                     foreach ($keys as $key) {
-                        $dataStorage[] = $weeksPrev[$key]['sum_of_net_sales'] ?? 0;
+                        $netSales = $weeksPrev[$key]['sum_of_net_sales'] ?? 0;
+
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $pieLabels[] = $prevYear . ' ' . $key;
+                        }
+                        
                     }
+
                     foreach ($keys as $key) {
-                        $dataStorage[] = $weeksCurr[$key]['sum_of_net_sales'] ?? 0;
+                        $netSales = $weeksCurr[$key]['sum_of_net_sales'] ?? 0;
+
+                        if ($netSales != 0) {
+                            $dataStorage[] = $netSales;
+                            $pieLabels[] = $currYear . ' ' . $key;
+                        }
                     }
                 }
     
@@ -569,7 +590,7 @@ class StoreSalesDashboardReportService {
     }
 
     public static function generateDataForPiePerChannel($chartType, $isPerChannel = true, $dataCategory = 'total', $prevYear, $currYear, $channelCodes, $lastThreeDaysDates, $channelKey){
-$pieLabels = [];
+        $pieLabels = [];
         $datasets = [];
 
         foreach ($channelCodes as $channelCode => $channelData) {
@@ -610,6 +631,7 @@ $pieLabels = [];
                 if ($dataCategory == 'last_three_days') {
                     foreach ($lastThreeDaysPrevYear as $day) {
                         $netSales = $day['sum_of_net_sales'] ?? 0;
+
                         if ($netSales != 0) {
                             $dataStorage[] = $netSales;
                             $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
@@ -619,6 +641,7 @@ $pieLabels = [];
 
                     foreach ($lastThreeDaysCurrYear as $day) {
                         $netSales = $day['sum_of_net_sales'] ?? 0;
+
                         if ($netSales != 0) {
                             $dataStorage[] = $netSales;
                             $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
@@ -700,7 +723,13 @@ $pieLabels = [];
             ]
         ];
 
+        // if(count($chartData['data']['datasets'][0]['data']) === 0) {return null;}
 
+        if (empty($chartData['data']['datasets'][0]['data'])) {
+            return null;
+        }
+
+        // dump($chartData);
 
         // Encode the chart configuration as a JSON string
         $chartConfigJson = json_encode($chartData);
@@ -708,8 +737,9 @@ $pieLabels = [];
         // Create the QuickChart URL with specified width and height
         $width = 1000;  
         $height = 600;
+        $version = 2.9;
 
-        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height;
+        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height . '&version=' . $version;
 
         return $quickChartUrl;
     }

@@ -27,16 +27,20 @@
 
         .charts {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 15px;
             padding: 10px;
             width: 100%;
-            height: 500px;
+            /* height: 500px; */
+            opacity: 1;
+            transition: opacity 0.5s ease; 
         }
 
         canvas {
             flex: 1 !important;
             height: 100% !important;
-            max-width: 50% !important;
+            max-width: 49% !important;
+            max-height: 500px !important;
             box-sizing: border-box !important;
             border: 1px solid #ccc !important;
         }
@@ -46,6 +50,16 @@
             font-weight: bold;
             text-transform: uppercase;
         }
+
+       
+        .fade-out {
+            opacity: 0; /* Start fading out */
+        }
+
+        .fade-in {
+            opacity: 1; /* Fade in */
+        }
+
     </style>
 @endpush
 
@@ -113,87 +127,14 @@
         </button>
     </div>
     
+    {{-- Charts Container  --}}
+    <div class="charts"></div>
 
-    <div class="chart-channel">
+    {{-- <div class="chart-channel">
         <h2>Bar Graph</h2>
         <div class="charts">
             <canvas id="myChart3" width="500" height="700"  ></canvas>
             <canvas id="myChart4" width="500" height="700"  ></canvas>
-        </div>
-    </div>
-    
-    <div class="chart-channel">
-        <h2>Line Graph</h2>
-        <div class="charts">
-            <canvas id="myChart" width="500" height="700"  ></canvas>
-            <canvas id="myChart2" width="500" height="700"  ></canvas>
-        </div>
-    </div>
-
-    <div class="chart-channel">
-        <h2>Pie Chart</h2>
-        <div class="charts">
-            <canvas id="myChart5" width="500" height="700"  ></canvas>
-            <canvas id="myChart6" width="500" height="700"  ></canvas>
-        </div>
-    </div>
-
-    <div class="chart-total">
-        <div class="charts">
-            <canvas id="myChart8" width="500" height="700"  ></canvas>
-            <canvas id="myChart9" width="500" height="700"  ></canvas>
-
-        </div>
-    </div>
-    <div class="chart-total">
-        <div class="charts">
-
-            <canvas id="myChart7" width="500" height="700"  ></canvas>
-
-        </div>
-    </div>
-
-
-    <div class="chart-channel">
-        <h2>Pie Chart1</h2>
-        <div class="charts">
-            <canvas id="myChart10" width="500" height="700"  ></canvas>
-            <canvas id="myChart11" width="500" height="700"  ></canvas>
-        </div>
-    </div>
-    <div class="chart-channel">
-        <h2>Pie Chart2</h2>
-        <div class="charts">
-            <canvas id="myChart12" width="500" height="700"  ></canvas>
-            <canvas id="myChart13" width="500" height="700"  ></canvas>
-        </div>
-    </div>
-    <div class="chart-channel">
-        <h2>Pie Chart3</h2>
-        <div class="charts">
-            <canvas id="myChart14" width="500" height="700"  ></canvas>
-            <canvas id="myChart15" width="500" height="700"  ></canvas>
-        </div>
-    </div>
-{{-- 
-    <div class="chart-total">
-        <h2>Total1</h2>
-        <div style="width:50%; height:500px; margin:0 auto;">
-            <canvas id="myChart7" class="canvas3"></canvas>
-        </div>
-    </div>
-    <div class="chart-total">
-        <h2>Total2</h2>
-
-        <div style="width:50%; height:500px; margin:0 auto;">
-            <canvas id="myChart8" class="canvas3"></canvas>
-        </div>
-    </div>
-    <div class="chart-total">
-        <h2>Total3</h2>
-
-        <div style="width:50%; height:500px; margin:0 auto;">
-            <canvas id="myChart9" class="canvas3"></canvas>
         </div>
     </div> --}}
 
@@ -206,198 +147,374 @@
             <canvas id="all3" class="canvas2" ></canvas>
         </div>
     </div> --}}
-
 </div>
 
 @endsection
 
 @push('bottom')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4"></script>
 
 <script>
    $(function() {
-   
 
     const prevYear = @json($yearData['previousYear']);
     const currYear = @json($yearData['currentYear']);
     const channelCodes = @json($channel_codes);
     const lastThreeDays = @json($lastThreeDaysDates);
     const chartInstances = {};
-    const chartInstancesPie = {};
+    const chartInstancesPieByChannel = {};
 
-    const chartConfigs = [
-        { year: prevYear, type: 'line', category: 'total', canvasId: 'myChart' },
-        { year: currYear, type: 'line', category: 'total', canvasId: 'myChart2' },
-        { year: prevYear, type: 'bar', category: 'total', canvasId: 'myChart3' },
-        { year: currYear, type: 'bar', category: 'total', canvasId: 'myChart4' },
-        { year: prevYear, type: 'pie', category: 'total', canvasId: 'myChart5' },
-        { year: currYear, type: 'pie', category: 'total', canvasId: 'myChart6' },
+    const chartConfigsByChannel = [
+        { type: 'line', category: 'total', year: prevYear },
+        { type: 'line', category: 'total', year: currYear },
+        { type: 'bar', category: 'total', year: prevYear },
+        { type: 'bar', category: 'total', year: currYear },
+        { type: 'pie', category: 'total', year: prevYear },
+        { type: 'pie', category: 'total', year: currYear },
     ];
-    const chartConfigs3 = [
-        { prevYear: prevYear, currYear: currYear, type: 'line', category: 'total', canvasId: 'myChart7' },
-        { prevYear: prevYear, currYear: currYear, type: 'bar', category: 'total', canvasId: 'myChart8' },
-        { prevYear: prevYear, currYear: currYear, type: 'pie', category: 'total', canvasId: 'myChart9' },
+
+    const chartConfigsOverallTotal = [
+        { type: 'line', category: 'total', prevYear: prevYear, currYear: currYear },
+        { type: 'bar', category: 'total', prevYear: prevYear, currYear: currYear },
+        { type: 'pie', category: 'total', prevYear: prevYear, currYear: currYear },
     ];
-    const channelsKey = [
-        {key: 'ECOMM', canvasId: 'myChart10'},
-        {key: 'RETAIL', canvasId: 'myChart11'},
-        {key: 'SC', canvasId: 'myChart12'},
-        {key: 'OUT', canvasId: 'myChart13'},
-        {key: 'CON', canvasId: 'myChart14'},
-        {key: 'FRA', canvasId: 'myChart15'},
+    
+    const chartConfigsPieChartByChannel = [
+        { key: 'ECOMM' },
+        { key: 'RETAIL' },
+        { key: 'SC' },
+        { key: 'OUT' },
+        { key: 'CON' },
+        { key: 'FRA' },
     ];
 
     
+    // Initial rendering of charts
+    renderCharts();
 
-    renderPie();
-
-    function renderPie(selectedCategory = 'total') {
-
-        channelsKey.forEach(channelPie => {
-            const test = generateDataForPiePerChannel('pie', true, selectedCategory, prevYear, currYear, channelPie.key);
-            console.log('test', test);
-
-            // const category = selectedCategory ? selectedCategory : config.category;
-
-            // const chartData = generateDataForOverallTotal(config.type, false, category, config.prevYear, config.currYear);
-
-            // console.log(chartData);
-
-            const ctx = document.getElementById(channelPie.canvasId);
-
-            // Destroy existing chart if it exists
-            if (chartInstancesPie[channelPie.canvasId]) {
-                chartInstancesPie[channelPie.canvasId].destroy();
-            }
-
-            // Create new chart instance
-            chartInstancesPie[channelPie.canvasId] = new Chart(ctx, test);
-        })
-    }
-
-    // document.querySelectorAll('input[name="dataDisplay"]').forEach((radio) => {
-    //     radio.addEventListener('change', renderCharts);
-    // });
-
-    // const test = generateDataForPiePerChannel('pie',true, 'weekly', prevYear, currYear);
-
-
+    //Updating the charts data
     $('#updateChartButton').on('click', function() {
         const selectedCategory = $('#categorySelector').val();
         const isPerChannel = $('input[name="dataDisplay"]:checked').val() === 'perChannel'; 
         const pdfLink = `{{ route('weekly_export_pdf') }}?perChannel=${isPerChannel}&category=${selectedCategory}`;
 
-        updateCharts(selectedCategory); 
-        renderPie(selectedCategory);
+        renderCharts(selectedCategory);
 
         $('#exportPDF').attr('href', pdfLink); 
     });
-
-    // document.getElementById('updateChartButton').addEventListener('click', function() {
-    //     const selectedCategory = document.getElementById('categorySelector').value;
-    //     const isPerChannel = document.querySelector('input[name="dataDisplay"]:checked').value === 'perChannel'; 
-    //     const pdfLink = `{{ route('weekly_export_pdf') }}?perChannel=${isPerChannel}&category=${selectedCategory}`;
-
-    //     updateCharts(selectedCategory);
-
-    //     document.getElementById('exportPDF').setAttribute('href', pdfLink);
-    // });
-
-    // Initial rendering of charts
-    renderCharts();
-
   
+    function renderPieChartsByChannel(selectedCategory = 'total') {
+
+        chartConfigsPieChartByChannel.forEach(channel => {
+            const chartData = generatePieChartDataByChannel('pie', true, selectedCategory, prevYear, currYear, channel.key);
+
+            // Assign a unique ID to each config
+            if (!channel.canvasId) {
+                channel.canvasId = generateUniqueId(); 
+            }
+       
+            if(chartData?.data?.datasets[0]?.data?.length !== 0){
+
+                const canvasId = `${channel.canvasId}`;
+                let canvas = document.getElementById(canvasId);
+
+                if (!canvas) {
+                    canvas = $('<canvas>', {
+                        id: canvasId,
+                        width: 500,
+                        height: 700
+                    });
+
+                    $('.charts').append(canvas);
+                }
+
+                // Destroy existing chart if it exists
+                if (chartInstancesPieByChannel[canvasId]) {
+                    chartInstancesPieByChannel[canvasId].destroy();
+                }
+
+                // Create new chart instance
+                chartInstancesPieByChannel[canvasId] = new Chart(canvas, chartData);
+
+            } 
+        })
+    }
+
+    function renderChannelCharts(selectedCategory = 'total'){
+        // Calculate maximum values
+        const maxValue = calculateMaxValuesInData(selectedCategory)[selectedCategory];
+        const buffer = maxValue * 0.15; 
+        // const maxValWithBuffer = Math.round((maxValue + buffer) / 1000) * 1000; //to make it look like, ex. xxx,xxx,000
+        const maxValWithBuffer = Math.round((maxValue + buffer) / 1000000) * 1000000; //to make it look like, ex. xxx,000,000
+
+        
+        chartConfigsByChannel.forEach(config => {
+
+            const category = selectedCategory ? selectedCategory : config.category;
+            const chartData = generateChannelData(config.type, true, category, config.year);
+
+            // Assign a unique ID to each config
+            if (!config.canvasId) {
+                config.canvasId = generateUniqueId(); 
+            }
+
+            const canvasId = `${config.canvasId}`;
+
+            let canvas = document.getElementById(canvasId);
+
+            //Create new canvas, if it doesn't have it.
+            if (!canvas) {
+                canvas = $('<canvas>', {
+                    id: canvasId,
+                    width: 500,
+                    height: 700
+                });
+
+                $('.charts').append(canvas);
+            }
+
+            // Destroy existing chart if it exists
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+
+            // Create new chart instance with overriding the scales.y.max = value
+            chartInstances[canvasId] = new Chart(canvas, {
+                ...chartData,
+                options: {
+                    ...chartData.options,
+                    scales:{
+                        ...chartData.options.scales,
+                        y: {
+                            ...chartData.options.scales?.y,
+                            max: maxValWithBuffer
+                        }
+                    }
+                }
+            });
+        });
+
+    }
+
+    function renderOverallTotalChart(selectedCategory = 'total'){
+        
+        chartConfigsOverallTotal.forEach(config => {
+            const category = selectedCategory ? selectedCategory : config.category;
+            const chartData = generateOverallTotalData(config.type, false, category, config.prevYear, config.currYear);
+
+            // Assign a unique ID to each config
+            if (!config.canvasId) {
+                config.canvasId = generateUniqueId(); 
+            }
+
+            const canvasId = `${config.canvasId}`;
+
+            let canvas = document.getElementById(canvasId);
+
+            if (!canvas) {
+                canvas = $('<canvas>', {
+                    id: canvasId,
+                    width: 500,
+                    height: 700
+                });
+
+                $('.charts').append(canvas);
+            }
+
+            // Destroy existing chart if it exists
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+
+            // Create new chart instance
+            chartInstances[canvasId] = new Chart(canvas, chartData);
+        });
+    }
+    
     function renderCharts(selectedCategory) {
         const isPerChannel = document.querySelector('input[name="dataDisplay"]:checked').value === 'perChannel'; 
 
+        $('.charts').addClass('fade-out');
 
 
-        if(isPerChannel){
-            $('.canvas1').show();
-            $('.canvas3').hide();
-            $('.chart-channel').show(); 
-            $('.chart-total').hide(); 
+        setTimeout(() => {
+        
+            $('.charts').empty();
 
-            // Calculate maximum values
-            const maxValue = calculateMaxValues(selectedCategory)[selectedCategory];
-            const buffer = maxValue * 0.15; 
-            // const maxValWithBuffer = Math.floor(maxValue + buffer);
-            // const maxValWithBuffer = Math.round((maxValue + buffer) / 1000) * 1000;
-            const maxValWithBuffer = Math.round((maxValue + buffer) / 1000000) * 1000000;
-            
+            if(isPerChannel){
+                //Render Chart By Year: line, bar, pie 
+                renderChannelCharts(selectedCategory);
 
-            chartConfigs.forEach(config => {
+                //Render Pie Chart For Each Channel
+                renderPieChartsByChannel(selectedCategory);
 
-                const category = selectedCategory ? selectedCategory : config.category;
+            } else {
+                //Render Charts For Overall Total
+                renderOverallTotalChart(selectedCategory);
+            }
 
-                const chartData = generateDataPerChannel(config.type, true, category, config.year);
+            // Trigger a reflow for the fade-in
+            $('.charts').removeClass('fade-out').addClass('fade-in');
+          
+            // Remove the temporary class after fade-in
+            setTimeout(() => {
+                $('.charts').removeClass('fade-in');
+            }, 300); 
+           
+        }, 500); 
 
-                const ctx = document.getElementById(config.canvasId);
-                
-                // Destroy existing chart if it exists
-                if (chartInstances[config.canvasId]) {
-                    chartInstances[config.canvasId].destroy();
-                }
+    }
 
-                // Create new chart instance
-                chartInstances[config.canvasId] = new Chart(ctx, {
-                    ...chartData,
-                    options: {
-                        ...chartData.options,
-                        scales:{
-                            ...chartData.options.scales,
-                            y: {
-                                ...chartData.options.scales?.y,
-                                max: maxValWithBuffer
-                            }
-                        }
-                    }
-                });
-            });
-        } else {
-            $('.canvas1').hide();
-            $('.canvas3').show();
-            $('.chart-channel').hide();
-            $('.chart-total').show(); 
+    function generateChannelData(chartType, isPerChannel = true, dataCategory = 'total', year){
 
-            chartConfigs3.forEach(config => {
+        let labels;
+        const datasets = [];
+        const channelCodes = @json($channel_codes);
+        const lastThreeDays = @json($lastThreeDaysDates);
+        const keyDates = Object.keys(lastThreeDays);
 
-                const category = selectedCategory ? selectedCategory : config.category;
 
-                const chartData = generateDataForOverallTotal(config.type, false, category, config.prevYear, config.currYear);
-
-                console.log(chartData);
-
-                const ctx = document.getElementById(config.canvasId);
-                
-                // Destroy existing chart if it exists
-                if (chartInstances[config.canvasId]) {
-                    chartInstances[config.canvasId].destroy();
-                }
-
-                // Create new chart instance
-                chartInstances[config.canvasId] = new Chart(ctx, chartData);
-            });
+        //LABELS
+        switch(dataCategory) {
+            case 'total':
+                labels = ['TOTAL'];
+                break;
+            case 'weekly':
+                labels =  ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
+                break;
+            case 'last_three_days':
+                labels = keyDates;
+                break;
+            default:
+                labels = [];
         }
 
-    }
+        const newData = Object.entries(channelCodes).map(channel => {
+            const dataStorage = [];
+            let channelCode = channel[0]; //ex. ECOMM, RTL
+            const weeks = channel[1][year]?.weeks;
+            const lastThreeDays = channel[1][year]?.last_three_days;
 
-    function updateCharts(selectedCategory) {
-        renderCharts(selectedCategory);
-    }
+            switch (channelCode) {
+                case 'TOTAL-RTL':
+                    channelCode = 'RETAIL';
+                    break;
+                case 'DLR/CRP':
+                    channelCode = 'OUT';
+                    break;
+                case 'FRA-DR':
+                    channelCode = 'FRA';
+                    break;
+                default:
+                    channelCode;
+            }
 
-    function calculateMaxValues(categoryVal) {
+            if (isPerChannel && channelCode && channelCode !== "TOTAL") {
+                let keys  = [];
+
+                switch(dataCategory) {
+                    case 'total':
+                        keys = ['TOTAL'];
+                        break;
+                    case 'weekly':
+                        keys = ['WK01', 'WK02', 'WK03', 'WK04'];
+                        break;
+                    default:
+                        keys = [];
+                }
+
+                if(dataCategory === 'last_three_days'){
+                    lastThreeDays && lastThreeDays.forEach(day => {
+                        const netSales = day.sum_of_net_sales ?? 0;
+                        dataStorage.push(netSales);
+                    });
+                } else {
+                    keys.forEach(key => {
+                        const netSales = weeks && weeks[key] ? weeks[key]?.sum_of_net_sales : 0;
+                        dataStorage.push(netSales);
+                    });
+                }
+
+                const maxVal = dataStorage.length > 0 ? Math.max(...dataStorage) : 0;
+
+                return {
+                    label: `${channelCode}`,
+                    data: dataStorage,
+                    borderWidth: 2,
+                    maxVal: maxVal
+
+                }; 
+            }
+
+
+            return null;
+
+        }).filter(data => data !== null);
+
+
+        return {
+            type: chartType,
+            data: {
+                labels: labels,
+                datasets: newData
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                    layout:{
+                    padding: 20
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${year} Sales Data`,
+                        font:{
+                            size: 16,
+                        },
+                        padding: {
+                            top:20,
+                            bottom: 20,
+                        },
+                    },
+                
+                    legend: {
+                        position: 'right',
+                        labels:{
+                            boxWidth: 10
+                        }
+                    }
+                },
+                locale: 'en-PH',
+                scales: {
+                    y: chartType === 'pie' ? {
+                    display: false // Hide y-axis for pie charts
+                    } : {
+                        // ticks: {
+                        //     callback: (value) => new Intl.NumberFormat('en-PH', {
+                        //         style: 'currency',
+                        //         currency: 'PHP',
+                        //         maximumSignificantDigits: 3
+                        //     }).format(value),
+                        // },
+                        beginAtZero: true,
+                    }
+
+                }
+            }
+        }
+    }
+    
+    function calculateMaxValuesInData(categoryVal) {
         const maxValues = {};
 
-        const chartConfigs2 = [
-            { year: prevYear, type: 'line', category: categoryVal },
-            { year: currYear, type: 'line', category: categoryVal },
+        const configToGetMaxVal = [
+            { type: 'line', category: categoryVal, year: prevYear},
+            { type: 'line', category: categoryVal, year: currYear},
         ];
 
+        configToGetMaxVal.forEach(config => {
 
-        chartConfigs2.forEach(config => {
-
-            const chartData = generateDataPerChannel(config.type, true, config.category, config.year);
+            const chartData = generateChannelData(config.type, true, config.category, config.year);
 
             const dataEntries = chartData.data.datasets;
 
@@ -413,7 +530,7 @@
         return maxValues;
     }
 
-    function generateDataForOverallTotal(chartType, isPerChannel = false, dataCategory = 'total', prevYear, currYear){
+    function generateOverallTotalData(chartType, isPerChannel = false, dataCategory = 'total', prevYear, currYear){
         let labels;
         let pieLabels = [];
         const datasets = [];
@@ -436,14 +553,12 @@
                 labels = [];
         }
 
-        // console.log(channelCodes);
 
         const prevData = Object.entries(channelCodes).map(channel => {
             const dataStorage = [];
             const channelCode = channel[0]; //ex. ECOMM, RTL
             const weeks = channel[1][prevYear]?.weeks;
             const lastThreeDays = channel[1][prevYear]?.last_three_days;
-
 
             if(!isPerChannel && channelCode === 'TOTAL'){
                 let keys  = [];
@@ -530,6 +645,7 @@
 
 
         const pieData = Object.entries(channelCodes).map(channel => {
+            
             const dataStorage = [];
             const channelCode = channel[0]; //ex. ECOMM, RTL
             const weeks = channel[1][prevYear]?.weeks;
@@ -545,16 +661,9 @@
                 switch(dataCategory) {
                     case 'total':
                         keys = ['TOTAL'];
-                        pieLabels = [prevYear + " TOTAL", currYear + " TOTAL"];
                         break;
                     case 'weekly':
                         keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        pieLabels = [
-                            prevYear + " WK01", currYear + " WK01",
-                            prevYear + " WK02", currYear + " WK02",
-                            prevYear + " WK03", currYear + " WK03",
-                            prevYear + " WK04", currYear + " WK04",
-                        ];
                         break;
                     default:
                         keys = [];
@@ -563,30 +672,46 @@
                 if(dataCategory === 'last_three_days'){
                     lastThreeDays.forEach(day => {
                         const netSales = day?.sum_of_net_sales ?? 0;
-                        dataStorage.push(netSales);
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+
+                            const formattedDate = formatDate(day?.date_of_the_day); 
+
+                            pieLabels.push(prevYear + ' ' + formattedDate);
+                        }
                     });
 
                     lastThreeDays2.forEach(day => {
                         const netSales = day?.sum_of_net_sales ?? 0;
-                        dataStorage.push(netSales);
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+
+                            const formattedDate = formatDate(day?.date_of_the_day); 
+
+                            pieLabels.push(currYear + ' ' + formattedDate);
+                        }
                     });
 
-                    keyDates.forEach(date => {
-                        pieLabels.push(prevYear + ' ' + date, currYear + ' ' + date) 
-                    });
-           
                 } else {
                     keys.forEach(key => {
-                    const netSales = weeks[key]?.sum_of_net_sales ?? 0;
-                    dataStorage.push(netSales);
+                        const netSales = weeks[key]?.sum_of_net_sales ?? 0;
+
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+                            pieLabels.push(prevYear + ' ' + key);
+                        }
                     });
 
                     keys.forEach(key => {
-                    const netSales = weeks2[key]?.sum_of_net_sales ?? 0;
-                    dataStorage.push(netSales);
+                        const netSales = weeks2[key]?.sum_of_net_sales ?? 0;
+                        if(netSales != 0) {
+                            dataStorage.push(netSales);
+                            pieLabels.push(currYear + ' ' + key);
+                        }
                     });
                 }
-
 
 
                 return {
@@ -601,10 +726,6 @@
 
         }).filter(data => data !== null);
 
-        // console.log(prevData);
-        // console.log(currData);
-
-        // const pieLabels = [`${prevYear}`, `${currYear}`];
 
         return {
             type: chartType,
@@ -643,159 +764,6 @@
                     y: chartType === 'pie' ? {
                     display: false // Hide y-axis for pie charts
                     } : {
-                        ticks: {
-                            callback: (value) => new Intl.NumberFormat('en-PH', {
-                                style: 'currency',
-                                currency: 'PHP',
-                                maximumSignificantDigits: 3
-                            }).format(value),
-                        },
-                        beginAtZero: true,
-                    }
-
-                }
-            }
-        }
-    }
-    function generateDataPerChannel(chartType, isPerChannel = true, dataCategory = 'total', year){
-
-        let labels;
-        const datasets = [];
-        const channelCodes = @json($channel_codes);
-        const lastThreeDays = @json($lastThreeDaysDates);
-        const keyDates = Object.keys(lastThreeDays);
-
-
-        //LABELS
-        switch(dataCategory) {
-            case 'total':
-                labels = ['TOTAL'];
-                break;
-            case 'weekly':
-                labels =  ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
-                break;
-            case 'last_three_days':
-                labels = keyDates;
-                break;
-            default:
-                labels = [];
-        }
-
-        // console.log(channelCodes);
-
-        const newData = Object.entries(channelCodes).map(channel => {
-            const dataStorage = [];
-            let channelCode = channel[0]; //ex. ECOMM, RTL
-            const weeks = channel[1][year]?.weeks;
-            const lastThreeDays = channel[1][year]?.last_three_days;
-
-            // console.group(channelCode)
-            //     console.log(weeks);
-            //     console.log(lastThreeDays);
-            //     console.log(channel);
-            // console.groupEnd();
-
-            switch (channelCode) {
-                case 'TOTAL-RTL':
-                    channelCode = 'RETAIL';
-                    break;
-                case 'DLR/CRP':
-                    channelCode = 'OUT';
-                    break;
-                case 'FRA-DR':
-                    channelCode = 'FRA';
-                    break;
-                default:
-                    channelCode;
-            }
-
-            if (isPerChannel && channelCode && channelCode !== "TOTAL") {
-                let keys  = [];
-
-                switch(dataCategory) {
-                    case 'total':
-                        keys = ['TOTAL'];
-                        break;
-                    case 'weekly':
-                        keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        break;
-                    default:
-                        keys = [];
-                }
-
-                if(dataCategory === 'last_three_days'){
-                    lastThreeDays && lastThreeDays.forEach(day => {
-                        // const netSales = day?.sum_of_net_sales ?? 0;
-                        // dataStorage.push(netSales);
-                        const netSales = day.sum_of_net_sales ?? 0;
-                        dataStorage.push(netSales);
-                    });
-                } else {
-                    keys.forEach(key => {
-                        const netSales = weeks && weeks[key] ? weeks[key]?.sum_of_net_sales : 0;
-                        dataStorage.push(netSales);
-                    });
-                }
-
-          
-
-                const maxVal = dataStorage.length > 0 ? Math.max(...dataStorage) : 0;
-                // console.log(maxVal);
-
-                return {
-                    label: `${channelCode}`,
-                    data: dataStorage,
-                    borderWidth: 2,
-                    maxVal: maxVal
-
-                }; 
-            }
-
-
-            return null;
-
-        }).filter(data => data !== null);
-
-        // console.log(newData);
-
-
-        return {
-            type: chartType,
-            data: {
-                labels: labels,
-                datasets: newData
-            },
-            options: { 
-                responsive: true,
-                maintainAspectRatio: false,
-                    layout:{
-                    padding: 20
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `${year} Sales Data`,
-                        font:{
-                            size: 16,
-                        },
-                        padding: {
-                            top:20,
-                            bottom: 20,
-                        },
-                    },
-                
-                    legend: {
-                        position: 'right',
-                        labels:{
-                            boxWidth: 10
-                        }
-                    }
-                },
-                locale: 'en-PH',
-                scales: {
-                    y: chartType === 'pie' ? {
-                    display: false // Hide y-axis for pie charts
-                    } : {
                         // ticks: {
                         //     callback: (value) => new Intl.NumberFormat('en-PH', {
                         //         style: 'currency',
@@ -811,6 +779,7 @@
         }
     }
 
+
     function formatDate(date_of_the_day){
         const date = new Date(date_of_the_day);
         const dayNum = date.getDate().toString().padStart(2, '0'); // Get day and pad if necessary
@@ -821,16 +790,13 @@
         return formattedDate;
     }
 
-    function generateDataForPiePerChannel(chartType = 'pie', isPerChannel = true, dataCategory = 'weekly', prevYear, currYear, key){
+    function generatePieChartDataByChannel(chartType = 'pie', isPerChannel = true, dataCategory = 'weekly', prevYear, currYear, key){
         let labels;
         let pieLabels = [];
         const datasets = [];
         const channelCodes = @json($channel_codes);
         const lastThreeDays = @json($lastThreeDaysDates);
         const keyDates = Object.keys(lastThreeDays);
-
-    
-
 
         const pieData = Object.entries(channelCodes).map(channel => {
             const dataStorage = [];
@@ -841,6 +807,7 @@
 
             const weeks2 = channel[1][currYear]?.weeks;
             const lastThreeDays2 = channel[1][currYear]?.last_three_days;
+
 
             switch (channelCode) {
                 case 'TOTAL-RTL':
@@ -897,7 +864,7 @@
            
                 } else {
                     keys.forEach(key => {
-                        const netSales = weeks[key]?.sum_of_net_sales ?? 0;
+                        const netSales = weeks && weeks[key] ? weeks[key]?.sum_of_net_sales  :0;
 
                         if(netSales != 0) {
                             dataStorage.push(netSales);
@@ -906,7 +873,7 @@
                     });
 
                     keys.forEach(key => {
-                        const netSales = weeks2[key]?.sum_of_net_sales ?? 0;
+                        const netSales = weeks2 && weeks2[key] ? weeks2[key]?.sum_of_net_sales : 0;
 
                         if(netSales != 0) {
                             dataStorage.push(netSales);
@@ -926,7 +893,7 @@
 
         }).filter(data => data !== null);
 
-        console.log(pieData);
+        // console.log(pieData);
 
 
         return {
@@ -966,13 +933,13 @@
                     y: chartType === 'pie' ? {
                     display: false // Hide y-axis for pie charts
                     } : {
-                        ticks: {
-                            callback: (value) => new Intl.NumberFormat('en-PH', {
-                                style: 'currency',
-                                currency: 'PHP',
-                                maximumSignificantDigits: 3
-                            }).format(value),
-                        },
+                        // ticks: {
+                        //     callback: (value) => new Intl.NumberFormat('en-PH', {
+                        //         style: 'currency',
+                        //         currency: 'PHP',
+                        //         maximumSignificantDigits: 3
+                        //     }).format(value),
+                        // },
                         beginAtZero: true,
                     }
 
@@ -981,21 +948,25 @@
         }
     }
 
+    function generateUniqueId(prefix = 'canvas') {
+        return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+    }
     
 
     // All Data Charts
     // const all = document.getElementById('all');
-    // const alldata = generateDataForOverallTotal('line', false, 'last_three_days', '2021', '2022');
+    // const alldata = generateOverallTotalData('line', false, 'last_three_days', '2021', '2022');
     // new Chart(all, alldata);
 
 
     // const all2 = document.getElementById('all2');
-    // const alldata2 = generateDataPerChannel('bar', true, 'last_three_days', '2021');
+    // const alldata2 = generateChannelData('bar', true, 'last_three_days', '2021');
     // new Chart(all2, alldata2);
 
     // const all3 = document.getElementById('all3');
-    // const alldata3 = generateDataPerChannel('bar', true, 'last_three_days', '2022');
+    // const alldata3 = generateChannelData('bar', true, 'last_three_days', '2022');
     // new Chart(all3, alldata3);
+
 
 });
 </script>

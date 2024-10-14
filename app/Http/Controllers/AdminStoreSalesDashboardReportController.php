@@ -476,7 +476,12 @@
 
 				foreach($chartConfigPiePerChannel as $index => $chart){
 					$lastIndex += 1;
-					$chartUrls["quickChartUrl{$lastIndex}"] = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
+					$url = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
+					
+					if($url){
+						$chartUrls["quickChartUrl{$lastIndex}"] = $url;
+					}
+					
 				}
 			} else {
 				foreach($chartConfigTotal as $index => $chart) {
