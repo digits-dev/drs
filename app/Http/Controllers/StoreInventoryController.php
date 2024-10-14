@@ -343,7 +343,7 @@ class StoreInventoryController extends Controller
                 if (isset($itemMasterCache[$itemNumber])) {
                     $item_master = $itemMasterCache[$itemNumber];
                 } else {
-                    $item_master = $this->fetchItemData($itemMaster, $itemNumber);
+                    $item_master = $this->fetchItemData($itemMaster, $itemNumber, $excel['ALLOCATABLE']);
                 }
 
 
@@ -373,7 +373,7 @@ class StoreInventoryController extends Controller
                 $toExcel['store_cost'] = $item_master['store_cost'];
                 $toExcel['store_cost_eccom'] = $item_master['store_cost_eccom'];
                 $toExcel['landed_cost'] = $item_master['landed_cost'];
-                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], "GOOD");
+                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], "POS - GOOD");
 
                 // dd($toExcel);
 
@@ -396,8 +396,7 @@ class StoreInventoryController extends Controller
                 'folder_name' => $folder_name,
                 'file_name' => $excel_file_name,
                 'created_by' => CRUDBooster::myId(),
-                'from_date' => $from_date,
-                'to_date' => $to_date,
+                'from_date' => null,
                 'data_type' => 'PULL'
             ];
 
@@ -419,36 +418,50 @@ class StoreInventoryController extends Controller
 
         $inv_type = $item->inventory_type_description;
 
-        if ($inv_type === 'ANY' && $pos_sub === 'RMA') {
+        if ($inv_type === 'ANY' && $pos_sub === 'POS - RMA') {
             return 'DEFECTIVE';
         }
 
-        if ($inv_type === 'HMR' && in_array($pos_sub, ['GOOD', 'DEMO', 'TRANSIT'])) {
+        if ($inv_type === 'HMR' && in_array($pos_sub, ['POS - GOOD', 'POS - DEMO', 'POS - TRANSIT'])) {
             return 'HMR';
         }
 
-        if (in_array($inv_type, ['TRADE', 'MARKETING', 'STORE DEMO']) && in_array($pos_sub, ['GOOD', 'DEMO', 'TRANSIT'])) {
+        if (in_array($inv_type, ['TRADE', 'MARKETING', 'STORE DEMO']) && in_array($pos_sub, ['POS - GOOD', 'POS - DEMO', 'POS - TRANSIT'])) {
             return 'GOOD';
         }
 
         return null;
     }
 
-    function prepareItemData($item, $orgName, $ecomStoreMargin = 0) {
+    function prepareItemData($item, $orgName, $sub_inventory = null, $ecomStoreMargin = 0) {
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
             'store_cost' => $item->dtp_rf,
             'store_cost_eccom' => $ecomStoreMargin,
             'landed_cost' => $item->landed_cost,
-            'inventory_type_id' => $item->inventory_types_id
+            'inventory_type_id' => $item->inventory_types_id,
+            'sub_inventory' => $sub_inventory
         ];
     }
     
-    function fetchItemData($itemMaster, $itemNumber) {
+    function fetchItemData($itemMaster, $itemNumber, $allocatable) {
         
+        $sub_inventory = '';
+
+        if(substr($itemNumber, 0, 1) === '3'){
+            dd($itemNumber);
+        }
+
         if ($itemMaster) {
-            return $this->prepareItemData($itemMaster, 'DIGITS', $itemMaster->ecom_store_margin);
+
+            if($allocatable === 0){
+                $sub_inventory = 'POS - GOOD';
+            }else{
+                $sub_inventory = 'POS - TRANSIT';
+            }
+
+            return $this->prepareItemData($itemMaster, 'DIGITS', $sub_inventory, $itemMaster->ecom_store_margin);
         }
     
         // Check the 'rma_item_masters' table
@@ -458,7 +471,7 @@ class StoreInventoryController extends Controller
             ->first();
         
         if ($rmaItemMaster) {
-            return $this->prepareItemData($rmaItemMaster, 'RMA');
+            return $this->prepareItemData($rmaItemMaster, 'RMA', 'POS - RMA');
         }
     
         // Check the 'digits_imfs' table
@@ -468,7 +481,6 @@ class StoreInventoryController extends Controller
             ->first();
         
         if ($aimfsItemMaster) {
-
             return $this->prepareItemData($aimfsItemMaster, 'ADMIN');
         }
     
@@ -484,4 +496,4 @@ class StoreInventoryController extends Controller
     }
 
 
-}
+}   
