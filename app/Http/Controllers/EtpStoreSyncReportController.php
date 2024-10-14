@@ -7,9 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 
-class EtpStoreSyncReportController extends Controller
-{
-    public function getIndex(Request $request){
+class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controllers\CBController {
+
+
+    public function getIndex(){
 		
 		$customerMap = [];
 		$customers_masterfile = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->where(function($query) { $query->where('cutomer_name', 'like', '%FRA')->orWhere('cutomer_name', 'like', '%RTL');})->get();

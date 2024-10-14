@@ -7,18 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class EtpBirReportController extends Controller
+class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBController
 {
-    public function getIndex(Request $request){
+    public function getIndex(){
 
-		if ($request->ajax()){
+		if (request()->ajax()){
 
 			$customers = array_map(function($customer) {
 				return str_replace('CUS-', '', $customer);
-			}, $request->customer);
+			}, request()->customer);
 			$customers_list = implode("','", array_map('addslashes', $customers));
-			$date_from = Carbon::parse($request->date_from)->format('Ymd');
-			$date_to = Carbon::parse($request->date_to)->format('Ymd');
+			$date_from = Carbon::parse(request()->date_from)->format('Ymd');
+			$date_to = Carbon::parse(request()->date_to)->format('Ymd');
 
 			$store_sync_data = DB::connection('sqlsrv')->select(DB::raw("
 				SELECT 
@@ -34,7 +34,7 @@ class EtpBirReportController extends Controller
 					Warehouse
 			"));
 
-			// return response()->json($store_sync_data);
+			return response()->json($store_sync_data);
 
 		}
 
