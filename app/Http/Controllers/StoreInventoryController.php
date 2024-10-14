@@ -335,14 +335,16 @@ class StoreInventoryController extends Controller
                 // ITEM MASTERS CACHING
                 $itemNumber = $excel['ITEM_NUMBER'];
 
-                
+                $itemMaster = DB::connection('imfs')
+                ->table('item_masters')
+                ->where('digits_code', $itemNumber)
+                ->first();
 
                 if (isset($itemMasterCache[$itemNumber])) {
                     $item_master = $itemMasterCache[$itemNumber];
                 } else {
-                    $itemMasterCache[$itemNumber] = $this->fetchItemData($itemNumber);
+                    $item_master = $this->fetchItemData($itemMaster, $itemNumber);
                 }
-
 
 
                 // MASTERFILE CACHING
@@ -366,12 +368,12 @@ class StoreInventoryController extends Controller
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
-                $toExcel['item_description'] = $itemMasterCache[$itemNumber]['item_description'];
+                $toExcel['item_description'] = $item_master['item_description'];
                 $toExcel['total_qty'] = $excel['TOTAL_QTY'];
-                $toExcel['store_cost'] = $itemMasterCache[$itemNumber]['store_cost'];
-                $toExcel['store_cost_eccom'] = $itemMasterCache[$itemNumber]['store_cost_eccom'];
-                $toExcel['landed_cost'] = $itemMasterCache[$itemNumber]['landed_cost'];
-                $toExcel['product_quality'] = $this->productQuality($item_master->inventory_types_id, "GOOD");
+                $toExcel['store_cost'] = $item_master['store_cost'];
+                $toExcel['store_cost_eccom'] = $item_master['store_cost_eccom'];
+                $toExcel['landed_cost'] = $item_master['landed_cost'];
+                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], "GOOD");
 
                 // dd($toExcel);
 
@@ -409,8 +411,6 @@ class StoreInventoryController extends Controller
     private function productQuality($inv_type_id, $pos_sub)
     {
 
-        \Log::info('inventory id' . $inv_type_id);
-
         $item = DB::connection('imfs')->table('inventory_types')->where('id', $inv_type_id)->first();
 
         if(!$item){
@@ -418,9 +418,6 @@ class StoreInventoryController extends Controller
         }
 
         $inv_type = $item->inventory_type_description;
-
-        \Log::info('inventory type' . $inv_type);
-
 
         if ($inv_type === 'ANY' && $pos_sub === 'RMA') {
             return 'DEFECTIVE';
@@ -434,9 +431,6 @@ class StoreInventoryController extends Controller
             return 'GOOD';
         }
 
-        if ($inv_type === 'OTHERS' && $pos_sub === 'OTHERS') {
-            return 'BLANK';
-        }
 
         if ($inv_type === null && $pos_sub === null) {
             return null;
@@ -452,15 +446,11 @@ class StoreInventoryController extends Controller
             'store_cost' => $item->dtp_rf,
             'store_cost_eccom' => $ecomStoreMargin,
             'landed_cost' => $item->landed_cost,
+            'inventory_type_id' => $item->inventory_types_id
         ];
     }
     
-    function fetchItemData($itemNumber) {
-        // Check the 'item_masters' table
-        $itemMaster = DB::connection('imfs')
-            ->table('item_masters')
-            ->where('digits_code', $itemNumber)
-            ->first();
+    function fetchItemData($itemMaster, $itemNumber) {
         
         if ($itemMaster) {
             return $this->prepareItemData($itemMaster, 'DIGITS', $itemMaster->ecom_store_margin);
