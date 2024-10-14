@@ -483,7 +483,8 @@ class StoreInventoryController extends Controller
             'item_description' => null,
             'store_cost' => null,
             'store_cost_eccom' => null,
-            'landed_cost' => null
+            'landed_cost' => null,
+            'inventory_type_id' => null
         ];
     }
 
