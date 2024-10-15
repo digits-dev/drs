@@ -5,21 +5,24 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
-class EtpTenderReportController extends Controller
+class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\CBController
 {
-	public function getIndex(Request $request)
+	public function getIndex()
 	{
 		$Customers = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name')->where(function($query) { $query->where('cutomer_name', 'like', '%FRA')->orWhere('cutomer_name', 'like', '%RTL');})->get();
 
-		if ($request->ajax()) {
+		if (request()->ajax()) {
 			
-			$storeCustomer = $request->customer;
-			$dateFrom = Carbon::parse($request->dateFrom)->format('Ymd');
-			$dateTo = Carbon::parse($request->dateTo)->format('Ymd');
+			$storeCustomer = request()->customer;
+			$dateFrom = Carbon::parse(request()->dateFrom)->format('Ymd');
+			$dateTo = Carbon::parse(request()->dateTo)->format('Ymd');
 			$store = "'" . implode("','", $storeCustomer) . "'";
 
-			$tender_data = DB::connection('sqlsrv')->select(DB::raw("
+			$tender_data = Cache::remember("{$store}{$dateFrom}{$dateTo}", 900, function() use($store, $dateFrom, $dateTo){
+			
+			return DB::connection('sqlsrv')->select(DB::raw("
 				SELECT 
 					P.CreateDate AS 'DATE',
 					P.CreateTime As 'TIME',
@@ -82,6 +85,7 @@ class EtpTenderReportController extends Controller
 					C.ExpiryDate,
 					C.AuthorisationNumber,
 					CM.CustomerName"));
+				});
 
 				$customerMap = [];
 
