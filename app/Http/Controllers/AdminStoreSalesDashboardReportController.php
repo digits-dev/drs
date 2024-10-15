@@ -680,4 +680,34 @@
 			];
 		}
 
+
+		
+		public function getTabs() {
+
+			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+			
+
+			$data = [];
+			$data['page_title'] = 'Store Sales Dashboard Report';
+
+			// $generatedData = $this->dashboardService->generateDailySalesReport();
+			$generatedData = $this->dashboardService->getData();
+
+			if(empty($generatedData)){
+				$this->dashboardService->generateMonthlySalesReport();
+			}
+
+			// $this->dashboardService->generateQuarterlySalesReport();
+
+			$data = array_merge($data, $generatedData);
+
+			// dd($data['channel_codes']);
+
+			// dd($data);
+
+			Log::info(json_encode($data, JSON_PRETTY_PRINT));
+
+			return view('dashboard-report.store-sales.tabs', $data);
+		}
+
 	}

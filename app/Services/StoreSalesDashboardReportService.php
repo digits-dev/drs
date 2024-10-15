@@ -47,20 +47,20 @@ class StoreSalesDashboardReportService {
             // Generate and cache the data here
      
 			
-            $currentDay = date('d');
-            $currentMonth = date('m');
-            $currentYear = date('Y'); 
-            $previousYear = date('Y', strtotime('-1 year'));
+            // $currentDay = date('d');
+            // $currentMonth = date('m');
+            // $currentYear = date('Y'); 
+            // $previousYear = date('Y', strtotime('-1 year'));
             
             // $currentMonth = 3;
             // $previousYear = 2019;
             // $currentYear = 2020; 
             // $currentDay = 29;
 
-            // $currentMonth = 2;
-            // $previousYear = 2021;
-            // $currentYear = 2022; 
-            // $currentDay = 23;
+            $currentMonth = 2;
+            $previousYear = 2021;
+            $currentYear = 2022; 
+            $currentDay = 23;
 
             // $currentMonth = 2;
             // $previousYear = 2018;
@@ -90,7 +90,7 @@ class StoreSalesDashboardReportService {
             $data['lastThreeDaysDates'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
 
             foreach ($years as $yearData) {
-                self::processYearData($yearData['year'], $yearData['month'], $currentDay, $data);
+                self::processDailySalesData($yearData['year'], $yearData['month'], $currentDay, $data);
             }
 
             // dd($data['channel_codes']);
@@ -115,7 +115,7 @@ class StoreSalesDashboardReportService {
 
     }
 
-    private function processYearData($year, $month, $day, &$data) {
+    private function processDailySalesData($year, $month, $day, &$data) {
         $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
 
         // Create temp table and get summary
@@ -127,7 +127,13 @@ class StoreSalesDashboardReportService {
         // Last three days summary
         $data['channel_codes']['TOTAL'][$year]['last_three_days'] = $storeSalesDR->getSalesSummaryForLastThreeDays();
 
-        
+        $test1 = $storeSalesDR->getSalesSummary()->toArray();
+        $test2 = $storeSalesDR->getSalesWeeklyPerChannel();
+
+        // dump($test1);
+        // dump($test2);
+        // dd('stop');
+
         // Process sales per channel
         $sumPerChannel = $storeSalesDR->getSalesWeeklyPerChannel();
 
@@ -268,7 +274,9 @@ class StoreSalesDashboardReportService {
         $width = 1000;  
         $height = 600;
 
-        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height;
+        $version = 2.4;
+
+        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height . '&version=' . $version;
 
         return $quickChartUrl;
     }
@@ -277,6 +285,8 @@ class StoreSalesDashboardReportService {
         $labels = [];
         $pieLabels = [];
         $keyDates = $lastThreeDaysDates !== null ? array_keys($lastThreeDaysDates) : [];
+
+        $colors = [self::generateRandomColor(), self::generateRandomColor()];
 
     
         // LABELS
@@ -296,9 +306,9 @@ class StoreSalesDashboardReportService {
     
         // Function to generate data for each year
 
-        $prevData = self::getDataForOverall($prevYear, $channelCodes, $dataCategory, $isPerChannel);
+        $prevData = self::getDataForOverall($prevYear, $channelCodes, $dataCategory, $isPerChannel, $colors[0]);
     
-        $currData = self::getDataForOverall($currYear, $channelCodes, $dataCategory, $isPerChannel);
+        $currData = self::getDataForOverall($currYear, $channelCodes, $dataCategory, $isPerChannel, $colors[1]);
 
     
         // Pie data generation
@@ -369,6 +379,7 @@ class StoreSalesDashboardReportService {
                     'data' => $dataStorage,
                     'borderWidth' => 2,
                     'fill' => false,
+                    // 'backgroundColor' => $colors,
                 ];
             }
         }
@@ -411,9 +422,48 @@ class StoreSalesDashboardReportService {
                 ],
             ],
         ];
+
+        // Chart js version 4.4.4
+
+        // return [
+        //     'type' => $chartType,
+        //     'data' => [
+        //         'labels' => $chartType == 'pie' ? $pieLabels : $labels,
+        //         'datasets' => $chartType == 'pie' ? $pieData : array_merge($prevData, $currData),
+        //     ],
+        //     'options' => [
+        //         'layout' => ['padding' => 20],
+        //         'plugins' => [
+        //             'title' => [
+        //                 'display' => true,
+        //                 'text' => "Sales Data",
+        //                 'font' => ['size' => 16],
+        //                 'padding' => 20,
+        //             ],
+        //             'legend' => [
+        //                 'display' => true,
+        //                 'position' => 'right',
+        //                 'labels' => [
+        //                     'boxWidth' => 10
+        //                 ]
+        //             ],
+        //             "datalabels" => [
+        //                 "display" => $chartType == 'pie' ? true : false,
+        //                 "anchor" =>  $chartType == 'pie' ? "center" : "end",
+        //                 "align" =>  $chartType == 'pie' ? "center" : "end",
+        //                 "color" => "#000",
+        //             ],
+        //         ],
+        //         'locale' => 'en-PH',
+        //         'scales' => [
+        //             'y' => $chartType === 'pie' ? ['display' => false] : ['beginAtZero' => true]
+        //         ],
+         
+        //     ],
+        // ];
     }
     
-    private static function getDataForOverall($year, $channelCodes, $dataCategory, $isPerChannel) {
+    private static function getDataForOverall($year, $channelCodes, $dataCategory, $isPerChannel, $color) {
         $dataStorage = [];
         foreach ($channelCodes as $channelCode => $channelData) {
             $weeks = $channelData[$year]['weeks'] ?? [];
@@ -452,6 +502,7 @@ class StoreSalesDashboardReportService {
                     'data' => $dataForChannel,
                     'borderWidth' => 2,
                     'fill' => false,
+                    // 'backgroundColor' => $color,
                 ];
             }
         }
@@ -737,7 +788,7 @@ class StoreSalesDashboardReportService {
         // Create the QuickChart URL with specified width and height
         $width = 1000;  
         $height = 600;
-        $version = 2.9;
+        $version = 2;
 
         $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height . '&version=' . $version;
 
@@ -773,4 +824,212 @@ class StoreSalesDashboardReportService {
         return $maxValues;
     }
 
+
+    private static function generateRandomColor() {
+        $red = rand(0, 255);
+        $green = rand(0, 255);
+        $blue = rand(0, 255);
+        
+        return sprintf("#%02x%02x%02x", $red, $green, $blue);
+    }
+
+
+
+    public function generateMonthlySalesReport(){
+
+        $data = Cache::lock('monthly_sales_report_lock', 5)->get(function () {
+            // Generate and cache the data here
+            // $currentMonth = 2;
+            // $previousYear = 2022;
+            // $currentYear = 2023; 
+            // $currentDay = 23;
+
+            $currentDay = date('d');
+            $currentMonth = date('m');
+            $currentYear = date('Y'); 
+            $previousYear = date('Y', strtotime('-1 year'));
+
+
+            $years = [
+                ['year' => $previousYear, 'month' => $currentMonth],
+                ['year' => $currentYear, 'month' => $currentMonth],
+            ];
+            
+            $data = [
+                'yearData' => [
+                    'previousYear' => $years[0]['year'],
+                    'currentYear' => $years[1]['year'],
+                ],
+                'channel_codes' => [],
+            ];
+
+            foreach ($years as $yearData) {
+                self::processMonthlySalesData($yearData['year'], $yearData['month'], $currentDay, $data);
+            }
+
+            // dd($data['channel_codes']);
+            // dd($data);
+
+            // Store the data in cache
+            Cache::put($this->getCacheKey(), $data, self::CACHE_EXPIRATION);
+
+            return $data;
+
+        });
+
+        // Check if data is null (indicating lock was not acquired)
+        if (is_null($data)) {
+            // Handle the case when the lock was not acquired
+            \Log::warning('Could not acquire lock for daily sales report generation.');
+            
+            // Optionally, you can return an empty array or existing cached data
+            return Cache::get($this->getCacheKey(), []); // Return cached data if available
+        }
+
+        return $data; // Return the generated data
+
+    }
+
+    private function processMonthlySalesData($year, $month, $day, &$data) {
+        $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
+
+        // Create temp table and get summary
+        $storeSalesDR->createTempTableForMonthly();
+
+        // Get and store sales summary
+        $data['channel_codes']['TOTAL'][$year]['months'] = $storeSalesDR->getSalesPerMonth()->toArray();
+
+        $test1 = $storeSalesDR->getSalesPerMonth()->toArray();
+        $test2 = $storeSalesDR->getSalesPerMonthByChannel();
+
+        // dump($test1);
+        // dump($test2);
+
+        // dd("stop");
+
+        // Process sales per channel
+        $sumPerChannel = $storeSalesDR->getSalesPerMonthByChannel();
+
+
+        foreach ($sumPerChannel as $sale) {
+            // if($sale['channel_classification'] == 'OTHER'){
+            // 	dump($sale['week_cutoff']);
+            // 	dump($sale['min_reference_number']);
+            // }
+            $channelCode = $sale['channel_classification'];
+
+
+            if (!isset($data['channel_codes'][$channelCode])) {
+                $data['channel_codes'][$channelCode] = [];
+            }
+
+            $data['channel_codes'][$channelCode][$year]['months'][$sale['month_cutoff']] = [
+                'sum_of_net_sales' => $sale['sum_of_net_sales'],
+            ];
+        }
+        
+        // Drop the temporary table
+        $storeSalesDR->dropTempTableForMonthly();
+    }
+
+
+    public function generateQuarterlySalesReport(){
+
+        // $data = Cache::lock('quarterly_sales_report_lock', 5)->get(function () {
+            // Generate and cache the data here
+            // $currentMonth = 2;
+            // $previousYear = 2022;
+            // $currentYear = 2023; 
+            // $currentDay = 23;
+
+            $currentDay = date('d');
+            $currentMonth = date('m');
+            $currentYear = date('Y'); 
+            $previousYear = date('Y', strtotime('-1 year'));
+
+
+            $years = [
+                ['year' => $previousYear, 'month' => $currentMonth],
+                ['year' => $currentYear, 'month' => $currentMonth],
+            ];
+            
+            $data = [
+                'yearData' => [
+                    'previousYear' => $years[0]['year'],
+                    'currentYear' => $years[1]['year'],
+                ],
+                'channel_codes' => [],
+            ];
+
+            foreach ($years as $yearData) {
+                self::processQuarterlySalesData($yearData['year'], $yearData['month'], $currentDay, $data);
+            }
+
+            // dd($data['channel_codes']);
+            // dd($data);
+
+            // Store the data in cache
+            Cache::put($this->getCacheKey(), $data, self::CACHE_EXPIRATION);
+
+            return $data;
+
+        // });
+
+        // // Check if data is null (indicating lock was not acquired)
+        // if (is_null($data)) {
+        //     // Handle the case when the lock was not acquired
+        //     \Log::warning('Could not acquire lock for daily sales report generation.');
+            
+        //     // Optionally, you can return an empty array or existing cached data
+        //     return Cache::get($this->getCacheKey(), []); // Return cached data if available
+        // }
+
+        // return $data; // Return the generated data
+
+    }
+
+
+
+
+    private function processQuarterlySalesData($year, $month, $day, &$data) {
+        $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
+
+        // Create temp table and get summary
+        $storeSalesDR->createTempTableForMonthly();
+
+        // Get and store sales summary
+        $data['channel_codes']['TOTAL'][$year]['quarters'] = $storeSalesDR->getSalesPerQuarter();
+
+        $test1 = $storeSalesDR->getSalesPerQuarter();
+        $test2 = $storeSalesDR->getSalesPerQuarterByChannel();
+        // dump('quarter');
+        // dump($test1);
+        // dump($test2);
+
+        // dd("stop");
+
+        // Process sales per channel
+        $sumPerChannel = $storeSalesDR->getSalesPerQuarterByChannel();
+
+
+        foreach ($sumPerChannel as $sale) {
+            // if($sale['channel_classification'] == 'OTHER'){
+            // 	dump($sale['week_cutoff']);
+            // 	dump($sale['min_reference_number']);
+            // }
+            $channelCode = $sale['channel_classification'];
+
+
+            if (!isset($data['channel_codes'][$channelCode])) {
+                $data['channel_codes'][$channelCode] = [];
+            }
+
+            $data['channel_codes'][$channelCode][$year]['quarters'][$sale['quarter_cutoff']] = [
+                'sum_of_net_sales' => $sale['sum_of_net_sales'],
+            ];
+        }
+        
+        // Drop the temporary table
+        $storeSalesDR->dropTempTableForMonthly();
+    }
 }

@@ -227,5 +227,8 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('/pdf_snap', [AdminStoreSalesDashboardReportController::class, 'generatePDF2'] );
 
 
+    Route::get('/tabs', [AdminStoreSalesDashboardReportController::class, 'getTabs'] );
+
+
 
 });

@@ -32,6 +32,7 @@
         <table>
             <colgroup>
                 <col span="2" style="width: 110px;">
+                <col span="1" style="width: 10px;">
                 <col span="8" style="width: 125px;">
               </colgroup>
             <thead>
@@ -40,6 +41,9 @@
                
                     <tr>
                         <th  class="none" style="text-align: left; font-size:14px;" colspan="3" rowspan="2"><b>DAILY SALES REPORT</b></th>
+
+                        <th class="none" >&nbsp;</th>
+
                         
                         @foreach (range(0,3) as $item)
                             <th class="bg-light-blue" style="text-decoration: underline;">CUT OFF</th>
@@ -50,6 +54,8 @@
 
                     <tr>
                         {{-- <th class="none" style="width: 5px !important;">&nbsp;</th> --}}
+                        <th class="none" >&nbsp;</th>
+
 
                         <th class="bg-light-blue" style="text-decoration: underline;">1-7</th>
                         <th class="bg-light-blue" style="text-decoration: underline;">8-14</th>
@@ -73,6 +79,9 @@
                             <th class="none"></th> 
                         @endfor
 
+                        {{-- <th class="none" >&nbsp;</th> --}}
+
+
                     </tr>
                 @endif
 
@@ -95,7 +104,7 @@
                 <tr>
                     <th>{{strtoupper($channelCode) }}</th>
                     <th >YEAR</th>
-                    {{-- <th class="none">&nbsp;</th> --}}
+                    <th class="none">&nbsp;</th>
                     {{-- <th class="none" style="width: 5px !important;">&nbsp;</th> --}}
 
 
@@ -129,7 +138,7 @@
                 <tr>
                     <td>&nbsp;</td>
                     <td class="font-size">% GROWTH</td>
-                    {{-- <td class="none" >&nbsp;</td> --}}
+                    <td class="none" >&nbsp;</td>
 
                     @foreach ($weeks as $key => $week)
                         @php
@@ -184,7 +193,7 @@
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
                     <td><b>{{$prevYear}}</b></td>
-                    {{-- <td class="none" >&nbsp;</td> --}}
+                    <td class="none" >&nbsp;</td>
 
                     @foreach ($weeks as $key => $week)
                         @php
@@ -228,7 +237,7 @@
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
                     <td><b>{{$currYear}}</b></td>
-                    {{-- <td class="none" >&nbsp;</td> --}}
+                    <td class="none" >&nbsp;</td>
 
 
                     @foreach ($weeks as $key => $week)

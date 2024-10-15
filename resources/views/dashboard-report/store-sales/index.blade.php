@@ -736,7 +736,7 @@
             options: { 
                 responsive: true,
                 maintainAspectRatio: false, 
-                    layout:{
+                layout:{
                     padding: 20
                 },
                 plugins: {

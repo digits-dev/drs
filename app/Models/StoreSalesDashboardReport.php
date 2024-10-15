@@ -262,7 +262,122 @@ class StoreSalesDashboardReport extends Model
         
         return $lastThreeDays;
     }
+
+    //Monthly Sales Report
+
+    public function createTempTableForMonthly(){
+
+        DB::statement("
+            CREATE TEMPORARY TABLE monthly_temp_store_sales AS
+            SELECT 
+                store_sales.sales_date,
+                store_sales.net_sales,
+                store_sales.reference_number,
+                channels.channel_code
+            FROM store_sales 
+            LEFT JOIN channels ON store_sales.channels_id = channels.id
+            WHERE store_sales.is_final = 1 
+                AND YEAR(store_sales.sales_date) = {$this->year}
+                AND store_sales.quantity_sold > 0
+                AND store_sales.net_sales IS NOT NULL
+                AND store_sales.sold_price > 0
+                AND store_sales.channels_id != 12 
+        ");
     
+        // AND store_sales.channels_id != 12  = EEE is not included 
+    
+        }
+    
+        public function dropTempTableForMonthly(){
+            DB::statement('DROP TEMPORARY TABLE IF EXISTS monthly_temp_store_sales');
+        }
+
+        public function getSalesPerMonth()
+        {
+            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+                CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
+                SUM(net_sales) AS sum_of_net_sales
+            "))
+            ->groupBy(DB::raw("month_cutoff WITH ROLLUP"))
+            ->get()->map(function($item) {
+                if(is_null($item->month_cutoff)){
+                    $item->month_cutoff = 'TOTAL';
+                }
+                return (array) $item;
+            })->keyBy('month_cutoff');
+        }
+
+
+        public function getSalesPerMonthByChannel()
+        {
+            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+                CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
+                CASE 
+                    WHEN channel_code = 'ONL' THEN 'ECOMM'
+                    WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
+                    WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                    WHEN channel_code = 'FRA' THEN 'FRA-DR'
+                    WHEN channel_code = 'SVC' THEN 'SC'
+                    WHEN channel_code = 'CON' THEN 'CON'
+                    ELSE 'OTHER'
+                END AS channel_classification,
+                SUM(net_sales) AS sum_of_net_sales,
+                MIN(reference_number) AS min_reference_number
+            "))
+            ->groupBy('channel_classification', DB::raw('month_cutoff WITH ROLLUP'))
+            ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+            ->get()->map(function($item){
+                if(is_null($item->month_cutoff)){
+                    $item->month_cutoff = 'TOTAL';
+                }
+                return (array) $item;
+            });
+        }
+
+
+        public function getSalesPerQuarter()
+        {
+            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+                CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
+                SUM(net_sales) AS sum_of_net_sales
+            "))
+            ->groupBy(DB::raw("quarter_cutoff WITH ROLLUP"))
+            ->get()->map(function($item) {
+                if (is_null($item->quarter_cutoff)) {
+                    $item->quarter_cutoff = 'TOTAL';
+                }
+                return (array) $item;
+            })->keyBy('quarter_cutoff');
+        }
+
+        public function getSalesPerQuarterByChannel()
+        {
+            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+                CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
+                CASE 
+                    WHEN channel_code = 'ONL' THEN 'ECOMM'
+                    WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
+                    WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                    WHEN channel_code = 'FRA' THEN 'FRA-DR'
+                    WHEN channel_code = 'SVC' THEN 'SC'
+                    WHEN channel_code = 'CON' THEN 'CON'
+                    ELSE 'OTHER'
+                END AS channel_classification,
+                SUM(net_sales) AS sum_of_net_sales,
+                MIN(reference_number) AS min_reference_number
+            "))
+            ->groupBy('channel_classification', DB::raw('quarter_cutoff WITH ROLLUP'))
+            ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+            ->get()->map(function($item){
+                if(is_null($item->quarter_cutoff)){
+                    $item->quarter_cutoff = 'TOTAL';
+                }
+                return (array) $item;
+            });
+        }
+
+
+     
 
 
 }
