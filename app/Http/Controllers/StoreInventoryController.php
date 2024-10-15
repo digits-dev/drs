@@ -331,7 +331,7 @@ class StoreInventoryController extends Controller
 
 
             foreach($storeData as &$excel){
-                $counter = Counter::where('id',1)->value('reference_code');
+                $counter = Counter::where('id',2)->value('reference_code');
                 $modified = [];
                 foreach ($excel as $key => $value) {
                     // Replace spaces with underscores in keys
