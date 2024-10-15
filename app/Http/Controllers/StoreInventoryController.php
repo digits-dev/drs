@@ -317,7 +317,7 @@ class StoreInventoryController extends Controller
             $batch_number = str_replace('.', '', $time);;
             $folder_name = "$batch_number-" . Str::random(5);
             $dateNow = Carbon::now()->format('Ymd');
-            $excel_file_name = "stores-inventory-$dateNow.xlsx";
+            $excel_file_name = "stores-inventory-$batch_number-$dateNow.xlsx";
             $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
     
             if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
@@ -364,10 +364,11 @@ class StoreInventoryController extends Controller
                     $masterfileCache[$cusCode] = $masterfile;
                 }
 
+
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
                 $toExcel['system'] = 'POS';
-                $toExcel['org'] = $itemMasterCache[$itemNumber]['org'];
+                $toExcel['org'] = $item_master['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
                 $toExcel['sub_inventory'] = $item_master['sub_inventory'];
