@@ -341,7 +341,7 @@ class StoreInventoryController extends Controller
                 $excel = $modified;
                 // ITEM MASTERS CACHING
                 $itemNumber = $excel['ITEM_NUMBER'];
-                $store_inventory = "POS - " . $excel['SUB_INVENTORY'];
+                $sub_inventory = "POS - " . $excel['SUB_INVENTORY'];
 
                 $itemMaster = DB::connection('imfs')
                 ->table('item_masters')
@@ -373,7 +373,7 @@ class StoreInventoryController extends Controller
                 $toExcel['org'] = $item_master['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
-                $toExcel['sub_inventory'] = $store_inventory;
+                $toExcel['sub_inventory'] = $sub_inventory;
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
@@ -382,7 +382,7 @@ class StoreInventoryController extends Controller
                 $toExcel['store_cost'] = $item_master['store_cost'];
                 $toExcel['store_cost_eccom'] = $item_master['store_cost_eccom'];
                 $toExcel['landed_cost'] = $item_master['landed_cost'];
-                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], $store_inventory);
+                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], $sub_inventory);
 
                 $toExcelContent[] = $toExcel;
 
