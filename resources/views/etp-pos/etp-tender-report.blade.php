@@ -69,6 +69,10 @@
         color: #ffffff !important;
         
     }
+
+    .select2-container {
+        width: 100% !important;
+    }
     
     .form-button .btn-submit{
         padding: 9px 20px;
@@ -242,6 +246,18 @@
             to {
                 transform: rotate(360deg);
             }
+        }
+
+        @media (max-width: 840px) {
+            .inputs-container{
+                display: flex;
+                flex-direction: column;
+
+            }
+        }
+
+        .wrapper {
+            overflow: hidden;
         }
     </style>
 @endpush
