@@ -31,9 +31,16 @@ use App\Jobs\ProcessStoreInventoryUploadJob;
 use App\Jobs\ExportStoreInventoryCreateFileJob;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
+define('SUB_INVENTORY_GOOD', 'POS - GOOD');
+define('SUB_INVENTORY_TRANSIT', 'POS - TRANSIT');
+define('SUB_INVENTORY_RMA', 'POS - RMA');
+define('SUB_INVENTORY_DEMO', 'POS - DEMO');
+
+
 class StoreInventoryController extends Controller
 {
     private $report_type;
+    
 
     public function __construct(){
         $this->report_type = ['STORE INVENTORY','STORE INTRANSIT'];
@@ -346,7 +353,6 @@ class StoreInventoryController extends Controller
                     $item_master = $this->fetchItemData($itemMaster, $itemNumber, $excel['ALLOCATABLE']);
                 }
 
-
                 // MASTERFILE CACHING
                 $cusCode = "CUS-" . $excel['STORE_ID'];
                 if (isset($masterfileCache[$cusCode])) {
@@ -364,7 +370,7 @@ class StoreInventoryController extends Controller
                 $toExcel['org'] = $itemMasterCache[$itemNumber]['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
-                $toExcel['sub_inventory'] = "POS - GOOD";
+                $toExcel['sub_inventory'] = $item_master['sub_inventory'];
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
@@ -376,6 +382,7 @@ class StoreInventoryController extends Controller
                 $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], "POS - GOOD");
 
                 $toExcelContent[] = $toExcel;
+
 
                 Counter::where('id',1)->increment('reference_code');
             }
@@ -416,20 +423,22 @@ class StoreInventoryController extends Controller
 
         $inv_type = $item->inventory_type_description;
 
-        if ($inv_type === 'ANY' && $pos_sub === 'POS - RMA') {
+        if ($inv_type === 'ANY' && $pos_sub === SUB_INVENTORY_RMA) {
             return 'DEFECTIVE';
         }
 
-        if ($inv_type === 'HMR' && in_array($pos_sub, ['POS - GOOD', 'POS - DEMO', 'POS - TRANSIT'])) {
+        if ($inv_type === 'HMR' && in_array($pos_sub, [SUB_INVENTORY_GOOD, SUB_INVENTORY_DEMO, SUB_INVENTORY_TRANSIT])) {
             return 'HMR';
         }
 
-        if (in_array($inv_type, ['TRADE', 'MARKETING', 'STORE DEMO']) && in_array($pos_sub, ['POS - GOOD', 'POS - DEMO', 'POS - TRANSIT'])) {
+        if (in_array($inv_type, ['TRADE', 'MARKETING', 'STORE DEMO']) && in_array($pos_sub, [SUB_INVENTORY_GOOD, SUB_INVENTORY_DEMO, SUB_INVENTORY_TRANSIT])) {
             return 'GOOD';
         }
 
         return null;
     }
+
+    
 
     function prepareItemData($item, $orgName, $sub_inventory = null, $ecomStoreMargin = 0) {
         return [
@@ -447,18 +456,15 @@ class StoreInventoryController extends Controller
         
         $sub_inventory = '';
 
-        if(substr($itemNumber, 0, 1) === '3'){
-            $sub_inventory = 'POS - DEMO';
+        if (substr($itemNumber, 0, 1) === '3') {
+            $sub_inventory = SUB_INVENTORY_DEMO;
         }
-
+    
         if ($itemMaster) {
-
-            if($allocatable === 0){
-                $sub_inventory = 'POS - GOOD';
-            }else{
-                $sub_inventory = 'POS - TRANSIT';
+            if ($sub_inventory !== SUB_INVENTORY_DEMO) {
+                $sub_inventory = ($allocatable === 0) ? SUB_INVENTORY_GOOD : SUB_INVENTORY_TRANSIT;
             }
-
+    
             return $this->prepareItemData($itemMaster, 'DIGITS', $sub_inventory, $itemMaster->ecom_store_margin);
         }
     
@@ -469,7 +475,7 @@ class StoreInventoryController extends Controller
             ->first();
         
         if ($rmaItemMaster) {
-            return $this->prepareItemData($rmaItemMaster, 'RMA', 'POS - RMA');
+            return $this->prepareItemData($rmaItemMaster, 'RMA', SUB_INVENTORY_RMA);
         }
     
         // Check the 'digits_imfs' table
