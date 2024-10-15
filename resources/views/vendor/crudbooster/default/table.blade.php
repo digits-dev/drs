@@ -37,7 +37,7 @@
                         $('#form-table').submit();
                         setTimeout(function() {
                         location.reload(); 
-                        }, 1000);
+                        }, 1500);
                          });
                 }
                 else {

@@ -12,6 +12,8 @@ use Request;
 use DB;
 use CRUDBooster;
 use Maatwebsite\Excel\Facades\Excel;
+use ZipArchive;
+use Illuminate\Support\Facades\Storage;
 
 	class AdminStoreSalesUploadsController extends \crocodicstudio\crudbooster\controllers\CBController {
 		public $status_class = [
@@ -181,6 +183,9 @@ use Maatwebsite\Excel\Facades\Excel;
 			}
 			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
 				$this->button_selected[] = ['label'=>'REJECT','icon'=>'fa fa-thumbs-down','name'=>'tag_as_reject'];
+			}
+			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
+				$this->button_selected[] = ['label'=>'Download as Zip','icon'=>'fa fa-file-archive-o','name'=>'download_all'];
 			}
 
 	        /*
@@ -370,9 +375,80 @@ use Maatwebsite\Excel\Facades\Excel;
 				return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully rejected.", 'success');
 			}
 
+			if ($button_name == 'download_all') {
+				if (empty($id_selected)) {
+					return CRUDBooster::redirect(CRUDBooster::mainPath(), 'No items selected', 'danger');
+				}
+
+				foreach ($id_selected as $id) {
+					$batch = StoreSalesUpload::find($id);
+					$batch = $batch->getBatchDetails();
+					if ($batch) {
+						if ($batch->status == 'IMPORTING') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is currently importing.", 'warning');
+						}
+						if ($batch->status == 'IMPORT FAILED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has failed importing, and no file was generated.", 'danger');
+						}
+						if (!$batch->finished_at) {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has not finished importing.", 'danger');
+						}
+						if ($batch->is_final) {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is already tagged as final.", 'danger');
+						}
+						if ($batch->status == 'GENERATING FILE') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is currently generating the file.", 'warning');
+						}
+						if ($batch->status == 'FAILED TO GENERATE FILE') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch failed to generate the file.", 'danger');
+						}
+						if ($batch->status == 'FILE DOWNLOADED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch already downloaded", 'danger');
+						}
+						if ($batch->status == 'IMPORT FINISHED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has finished importing, but the file has not been generated yet.", 'danger');
+						}
+						if ($batch->status == 'REJECTED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has been rejected.", 'danger');
+						}
+
+					}
+				}
+				// Create a temporary zip file
+				$zipFileName = 'stores_sales.zip';
+				$zipFilePath = storage_path($zipFileName);
+			
+				$zip = new ZipArchive;
+				if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
+					foreach ($id_selected as $id) {
+						$batch = StoreSalesUpload::find($id);
+						$batch = $batch->getBatchDetails();
+						if ($batch) {
+							$zip->addFile($batch->generated_file_path, basename($batch->generated_file_path));
+							$batch->update(['status' => 'FILE DOWNLOADED']);
+						}
+					}
+					// Close the zip archive
+					$zip->close();
+			
+					// Set headers to force download in the browser
+					header('Content-Type: application/zip');
+					header('Content-Disposition: attachment; filename="' . basename($zipFileName) . '"');
+					header('Content-Length: ' . filesize($zipFilePath));
+			
+					// Stream the file to the browser
+					readfile($zipFilePath);
+			
+					// Optionally delete the temporary zip file after download
+					unlink($zipFilePath);
+					exit();
+					return CRUDBooster::redirect(CRUDBooster::mainPath(), 'Success download', 'success');
+				} else {
+					return CRUDBooster::redirect(CRUDBooster::mainPath(), 'Could not create zip file', 'danger');
+				}
+			}
 
 	    }
-
 
 	    /*
 	    | ----------------------------------------------------------------------
