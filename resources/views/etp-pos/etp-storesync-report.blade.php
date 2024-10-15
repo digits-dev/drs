@@ -26,6 +26,10 @@ body{
         background-color: #f9f9f9;
     }
 
+    .wrapper{
+        overflow: hidden;
+    }
+
     /* Header styling */
     .dataTable thead {
         background-color: #3C8DBC;
