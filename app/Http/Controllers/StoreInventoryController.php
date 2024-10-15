@@ -384,7 +384,7 @@ class StoreInventoryController extends Controller
                 $toExcelContent[] = $toExcel;
 
 
-                Counter::where('id',1)->increment('reference_code');
+                Counter::where('id',2)->increment('reference_code');
             }
 
             Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
