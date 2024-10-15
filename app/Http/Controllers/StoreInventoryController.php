@@ -341,16 +341,18 @@ class StoreInventoryController extends Controller
                 $excel = $modified;
                 // ITEM MASTERS CACHING
                 $itemNumber = $excel['ITEM_NUMBER'];
+                $store_inventory = "POS - " . $excel['SUB_INVENTORY'];
 
                 $itemMaster = DB::connection('imfs')
                 ->table('item_masters')
                 ->where('digits_code', $itemNumber)
                 ->first();
 
+
                 if (isset($itemMasterCache[$itemNumber])) {
                     $item_master = $itemMasterCache[$itemNumber];
                 } else {
-                    $item_master = $this->fetchItemData($itemMaster, $itemNumber, $excel['ALLOCATABLE']);
+                    $item_master = $this->fetchItemData($itemMaster, $itemNumber);
                 }
 
                 // MASTERFILE CACHING
@@ -371,7 +373,7 @@ class StoreInventoryController extends Controller
                 $toExcel['org'] = $item_master['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
-                $toExcel['sub_inventory'] = $item_master['sub_inventory'];
+                $toExcel['sub_inventory'] = $store_inventory;
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
@@ -380,10 +382,9 @@ class StoreInventoryController extends Controller
                 $toExcel['store_cost'] = $item_master['store_cost'];
                 $toExcel['store_cost_eccom'] = $item_master['store_cost_eccom'];
                 $toExcel['landed_cost'] = $item_master['landed_cost'];
-                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], "POS - GOOD");
+                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], $store_inventory);
 
                 $toExcelContent[] = $toExcel;
-
 
                 Counter::where('id',2)->increment('reference_code');
             }
@@ -441,32 +442,21 @@ class StoreInventoryController extends Controller
 
     
 
-    function prepareItemData($item, $orgName, $sub_inventory = null, $ecomStoreMargin = 0) {
+    function prepareItemData($item, $orgName, $ecomStoreMargin = 0) {
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
             'store_cost' => $item->dtp_rf,
             'store_cost_eccom' => $ecomStoreMargin,
             'landed_cost' => $item->landed_cost,
-            'inventory_type_id' => $item->inventory_types_id,
-            'sub_inventory' => $sub_inventory
+            'inventory_type_id' => $item->inventory_types_id
         ];
     }
     
-    function fetchItemData($itemMaster, $itemNumber, $allocatable) {
+    function fetchItemData($itemMaster, $itemNumber) {
         
-        $sub_inventory = '';
-
-        if (substr($itemNumber, 0, 1) === '3') {
-            $sub_inventory = SUB_INVENTORY_DEMO;
-        }
-    
         if ($itemMaster) {
-            if ($sub_inventory !== SUB_INVENTORY_DEMO) {
-                $sub_inventory = ($allocatable === 0) ? SUB_INVENTORY_GOOD : SUB_INVENTORY_TRANSIT;
-            }
-    
-            return $this->prepareItemData($itemMaster, 'DIGITS', $sub_inventory, $itemMaster->ecom_store_margin);
+            return $this->prepareItemData($itemMaster, 'DIGITS', $itemMaster->ecom_store_margin);
         }
     
         // Check the 'rma_item_masters' table
@@ -476,7 +466,7 @@ class StoreInventoryController extends Controller
             ->first();
         
         if ($rmaItemMaster) {
-            return $this->prepareItemData($rmaItemMaster, 'RMA', SUB_INVENTORY_RMA);
+            return $this->prepareItemData($rmaItemMaster, 'RMA');
         }
     
         // Check the 'digits_imfs' table
@@ -498,6 +488,5 @@ class StoreInventoryController extends Controller
             'inventory_type_id' => null
         ];
     }
-
 
 }   
