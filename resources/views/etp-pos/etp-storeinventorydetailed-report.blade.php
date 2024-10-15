@@ -56,6 +56,11 @@
             border-color: #3498db !important;
             border-radius: 7px;
             padding: 6px 0 8px 10px;
+            
+        }
+
+        .select2-container {
+            width: 100% !important;
         }
 
         .select2-container--default .select2-selection__choice {
@@ -262,6 +267,18 @@
             to {
                 transform: rotate(360deg);
             }
+        }
+
+        @media (max-width: 840px) {
+            .inputs-container{
+                display: flex;
+                flex-direction: column;
+
+            }
+        }
+
+        .wrapper {
+            overflow: hidden;
         }
     </style>
 @endpush

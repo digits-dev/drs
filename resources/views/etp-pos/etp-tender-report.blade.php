@@ -3,24 +3,24 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style type="text/css">
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-        .form-content {
-                display: flex;
-                background: #fff;
-                flex-direction: column;
-                font-family: 'Poppins', sans-serif !important;
-                border-radius: 10px;
-            }
-        body{
-                overflow: scroll;
-            }
+    .form-content {
+        display: flex;
+        background: #fff;
+        flex-direction: column;
+        font-family: 'Poppins', sans-serif !important;
+        border-radius: 10px;
+    }
+    body{
+        overflow: scroll;
+    }
 
-            .header-title{
-        background: #3C8DBC !important;
-        color: #fff !important;
-        font-size: 16px;
-        font-weight: 500;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
+    .header-title{
+    background: #3C8DBC !important;
+    color: #fff !important;
+    font-size: 16px;
+    font-weight: 500;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
     }
     
     .content-panel{
