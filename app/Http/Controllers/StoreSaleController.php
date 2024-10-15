@@ -292,7 +292,7 @@ class StoreSaleController extends Controller
                     $store_cost = $item_master->dtp_rf;
                     $store_cost_eccom = $item_master->ecom_store_margin;
                     $landed_cost = $item_master->landed_cost;
-                    $sales_memo_ref = 'RTL';
+                    $sales_memo_ref = NULL;
                 } elseif ($rma_item_master) {
                     $org = 'RMA';
                     $rr_ref = $rma_item_master->current_srp ? $rma_item_master->digits_code : 'GWP';
@@ -300,7 +300,7 @@ class StoreSaleController extends Controller
                     $store_cost = $rma_item_master->dtp_rf;
                     $store_cost_eccom = 0;
                     $landed_cost = $rma_item_master->landed_cost;
-                    $sales_memo_ref = 'RTL';
+                    $sales_memo_ref = NULL;
                 } elseif ($aimfs_item_master) {
                     $org = 'ADMIN';
                     $rr_ref = $aimfs_item_master->current_srp ? $aimfs_item_master->digits_code : 'GWP';
@@ -308,7 +308,7 @@ class StoreSaleController extends Controller
                     $store_cost = $aimfs_item_master->dtp_rf;
                     $store_cost_eccom = 0;
                     $landed_cost = $aimfs_item_master->landed_cost;
-                    $sales_memo_ref = 'RTL';
+                    $sales_memo_ref = NULL;
                 }
             
                 // MASTERFILE CACHING
@@ -337,16 +337,18 @@ class StoreSaleController extends Controller
                 $toExcel['item_description'] = $item_description;
                 $toExcel['qty_sold'] = $excel['QTY_SOLD'];
                 $toExcel['sold_price'] = $excel['SOLD_PRICE'];
-                $toExcel['net_sales'] = $excel['vatTotalSales'] + $excel['nonVatSales'];
+                $toExcel['net_sales'] = $excel['QTY_SOLD'] * $excel['SOLD_PRICE'];
                 $toExcel['store_cost'] = $store_cost;
                 $toExcel['store_cost_eccom'] = $store_cost_eccom;
                 $toExcel['landed_cost'] = $landed_cost;
                 $toExcel['sales_memo_ref'] = $sales_memo_ref;
+                $toExcel['item_serial'] = $excel['ITEM_SERIAL'];
+                $toExcel['sales_person'] = $excel['SALES_PERSON'];
                 $toExcelContent[] = $toExcel;
                 // Increment the counter for the next iteration
                 Counter::where('id', 1)->increment('reference_code');
             }
-            
+
             // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
             Excel::store(new StoreSalesExcel($toExcelContent), $excel_path, 'local');
 

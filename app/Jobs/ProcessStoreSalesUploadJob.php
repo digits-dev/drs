@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Imports\StoreSalesImport;
+use App\Imports\StoreSalesImportPull;
 use App\Models\StoreSalesUpload;
 use App\Models\StoreSalesUploadLine;
 use App\Jobs\StoreSalesImportJob;
@@ -73,8 +74,11 @@ class ProcessStoreSalesUploadJob implements ShouldQueue
     public function handle()
     {
         HeadingRowFormatter::default('slug');
-        $excel_data = Excel::toArray(new StoreSalesImport($this->batch_number), $this->excel_path)[0];
-
+        if($this->data_type == '' || $this->data_type == NULL){
+            $excel_data = Excel::toArray(new StoreSalesImport($this->batch_number), $this->excel_path)[0];
+        }else{
+            $excel_data = Excel::toArray(new StoreSalesImportPull($this->batch_number), $this->excel_path)[0];
+        }
         $excelReportType = array_unique(array_column($excel_data, "report_type"));
         foreach ($excelReportType as $keyReportType => $valueReportType) {
             if (!in_array($valueReportType, $this->report_type)) {

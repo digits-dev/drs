@@ -75,7 +75,7 @@ class StoreSalesImportJobPull implements ShouldQueue
             $v_channel = $channel->where('channel_code',trim($row->channel_code))->first();
             $v_customer = $customer->where('customer_name',trim($row->customer_location))->first();
             $v_employee = $employee->where('employee_name',trim($row->customer_location))->first();
-            $sales_date = date('Y-m-d', strtotime('1899-12-30') + ($row->sold_date * 24 * 60 * 60));
+            $sales_date = $row->sold_date;
   
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
@@ -105,6 +105,8 @@ class StoreSalesImportJobPull implements ShouldQueue
                 'qtysold_lc'			=> ($row->qty_sold)*($row->landed_cost),
                 'sale_memo_reference'	=> $row->sale_memo_ref,
                 'created_by'            => $chunk->created_by,
+                'item_serial'           => $row->item_serial,
+                'sales_person'          => $row->sales_person
             ];
         }
         $columns = array_keys($insertable[0]);

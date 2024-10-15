@@ -57,6 +57,8 @@ class StoreSale extends Model
         'qtysold_lc',
         'dtp_ecom',
         'qtysold_ecom',
+        'item_serial',
+        'sales_person',
         'created_by',
         'updated_by',
     ];
@@ -170,7 +172,9 @@ class StoreSale extends Model
             'store_sales.landed_cost AS landed_cost',
             'store_sales.qtysold_lc AS qtysold_lc',
             'store_sales.dtp_ecom AS dtp_ecom',
-            'store_sales.qtysold_ecom AS qtysold_ecom'
+            'store_sales.qtysold_ecom AS qtysold_ecom',
+            'store_sales.item_serial AS item_serial',
+            'store_sales.sales_person AS sales_person'
         )
         ->leftJoin('systems', 'store_sales.systems_id', '=', 'systems.id')
         ->leftJoin('organizations', 'store_sales.organizations_id', '=', 'organizations.id')
@@ -246,46 +250,7 @@ class StoreSale extends Model
                 C.InvoiceQuantity AS 'QTY SOLD',
                 C.SalesPrice AS 'SOLD PRICE',
                 C.LotNumber AS 'ITEM SERIAL',
-                C.SalesPerson AS 'SALES PERSON',
-                ISNULL((
-                    SELECT TOP 1 ISNULL(localamount, 0)
-                    FROM cashordertrn
-                    WHERE invoicetype = 31
-                    AND Company = 100
-                    AND InvoiceNumber = C.InvoiceNumber
-                    AND InvoiceNumber NOT IN (
-                        SELECT InvoiceNumber 
-                        FROM PrivilegeMemberInfo
-                        WHERE Company = 100
-                    )
-                    AND FreeField2 != 1
-                    AND InvoiceNumber NOT IN (
-                        SELECT InvoiceNumber 
-                        FROM BillCancellationTrn
-                        WHERE Company = 100
-                    )
-                    ORDER BY CreateDate DESC -- Optional: Adjust this based on what logic makes sense for your data
-                ), 0) AS vatTotalSales,
-                ISNULL((
-                    SELECT TOP 1 ISNULL(localamount, 0)
-                    FROM cashordertrn
-                    WHERE invoicetype = 31
-                    AND Company = 100
-                    AND InvoiceNumber = C.InvoiceNumber
-                    AND InvoiceNumber IN (
-                        SELECT InvoiceNumber 
-                        FROM PrivilegeMemberInfo
-                        WHERE Company = 100
-                        AND ObjectKey = 1
-                    )
-                    AND FreeField2 != 1
-                    AND InvoiceNumber NOT IN (
-                        SELECT InvoiceNumber 
-                        FROM BillCancellationTrn
-                        WHERE Company = 100
-                    )
-                    ORDER BY CreateDate DESC -- Optional: Adjust this based on what logic makes sense for your data
-                ), 0) AS nonVatSales
+                C.SalesPerson AS 'SALES PERSON'
             FROM CashOrderTrn C (nolock)
             WHERE 
                 C.Company = 100

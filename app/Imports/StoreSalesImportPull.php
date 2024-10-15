@@ -28,7 +28,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class StoreSalesImport implements ToModel,
+class StoreSalesImportPull implements ToModel,
     WithHeadingRow,
     WithChunkReading,
     WithValidation,
@@ -92,7 +92,7 @@ class StoreSalesImport implements ToModel,
             'customers_id'          => $v_customer->id ?? NULL,
             // 'customer_location'		=> $row['customer_location'],
             'receipt_number'		=> $row['receipt_number'],
-            'sales_date'			=> Carbon::parse($this->transformDate($row["sold_date"]))->format("Y-m-d"),
+            'sales_date'			=> $row["sold_date"],
             'item_code'				=> trim($row['item_number']),
             'digits_code_rr_ref'    => $row['rr_ref'],
             'item_description'      => trim(preg_replace('/\s+/', ' ', strtoupper($row['item_description']))),

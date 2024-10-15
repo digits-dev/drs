@@ -19,7 +19,9 @@ return [
         'STORE COST',
         'STORE COST ECOMM',
         'LANDED COST',
-        'SALE MEMO REF'
+        'SALE MEMO REF',
+        'ITEM SERIAL',
+        'SALES PERSON'
     ],
 
     'gashapon-store-sales' => [
