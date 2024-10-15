@@ -375,13 +375,11 @@ class StoreInventoryController extends Controller
                 $toExcel['landed_cost'] = $item_master['landed_cost'];
                 $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], "POS - GOOD");
 
-                // dd($toExcel);
-
                 $toExcelContent[] = $toExcel;
 
                 Counter::where('id',1)->increment('reference_code');
             }
-            // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
+
             Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
 
 
@@ -450,7 +448,7 @@ class StoreInventoryController extends Controller
         $sub_inventory = '';
 
         if(substr($itemNumber, 0, 1) === '3'){
-            dd($itemNumber);
+            $sub_inventory = 'POS - DEMO';
         }
 
         if ($itemMaster) {
@@ -484,7 +482,6 @@ class StoreInventoryController extends Controller
             return $this->prepareItemData($aimfsItemMaster, 'ADMIN');
         }
     
-        // Return default values if no match is found
         return [
             'org' => null,
             'item_description' => null,
