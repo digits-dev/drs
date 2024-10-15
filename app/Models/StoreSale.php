@@ -246,7 +246,46 @@ class StoreSale extends Model
                 C.InvoiceQuantity AS 'QTY SOLD',
                 C.SalesPrice AS 'SOLD PRICE',
                 C.LotNumber AS 'ITEM SERIAL',
-                C.SalesPerson AS 'SALES PERSON'
+                C.SalesPerson AS 'SALES PERSON',
+                ISNULL((
+                    SELECT TOP 1 ISNULL(localamount, 0)
+                    FROM cashordertrn
+                    WHERE invoicetype = 31
+                    AND Company = 100
+                    AND InvoiceNumber = C.InvoiceNumber
+                    AND InvoiceNumber NOT IN (
+                        SELECT InvoiceNumber 
+                        FROM PrivilegeMemberInfo
+                        WHERE Company = 100
+                    )
+                    AND FreeField2 != 1
+                    AND InvoiceNumber NOT IN (
+                        SELECT InvoiceNumber 
+                        FROM BillCancellationTrn
+                        WHERE Company = 100
+                    )
+                    ORDER BY CreateDate DESC -- Optional: Adjust this based on what logic makes sense for your data
+                ), 0) AS vatTotalSales,
+                ISNULL((
+                    SELECT TOP 1 ISNULL(localamount, 0)
+                    FROM cashordertrn
+                    WHERE invoicetype = 31
+                    AND Company = 100
+                    AND InvoiceNumber = C.InvoiceNumber
+                    AND InvoiceNumber IN (
+                        SELECT InvoiceNumber 
+                        FROM PrivilegeMemberInfo
+                        WHERE Company = 100
+                        AND ObjectKey = 1
+                    )
+                    AND FreeField2 != 1
+                    AND InvoiceNumber NOT IN (
+                        SELECT InvoiceNumber 
+                        FROM BillCancellationTrn
+                        WHERE Company = 100
+                    )
+                    ORDER BY CreateDate DESC -- Optional: Adjust this based on what logic makes sense for your data
+                ), 0) AS nonVatSales
             FROM CashOrderTrn C (nolock)
             WHERE 
                 C.Company = 100
@@ -255,7 +294,7 @@ class StoreSale extends Model
                 AND C.CreateDate BETWEEN '20240919' AND '20240921'
                 AND C.FreeField2 = '0'
         "));
-        
+    
         return $data;
     }
 

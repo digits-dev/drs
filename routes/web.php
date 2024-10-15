@@ -55,7 +55,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/query', [StoreSaleController::class, 'StoresSalesFromPosEtp']);
+Route::get('/get-store-sales', [StoreSaleController::class, 'StoresSalesFromPosEtp']);
 
 Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
     Route::post('login', [CBHook::class, 'postLogin'])->name('postLogin');

@@ -245,13 +245,12 @@ class StoreSaleController extends Controller
         $result = StoreSale::getStoresSalesFromPosEtp();
         // Group sales data by store ID
         $groupedSalesData = collect($result)->groupBy('STORE ID');
-
         foreach ($groupedSalesData as $storeId => $storeData) {
             $time = microtime(true);
             $batch_number = str_replace('.', '', $time);;
             $folder_name = "$batch_number-" . Str::random(5);
             $dateNow = Carbon::now()->format('Ymd');
-            $excel_file_name = "stores-sales-$dateNow.xlsx";
+            $excel_file_name = "stores-sales-$batch_number-$dateNow.xlsx";
             $excel_path = "store-sales-upload/$folder_name/$excel_file_name";
     
             if (!file_exists(storage_path("app/store-sales-upload/$folder_name"))) {
@@ -314,8 +313,15 @@ class StoreSaleController extends Controller
             
                 // MASTERFILE CACHING
                 $cusCode = "CUS-" . $excel['STORE_ID'];
-                $masterfile = $masterfileCache[$cusCode] ??= DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
-            
+                if (isset($masterfileCache[$cusCode])) {
+                    // Retrieve from cache if exists
+                    $masterfile = $masterfileCache[$cusCode];
+                } else {
+                    // Query the database and store in cache
+                    $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
+                    $masterfileCache[$cusCode] = $masterfile;
+                }
+
                 // Prepare data for output
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
@@ -323,7 +329,7 @@ class StoreSaleController extends Controller
                 $toExcel['org'] = $org;
                 $toExcel['report_type'] = 'STORE SALES';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
-                $toExcel['customer_location'] = $masterfile->customer_name;
+                $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['receipt_number'] = $excel['RECEIPT_#'];
                 $toExcel['sold_date'] = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
@@ -331,13 +337,12 @@ class StoreSaleController extends Controller
                 $toExcel['item_description'] = $item_description;
                 $toExcel['qty_sold'] = $excel['QTY_SOLD'];
                 $toExcel['sold_price'] = $excel['SOLD_PRICE'];
-                $toExcel['net_sales'] = $excel['NET_SALES'];
+                $toExcel['net_sales'] = $excel['vatTotalSales'] + $excel['nonVatSales'];
                 $toExcel['store_cost'] = $store_cost;
                 $toExcel['store_cost_eccom'] = $store_cost_eccom;
                 $toExcel['landed_cost'] = $landed_cost;
                 $toExcel['sales_memo_ref'] = $sales_memo_ref;
                 $toExcelContent[] = $toExcel;
-            
                 // Increment the counter for the next iteration
                 Counter::where('id', 1)->increment('reference_code');
             }
@@ -365,4 +370,5 @@ class StoreSaleController extends Controller
             ProcessStoreSalesUploadJob::dispatch($args);
         }
     }
+    
 }
