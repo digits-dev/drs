@@ -7,11 +7,18 @@
     <title>Document</title>
 
 
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
 
     <style>
         @page {
-            margin: 100px; /* Set all margins to 20mm */
+            margin: 10px; /* Default margin */
         }
+
+        .page-break {
+            page-break-before: always;
+            /* Custom margin for the next page */
+        }
+
 
         .content {
             height: 100%;
@@ -35,23 +42,71 @@
         .dashboard{
             margin-top: 90px;
         }
+/* 
+        td {
+            white-space: initial !important;        
+            overflow: unset !important;          
+            text-overflow: unset !important;   
+            padding: 0 !important;
+        } */
+        
+        .sales-report td {
+            padding: 3px 2.5px !important; 
+        }
     </style>
 
-<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+
 </head>
 <body>
-    <div class="dashboard">
+    <div class="dashboard ">
         @foreach ($channel_codes as $channel => $channelData)
             @if ($channel == 'OTHER' || $channel == '')
                 @continue
             @endif
-            <x-sales-report-pdf 
+            
+            <x-sales-report 
                 :isTopOpen="$loop->first"
                 :channel="$channel" 
                 :data="$channelData"
                 :prevYear="$yearData['previousYear']" 
                 :currYear="$yearData['currentYear']"
                 :lastThreeDaysDates="$lastThreeDaysDates"
+            />
+        @endforeach
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="dashboard ">
+        @foreach ($channel_codes as $channel => $channelData)
+            @if ($channel == 'OTHER' || $channel == '')
+                @continue
+            @endif
+            
+            <x-monthly-sales-report-pdf 
+                :isTopOpen="$loop->first"
+                :channel="$channel" 
+                :data="$channelData"
+                :prevYear="$yearData['previousYear']" 
+                :currYear="$yearData['currentYear']"
+            />
+        @endforeach
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="dashboard ">
+        @foreach ($channel_codes as $channel => $channelData)
+            @if ($channel == 'OTHER' || $channel == '')
+                @continue
+            @endif
+            
+            <x-quarterly-sales-report 
+                :isTopOpen="$loop->first"
+                :channel="$channel" 
+                :data="$channelData"
+                :prevYear="$yearData['previousYear']" 
+                :currYear="$yearData['currentYear']"
             />
         @endforeach
     </div>

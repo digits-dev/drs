@@ -64,12 +64,13 @@ class StoreSalesDashboardReport extends Model
         FROM store_sales 
         LEFT JOIN channels ON store_sales.channels_id = channels.id
         WHERE store_sales.is_final = 1 
-            AND store_sales.sales_date BETWEEN '{$this->startDate}' AND '{$this->endDate}'
+            AND YEAR(store_sales.sales_date) = {$this->year}
             AND store_sales.quantity_sold > 0
             AND store_sales.net_sales IS NOT NULL
             AND store_sales.sold_price > 0
             AND store_sales.channels_id != 12 
     ");
+    // AND store_sales.sales_date BETWEEN '{$this->startDate}' AND '{$this->endDate}'
 
     // AND store_sales.channels_id != 12  = EEE is not included 
 
@@ -91,6 +92,7 @@ class StoreSalesDashboardReport extends Model
             END AS week_cutoff,
             SUM(net_sales) AS sum_of_net_sales
         "))
+        ->whereBetween('sales_date', [$this->startDate, $this->endDate])
         ->groupBy(DB::raw('week_cutoff WITH ROLLUP'))
         ->get()->map(function($item) {
             if(is_null($item->week_cutoff)){
@@ -125,6 +127,7 @@ class StoreSalesDashboardReport extends Model
             SUM(net_sales) AS sum_of_net_sales,
             MIN(reference_number) AS min_reference_number
         "))
+        ->whereBetween('sales_date', [$this->startDate, $this->endDate])
         ->groupBy('channel_classification', DB::raw('week_cutoff WITH ROLLUP'))
         ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
         ->get()->map(function($item){
@@ -294,7 +297,7 @@ class StoreSalesDashboardReport extends Model
 
         public function getSalesPerMonth()
         {
-            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+            return DB::table('temp_store_sales')->select(DB::raw("
                 CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
                 SUM(net_sales) AS sum_of_net_sales
             "))
@@ -310,7 +313,7 @@ class StoreSalesDashboardReport extends Model
 
         public function getSalesPerMonthByChannel()
         {
-            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+            return DB::table('temp_store_sales')->select(DB::raw("
                 CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
                 CASE 
                     WHEN channel_code = 'ONL' THEN 'ECOMM'
@@ -337,7 +340,7 @@ class StoreSalesDashboardReport extends Model
 
         public function getSalesPerQuarter()
         {
-            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+            return DB::table('temp_store_sales')->select(DB::raw("
                 CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
                 SUM(net_sales) AS sum_of_net_sales
             "))
@@ -352,7 +355,7 @@ class StoreSalesDashboardReport extends Model
 
         public function getSalesPerQuarterByChannel()
         {
-            return DB::table('monthly_temp_store_sales')->select(DB::raw("
+            return DB::table('temp_store_sales')->select(DB::raw("
                 CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
                 CASE 
                     WHEN channel_code = 'ONL' THEN 'ECOMM'

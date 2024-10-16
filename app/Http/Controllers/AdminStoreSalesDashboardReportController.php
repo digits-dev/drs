@@ -430,11 +430,22 @@
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 			
-
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
 
-			$generatedData = $this->dashboardService->generateDailySalesReport();
+			$reloadData = request()->has('reload_data');
+
+			// dd($reloadData);
+
+			if($reloadData){
+				$generatedData = $this->dashboardService->generateSalesReport();
+			} else {
+				$generatedData = $this->dashboardService->getData();
+
+				if(empty($generatedData)){
+					$generatedData = $this->dashboardService->generateSalesReport();
+				}
+			}
 
 			$data = array_merge($data, $generatedData);
 
@@ -452,6 +463,11 @@
 
 			$data = [];
 			$generatedData = $this->dashboardService->getData();
+
+			if(empty($generatedData)){
+				$generatedData = $this->dashboardService->generateSalesReport();
+			}
+
 			$dataCategory = $request->query('category') ?? 'total';
 			$isPerChannel = $request->boolean('perChannel', false);
 			
@@ -460,43 +476,43 @@
 
 			$chartUrls = []; // Array to hold chart URLs
 
-			$chartConfigTotal = self::getChartConfigForTotal($dataCategory, $generatedData);
+			// $chartConfigTotal = self::getChartConfigForTotal($dataCategory, $generatedData);
 
-			$chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
+			// $chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
 
-			$chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
+			// $chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
 
 
-			if($isPerChannel){ 
-				$lastIndex = 0;
-				foreach($chartConfigPerChannel as $index => $chart) {
-					$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
-					$lastIndex = $index;
-				}
+			// if($isPerChannel){ 
+			// 	$lastIndex = 0;
+			// 	foreach($chartConfigPerChannel as $index => $chart) {
+			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
+			// 		$lastIndex = $index;
+			// 	}
 
-				foreach($chartConfigPiePerChannel as $index => $chart){
-					$lastIndex += 1;
-					$url = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
+			// 	foreach($chartConfigPiePerChannel as $index => $chart){
+			// 		$lastIndex += 1;
+			// 		$url = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
 					
-					if($url){
-						$chartUrls["quickChartUrl{$lastIndex}"] = $url;
-					}
+			// 		if($url){
+			// 			$chartUrls["quickChartUrl{$lastIndex}"] = $url;
+			// 		}
 					
-				}
-			} else {
-				foreach($chartConfigTotal as $index => $chart) {
-					$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], false, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], null, $chart['prevYear'], $chart['currYear']);
-				}
-			}
+			// 	}
+			// } else {
+			// 	foreach($chartConfigTotal as $index => $chart) {
+			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], false, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], null, $chart['prevYear'], $chart['currYear']);
+			// 	}
+			// }
 
 			$data['chartUrls'] = $chartUrls;
 			
 			
-			try {
+			try {	
 				// Load the view and generate the PDF
 				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf', $data)
 						->setPaper('A4', 'landscape')
-						->setOptions(['margin-top' => 25, 'margin-right' => 10, 'margin-bottom' => 10, 'margin-left' => 10]);
+						->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
 					
 				// Return the PDF as a download
 				\Log::info('Data for PDF: ');
@@ -513,7 +529,13 @@
 		public function showPDF(Request $request){
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
+
 			$generatedData = $this->dashboardService->getData();
+
+			if(empty($generatedData)){
+				$generatedData = $this->dashboardService->generateSalesReport();
+			}
+
 			$dataCategory = $request->query('category') ?? 'total';
 			$isPerChannel = $request->boolean('perChannel', false);
 
@@ -521,29 +543,29 @@
 
 			$chartUrls = []; // Array to hold chart URLs
 
-			$chartConfigTotal = self::getChartConfigForTotal($dataCategory, $generatedData);
+			// $chartConfigTotal = self::getChartConfigForTotal($dataCategory, $generatedData);
 
-			$chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
+			// $chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
 
-			$chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
+			// $chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
 
-			// generateQuickChartForPiePerChannel
-			if($isPerChannel){ 
-				$lastIndex = 0;
-				foreach($chartConfigPerChannel as $index => $chart) {
-					$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
-					$lastIndex = $index;
-				}
+			// // generateQuickChartForPiePerChannel
+			// if($isPerChannel){ 
+			// 	$lastIndex = 0;
+			// 	foreach($chartConfigPerChannel as $index => $chart) {
+			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
+			// 		$lastIndex = $index;
+			// 	}
 
-				foreach($chartConfigPiePerChannel as $index => $chart){
-					$lastIndex += 1;
-					$chartUrls["quickChartUrl{$lastIndex}"] = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
-				}
-			} else {
-				foreach($chartConfigTotal as $index => $chart) {
-					$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], false, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], null, $chart['prevYear'], $chart['currYear']);
-				}
-			}
+			// 	foreach($chartConfigPiePerChannel as $index => $chart){
+			// 		$lastIndex += 1;
+			// 		$chartUrls["quickChartUrl{$lastIndex}"] = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
+			// 	}
+			// } else {
+			// 	foreach($chartConfigTotal as $index => $chart) {
+			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], false, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], null, $chart['prevYear'], $chart['currYear']);
+			// 	}
+			// }
 
 			$data['chartUrls'] = $chartUrls;
 
@@ -685,19 +707,23 @@
 		public function getTabs() {
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-			
 
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
 
-			// $generatedData = $this->dashboardService->generateDailySalesReport();
-			$generatedData = $this->dashboardService->getData();
+			$reloadData = request()->has('reload_data');
 
-			if(empty($generatedData)){
-				$this->dashboardService->generateMonthlySalesReport();
+			// dd($reloadData);
+
+			if($reloadData){
+				$generatedData = $this->dashboardService->generateSalesReport();
+			} else {
+				$generatedData = $this->dashboardService->getData();
+
+				if(empty($generatedData)){
+					$generatedData = $this->dashboardService->generateSalesReport();
+				}
 			}
-
-			// $this->dashboardService->generateQuarterlySalesReport();
 
 			$data = array_merge($data, $generatedData);
 

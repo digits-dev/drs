@@ -6,6 +6,7 @@
     'currYear', 
     'lastThreeDaysDates',
 ])
+
 @php
     $weeks = [
         'TOTAL' => 'RUNNING',
@@ -25,126 +26,24 @@
 
 @endphp
 
-<style type="text/css">
-    .sales-report {
-        width: 100%;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-    }
-
-    .sales-report table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-    }
-
-    .sales-report th, .sales-report td {
-        padding: 2px;
-        text-align: center;
-    }
-
-    .sales-report td {
-        border: 1px solid #e1e1e1;
-    }
-
-    .sales-report th {
-        background-color: #004b87;
-        color: white;
-        font-weight: bold;
-    }
-
-    /* green background only to the last three header cells */
-    .sales-report th:nth-last-child(-n+3) {
-        background-color: #d4edda; 
-        color: #155724; 
-    }
-
-    .none {
-        background-color: white !important;
-        border: none !important;
-        color:black !important;
-    }
-
-    .bg-light-blue{
-        background-color: #d9eaf9 !important;
-        color: black !important;
-    }
-
-    .underline {
-        position: relative; 
-    }
-        
-    .underline::after {
-        content: ""; 
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 2px; 
-        height: 1px; 
-        width: 50%;
-        background: black; 
-    }
-
-    
-    /* width for first two th  */
-    /* .sales-report tr th:nth-child(-n+2) {
-        width: 110px;
-
-    } */
-    /* width for 4th col to end */
-    /* .sales-report th:nth-child(n+4),
-    .sales-report td:nth-child(n+4) {
-        width: 125px;
-    } */
-
-
-    .border-right {
-    position: relative;
-}
-
-.border-right::after {
-    content: ' ';
-    position: absolute;
-    top: 0;
-    right: -2.5px;
-    height: 105%;
-    width: 10px; /* Corrected from 'widows' to 'width' */
-    border-left: 1px solid #e1e1e1;
-    border-right: 1px solid #e1e1e1;
-    background: white;
-}
-
-.no-border-right {
-    border-right: unset !important;
-}
-
-.no-border-right::after {
-    border-right: unset !important;
-}
-
-
-
-
-</style>
-
 <div>
-
     <div class="sales-report">
-        <colgroup>
-        <col span="2" style="width:110px;">
-        <col style="width:10px;">
-        <col span="8" style="width:125px;">
-        </colgroup>
         <table>
+            <colgroup>
+                <col span="2" style="width:110px;">
+                <col style="width:15px;">
+                <col span="8" style="width:125px;">
+            </colgroup>
+
             <thead>
                 
                 @if ($isTopOpen)
                
                     <tr>
-                        <th  class="none" style="text-align: left; font-size:14px;" colspan="3" rowspan="2"><b>DAILY SALES REPORT</b></th>
+                        <th  class="none" style="text-align: left; font-size:14px;" colspan="4" rowspan="2"><b>DAILY SALES REPORT</b></th>
                         
                         @foreach (range(0,3) as $item)
-                            <th class="bg-light-blue underline">CUT OFF</th>
+                            <th class="bg-light-blue underline ">CUT OFF</th>
                         @endforeach
 
                         <th class="none" colspan="3">&nbsp;</th>
@@ -194,8 +93,8 @@
 
                 <tr>
                     <th>{{strtoupper($channelCode) }}</th>
-                    <th class="border-right">YEAR</th>
-                    {{-- <th class="none">&nbsp;</th> --}}
+                    <th>YEAR</th>
+                    <th class="none">&nbsp;</th>
 
                     {{-- Display Weeks like WEEK1, WEEK2, etc.  --}}
                     @foreach ($weeks as $week)
@@ -212,12 +111,12 @@
 
                     {{-- Display if it has data  --}}
                     @foreach ($lastThreeDaysDates as $key => $day)
-                        <th>{{$key}}</th>
+                        <th class="bg-light-green">{{$key}}</th>
                     @endforeach
 
                     {{-- Display the blanks th --}}
                     @for ($i = 0; $i < $blanks; $i++)
-                        <th></th> 
+                        <th class="bg-light-green"></th> 
                     @endfor
                 </tr>
             </thead>
@@ -225,8 +124,8 @@
                 {{-- ROW 1  --}}
                 <tr>
                     <td>&nbsp;</td>
-                    <td class="font-size border-right no-border-right" >% GROWTH</td>
-                    {{-- <td class="none" style="width: 10px">&nbsp;</td> --}}
+                    <td class="font-size" >% GROWTH</td>
+                    <th class="none">&nbsp;</th>
 
                     @foreach ($weeks as $key => $week)
                         @php
@@ -280,15 +179,17 @@
                 {{-- ROW 2  --}}
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
-                    <td class="border-right"><b>{{$prevYear}}</b></td>
-                    {{-- <td class="none" style="width: 10px">&nbsp;</td> --}}
+                    <td><b>{{$prevYear}}</b></td>
+                    <th class="none">&nbsp;</th>
 
                     @foreach ($weeks as $key => $week)
                         @php
                             $curr = $prevYearWeeksData[$key]['sum_of_net_sales'];
+                            
+                            $formattedVal = $curr ? number_format($curr, 2) : '';
                         @endphp
 
-                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+                        <td title="{{$formattedVal}}"><b>{{$formattedVal}}</b></td>
 
                     @endforeach
 
@@ -310,7 +211,11 @@
                     @endphp
 
                     @foreach ($salesData as $saleData)
-                        <td><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
+                        @php
+                            $val = $saleData !== 0 ? number_format($saleData, 2) : '';
+                        @endphp
+
+                        <td title="{{$val}}"><b>{{$val}}</b></td>
                     @endforeach
 
                     @if (empty($salesData))
@@ -324,16 +229,17 @@
                 {{-- ROW 3  --}}
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
-                    <td class="border-right"><b>{{$currYear}}</b></td>
-                    {{-- <td class="none" style="width: 10px">&nbsp;</td> --}}
-
+                    <td><b>{{$currYear}}</b></td>
+                    <td class="none">&nbsp;</td>
 
                     @foreach ($weeks as $key => $week)
                         @php
                             $curr = $currYearWeeksData[$key]['sum_of_net_sales'];
+
+                            $formattedVal = $curr ? number_format($curr, 2) : '';
                         @endphp
 
-                        <td><b>{{$curr ? number_format($curr, 2) : ''}}</b></td>
+                        <td title="{{$formattedVal}}"><b>{{$formattedVal}}</b></td>
 
                     @endforeach
 
@@ -352,7 +258,11 @@
                     @endphp
 
                     @foreach ($salesData as $saleData)
-                        <td><b>{{$saleData !== 0 ? number_format($saleData, 2) : ''}}</b></td>
+                        @php
+                            $val = $saleData !== 0 ? number_format($saleData, 2) : '';
+                        @endphp
+
+                        <td title="{{$val}}"><b>{{$val}}</b></td>
                     @endforeach
 
                     @if (empty($salesData))

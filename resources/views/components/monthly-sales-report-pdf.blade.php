@@ -1,3 +1,5 @@
+{{-- Copy only but without one "none" class column  --}}
+
 @props([
     'isTopOpen' => false,
     'channel' => 'TOTAL', 
@@ -39,7 +41,6 @@
         <table>
             <colgroup>
                 <col span="2" style="width:80px;">
-                <col style="width:10px;">
                 <col span="8">
             </colgroup>
 
@@ -48,7 +49,7 @@
                 @if ($isTopOpen)
                
                     <tr>
-                        <th  class="none" style="text-align: left; font-size:14px; height:50px;" colspan="4"><b>MONTHLY SALES REPORT</b></th>
+                        <th  class="none" style="text-align: left; font-size:14px; height:50px;" colspan="3"><b>MONTHLY SALES REPORT</b></th>
                     </tr>
                   
                 @endif
@@ -72,7 +73,7 @@
                 <tr>
                     <th>{{strtoupper($channelCode) }}</th>
                     <th>YEAR</th>
-                    <th class="none">&nbsp;</th>
+                    {{-- <th class="none">&nbsp;</th> --}}
 
                     {{-- Display Months like JANUARY, FEB, etc.  --}}
                     @foreach ($months as $month)
@@ -87,7 +88,7 @@
                 <tr>
                     <td>&nbsp;</td>
                     <td class="font-size" >% GROWTH</td>
-                    <th class="none">&nbsp;</th>
+                    {{-- <th class="none">&nbsp;</th> --}}
 
                     @foreach ($months as $key => $month)
                         @php
@@ -108,7 +109,7 @@
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
                     <td><b>{{$prevYear}}</b></td>
-                    <th class="none">&nbsp;</th>
+                    {{-- <th class="none">&nbsp;</th> --}}
 
                     @foreach ($months as $key => $month)
                         @php
@@ -126,7 +127,7 @@
                 <tr>
                     <td><b>{{strtoupper($channel) }}</b></td>
                     <td><b>{{$currYear}}</b></td>
-                    <th class="none">&nbsp;</th>
+                    {{-- <th class="none">&nbsp;</th> --}}
 
                     @foreach ($months as $key => $month)
                         @php

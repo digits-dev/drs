@@ -1,81 +1,65 @@
-* {
-    box-sizing: border-box; /* Includes padding and border in element's total width */
+.sales-report {
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
 }
-body{
-    margin:0;
-    padding:0;
-    width:100%;
+
+.sales-report table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
-    .sales-report {
-        width: 100%;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-    }
 
-    .sales-report table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-    }
+.sales-report th, .sales-report td {
+    padding: 2px;
+    text-align: center;
+}
 
-    .sales-report th, .sales-report td {
-        padding: 2px;
-        text-align: center;
-    }
+.sales-report td {
+    border: 1px solid #e1e1e1;
+    /* white-space: nowrap;        
+    overflow: hidden;          
+    text-overflow: ellipsis;   
+    padding: 0 5px !important; */
+    text-overflow: ellipsis; 
+    overflow: hidden;    
+    padding: 0 2.5px !important; 
 
-    .sales-report td {
-        border: 1px solid #e1e1e1;
-    }
+}
 
-    .sales-report th {
-        background-color: #004b87;
-        color: white;
-        font-weight: bold;
-    }
+.sales-report th {
+    background-color: #004b87;
+    color: white;
+    font-weight: bold;
+}
 
-    /* green background only to the last three header cells */
-    .sales-report th:nth-last-child(-n+3) {
-        background-color: #d4edda; 
-        color: #155724; 
-    }
+.bg-light-green{
+    background-color: #d4edda !important; 
+    color: #155724 !important; 
+}
 
-    .none {
-        background-color: white !important;
-        border: none !important;
-        color:black !important;
-    }
+.none {
+    background-color: white !important;
+    border: none !important;
+    color:black !important;
+}
 
-    .bg-light-blue{
-        background-color: #d9eaf9 !important;
-        color: black !important;
-    }
+.bg-light-blue{
+    background-color: #d9eaf9 !important;
+    color: black !important;
+}
 
-    .underline {
-        position: relative; 
-    }
-        
-    .underline::after {
-        content: ""; 
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 2px; 
-        height: 1px; 
-        width: 50%;
-        background: black; 
-    }
-    /* width for first two th  */
-    .sales-report tr th:nth-child(-n+2) {
-        width: 110px;
-    }
-    /* width for 4th col to end */
-    /* .sales-report th:nth-child(n+4),
-    .sales-report td:nth-child(n+4) {
-        width: 125px;
-    } */
-
-    .bg-green{
-        background-color: #d4edda !important; 
-        color: #155724 !important; 
-        width: 10px !important;
-    }
+.underline {
+    position: relative; 
+}
+    
+.underline::after {
+    content: ""; 
+    position: absolute;
+    left: 4px;
+    /* transform: translateX(-50%); */
+    bottom: 0;
+    height: 1px; 
+    width: 95%;
+    background: black; 
+}
