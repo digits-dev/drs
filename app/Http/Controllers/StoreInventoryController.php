@@ -40,6 +40,7 @@ define('SUB_INVENTORY_DEMO', 'POS - DEMO');
 class StoreInventoryController extends Controller
 {
     private $report_type;
+    private $inventoryTypeCache = [];
     
 
     public function __construct(){
@@ -324,12 +325,18 @@ class StoreInventoryController extends Controller
                 mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
             }
             $toExcelContent = [];
+
             // Initialize the cache arrays
-            $itemMasterCache = [];
             $masterfileCache = [];
+            $itemNumbers = [];
+
+            foreach($storeData as $item){
+                $itemNumbers[] = $item->{"ITEM NUMBER"};
+            }
+
+            $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
+
             // Create Excel Data
-
-
             foreach($storeData as &$excel){
                 $counter = Counter::where('id',2)->value('reference_code');
                 $modified = [];
@@ -339,24 +346,10 @@ class StoreInventoryController extends Controller
                     $modified[$newKey] = $value;
                 }
                 $excel = $modified;
-                // ITEM MASTERS CACHING
                 $itemNumber = $excel['ITEM_NUMBER'];
                 $sub_inventory = "POS - " . $excel['SUB_INVENTORY'];
-
-                $itemMaster = DB::connection('imfs')
-                ->table('item_masters')
-                ->where('digits_code', $itemNumber)
-                ->first();
-
-
-                if (isset($itemMasterCache[$itemNumber])) {
-                    $item_master = $itemMasterCache[$itemNumber];
-                } else {
-                    $item_master = $this->fetchItemData($itemMaster, $itemNumber);
-                }
-
-                // MASTERFILE CACHING
                 $cusCode = "CUS-" . $excel['STORE_ID'];
+                
                 if (isset($masterfileCache[$cusCode])) {
                     // Retrieve from cache if exists
                     $masterfile = $masterfileCache[$cusCode];
@@ -366,23 +359,22 @@ class StoreInventoryController extends Controller
                     $masterfileCache[$cusCode] = $masterfile;
                 }
 
-
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
                 $toExcel['system'] = 'POS';
-                $toExcel['org'] = $item_master['org'];
+                $toExcel['org'] = $itemDetails[$itemNumber]['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
                 $toExcel['sub_inventory'] = $sub_inventory;
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
                 $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
-                $toExcel['item_description'] = $item_master['item_description'];
+                $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
                 $toExcel['total_qty'] = $excel['TOTAL_QTY'];
-                $toExcel['store_cost'] = $item_master['store_cost'];
-                $toExcel['store_cost_eccom'] = $item_master['store_cost_eccom'];
-                $toExcel['landed_cost'] = $item_master['landed_cost'];
-                $toExcel['product_quality'] = $this->productQuality($item_master['inventory_type_id'], $sub_inventory);
+                $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
+                $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
+                $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
+                $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
 
                 $toExcelContent[] = $toExcel;
 
@@ -407,8 +399,6 @@ class StoreInventoryController extends Controller
                 'data_type' => 'PULL'
             ];
 
-            
-
             // Dispatch the processing job for each store
             ProcessStoreInventoryUploadJob::dispatch($args);
         }
@@ -416,8 +406,14 @@ class StoreInventoryController extends Controller
 
     private function productQuality($inv_type_id, $pos_sub)
     {
+        $item = null;
 
-        $item = DB::connection('imfs')->table('inventory_types')->where('id', $inv_type_id)->first();
+        if(isset($this->inventoryTypeCache[$inv_type_id])){
+            $item = $this->inventoryTypeCache[$inv_type_id];
+        }else{
+            $item = DB::connection('imfs')->table('inventory_types')->where('id', $inv_type_id)->first();
+            $this->inventoryTypeCache[$inv_type_id] = $item;
+        }
 
         if(!$item){
             return null;
@@ -440,8 +436,6 @@ class StoreInventoryController extends Controller
         return null;
     }
 
-    
-
     function prepareItemData($item, $orgName, $ecomStoreMargin = 0) {
         return [
             'org' => $orgName,
@@ -453,40 +447,54 @@ class StoreInventoryController extends Controller
         ];
     }
     
-    function fetchItemData($itemMaster, $itemNumber) {
-        
-        if ($itemMaster) {
-            return $this->prepareItemData($itemMaster, 'DIGITS', $itemMaster->ecom_store_margin);
+    function fetchItemDataInBatch($itemNumbers)
+    {
+        $results = [];
+        $itemNumberSet = collect($itemNumbers)->unique();
+
+        $itemMasterRecords = DB::connection('imfs')
+        ->table('item_masters') 
+        ->whereIn('digits_code', $itemNumberSet)
+        ->get();
+
+        foreach ($itemMasterRecords as $record) {
+            $results[$record->digits_code] = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
         }
-    
-        // Check the 'rma_item_masters' table
-        $rmaItemMaster = DB::connection('imfs')
-            ->table('rma_item_masters')
-            ->where('digits_code', $itemNumber)
-            ->first();
-        
-        if ($rmaItemMaster) {
-            return $this->prepareItemData($rmaItemMaster, 'RMA');
+
+        $foundItemNumbers = collect(array_keys($results));
+        $missingItemNumbers = $itemNumberSet->diff($foundItemNumbers); 
+
+        if ($missingItemNumbers->isEmpty()) {
+            return $results;
         }
-    
-        // Check the 'digits_imfs' table
-        $aimfsItemMaster = DB::connection('aimfs')
-            ->table('digits_imfs')
-            ->where('digits_code', $itemNumber)
-            ->first();
-        
-        if ($aimfsItemMaster) {
-            return $this->prepareItemData($aimfsItemMaster, 'ADMIN');
+
+        // Check the second database
+        $rmaItemMasterRecords = DB::connection('imfs')
+        ->table('rma_item_masters')
+        ->whereIn('digits_code', $missingItemNumbers)
+        ->get();
+
+        foreach ($rmaItemMasterRecords as $record) {
+            $results[$record->digits_code] = $this->prepareItemData($record, 'RMA');
         }
-    
-        return [
-            'org' => null,
-            'item_description' => null,
-            'store_cost' => null,
-            'store_cost_eccom' => null,
-            'landed_cost' => null,
-            'inventory_type_id' => null
-        ];
+
+        // Check for missing item numbers again
+        $foundItemNumbersAfterRMA = collect(array_keys($results));
+        $missingItemNumbersAfterRMA = $missingItemNumbers->diff($foundItemNumbersAfterRMA); 
+
+        if ($missingItemNumbersAfterRMA->isNotEmpty()) {
+            $aimfsItemMasterRecords = DB::connection('aimfs')
+                ->table('digits_imfs')
+                ->whereIn('digits_code', $missingItemNumbersAfterRMA)
+                ->get();
+
+            foreach ($aimfsItemMasterRecords as $record) {
+                $results[$record->digits_code] = $this->prepareItemData($record, 'ADMIN');
+            }
+        }
+
+
+        return $results;
     }
 
 }   
