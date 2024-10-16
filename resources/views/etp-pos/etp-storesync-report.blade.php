@@ -185,17 +185,21 @@ body{
                 <thead>
                     <tr>
                         <th>Store Name</th>
-                        <th>Date</th>
-                        <th>Time</th>
+                        <th>Last Zread Date</th>
+                        <th>Last Zread Time</th>
+                        <th>Store Last DRS Sync</th>
+                        <th>Inventory Last DRS Sync</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!empty($store_sync_data) && is_array($store_sync_data))
                         @foreach ($store_sync_data as $row)
                             <tr>
-                                <td>{{ $row->{'Warehouse'} }}</td>
+                                <td>{{ $row->Warehouse }}</td>
                                 <td>{{ $row->Date}}</td>
-                                <td>{{ $row->{'Time'} }}</td>
+                                <td>{{ $row->Time }}</td>
+                                <td>{{ $row->store_last_sync}}</td>
+                                <td>{{ $row->inventory_last_sync}}</td>
                             </tr>
                         @endforeach
                     @endif

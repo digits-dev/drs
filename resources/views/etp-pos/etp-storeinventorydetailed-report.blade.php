@@ -304,23 +304,6 @@
 
                     <textarea id="all_customer" style="display: none">{{ $all }}</textarea>    
                 </div>
-                <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From 
-                        <small id="dateFromRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
-                        <small id="invalidDateFrom" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> 'Date From' cannot be after 'Date To'.</small> 
-                        <small id="validDateFrom" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date From parameter.</small> 
-                    </p>
-                    <input class="date-input" type="date" required placeholder="Select Date" name="date_from"
-                        id="date_from" required>
-                </div>
-                <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To 
-                    <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
-                    <small id="validDateTo" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date To parameter.</small> 
-                </p>
-                    <input class="date-input" type="date" required placeholder="Select Date" name="date_to"
-                        id="date_to" required>
-                </div>
             </div>
             <div>
                 <div class="form-button pull-right" style="margin-top: 15px;">
@@ -442,17 +425,6 @@
                 customer = allcustomer;
             }
 
-            const date_from = $('#date_from').val();
-            const date_to = $('#date_to').val();
-            const dateFromObj = new Date(date_from);
-            const dateToObj = new Date(date_to);
-
-            if(dateFromObj > dateToObj){
-                $('#date_from').css('border', '1px solid rgba(255, 0, 0, 0.853)');
-                $('#date_to').css('border', '1px solid rgba(255, 0, 0, 0.853)');
-                $('#invalidDateFrom').show();
-            }
-
             if(customer === null || customer.length === 0){
                 $('#customer').css('border', 'rgba(255, 0, 0, 0.853) !important');
                 $('#customerRequired').show()
@@ -461,24 +433,7 @@
                 $('#customerRequired').hide()
             }
 
-            if(date_from == ""){
-                $('#date_from').addClass('inactive');
-                $('#dateFromRequired').show()
-                $('#invalidDateFrom').hide();
-            } else {
-                $('#date_from').removeClass('inactive');
-                $('#dateFromRequired').hide()
-            }
-
-            if(date_to == ""){
-                $('#date_to').addClass('inactive');
-                $('#dateToRequired').show()
-            } else {
-                $('#date_to').removeClass('inactive');
-                $('#dateToRequired').hide()
-            }
-
-            if(date_from == "" || date_to == "" || customer === null || customer.length === 0 || dateFromObj > dateToObj){
+            if(customer === null || customer.length === 0){
                 return;
             }
 
@@ -489,8 +444,6 @@
                 method: 'POST',
                 data: {
                     customer: customer,
-                    date_from: date_from,
-                    date_to: date_to,
                     _token: '{{ csrf_token() }}',
                 },
                 success: function(response) {
@@ -501,7 +454,7 @@
                     response.forEach(function(row) {
                         const tr =
                             '<tr>' +
-                            '<td>' + '</td>' +
+                            '<td>' + row['LOCATION'] +'</td>' +
                             '<td>' + row['customerName'] + '</td>' +
                             '<td>' + row['concept'] + '</td>' +
                             '<td>' + row['DATE'] + '</td>' +

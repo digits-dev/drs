@@ -22,10 +22,9 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 			}, request()->customer);
 
 			$allCustomer = "'" . implode("','", $customers) . "'";
-			$date_from = Carbon::parse(request()->date_from)->format('Ymd');
-			$date_to = Carbon::parse(request()->date_to)->format('Ymd');
+			$date = Carbon::parse(now())->format('Ymd');
 
-			$inventory_report = Cache::remember("{$allCustomer}{$date_from}{$date_to}", 900, function() use($allCustomer , $date_from, $date_to){
+			$inventory_report = Cache::remember("{$allCustomer}{$date}", 900, function() use($allCustomer , $date){
 
 				return DB::connection('sqlsrv')->select(DB::raw("
 				SELECT 
@@ -33,13 +32,14 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 					P.LastIssueDate AS 'DATE',
 					P.ItemNumber AS 'ITEM NUMBER',
 					P.LotNumber AS 'SERIAL NUMBER',
-					P.BalanceApproved AS 'TOTAL QTY'
+					P.BalanceApproved AS 'TOTAL QTY',
+					P.Location AS 'LOCATION'
 				FROM 
 					ProductLocationBalance P WITH (NOLOCK)
 				WHERE 
 					P.Company = 100
 					AND P.WareHouse IN ($allCustomer)
-					AND P.LastIssueDate BETWEEN $date_from AND $date_to;
+					AND P.LastIssueDate = $date;
 				"));
 
 			});
@@ -64,6 +64,7 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 				$row->{'DATE'} = Carbon::parse($row->{'DATE'})->format('Y-m-d');
 				$row->customerName = $customerMap[$row->{'STORE ID'}] ?? ' ';
 				$row->concept = $customerConcept[$row->{'STORE ID'}] ?? ' ';
+				$row->{'LOCATION'} = 'POS-' . $row->{'LOCATION'};
 
 				$itemData = Cache::remember($row->{'ITEM NUMBER'}, 3600, function() use($row){
 

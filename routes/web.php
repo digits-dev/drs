@@ -250,6 +250,7 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     // STORE INVENTORY DETAILED
     Route::post('generate_store_inventory_detailed/report', [EtpStoreInventoryDetailedReportController::class, 'getIndex']);
     
+    Route::post('generate_bir/report', [EtpBirReportController::class, 'getIndex']);
    
 });
 

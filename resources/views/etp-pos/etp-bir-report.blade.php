@@ -552,7 +552,7 @@
             $('#spinner').show();
 
             $.ajax({
-                url: 'bir url here...',
+                url: 'generate_bir/report',
                 method: 'POST',
                 data: { 
                     customer: customer,
