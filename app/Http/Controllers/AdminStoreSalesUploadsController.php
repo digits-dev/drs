@@ -178,15 +178,19 @@ use Illuminate\Support\Facades\Storage;
 	        |
 	        */
 	        $this->button_selected = array();
+			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
+				$this->button_selected[] = ['label'=>'Generate File','icon'=>'fa fa-file-excel-o','name'=>'generate_file'];
+			}
+			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
+				$this->button_selected[] = ['label'=>'Download as Zip','icon'=>'fa fa-file-archive-o','name'=>'download_all'];
+			}
 			if (in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_final)) {
 				$this->button_selected[] = ['label'=>'TAG AS FINAL','icon'=>'fa fa-thumbs-up','name'=>'tag_as_final'];
 			}
 			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
 				$this->button_selected[] = ['label'=>'REJECT','icon'=>'fa fa-thumbs-down','name'=>'tag_as_reject'];
 			}
-			if(in_array(CRUDBooster::myPrivilegeId(), $this->allowed_privs_to_tag_as_rejected)){
-				$this->button_selected[] = ['label'=>'Download as Zip','icon'=>'fa fa-file-archive-o','name'=>'download_all'];
-			}
+		
 
 	        /*
 	        | ----------------------------------------------------------------------
@@ -375,7 +379,7 @@ use Illuminate\Support\Facades\Storage;
 				return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch successfully rejected.", 'success');
 			}
 
-			if ($button_name == 'download_all') {
+			if ($button_name == 'generate_file') {
 				if (empty($id_selected)) {
 					return CRUDBooster::redirect(CRUDBooster::mainPath(), 'No items selected', 'danger');
 				}
@@ -405,6 +409,52 @@ use Illuminate\Support\Facades\Storage;
 						if ($batch->status == 'FILE DOWNLOADED') {
 							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch already downloaded", 'danger');
 						}
+						if ($batch->status == 'FILE GENERATED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch file has been generated.", 'danger');
+						}
+						if ($batch->status == 'REJECTED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has been rejected.", 'danger');
+						}
+					}
+				}
+
+				foreach ($id_selected as $id) {
+						$batch = StoreSalesUpload::find($id);
+						$folder_name = $batch->folder_name;
+						$batch_export = new StoreSalesUploadBatchExport($batch->batch);
+						$filename = $batch->batch. '.csv';
+						$report_type = 'store-sales-upload';
+						$excel_path = storage_path("app/$report_type/$folder_name/$filename");
+						$excel_file = $batch_export->store("$report_type/$folder_name/$filename");
+						$excel_file->chain([new UpdateBatchImportStatusJob($batch, $excel_path)]);
+					}
+				return CRUDBooster::redirect(CRUDBooster::mainPath(), "Generating file for all selected Batches.", 'info');
+			}
+
+			if ($button_name == 'download_all') {
+				if (empty($id_selected)) {
+					return CRUDBooster::redirect(CRUDBooster::mainPath(), 'No items selected', 'danger');
+				}
+
+				foreach ($id_selected as $id) {
+					$batch = StoreSalesUpload::find($id);
+					$batch = $batch->getBatchDetails();
+					if ($batch) {
+						if ($batch->status == 'IMPORTING') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is currently importing.", 'warning');
+						}
+						if ($batch->status == 'IMPORT FAILED') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has failed importing, and no file was generated.", 'danger');
+						}
+						if (!$batch->finished_at) {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has not finished importing.", 'danger');
+						}
+						if ($batch->status == 'GENERATING FILE') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch is currently generating the file.", 'warning');
+						}
+						if ($batch->status == 'FAILED TO GENERATE FILE') {
+							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch failed to generate the file.", 'danger');
+						}
 						if ($batch->status == 'IMPORT FINISHED') {
 							return CRUDBooster::redirect(CRUDBooster::mainPath(), "Batch # $batch->batch has finished importing, but the file has not been generated yet.", 'danger');
 						}
@@ -425,7 +475,9 @@ use Illuminate\Support\Facades\Storage;
 						$batch = $batch->getBatchDetails();
 						if ($batch) {
 							$zip->addFile($batch->generated_file_path, basename($batch->generated_file_path));
-							$batch->update(['status' => 'FILE DOWNLOADED']);
+							if ($batch->status != 'FINAL' && $batch->status != 'FILE DOWNLOADED') {
+								$batch->update(['status' => 'FILE DOWNLOADED']);
+							}
 						}
 					}
 					// Close the zip archive
