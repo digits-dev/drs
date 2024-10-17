@@ -258,10 +258,16 @@ class StoreSaleController extends Controller
             }
             $toExcelContent = [];
             // Initialize the cache arrays
-            $itemMasterCache = [];
-            $rmaItemMasterCache = [];
-            $aimfsItemMasterCache = [];
+            // $itemMasterCache = [];
+            // $rmaItemMasterCache = [];
+            // $aimfsItemMasterCache = [];
             $masterfileCache = [];
+
+            foreach($storeData as $item){
+                $itemNumbers[] = $item->{"ITEM NUMBER"};
+            }
+
+            $itemDetails = self::fetchItemDataInBatch($itemNumbers);
     
             foreach ($storeData as &$excel) {
                 $counter = Counter::where('id', 1)->value('reference_code');
@@ -272,17 +278,8 @@ class StoreSaleController extends Controller
                     $modified[$newKey] = $value;
                 }
                 $excel = $modified;
-    
-                // Retrieve the item master details
-                $itemData = self::getItemMasterData($excel['ITEM_NUMBER'], $itemMasterCache, $rmaItemMasterCache, $aimfsItemMasterCache);
-                $org = $itemData['org'];
-                $rr_ref = $itemData['rr_ref'];
-                $item_description = $itemData['item_description'];
-                $store_cost = $itemData['store_cost'];
-                $store_cost_eccom = $itemData['store_cost_eccom'];
-                $landed_cost = $itemData['landed_cost'];
-                $sales_memo_ref = $itemData['sales_memo_ref'];
-    
+                $itemNumber = $excel['ITEM_NUMBER'];
+      
                 // MASTERFILE CACHING
                 $cusCode = "CUS-" . $excel['STORE_ID'];
                 if (isset($masterfileCache[$cusCode])) {
@@ -298,7 +295,7 @@ class StoreSaleController extends Controller
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
                 $toExcel['system'] = 'POS';
-                $toExcel['org'] = $org;
+                $toExcel['org'] = $itemDetails[$itemNumber]['org'];
                 $toExcel['report_type'] = 'STORE SALES';
                 $toExcel['channel_code'] = $masterfile->channel_code_id;
                 $toExcel['customer_location'] = $masterfile->cutomer_name;
@@ -306,14 +303,14 @@ class StoreSaleController extends Controller
                 $toExcel['sold_date'] = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
                 $toExcel['item_number'] = $excel['ITEM_NUMBER'];
                 $toExcel['rr_ref'] = $rr_ref;
-                $toExcel['item_description'] = $item_description;
+                $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
                 $toExcel['qty_sold'] = $excel['QTY_SOLD'];
                 $toExcel['sold_price'] = $excel['SOLD_PRICE'];
                 $toExcel['net_sales'] = $excel['QTY_SOLD'] * $excel['SOLD_PRICE'];
-                $toExcel['store_cost'] = $store_cost;
-                $toExcel['store_cost_eccom'] = $store_cost_eccom;
-                $toExcel['landed_cost'] = $landed_cost;
-                $toExcel['sales_memo_ref'] = $sales_memo_ref;
+                $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
+                $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
+                $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
+                $toExcel['sales_memo_ref'] = $itemDetails[$itemNumber]['sales_memo_ref'];
                 $toExcel['item_serial'] = $excel['ITEM_SERIAL'];
                 $toExcel['sales_person'] = $excel['SALES_PERSON'];
                 $toExcelContent[] = $toExcel;
@@ -345,51 +342,65 @@ class StoreSaleController extends Controller
         }
     }
     
-    private function getItemMasterData($itemNumber, &$itemMasterCache, &$rmaItemMasterCache, &$aimfsItemMasterCache){
-        // ITEM MASTERS CACHING
-        $item_master = $itemMasterCache[$itemNumber] ??= DB::connection('imfs')->table('item_masters')->where('digits_code', $itemNumber)->first();
-    
-        // RMA ITEM MASTERS CACHING
-        $rma_item_master = $rmaItemMasterCache[$itemNumber] ??= DB::connection('imfs')->table('rma_item_masters')->where('digits_code', $itemNumber)->first();
-    
-        // ADMIN ITEM MASTERS CACHING
-        $aimfs_item_master = $aimfsItemMasterCache[$itemNumber] ??= DB::connection('aimfs')->table('digits_imfs')->where('digits_code', $itemNumber)->first();
-    
-        // Determine the organization and set related values
-        if ($item_master) {
-            return [
-                'org' => 'DIGITS',
-                'rr_ref' => $item_master->current_srp ? $item_master->digits_code : 'GWP',
-                'item_description' => $item_master->item_description,
-                'store_cost' => $item_master->dtp_rf,
-                'store_cost_eccom' => $item_master->ecom_store_margin,
-                'landed_cost' => $item_master->landed_cost,
-                'sales_memo_ref' => NULL,
-            ];
-        } elseif ($rma_item_master) {
-            return [
-                'org' => 'RMA',
-                'rr_ref' => $rma_item_master->current_srp ? $rma_item_master->digits_code : 'GWP',
-                'item_description' => $rma_item_master->item_description,
-                'store_cost' => $rma_item_master->dtp_rf,
-                'store_cost_eccom' => 0,
-                'landed_cost' => $rma_item_master->landed_cost,
-                'sales_memo_ref' => NULL,
-            ];
-        } elseif ($aimfs_item_master) {
-            return [
-                'org' => 'ADMIN',
-                'rr_ref' => $aimfs_item_master->current_srp ? $aimfs_item_master->digits_code : 'GWP',
-                'item_description' => $aimfs_item_master->item_description,
-                'store_cost' => $aimfs_item_master->dtp_rf,
-                'store_cost_eccom' => 0,
-                'landed_cost' => $aimfs_item_master->landed_cost,
-                'sales_memo_ref' => NULL,
-            ];
-        }
-    
-        return [];
+    function prepareItemData($item, $orgName, $ecomStoreMargin = 0) {
+        return [
+            'org' => $orgName,
+            'item_description' => $item->item_description,
+            'store_cost' => $item->dtp_rf,
+            'store_cost_eccom' => $ecomStoreMargin,
+            'landed_cost' => $item->landed_cost,
+            'inventory_type_id' => $item->inventory_types_id,
+            'sales_memo_ref'   => NULL
+        ];
     }
     
+    function fetchItemDataInBatch($itemNumbers)
+    {
+        $results = [];
+        $itemNumberSet = collect($itemNumbers)->unique();
+
+        $itemMasterRecords = DB::connection('imfs')
+        ->table('item_masters') 
+        ->whereIn('digits_code', $itemNumberSet)
+        ->get();
+
+        foreach ($itemMasterRecords as $record) {
+            $results[$record->digits_code] = self::prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
+        }
+
+        $foundItemNumbers = collect(array_keys($results));
+        $missingItemNumbers = $itemNumberSet->diff($foundItemNumbers); 
+
+        if ($missingItemNumbers->isEmpty()) {
+            return $results;
+        }
+
+        // Check the second database
+        $rmaItemMasterRecords = DB::connection('imfs')
+        ->table('rma_item_masters')
+        ->whereIn('digits_code', $missingItemNumbers)
+        ->get();
+
+        foreach ($rmaItemMasterRecords as $record) {
+            $results[$record->digits_code] = self::prepareItemData($record, 'RMA');
+        }
+
+        // Check for missing item numbers again
+        $foundItemNumbersAfterRMA = collect(array_keys($results));
+        $missingItemNumbersAfterRMA = $missingItemNumbers->diff($foundItemNumbersAfterRMA); 
+
+        if ($missingItemNumbersAfterRMA->isNotEmpty()) {
+            $aimfsItemMasterRecords = DB::connection('aimfs')
+                ->table('digits_imfs')
+                ->whereIn('digits_code', $missingItemNumbersAfterRMA)
+                ->get();
+
+            foreach ($aimfsItemMasterRecords as $record) {
+                $results[$record->digits_code] = self::prepareItemData($record, 'ADMIN');
+            }
+        }
+
+        return $results;
+    }
     
 }
