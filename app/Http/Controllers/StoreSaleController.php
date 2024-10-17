@@ -247,7 +247,7 @@ class StoreSaleController extends Controller
         $groupedSalesData = collect($result)->groupBy('STORE ID');
         foreach ($groupedSalesData as $storeId => $storeData) {
             $time = microtime(true);
-            $batch_number = str_replace('.', '', $time);;
+            $batch_number = str_replace('.', '', $time);
             $folder_name = "$batch_number-" . Str::random(5);
             $dateNow = Carbon::now()->format('Ymd');
             $excel_file_name = "stores-sales-$batch_number-$dateNow.xlsx";
@@ -262,8 +262,7 @@ class StoreSaleController extends Controller
             $rmaItemMasterCache = [];
             $aimfsItemMasterCache = [];
             $masterfileCache = [];
-            // Create Excel Data
-
+    
             foreach ($storeData as &$excel) {
                 $counter = Counter::where('id', 1)->value('reference_code');
                 $modified = [];
@@ -273,44 +272,17 @@ class StoreSaleController extends Controller
                     $modified[$newKey] = $value;
                 }
                 $excel = $modified;
-            
-                // ITEM MASTERS CACHING
-                $itemNumber = $excel['ITEM_NUMBER'];
-                $item_master = $itemMasterCache[$itemNumber] ??= DB::connection('imfs')->table('item_masters')->where('digits_code', $itemNumber)->first();
-            
-                // RMA ITEM MASTERS CACHING
-                $rma_item_master = $rmaItemMasterCache[$itemNumber] ??= DB::connection('imfs')->table('rma_item_masters')->where('digits_code', $itemNumber)->first();
-            
-                // ADMIN ITEM MASTERS CACHING
-                $aimfs_item_master = $aimfsItemMasterCache[$itemNumber] ??= DB::connection('aimfs')->table('digits_imfs')->where('digits_code', $itemNumber)->first();
-            
-                // Determine the organization and set related values
-                if ($item_master) {
-                    $org = 'DIGITS';
-                    $rr_ref = $item_master->current_srp ? $item_master->digits_code : 'GWP';
-                    $item_description = $item_master->item_description;
-                    $store_cost = $item_master->dtp_rf;
-                    $store_cost_eccom = $item_master->ecom_store_margin;
-                    $landed_cost = $item_master->landed_cost;
-                    $sales_memo_ref = NULL;
-                } elseif ($rma_item_master) {
-                    $org = 'RMA';
-                    $rr_ref = $rma_item_master->current_srp ? $rma_item_master->digits_code : 'GWP';
-                    $item_description = $rma_item_master->item_description;
-                    $store_cost = $rma_item_master->dtp_rf;
-                    $store_cost_eccom = 0;
-                    $landed_cost = $rma_item_master->landed_cost;
-                    $sales_memo_ref = NULL;
-                } elseif ($aimfs_item_master) {
-                    $org = 'ADMIN';
-                    $rr_ref = $aimfs_item_master->current_srp ? $aimfs_item_master->digits_code : 'GWP';
-                    $item_description = $aimfs_item_master->item_description;
-                    $store_cost = $aimfs_item_master->dtp_rf;
-                    $store_cost_eccom = 0;
-                    $landed_cost = $aimfs_item_master->landed_cost;
-                    $sales_memo_ref = NULL;
-                }
-            
+    
+                // Retrieve the item master details
+                $itemData = self::getItemMasterData($excel['ITEM_NUMBER'], $itemMasterCache, $rmaItemMasterCache, $aimfsItemMasterCache);
+                $org = $itemData['org'];
+                $rr_ref = $itemData['rr_ref'];
+                $item_description = $itemData['item_description'];
+                $store_cost = $itemData['store_cost'];
+                $store_cost_eccom = $itemData['store_cost_eccom'];
+                $landed_cost = $itemData['landed_cost'];
+                $sales_memo_ref = $itemData['sales_memo_ref'];
+    
                 // MASTERFILE CACHING
                 $cusCode = "CUS-" . $excel['STORE_ID'];
                 if (isset($masterfileCache[$cusCode])) {
@@ -321,7 +293,7 @@ class StoreSaleController extends Controller
                     $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
                     $masterfileCache[$cusCode] = $masterfile;
                 }
-
+    
                 // Prepare data for output
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
@@ -348,13 +320,13 @@ class StoreSaleController extends Controller
                 // Increment the counter for the next iteration
                 Counter::where('id', 1)->increment('reference_code');
             }
-
+    
             // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
             Excel::store(new StoreSalesExcel($toExcelContent), $excel_path, 'local');
-
+    
             // Full path of the stored Excel file
             $full_excel_path = storage_path('app') . '/' . $excel_path;
-
+    
             // Prepare arguments for the job
             $args = [
                 'batch_number' => $batch_number,
@@ -367,10 +339,57 @@ class StoreSaleController extends Controller
                 'to_date' => $to_date,
                 'data_type' => 'PULL'
             ];
-
+    
             // Dispatch the processing job for each store
             ProcessStoreSalesUploadJob::dispatch($args);
         }
     }
+    
+    private function getItemMasterData($itemNumber, &$itemMasterCache, &$rmaItemMasterCache, &$aimfsItemMasterCache){
+        // ITEM MASTERS CACHING
+        $item_master = $itemMasterCache[$itemNumber] ??= DB::connection('imfs')->table('item_masters')->where('digits_code', $itemNumber)->first();
+    
+        // RMA ITEM MASTERS CACHING
+        $rma_item_master = $rmaItemMasterCache[$itemNumber] ??= DB::connection('imfs')->table('rma_item_masters')->where('digits_code', $itemNumber)->first();
+    
+        // ADMIN ITEM MASTERS CACHING
+        $aimfs_item_master = $aimfsItemMasterCache[$itemNumber] ??= DB::connection('aimfs')->table('digits_imfs')->where('digits_code', $itemNumber)->first();
+    
+        // Determine the organization and set related values
+        if ($item_master) {
+            return [
+                'org' => 'DIGITS',
+                'rr_ref' => $item_master->current_srp ? $item_master->digits_code : 'GWP',
+                'item_description' => $item_master->item_description,
+                'store_cost' => $item_master->dtp_rf,
+                'store_cost_eccom' => $item_master->ecom_store_margin,
+                'landed_cost' => $item_master->landed_cost,
+                'sales_memo_ref' => NULL,
+            ];
+        } elseif ($rma_item_master) {
+            return [
+                'org' => 'RMA',
+                'rr_ref' => $rma_item_master->current_srp ? $rma_item_master->digits_code : 'GWP',
+                'item_description' => $rma_item_master->item_description,
+                'store_cost' => $rma_item_master->dtp_rf,
+                'store_cost_eccom' => 0,
+                'landed_cost' => $rma_item_master->landed_cost,
+                'sales_memo_ref' => NULL,
+            ];
+        } elseif ($aimfs_item_master) {
+            return [
+                'org' => 'ADMIN',
+                'rr_ref' => $aimfs_item_master->current_srp ? $aimfs_item_master->digits_code : 'GWP',
+                'item_description' => $aimfs_item_master->item_description,
+                'store_cost' => $aimfs_item_master->dtp_rf,
+                'store_cost_eccom' => 0,
+                'landed_cost' => $aimfs_item_master->landed_cost,
+                'sales_memo_ref' => NULL,
+            ];
+        }
+    
+        return [];
+    }
+    
     
 }

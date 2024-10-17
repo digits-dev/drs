@@ -169,6 +169,7 @@ return [
         "category_description"  =>"CATEGORY",
         "margin_category_description"   =>"MARGIN CATEGORY",
         "vendor_type_code"              =>"VENDOR TYPE CODE",
+        "vendor_name"              =>"VENDOR NAME",
         "inventory_type_description"    =>"INVENTORY TYPE CODE",
         "sku_status_description"        =>"SKU STATUS",
         "brand_status"      =>"BRAND STATUS",

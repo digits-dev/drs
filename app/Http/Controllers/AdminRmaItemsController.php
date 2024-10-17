@@ -425,6 +425,7 @@
 				$to_be_inserted['category_description']        = $item['category_description'];
 				$to_be_inserted['margin_category_description'] = $item['margin_category_description'];
 				$to_be_inserted['vendor_type_code']            = $item['vendor_type_code'];
+				$to_be_inserted['vendor_name']                 = $item['vendor_name'];
 				$to_be_inserted['inventory_type_description']  = $item['inventory_type_description'];
 				$to_be_inserted['current_srp']                 = $item['current_srp'];
 				$to_be_inserted['initial_wrr_date']            = $item['initial_wrr_date'];

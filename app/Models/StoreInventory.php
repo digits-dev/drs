@@ -126,6 +126,7 @@ class StoreInventory extends Model
             'all_items.category_description AS category_description',
             'all_items.margin_category_description AS margin_category_description',
             'all_items.vendor_type_code AS vendor_type_code',
+            'all_items.vendor_name AS vendor_name',
             'all_items.inventory_type_description AS inventory_type_description',
             'all_items.sku_status_description AS sku_status_description',
             'all_items.brand_status AS brand_status',

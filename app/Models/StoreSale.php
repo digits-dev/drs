@@ -256,7 +256,7 @@ class StoreSale extends Model
                 C.Company = 100
                 AND C.Division = '100'
                 AND C.InvoiceType = 31
-                AND C.CreateDate BETWEEN '20240919' AND '20240921'
+                AND C.CreateDate BETWEEN '20240905' AND '20240921'
                 AND C.FreeField2 = '0'
         "));
     
