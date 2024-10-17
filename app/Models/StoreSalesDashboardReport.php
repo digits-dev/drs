@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Log;
 
 class StoreSalesDashboardReport extends Model
@@ -19,6 +20,8 @@ class StoreSalesDashboardReport extends Model
     protected $fillable = ['year', 'month', 'day'];
 
     protected $year;
+
+    protected $rawMonth;
     protected $month;
     protected $day;
     protected $yearMonth;
@@ -33,6 +36,7 @@ class StoreSalesDashboardReport extends Model
         // Initialize year and month, and set properties
         if (isset($attributes['year']) && isset($attributes['month']) && isset($attributes['day'])) {
             $this->year = $attributes['year'];
+            $this->previousMonth = $attributes['month'] - 1;
             $this->month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT); // always two digits
             // $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT); // always two digits
             $this->day = $attributes['day']; // always two digits
@@ -44,6 +48,7 @@ class StoreSalesDashboardReport extends Model
         }
 
         Log::info("Month $this->month");
+        Log::info("RAW Month $this->rawMonth");
         Log::info("Year $this->year");
         Log::info("Day $this->day");
         Log::info("YearMonth $this->yearMonth");
@@ -54,26 +59,70 @@ class StoreSalesDashboardReport extends Model
 
     public function createTempTable(){
 
-    DB::statement("
-        CREATE TEMPORARY TABLE temp_store_sales AS
-        SELECT 
-            store_sales.sales_date,
-            store_sales.net_sales,
-            store_sales.reference_number,
-            channels.channel_code
-        FROM store_sales 
-        LEFT JOIN channels ON store_sales.channels_id = channels.id
-        WHERE store_sales.is_final = 1 
-            AND YEAR(store_sales.sales_date) = {$this->year}
-            AND store_sales.quantity_sold > 0
-            AND store_sales.net_sales IS NOT NULL
-            AND store_sales.sold_price > 0
-            AND store_sales.channels_id != 12 
-    ");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_store_sales AS
+            SELECT 
+                store_sales.sales_date,
+                store_sales.net_sales,
+                store_sales.reference_number,
+                channels.channel_code,
+                store_sales.channels_id,
+                customers.concepts_id,
+                all_items.brand_description,
+                concepts.concept_name
+            FROM store_sales 
+            LEFT JOIN channels ON store_sales.channels_id = channels.id
+            LEFT JOIN customers ON store_sales.customers_id = customers.id
+            LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
+            LEFT JOIN concepts ON customers.concepts_id = concepts.id
+            WHERE store_sales.is_final = 1 
+                AND YEAR(store_sales.sales_date) = {$this->year}
+                AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->month}
+                AND store_sales.quantity_sold > 0
+                AND store_sales.net_sales IS NOT NULL
+                AND store_sales.sold_price > 0
+                AND store_sales.channels_id != 12 
+        ");
+    // AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->rawMonth}
+
     // AND store_sales.sales_date BETWEEN '{$this->startDate}' AND '{$this->endDate}'
 
     // AND store_sales.channels_id != 12  = EEE is not included 
 
+    }
+
+    public function getCachedData() {
+        $today = date('Y-m-d');
+        $cacheKey = "temp_table_data_{$today}";
+    
+        // Cache the results of the query
+        $tempTableData = Cache::remember($cacheKey, 1000, function() {
+            return DB::select("
+                SELECT 
+                    store_sales.sales_date,
+                    store_sales.net_sales,
+                    store_sales.reference_number,
+                    channels.channel_code,
+                    store_sales.channels_id,
+                    customers.concepts_id,
+                    all_items.brand_description,
+                    concepts.concept_name
+                FROM store_sales 
+                LEFT JOIN channels ON store_sales.channels_id = channels.id
+                LEFT JOIN customers ON store_sales.customers_id = customers.id
+                LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
+                LEFT JOIN concepts ON customers.concepts_id = concepts.id
+                WHERE store_sales.is_final = 1 
+                    AND YEAR(store_sales.sales_date) = {$this->year}
+                    AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->month}
+                    AND store_sales.quantity_sold > 0
+                    AND store_sales.net_sales IS NOT NULL
+                    AND store_sales.sold_price > 0
+                    AND store_sales.channels_id != 12 
+            ");
+        });
+    
+        return $tempTableData;
     }
 
     public function dropTempTable(){
@@ -266,121 +315,146 @@ class StoreSalesDashboardReport extends Model
         return $lastThreeDays;
     }
 
-    //Monthly Sales Report
-
-    public function createTempTableForMonthly(){
-
-        DB::statement("
-            CREATE TEMPORARY TABLE monthly_temp_store_sales AS
-            SELECT 
-                store_sales.sales_date,
-                store_sales.net_sales,
-                store_sales.reference_number,
-                channels.channel_code
-            FROM store_sales 
-            LEFT JOIN channels ON store_sales.channels_id = channels.id
-            WHERE store_sales.is_final = 1 
-                AND YEAR(store_sales.sales_date) = {$this->year}
-                AND store_sales.quantity_sold > 0
-                AND store_sales.net_sales IS NOT NULL
-                AND store_sales.sold_price > 0
-                AND store_sales.channels_id != 12 
-        ");
-    
-        // AND store_sales.channels_id != 12  = EEE is not included 
-    
-        }
-    
-        public function dropTempTableForMonthly(){
-            DB::statement('DROP TEMPORARY TABLE IF EXISTS monthly_temp_store_sales');
-        }
-
-        public function getSalesPerMonth()
-        {
-            return DB::table('temp_store_sales')->select(DB::raw("
-                CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
-                SUM(net_sales) AS sum_of_net_sales
-            "))
-            ->groupBy(DB::raw("month_cutoff WITH ROLLUP"))
-            ->get()->map(function($item) {
-                if(is_null($item->month_cutoff)){
-                    $item->month_cutoff = 'TOTAL';
-                }
-                return (array) $item;
-            })->keyBy('month_cutoff');
-        }
+    public function getSalesPerMonth()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy(DB::raw("month_cutoff WITH ROLLUP"))
+        ->get()->map(function($item) {
+            if(is_null($item->month_cutoff)){
+                $item->month_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        })->keyBy('month_cutoff');
+    }
 
 
-        public function getSalesPerMonthByChannel()
-        {
-            return DB::table('temp_store_sales')->select(DB::raw("
-                CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
-                CASE 
-                    WHEN channel_code = 'ONL' THEN 'ECOMM'
-                    WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                    WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
-                    WHEN channel_code = 'FRA' THEN 'FRA-DR'
-                    WHEN channel_code = 'SVC' THEN 'SC'
-                    WHEN channel_code = 'CON' THEN 'CON'
-                    ELSE 'OTHER'
-                END AS channel_classification,
-                SUM(net_sales) AS sum_of_net_sales,
-                MIN(reference_number) AS min_reference_number
-            "))
-            ->groupBy('channel_classification', DB::raw('month_cutoff WITH ROLLUP'))
-            ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
-            ->get()->map(function($item){
-                if(is_null($item->month_cutoff)){
-                    $item->month_cutoff = 'TOTAL';
-                }
-                return (array) $item;
-            });
-        }
+    public function getSalesPerMonthByChannel()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
+            CASE 
+                WHEN channel_code = 'ONL' THEN 'ECOMM'
+                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
+                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'FRA' THEN 'FRA-DR'
+                WHEN channel_code = 'SVC' THEN 'SC'
+                WHEN channel_code = 'CON' THEN 'CON'
+                ELSE 'OTHER'
+            END AS channel_classification,
+            SUM(net_sales) AS sum_of_net_sales,
+            MIN(reference_number) AS min_reference_number
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy('channel_classification', DB::raw('month_cutoff WITH ROLLUP'))
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->get()->map(function($item){
+            if(is_null($item->month_cutoff)){
+                $item->month_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        });
+    }
 
 
-        public function getSalesPerQuarter()
-        {
-            return DB::table('temp_store_sales')->select(DB::raw("
-                CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
-                SUM(net_sales) AS sum_of_net_sales
-            "))
-            ->groupBy(DB::raw("quarter_cutoff WITH ROLLUP"))
-            ->get()->map(function($item) {
-                if (is_null($item->quarter_cutoff)) {
-                    $item->quarter_cutoff = 'TOTAL';
-                }
-                return (array) $item;
-            })->keyBy('quarter_cutoff');
-        }
+    public function getSalesPerQuarter()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy(DB::raw("quarter_cutoff WITH ROLLUP"))
+        ->get()->map(function($item) {
+            if (is_null($item->quarter_cutoff)) {
+                $item->quarter_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        })->keyBy('quarter_cutoff');
+    }
 
-        public function getSalesPerQuarterByChannel()
-        {
-            return DB::table('temp_store_sales')->select(DB::raw("
-                CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
-                CASE 
-                    WHEN channel_code = 'ONL' THEN 'ECOMM'
-                    WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                    WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
-                    WHEN channel_code = 'FRA' THEN 'FRA-DR'
-                    WHEN channel_code = 'SVC' THEN 'SC'
-                    WHEN channel_code = 'CON' THEN 'CON'
-                    ELSE 'OTHER'
-                END AS channel_classification,
-                SUM(net_sales) AS sum_of_net_sales,
-                MIN(reference_number) AS min_reference_number
-            "))
-            ->groupBy('channel_classification', DB::raw('quarter_cutoff WITH ROLLUP'))
-            ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
-            ->get()->map(function($item){
-                if(is_null($item->quarter_cutoff)){
-                    $item->quarter_cutoff = 'TOTAL';
-                }
-                return (array) $item;
-            });
-        }
+    public function getSalesPerQuarterByChannel()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
+            CASE 
+                WHEN channel_code = 'ONL' THEN 'ECOMM'
+                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
+                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'FRA' THEN 'FRA-DR'
+                WHEN channel_code = 'SVC' THEN 'SC'
+                WHEN channel_code = 'CON' THEN 'CON'
+                ELSE 'OTHER'
+            END AS channel_classification,
+            SUM(net_sales) AS sum_of_net_sales,
+            MIN(reference_number) AS min_reference_number
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy('channel_classification', DB::raw('quarter_cutoff WITH ROLLUP'))
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->get()->map(function($item){
+            if(is_null($item->quarter_cutoff)){
+                $item->quarter_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        });
+    }
 
+    public function getYearToDate()
+    {
 
-     
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CASE 
+                WHEN brand_description = 'APPLE' THEN 'APPLE'
+                ELSE 'NON APPLE'
+            END AS category,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy(DB::raw('category WITH ROLLUP'))
+        ->get()->map(function($item) {
+            if(is_null($item->category)){
+                $item->category = 'TOTAL';
+            }
+            return $item;
+        })->keyBy('category');
+
+    }
+
+    public function getYearToDateWithSelection(){
+        return DB::table('store_sales', 'ss')::select(DB::raw("
+            CASE 
+                WHEN ai.brand_description = 'APPLE' THEN 'APPLE'
+                ELSE 'NON-APPLE'
+            END AS category,
+            MIN(c.channel_code) AS channel_code,
+            MIN(co.concept_name) AS concept_name,
+            SUM(ss.net_sales) AS sum_of_net_sales
+        "))
+        ->leftJoin('channels as c', 'ss.channels_id', 'c.id')
+        ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
+        ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
+        ->leftJoin('concepts as co', 'cu.concepts_id', 'co.id')
+        ->where('ss.is_final', 1)
+        ->whereYear('ss.sales_date', $this->year)
+        ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [1, $this->previousMonth])
+        ->where('ss.channels_id', 6)
+        ->where('cu.concepts_id', 324)
+        ->where('ss.quantity_sold', '>', 0)
+        ->whereNotNull('ss.net_sales')
+        ->where('ss.sold_price', '>', 0)
+        ->where('ss.channels_id', '!=', 12)
+        ->groupBy(DB::raw('category WITH ROLLUP'))
+        ->get()->map(function($item) {
+            if(is_null($item->category)){
+                $item->category = 'TOTAL';
+            }
+            return $item;
+        })->keyBy('category');
+    }
 
 
 }

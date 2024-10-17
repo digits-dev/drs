@@ -66,7 +66,7 @@ class StoreSalesDashboardReportService {
             // $currentYear = 2020; 
             // $currentDay = 29;
 
-            $currentMonth = 2;
+            $currentMonth = 4;
             $previousYear = 2021;
             $currentYear = 2022; 
             $currentDay = 23;
@@ -125,6 +125,12 @@ class StoreSalesDashboardReportService {
     }
 
     private function processDailySalesData($year, $month, $day, &$data, $storeSalesDR) {
+
+        $test1 = $storeSalesDR->getYearToDate();
+        // $test2 = $storeSalesDR->getYearToDateWithSelection();
+
+        dd($test1);
+        // dd($test2);
 
        
         $data['channel_codes']['TOTAL'][$year]['weeks'] = $storeSalesDR->getSalesSummary()->toArray();
@@ -871,8 +877,13 @@ class StoreSalesDashboardReportService {
     private function processSalesData($year, $month, $day, &$data) {
         $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
 
+        $test = $storeSalesDR->getCachedData();
+
+        dd($test);
+
         // Create temp table and get summary
-        $storeSalesDR->createTempTable();
+        //  $storeSalesDR->createTempTable();
+
 
         self::processDailySalesData($year, $month, $day, $data, $storeSalesDR);
 

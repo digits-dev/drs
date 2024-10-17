@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 	use App\Exports\WeeklySalesExport;
+	use App\Models\Channel;
+	use App\Models\Concept;
 	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
 	use Barryvdh\DomPDF\Facade as DomPDF;
 	use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
@@ -448,6 +450,9 @@
 			}
 
 			$data = array_merge($data, $generatedData);
+
+			$data['channels'] = Channel::get(['id','channel_name'] );
+			$data['concepts'] = Concept::get(['id','concept_name'] );
 
 			// dd($data['channel_codes']);
 

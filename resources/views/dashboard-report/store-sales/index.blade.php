@@ -3,6 +3,8 @@
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.24/dist/sweetalert2.min.css" integrity="sha256-F2TGXW+mc8e56tXYBFYeucG/SgD6qQt4SNFxmpVXdUk=" crossorigin="anonymous">
 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <style>
         .dashboard {
             padding-top: 10px;
@@ -102,6 +104,10 @@
             opacity: 1; /* Fade in */
         }
 
+        h2{
+            font-size: 16px;
+            font-weight: 600;
+        }
 
     </style>
 
@@ -138,7 +144,7 @@
     </div>
 
     <div class="tab-content-container">
-        <div id="tab1" class="tab-content active">
+        <div id="tab1" class="tab-content ">
 
             <div class="weekly-section">
                 <div class="dashboard">
@@ -201,25 +207,35 @@
             </div>
         </div>
 
-        <div id="tab4" class="tab-content">
+        <div id="tab4" class="tab-content active">
             <div class="ytd-section">
-                <h3>YTD Sales Report</h3>
-                {{-- <div class="dashboard">
-                    @foreach ($channel_codes as $channel => $channelData)
-                        @if ($channel == 'OTHER' || $channel == '')
-                            @continue
-                        @endif
-                        
-                        <x-sales-report 
-                            :isTopOpen="$loop->first"
-                            :channel="$channel" 
-                            :data="$channelData"
-                            :prevYear="$yearData['previousYear']" 
-                            :currYear="$yearData['currentYear']"
-                            :lastThreeDaysDates="$lastThreeDaysDates"
-                        />
-                    @endforeach
-                </div> --}}
+                <h2 class="text-start" >YTD SALES REPORT</h2>
+                    <div class="" style="display: flex; gap:10px; justify-content:start; align-items:flex-start; margin-top:40px; ">
+                
+                        <div class="form-group" style="display: inline-block; margin-right: 15px;">
+                            <label   class="control-label" for="categorySelector" style="margin-bottom: 15px;">Select Channel:</label>
+                            
+                            <select id="channelSelector" class="form-control">
+                                @foreach ($channels as $channel)
+                                    <option value="{{$channel->id}}">{{$channel->channel_name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="display: inline-block; margin-right: 15px;">
+                            <label   class="control-label" for="categorySelector" style="margin-bottom: 15px;">Select Store Concept:</label>
+                            <select id="conceptSelector" class="form-control">
+                                @foreach ($concepts as $concept)
+                                    <option value="{{$concept->id}}">{{$concept->concept_name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    
+                        <button id="updateChartButton" class="btn btn-primary" style="align-self: center; ">
+                            <i class="fa fa-refresh" aria-hidden="true"></i> Update Charts
+                        </button>
+                    </div>
+                
             </div>
         </div>
 
@@ -231,6 +247,7 @@
 
 @push('bottom')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
    $(function() {
@@ -252,6 +269,9 @@
             $('#' + tabId).css('display', 'block').addClass('active').css('opacity', '0').animate({ opacity: 1 }, 500); // Fade in
         }, 150); // Match the timeout with the CSS transition duration
     });
+
+    $('#channelSelector').select2();
+    $('#conceptSelector').select2();
 
 
 });
