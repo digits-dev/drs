@@ -51,4 +51,8 @@ class Users extends Model
                           ) 
                         ->first();
       }
+
+      public function announcements(){
+          return $this->belongsToMany(Announcement::class,'announcement_user')->withTimestamps();
+      }
 }

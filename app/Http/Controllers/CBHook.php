@@ -7,6 +7,7 @@ use Request;
 use CRUDBooster;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Models\Announcement;
 class CBHook extends Controller {
 
 	/*
@@ -107,6 +108,15 @@ class CBHook extends Controller {
             Session::put('check-user',true);
             Session::put('admin-password',$user->password);
             return redirect()->route('show-change-force-password')->send();
+        }
+
+        $unreadAnnouncements = Announcement::whereDoesntHave('users', function($query) use ($user) {
+            $query->where('users_id', $user->id);
+        })->where('status','ACTIVE')->get();
+
+        if($unreadAnnouncements){
+            Session::put('unread-announcement',$unreadAnnouncements);
+            return redirect()->route('show-announcement')->send();
         }
 	}
 }

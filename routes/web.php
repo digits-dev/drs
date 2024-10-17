@@ -40,6 +40,7 @@ use App\Http\Controllers\EtpBirReportController;
 use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
 use App\Http\Controllers\EtpStoreSyncReportController;
 use App\Http\Controllers\EtpTenderReportController;
+use App\Http\Controllers\AdminAnnouncementsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -75,6 +76,11 @@ Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PAT
     Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
     Route::post('reset-password', [AdminCmsUsersController::class, 'postSendEmailResetPassword'])->name('reset-password');
     Route::post('waive-change-password',[AdminCmsUsersController::class, 'waiveChangePassword'])->name('waive-change-password');
+
+     //ANNOUNCEMENT
+     Route::get('unread-announcement', [AdminAnnouncementsController::class, 'getUnreadAnnouncements'])->name('show-announcement');
+     Route::post('read-announcement', [AdminAnnouncementsController::class, 'markAnnouncementAsRead'])->name('read-announcement');
+     Route::get('announcement', [AdminAnnouncementsController::class, 'getAnnouncements'])->name('announcement');
 });
 
 Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CBBackend','check.user'], 'prefix'=>'admin'], function(){

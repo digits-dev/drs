@@ -115,15 +115,19 @@
                         <!-- Menu Footer-->
                         <li class="user-footer">
                             <div class="pull-{{ cbLang('left') }}">
-                                <a href="{{ route('AdminCmsUsersControllerGetProfile') }}" class="btn btn-default btn-flat"><i
-                                            class='fa fa-user'></i> {{cbLang("label_button_profile")}}</a>
+                                <a title='Profile' href="{{ route('AdminCmsUsersControllerGetProfile') }}" class="btn btn-default btn-border"><i
+                                            class='fa fa-user'></i> </a>
                             </div>
                             <div class="pull-{{ cbLang('left') }}" style="padding-left:3px">
-                                <a title='Change password' href="{{ route('change-password') }}" id="btnChangePass" class="btn btn-warning btn-flat"><i
+                                <a title='Change password' href="{{ route('change-password') }}" id="btnChangePass" class="btn btn-warning btn-border"><i
                                             class='fa fa-key'></i></a>
                             </div>
+                            <div class="pull-{{ cbLang('left') }}" style="padding-left:3px; font-style: italic !important">
+                                <a title='Updates' href="{{ route('announcement') }}" class="btn btn-info btn-border"><i
+                                            class='fa fa-info-circle' style="font-style: italic !important"></i></a>
+                            </div>
                             <div class="pull-{{ cbLang('right') }}">
-                                <a title='Lock Screen' href="{{ route('getLockScreen') }}" class='btn btn-default btn-flat'><i class='fa fa-lock'></i></a>
+                                <a title='Lock Screen' href="{{ route('getLockScreen') }}" class='btn btn-default btn-border'><i class='fa fa-lock'></i></a>
                                 <a href="javascript:void(0)" onclick="swal({
                                         title: '{{cbLang('alert_want_to_logout')}}',
                                         type:'info',
@@ -136,7 +140,7 @@
                                         }, function(){
                                         location.href = '{{ route("getLogout") }}';
 
-                                        });" title="{{cbLang('button_logout')}}" class="btn btn-danger btn-flat"><i class='fa fa-power-off'></i></a>
+                                        });" title="{{cbLang('button_logout')}}" class="btn btn-danger btn-border"><i class='fa fa-power-off'></i></a>
                             </div>
                         </li>
                     </ul>
