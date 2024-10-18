@@ -29,10 +29,16 @@
     <div class="sales-report">
       
         <table>
-            <colgroup>
+            {{-- <colgroup>
                 <col span="2" style="width:100px;">
                 <col style="width:10px;">
                 <col span="5" style="width:125px;">
+            </colgroup> --}}
+
+            <colgroup>
+                <col span="2" >
+                <col style="width:15px;">
+                <col span="5" >
             </colgroup>
 
             <thead>

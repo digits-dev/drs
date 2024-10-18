@@ -56,20 +56,20 @@ class StoreSalesDashboardReportService {
         $data = Cache::lock('sales_report_lock', 5)->get(function () {
             // Generate and cache the data here
 			
-            // $currentDay = date('d');
-            // $currentMonth = date('m');
-            // $currentYear = date('Y'); 
-            // $previousYear = date('Y', strtotime('-1 year'));
+            $currentDay = date('d');
+            $currentMonth = date('m');
+            $currentYear = date('Y'); 
+            $previousYear = date('Y', strtotime('-1 year'));
             
             // $currentMonth = 3;
             // $previousYear = 2019;
             // $currentYear = 2020; 
             // $currentDay = 29;
 
-            $currentMonth = 4;
-            $previousYear = 2021;
-            $currentYear = 2022; 
-            $currentDay = 23;
+            // $currentMonth = 4;
+            // $previousYear = 2021;
+            // $currentYear = 2022; 
+            // $currentDay = 23;
 
             // $currentMonth = 2;
             // $previousYear = 2018;
@@ -84,14 +84,15 @@ class StoreSalesDashboardReportService {
 
 
             $years = [
-                ['year' => $previousYear, 'month' => $currentMonth],
-                ['year' => $currentYear, 'month' => $currentMonth],
+                ['year' => $previousYear],
+                ['year' => $currentYear],
             ];
             
             $data = [
                 'yearData' => [
                     'previousYear' => $years[0]['year'],
                     'currentYear' => $years[1]['year'],
+                    'month' => $currentMonth,
                 ],
                 'channel_codes' => [],
             ];
@@ -99,7 +100,7 @@ class StoreSalesDashboardReportService {
             $data['lastThreeDaysDates'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
 
             foreach ($years as $yearData) {
-                self::processSalesData($yearData['year'], $yearData['month'], $currentDay, $data);
+                self::processSalesData($yearData['year'], $currentMonth, $currentDay, $data);
             }
 
             // dd($data['channel_codes']);
@@ -126,14 +127,14 @@ class StoreSalesDashboardReportService {
 
     private function processDailySalesData($year, $month, $day, &$data, $storeSalesDR) {
 
-        $test1 = $storeSalesDR->getYearToDate();
+        // $test1 = $storeSalesDR->getYearToDate();
         // $test2 = $storeSalesDR->getYearToDateWithSelection();
 
-        dd($test1);
+        // dd($test1);
         // dd($test2);
 
        
-        $data['channel_codes']['TOTAL'][$year]['weeks'] = $storeSalesDR->getSalesSummary()->toArray();
+        $data['channel_codes']['TOTAL'][$year]['weeks'] = $storeSalesDR->getSalesSummary();
 
         $data['channel_codes']['TOTAL'][$year]['last_three_days'] = $storeSalesDR->getSalesSummaryForLastThreeDays();
 
@@ -830,7 +831,7 @@ class StoreSalesDashboardReportService {
     private function processMonthlySalesData($year, $month, $day, &$data, $storeSalesDR) {
 
         // Get and store sales summary
-        $data['channel_codes']['TOTAL'][$year]['months'] = $storeSalesDR->getSalesPerMonth()->toArray();
+        $data['channel_codes']['TOTAL'][$year]['months'] = $storeSalesDR->getSalesPerMonth();
 
         // Process sales per channel
         $sumPerChannel = $storeSalesDR->getSalesPerMonthByChannel();
@@ -874,24 +875,29 @@ class StoreSalesDashboardReportService {
         
     }
 
+    private function processYTDSalesData($year, $month, $day, &$data, $storeSalesDR) {
+
+        // Get and store sales summary
+        $data['channel_codes']['TOTAL'][$year]['YTD'] = $storeSalesDR->getYearToDate();
+
+    }
+
     private function processSalesData($year, $month, $day, &$data) {
         $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
-
-        $test = $storeSalesDR->getCachedData();
-
-        dd($test);
-
-        // Create temp table and get summary
-        //  $storeSalesDR->createTempTable();
-
-
+        $test  = $storeSalesDR->getStoreSalesData();
+        // dump($year);
+        // dump(count($test)); // Show the number of rows returned
+        // dump(array_slice($test, 0, 5)); // Show the first 5 results
         self::processDailySalesData($year, $month, $day, $data, $storeSalesDR);
 
         self::processMonthlySalesData($year, $month, $day, $data, $storeSalesDR);
 
         self::processQuarterlySalesData($year, $month, $day, $data, $storeSalesDR);
        
+        // Get YTD
+        $data['channel_codes']['TOTAL'][$year]['ytd'] = $storeSalesDR->getYearToDate();
+
         // Drop the temporary table
-        $storeSalesDR->dropTempTable();
+        // $storeSalesDR->dropTempTable();
     }
 }

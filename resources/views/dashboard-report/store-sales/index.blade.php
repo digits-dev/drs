@@ -15,7 +15,7 @@
             gap: 10px;
             justify-content: center;
             align-items: center;
-            margin-left: auto;
+            /* margin-left: auto; */
 
         }
 
@@ -28,10 +28,17 @@
             gap: 25px;
         }
 
+        .dashboard-nav-tabs{
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            justify-content: space-between;
+            gap:20px;
+        }
+
         .tabs {
             display: flex;
             cursor: pointer;
-            width: 100%;
         }
         .tab {
             padding: 10px 20px;
@@ -72,21 +79,6 @@
             display: block; /* Make it block when active */
             opacity: 1; /* Fade in */
         }
-      
-        .nav-tabs > li > a {
-            border: 1px solid transparent;
-            border-radius: 4px;
-            background: #fff;
-            color: #007bff;
-        }
-        .nav-tabs > li.active > a {
-            background: #007bff;
-            color: white;
-            border: 1px solid #007bff;
-        }
-        .nav-tabs > li > a:hover {
-            background: #e2e6ea;
-        }
         .tab-content {
             background: white;
         }
@@ -106,7 +98,7 @@
 
         h2{
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
     </style>
@@ -120,11 +112,13 @@
 
 <div class="main-content">
 
-    <div class="tabs">
-        <div class="tab active" data-tab="tab1">Daily Sales Report</div>
-        <div class="tab " data-tab="tab2">Monthly Sales Report</div>
-        <div class="tab" data-tab="tab3">Quarterly Sales Report</div>    
-        <div class="tab" data-tab="tab4">YTD Sales</div>
+    <div class="dashboard-nav-tabs">
+        <div class="tabs">
+            <div class="tab active" data-tab="tab1">Daily Sales Report</div>
+            <div class="tab " data-tab="tab2">Monthly Sales Report</div>
+            <div class="tab" data-tab="tab3">Quarterly Sales Report</div>    
+            <div class="tab" data-tab="tab4">YTD Sales Report</div>
+        </div>
 
         <div class="export">
             <a href="{{ route('weekly_export_excel') }}" class="btn btn-primary btn-sm pull-right">
@@ -144,6 +138,13 @@
     </div>
 
     <div class="tab-content-container">
+
+        @php
+            $prevYear = $yearData['previousYear'];
+            $currYear = $yearData['currentYear'];
+            $month = $yearData['month'];
+        @endphp
+
         <div id="tab1" class="tab-content ">
 
             <div class="weekly-section">
@@ -157,8 +158,8 @@
                             :isTopOpen="$loop->first"
                             :channel="$channel" 
                             :data="$channelData"
-                            :prevYear="$yearData['previousYear']" 
-                            :currYear="$yearData['currentYear']"
+                            :prevYear="$prevYear"
+                            :currYear="$currYear"
                             :lastThreeDaysDates="$lastThreeDaysDates"
                         />
                     @endforeach
@@ -179,8 +180,8 @@
                             :isTopOpen="$loop->first"
                             :channel="$channel" 
                             :data="$channelData"
-                            :prevYear="$yearData['previousYear']" 
-                            :currYear="$yearData['currentYear']"
+                            :prevYear="$prevYear"
+                            :currYear="$currYear"
                         />
                     @endforeach
                 </div>
@@ -199,8 +200,8 @@
                             :isTopOpen="$loop->first"
                             :channel="$channel" 
                             :data="$channelData"
-                            :prevYear="$yearData['previousYear']" 
-                            :currYear="$yearData['currentYear']"
+                            :prevYear="$prevYear"
+                            :currYear="$currYear"
                         />
                     @endforeach
                 </div>
@@ -209,33 +210,49 @@
 
         <div id="tab4" class="tab-content active">
             <div class="ytd-section">
-                <h2 class="text-start" >YTD SALES REPORT</h2>
-                    <div class="" style="display: flex; gap:10px; justify-content:start; align-items:flex-start; margin-top:40px; ">
-                
-                        <div class="form-group" style="display: inline-block; margin-right: 15px;">
-                            <label   class="control-label" for="categorySelector" style="margin-bottom: 15px;">Select Channel:</label>
-                            
-                            <select id="channelSelector" class="form-control">
-                                @foreach ($channels as $channel)
-                                    <option value="{{$channel->id}}">{{$channel->channel_name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <h2 class="text-start" style="margin-top:25px;">YTD SALES REPORT</h2>
 
-                        <div class="form-group" style="display: inline-block; margin-right: 15px;">
-                            <label   class="control-label" for="categorySelector" style="margin-bottom: 15px;">Select Store Concept:</label>
-                            <select id="conceptSelector" class="form-control">
-                                @foreach ($concepts as $concept)
-                                    <option value="{{$concept->id}}">{{$concept->concept_name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    
-                        <button id="updateChartButton" class="btn btn-primary" style="align-self: center; ">
-                            <i class="fa fa-refresh" aria-hidden="true"></i> Update Charts
-                        </button>
+                <div class="" style="display: flex; flex-wrap:wrap; gap:15px; justify-content:flex-start; align-items:ceneter; margin:20px 0px 8px;">
+            
+                    <div class="form-group" >
+                        <label class="control-label" for="channelSelector" >Channel:</label>
+                        
+                        <select id="channelSelector" class="form-control">
+                            <option value="all">All</option>
+
+                            @foreach ($channels as $channel)
+                                <option value="{{$channel->id}}">{{$channel->channel_name}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group" >
+                        <label class="control-label" for="conceptSelector" >Store Concept:</label>
+                        <select id="conceptSelector" class="form-control">
+                            <option value="all">All</option>
+
+                            @foreach ($concepts as $concept)
+                                <option value="{{$concept->id}}">{{$concept->concept_name}}</option>
+                            @endforeach
+                        </select>
                     </div>
                 
+                    <button id="updateTableButton" class="btn btn-primary" style="align-self: center; margin-top:8px; height:30px;">
+                        <i class="fa fa-refresh" aria-hidden="true"></i> Update Table
+                    </button>
+                </div>
+
+           
+                <div id="ytdSalesReportContainer">
+                    <x-ytd-sales-report 
+                        :prevYear="$prevYear"
+                        :currYear="$currYear"
+                        :month="$month"
+                        :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
+                        :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
+                    />
+                </div>
+            
             </div>
         </div>
 
@@ -246,8 +263,11 @@
 @endsection
 
 @push('bottom')
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js"></script>
+
 
 <script>
    $(function() {
@@ -272,6 +292,84 @@
 
     $('#channelSelector').select2();
     $('#conceptSelector').select2();
+
+    $('#updateTableButton').on('click', function() {
+        console.log('work');
+        console.log('CSRF Token:', '{{ csrf_token() }}');
+        const selectedChannel = $('#channelSelector').val();
+        const selectedConcept = $('#conceptSelector').val();
+
+        $.ajax({
+            url: '/admin/ytd_update',
+            type: 'POST',
+            data: {
+                channel: selectedChannel,
+                concept: selectedConcept,
+                _token: '{{ csrf_token() }}' // CSRF token for security
+            },
+            success: function(data) {
+                console.log(data);
+
+                // Fallback values
+                const currData = {
+                    apple: data.currApple || 0,
+                    nonApple: data.currNonApple || 0,
+                    totalApple: data.currTotalApple || 0,
+                };
+
+                const prevData = {
+                    apple: data.prevApple || 0,
+                    nonApple: data.prevNonApple || 0,
+                    totalApple: data.prevTotalApple || 0,
+                };
+
+                // Format numbers with two decimal places
+                const formatNumber = (num) => {
+                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                };
+
+                // Calculate increments and percentage changes
+                const calculateChanges = (curr, prev) => {
+                    const change = curr - prev;
+                    const percentageChange = prev ? ((change / prev) * 100) : 0;
+                    return {
+                        change,
+                        percentageChange,
+                        roundedValue: Math.round(percentageChange) + '%',
+                        style: percentageChange < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : ''
+                    };
+                };
+
+                const appleChanges = calculateChanges(currData.apple, prevData.apple);
+                const nonAppleChanges = calculateChanges(currData.nonApple, prevData.nonApple);
+                const totalChanges = calculateChanges(currData.totalApple, prevData.totalApple);
+
+                // Update the DOM
+                const updateDOM = (selector, value) => {
+                    $(selector).text(formatNumber(value));
+                };
+
+                updateDOM('#prevApple', prevData.apple);
+                updateDOM('#prevNonApple', prevData.nonApple);
+                updateDOM('#prevTotalApple', prevData.totalApple);
+                updateDOM('#currApple', currData.apple);
+                updateDOM('#currNonApple', currData.nonApple);
+                updateDOM('#currTotalApple', currData.totalApple);
+                updateDOM('#incDecApple', appleChanges.change);
+                updateDOM('#incDecNonApple', nonAppleChanges.change);
+                updateDOM('#incDecTotal', totalChanges.change);
+
+                // Update percentage change displays
+                $('#percentageChangeApple').text(appleChanges.roundedValue).attr('style', appleChanges.style);
+                $('#percentageChangeNonApple').text(nonAppleChanges.roundedValue).attr('style', nonAppleChanges.style);
+                $('#percentageChangeTotal').text(totalChanges.roundedValue).attr('style', totalChanges.style);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        });
+
+    });
 
 
 });

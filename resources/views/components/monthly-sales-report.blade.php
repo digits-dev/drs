@@ -37,10 +37,16 @@
     <div class="sales-report">
     
         <table>
-            <colgroup>
+            {{-- <colgroup>
                 <col span="2" style="width:80px;">
                 <col style="width:10px;">
                 <col span="8">
+            </colgroup> --}}
+
+            <colgroup>
+                <col span="2" >
+                <col style="width:10px;">
+                <col span="8" >
             </colgroup>
 
             <thead>
@@ -48,7 +54,7 @@
                 @if ($isTopOpen)
                
                     <tr>
-                        <th  class="none" style="text-align: left; font-size:14px; height:50px;" colspan="4"><b>MONTHLY SALES REPORT</b></th>
+                        <th  class="none" style="text-align: left; font-size:14px; height:50px;" colspan="8"><b>MONTHLY SALES REPORT</b></th>
                     </tr>
                   
                 @endif

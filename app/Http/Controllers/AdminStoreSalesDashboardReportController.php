@@ -3,6 +3,7 @@
 	use App\Exports\WeeklySalesExport;
 	use App\Models\Channel;
 	use App\Models\Concept;
+	use App\Models\StoreSalesDashboardReport;
 	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
 	use Barryvdh\DomPDF\Facade as DomPDF;
 	use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
@@ -739,6 +740,45 @@
 			Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.tabs', $data);
+		}
+
+		public function updateYtdSalesReport(Request $request)
+		{
+			// Validate incoming request
+			$request->validate([
+				'channel' => 'required|string',
+				'concept' => 'required|string',
+			]);
+
+			// Fetch data based on selected channel and concept
+			$channelId = $request->input('channel');
+			$conceptId = $request->input('concept');
+
+			$currentMonth = 4;
+            $previousYear = 2021;
+            $currentYear = 2022; 
+            $currentDay = 23;
+
+			$prevInstance = new StoreSalesDashboardReport(['year' => $previousYear, 'month' => $currentMonth, 'day' => $currentDay]);
+			$currInstance = new StoreSalesDashboardReport(['year' => $currentYear, 'month' => $currentMonth, 'day' => $currentDay]);
+
+			$prevData = $prevInstance->getYearToDateWithSelection($channelId, $conceptId);
+			$currData = $currInstance->getYearToDateWithSelection($channelId, $conceptId);
+			
+			
+			$data = [
+				'currApple' => $currData['APPLE']['sum_of_net_sales'],
+				'currNonApple' => $currData['NON-APPLE']['sum_of_net_sales'],
+				'currTotalApple' => $currData['TOTAL']['sum_of_net_sales'],
+
+				'prevApple' => $prevData['APPLE']['sum_of_net_sales'],
+				'prevNonApple' => $prevData['NON-APPLE']['sum_of_net_sales'],
+				'prevTotalApple' => $prevData['TOTAL']['sum_of_net_sales'],
+
+			];
+
+		
+			return response()->json($data);
 		}
 
 	}

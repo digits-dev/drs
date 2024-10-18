@@ -36,7 +36,8 @@ class StoreSalesDashboardReport extends Model
         // Initialize year and month, and set properties
         if (isset($attributes['year']) && isset($attributes['month']) && isset($attributes['day'])) {
             $this->year = $attributes['year'];
-            $this->previousMonth = $attributes['month'] - 1;
+            $this->previousMonthRaw = $attributes['month'] - 1;
+            $this->previousMonth = str_pad($attributes['month'] - 1, 2, '0', STR_PAD_LEFT); ;
             $this->month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT); // always two digits
             // $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT); // always two digits
             $this->day = $attributes['day']; // always two digits
@@ -57,7 +58,8 @@ class StoreSalesDashboardReport extends Model
 
     }
 
-    public function createTempTable(){
+    //FIRST APPROACH
+    public function createTempTableBackUp(){
 
         DB::statement("
             CREATE TEMPORARY TABLE temp_store_sales AS
@@ -65,11 +67,7 @@ class StoreSalesDashboardReport extends Model
                 store_sales.sales_date,
                 store_sales.net_sales,
                 store_sales.reference_number,
-                channels.channel_code,
-                store_sales.channels_id,
-                customers.concepts_id,
-                all_items.brand_description,
-                concepts.concept_name
+                channels.channel_code
             FROM store_sales 
             LEFT JOIN channels ON store_sales.channels_id = channels.id
             LEFT JOIN customers ON store_sales.customers_id = customers.id
@@ -91,45 +89,10 @@ class StoreSalesDashboardReport extends Model
 
     }
 
-    public function getCachedData() {
-        $today = date('Y-m-d');
-        $cacheKey = "temp_table_data_{$today}";
-    
-        // Cache the results of the query
-        $tempTableData = Cache::remember($cacheKey, 1000, function() {
-            return DB::select("
-                SELECT 
-                    store_sales.sales_date,
-                    store_sales.net_sales,
-                    store_sales.reference_number,
-                    channels.channel_code,
-                    store_sales.channels_id,
-                    customers.concepts_id,
-                    all_items.brand_description,
-                    concepts.concept_name
-                FROM store_sales 
-                LEFT JOIN channels ON store_sales.channels_id = channels.id
-                LEFT JOIN customers ON store_sales.customers_id = customers.id
-                LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
-                LEFT JOIN concepts ON customers.concepts_id = concepts.id
-                WHERE store_sales.is_final = 1 
-                    AND YEAR(store_sales.sales_date) = {$this->year}
-                    AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->month}
-                    AND store_sales.quantity_sold > 0
-                    AND store_sales.net_sales IS NOT NULL
-                    AND store_sales.sold_price > 0
-                    AND store_sales.channels_id != 12 
-            ");
-        });
-    
-        return $tempTableData;
-    }
-
-    public function dropTempTable(){
+    public function dropTempTableBackUp(){
         DB::statement('DROP TEMPORARY TABLE IF EXISTS temp_store_sales');
     }
-
-    public function getSalesSummary()
+    public function getSalesSummaryBackUp()
     {
 
         return self::select(DB::raw("
@@ -152,7 +115,7 @@ class StoreSalesDashboardReport extends Model
 
     }
 
-    public function getSalesWeeklyPerChannel()
+    public function getSalesWeeklyPerChannelBackUp()
     {
 
         return self::select(DB::raw("
@@ -187,8 +150,7 @@ class StoreSalesDashboardReport extends Model
         });
     }
 
-
-    public function getSalesSummaryForLastThreeDays()
+    public function getSalesSummaryForLastThreeDaysBackUp()
     {
 
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
@@ -228,7 +190,7 @@ class StoreSalesDashboardReport extends Model
         return $summary;
     }
 
-    public function getSalesSummaryForLastThreeDaysPerChannel()
+    public function getSalesSummaryForLastThreeDaysPerChannelBackUp()
     {
 
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
@@ -258,7 +220,145 @@ class StoreSalesDashboardReport extends Model
         return $salesSummary;
     }
 
+    public function getSalesPerMonthBackUp()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy(DB::raw("month_cutoff WITH ROLLUP"))
+        ->get()->map(function($item) {
+            if(is_null($item->month_cutoff)){
+                $item->month_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        })->keyBy('month_cutoff');
+    }
 
+    public function getSalesPerMonthByChannelBackUp()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
+            CASE 
+                WHEN channel_code = 'ONL' THEN 'ECOMM'
+                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
+                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'FRA' THEN 'FRA-DR'
+                WHEN channel_code = 'SVC' THEN 'SC'
+                WHEN channel_code = 'CON' THEN 'CON'
+                ELSE 'OTHER'
+            END AS channel_classification,
+            SUM(net_sales) AS sum_of_net_sales,
+            MIN(reference_number) AS min_reference_number
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy('channel_classification', DB::raw('month_cutoff WITH ROLLUP'))
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->get()->map(function($item){
+            if(is_null($item->month_cutoff)){
+                $item->month_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        });
+    }
+
+    public function getSalesPerQuarterBackUp()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy(DB::raw("quarter_cutoff WITH ROLLUP"))
+        ->get()->map(function($item) {
+            if (is_null($item->quarter_cutoff)) {
+                $item->quarter_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        })->keyBy('quarter_cutoff');
+    }
+
+    public function getSalesPerQuarterByChannelBackUp()
+    {
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
+            CASE 
+                WHEN channel_code = 'ONL' THEN 'ECOMM'
+                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
+                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'FRA' THEN 'FRA-DR'
+                WHEN channel_code = 'SVC' THEN 'SC'
+                WHEN channel_code = 'CON' THEN 'CON'
+                ELSE 'OTHER'
+            END AS channel_classification,
+            SUM(net_sales) AS sum_of_net_sales,
+            MIN(reference_number) AS min_reference_number
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy('channel_classification', DB::raw('quarter_cutoff WITH ROLLUP'))
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->get()->map(function($item){
+            if(is_null($item->quarter_cutoff)){
+                $item->quarter_cutoff = 'TOTAL';
+            }
+            return (array) $item;
+        });
+    }
+
+    public function getYearToDateBackUp()
+    {
+
+        return DB::table('temp_store_sales')->select(DB::raw("
+            CASE 
+                WHEN brand_description = 'APPLE' THEN 'APPLE'
+                ELSE 'NON-APPLE'
+            END AS category,
+            SUM(net_sales) AS sum_of_net_sales
+        "))
+        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
+        ->groupBy(DB::raw('category WITH ROLLUP'))
+        ->get()->map(function($item) {
+            if(is_null($item->category)){
+                $item->category = 'TOTAL';
+            }
+            return $item;
+        })->keyBy('category');
+
+    }
+
+    public function getYearToDateWithSelectionBackUp(){
+        return DB::table('store_sales', 'ss')::select(DB::raw("
+            CASE 
+                WHEN ai.brand_description = 'APPLE' THEN 'APPLE'
+                ELSE 'NON-APPLE'
+            END AS category,
+            MIN(c.channel_code) AS channel_code,
+            MIN(co.concept_name) AS concept_name,
+            SUM(ss.net_sales) AS sum_of_net_sales
+        "))
+        ->leftJoin('channels as c', 'ss.channels_id', 'c.id')
+        ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
+        ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
+        ->leftJoin('concepts as co', 'cu.concepts_id', 'co.id')
+        ->where('ss.is_final', 1)
+        ->whereYear('ss.sales_date', $this->year)
+        ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [1, $this->previousMonth])
+        ->where('ss.channels_id', 6)
+        ->where('cu.concepts_id', 324)
+        ->where('ss.quantity_sold', '>', 0)
+        ->whereNotNull('ss.net_sales')
+        ->where('ss.sold_price', '>', 0)
+        ->where('ss.channels_id', '!=', 12)
+        ->groupBy(DB::raw('category WITH ROLLUP'))
+        ->get()->map(function($item) {
+            if(is_null($item->category)){
+                $item->category = 'TOTAL';
+            }
+            return $item;
+        })->keyBy('category');
+    }
+    
     public function getLastThreeDaysDates($date = null)
     {
 
@@ -315,146 +415,625 @@ class StoreSalesDashboardReport extends Model
         return $lastThreeDays;
     }
 
-    public function getSalesPerMonth()
-    {
-        return DB::table('temp_store_sales')->select(DB::raw("
-            CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
-            SUM(net_sales) AS sum_of_net_sales
-        "))
-        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
-        ->groupBy(DB::raw("month_cutoff WITH ROLLUP"))
-        ->get()->map(function($item) {
-            if(is_null($item->month_cutoff)){
-                $item->month_cutoff = 'TOTAL';
-            }
-            return (array) $item;
-        })->keyBy('month_cutoff');
+
+     //SECOND APPROACH
+
+     public function getStoreSalesData() {
+        
+        $cacheKey = $this->getCacheKey();
+
+        // Cache::forget($cacheKey); 
+
+        // Cache the results of the query
+        $storeSalesData = Cache::remember($cacheKey, 80000, function() {
+            return DB::select("
+                SELECT 
+                    store_sales.sales_date,
+                    store_sales.net_sales,
+                    store_sales.reference_number,
+                    channels.channel_code,
+                    store_sales.channels_id,
+                    customers.concepts_id,
+                    all_items.brand_description,
+                    concepts.concept_name
+                FROM store_sales 
+                LEFT JOIN channels ON store_sales.channels_id = channels.id
+                LEFT JOIN customers ON store_sales.customers_id = customers.id
+                LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
+                LEFT JOIN concepts ON customers.concepts_id = concepts.id
+                WHERE store_sales.is_final = 1 
+                    AND YEAR(store_sales.sales_date) = {$this->year}
+                    AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->month}
+                    AND store_sales.quantity_sold > 0
+                    AND store_sales.net_sales IS NOT NULL
+                    AND store_sales.sold_price > 0
+                    AND store_sales.channels_id != 12 
+            ");
+        });
+    
+        return $storeSalesData;
     }
 
+    public function getSalesSummary()
+    {
+
+        $dataCollection = $this->getDataCollection();
+
+        // Group the data by week cutoff
+        $salesSummary = $dataCollection->filter(function($row) {
+            return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
+        })->map(function($row) {
+            $weekCutoff = null;
+
+            if ($row->sales_date >= $this->startDate && $row->sales_date <= "{$this->yearMonth}-07") {
+                $weekCutoff = 'WK01';
+            } elseif ($row->sales_date >= "{$this->yearMonth}-08" && $row->sales_date <= "{$this->yearMonth}-14") {
+                $weekCutoff = 'WK02';
+            } elseif ($row->sales_date >= "{$this->yearMonth}-15" && $row->sales_date <= "{$this->yearMonth}-21") {
+                $weekCutoff = 'WK03';
+            } elseif ($row->sales_date >= "{$this->yearMonth}-22" && $row->sales_date <= $this->endDate) {
+                $weekCutoff = 'WK04';
+            }
+
+            return [
+                'week_cutoff' => $weekCutoff,
+                'net_sales' => $row->net_sales,
+            ];
+        })->groupBy('week_cutoff')->map(function($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('net_sales'),
+            ];
+        });
+
+        // Add total row
+        $salesSummary->put('TOTAL', [
+            'sum_of_net_sales' => $salesSummary->sum(function($item) {
+                return $item['sum_of_net_sales'];
+            }),
+        ]);
+
+        return $salesSummary;
+    }   
+
+    public function getSalesWeeklyPerChannel()
+    {
+        $dataCollection = $this->getDataCollection();
+
+        // Group the data by week and channel classification
+        $salesSummary = $dataCollection->filter(function($row) {
+            return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
+        })->map(function($row) {
+            // Determine week cutoff
+            $weekCutoff = null;
+
+            if ($row->sales_date >= $this->startDate && $row->sales_date <= "{$this->yearMonth}-07") {
+                $weekCutoff = 'WK01';
+            } elseif ($row->sales_date >= "{$this->yearMonth}-08" && $row->sales_date <= "{$this->yearMonth}-14") {
+                $weekCutoff = 'WK02';
+            } elseif ($row->sales_date >= "{$this->yearMonth}-15" && $row->sales_date <= "{$this->yearMonth}-21") {
+                $weekCutoff = 'WK03';
+            } elseif ($row->sales_date >= "{$this->yearMonth}-22" && $row->sales_date <= $this->endDate) {
+                $weekCutoff = 'WK04';
+            }
+
+            // Determine channel classification
+            switch ($row->channel_code) {
+                case 'ONL':
+                    $channelClassification = 'ECOMM';
+                    break;
+                case 'DLR':
+                case 'CRP':
+                case 'OUT':
+                    $channelClassification = 'DLR/CRP';
+                    break;
+                case 'RTL':
+                    $channelClassification = 'TOTAL-RTL';
+                    break;
+                case 'FRA':
+                    $channelClassification = 'FRA-DR';
+                    break;
+                case 'SVC':
+                    $channelClassification = 'SC';
+                    break;
+                case 'CON':
+                    $channelClassification = 'CON';
+                    break;
+                default:
+                    $channelClassification = 'OTHER';
+                    break;
+            }
+
+            return [
+                'week_cutoff' => $weekCutoff,
+                'channel_classification' => $channelClassification,
+                'net_sales' => $row->net_sales,
+                'reference_number' => $row->reference_number,
+            ];
+        })->groupBy(function($item) {
+            return "{$item['week_cutoff']}_{$item['channel_classification']}";
+        })->map(function($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('net_sales'),
+                'min_reference_number' => $group->min('reference_number'),
+            ];
+        });
+
+        // Prepare final result with ROLLUP equivalent (if needed)
+        $finalResult = collect();
+        foreach ($salesSummary as $key => $summary) {
+            [$weekCutoff, $channelClassification] = explode('_', $key);
+            $finalResult->push(array_merge($summary, [
+                'week_cutoff' => $weekCutoff,
+                'channel_classification' => $channelClassification,
+            ]));
+        }
+
+        // Add totals for each classification
+        $totalSummary = $finalResult->groupBy('channel_classification')->map(function($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('sum_of_net_sales'),
+                'min_reference_number' => $group->min('min_reference_number'),
+            ];
+        })->toArray();
+
+        // Append total summary to the final result
+        foreach ($totalSummary as $classification => $totals) {
+            $finalResult->push(array_merge($totals, [
+                'week_cutoff' => 'TOTAL',
+                'channel_classification' => $classification,
+            ]));
+        }
+
+        return $finalResult->values(); // Reset keys and return
+    }
+
+    public function getSalesSummaryForLastThreeDays()
+    {
+        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
+
+        $dataCollection = $this->getDataCollection();
+
+        // Prepare the sales summary
+        $salesSummary = [];
+
+        foreach ($lastThreeDays as $date) {
+            $formattedDate = date('Y-m-d', strtotime($date));
+            $dailySales = $dataCollection->filter(function ($row) use ($formattedDate) {
+                return $row->sales_date === $formattedDate;
+            });
+
+            $sumOfNetSales = $dailySales->sum('net_sales');
+
+            $salesSummary[] = [
+                'date_of_the_day' => $formattedDate,
+                'sum_of_net_sales' => $sumOfNetSales,
+                'day' => date('D', strtotime($date)),
+            ];
+        }
+
+        return $salesSummary;
+    }
+
+    public function getSalesSummaryForLastThreeDaysPerChannel()
+    {
+        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
+
+        $dataCollection = $this->getDataCollection();
+
+
+        // Prepare the sales summary
+        $salesSummary = $dataCollection->filter(function ($row) use ($lastThreeDays) {
+            return in_array($row->sales_date, $lastThreeDays);
+        })->map(function ($row) {
+                switch ($row->channel_code) {
+                    case 'ONL':
+                        $channelClassification = 'ECOMM';
+                        break;
+                    case 'DLR':
+                    case 'CRP':
+                    case 'OUT':
+                        $channelClassification = 'DLR/CRP';
+                        break;
+                    case 'RTL':
+                        $channelClassification = 'TOTAL-RTL';
+                        break;
+                    case 'FRA':
+                        $channelClassification = 'FRA-DR';
+                        break;
+                    case 'SVC':
+                        $channelClassification = 'SC';
+                        break;
+                    case 'CON':
+                        $channelClassification = 'CON';
+                        break;
+                    default:
+                        $channelClassification = 'OTHER';
+                        break;
+                }
+
+            return [
+                'date_of_the_day' => $row->sales_date,
+                'day' => date('D', strtotime($row->sales_date)),
+                'sum_of_net_sales' => $row->net_sales,
+                'min_reference_number' => $row->reference_number,
+                'channel_classification' => $channelClassification,
+            ];
+        });
+
+        // Group by date and channel classification
+        $groupedSummary = $salesSummary->groupBy(function ($item) {
+            return $item['date_of_the_day'] . '_' . $item['channel_classification'];
+        })->map(function ($group) {
+            return [
+                'date_of_the_day' => $group->first()['date_of_the_day'],
+                'day' => $group->first()['day'],
+                'sum_of_net_sales' => $group->sum('sum_of_net_sales'),
+                'min_reference_number' => $group->min('min_reference_number'),
+                'channel_classification' => $group->first()['channel_classification'],
+            ];
+        });
+
+        return $groupedSummary->values(); // Reset keys and return
+    }
+
+    public function getSalesPerMonth()
+    {
+        $dataCollection = $this->getDataCollection();
+
+        // Group by month and calculate sums
+        $salesSummary = $dataCollection->filter(function ($row) {
+            return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
+        })->groupBy(function ($row) {
+            return 'M' . str_pad(date('m', strtotime($row->sales_date)), 2, '0', STR_PAD_LEFT);
+        })->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('net_sales'),
+            ];
+        });
+
+        // Prepare final result with ROLLUP equivalent
+        $finalResult = $salesSummary->toArray();
+        $totalSales = array_sum(array_column($finalResult, 'sum_of_net_sales'));
+
+        // Add total row
+        $finalResult['TOTAL'] = [
+            'sum_of_net_sales' => $totalSales,
+        ];
+
+        return collect($finalResult);
+    }
 
     public function getSalesPerMonthByChannel()
     {
-        return DB::table('temp_store_sales')->select(DB::raw("
-            CONCAT('M', LPAD(MONTH(sales_date), 2, '0')) AS month_cutoff,
-            CASE 
-                WHEN channel_code = 'ONL' THEN 'ECOMM'
-                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
-                WHEN channel_code = 'FRA' THEN 'FRA-DR'
-                WHEN channel_code = 'SVC' THEN 'SC'
-                WHEN channel_code = 'CON' THEN 'CON'
-                ELSE 'OTHER'
-            END AS channel_classification,
-            SUM(net_sales) AS sum_of_net_sales,
-            MIN(reference_number) AS min_reference_number
-        "))
-        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
-        ->groupBy('channel_classification', DB::raw('month_cutoff WITH ROLLUP'))
-        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
-        ->get()->map(function($item){
-            if(is_null($item->month_cutoff)){
-                $item->month_cutoff = 'TOTAL';
-            }
-            return (array) $item;
+
+        $dataCollection = $this->getDataCollection();
+
+
+        // Group by month and channel classification
+        $salesSummary = $dataCollection->filter(function ($row) {
+            return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
+        })->map(function ($row) {
+                switch ($row->channel_code) {
+                    case 'ONL':
+                        $channelClassification = 'ECOMM';
+                        break;
+                    case 'DLR':
+                    case 'CRP':
+                    case 'OUT':
+                        $channelClassification = 'DLR/CRP';
+                        break;
+                    case 'RTL':
+                        $channelClassification = 'TOTAL-RTL';
+                        break;
+                    case 'FRA':
+                        $channelClassification = 'FRA-DR';
+                        break;
+                    case 'SVC':
+                        $channelClassification = 'SC';
+                        break;
+                    case 'CON':
+                        $channelClassification = 'CON';
+                        break;
+                    default:
+                        $channelClassification = 'OTHER';
+                        break;
+                }
+
+            return [
+                'month_cutoff' => 'M' . str_pad(date('m', strtotime($row->sales_date)), 2, '0', STR_PAD_LEFT),
+                'channel_classification' => $channelClassification,
+                'net_sales' => $row->net_sales,
+                'reference_number' => $row->reference_number,
+            ];
+        })->groupBy(function ($item) {
+            return "{$item['month_cutoff']}_{$item['channel_classification']}";
+        })->map(function ($group) {
+            return [
+                'month_cutoff' => $group->first()['month_cutoff'],
+                'channel_classification' => $group->first()['channel_classification'],
+                'sum_of_net_sales' => $group->sum('net_sales'),
+                'min_reference_number' => $group->min('reference_number'),
+            ];
         });
+
+        // Prepare final result with ROLLUP equivalent
+        $finalResult = collect();
+        foreach ($salesSummary as $key => $summary) {
+            [$monthCutoff, $channelClassification] = explode('_', $key);
+            $finalResult->push(array_merge($summary, [
+                'month_cutoff' => $monthCutoff,
+                'channel_classification' => $channelClassification,
+            ]));
+        }
+
+        // Add totals for each classification
+        $totalSummary = $finalResult->groupBy('channel_classification')->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('sum_of_net_sales'),
+                'min_reference_number' => $group->min('min_reference_number'),
+            ];
+        })->toArray();
+
+        // Append total summary to the final result
+        foreach ($totalSummary as $classification => $totals) {
+            $finalResult->push(array_merge($totals, [
+                'month_cutoff' => 'TOTAL',
+                'channel_classification' => $classification,
+            ]));
+        }
+
+        return $finalResult->values(); // Reset keys and return
     }
 
 
     public function getSalesPerQuarter()
     {
-        return DB::table('temp_store_sales')->select(DB::raw("
-            CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
-            SUM(net_sales) AS sum_of_net_sales
-        "))
-        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
-        ->groupBy(DB::raw("quarter_cutoff WITH ROLLUP"))
-        ->get()->map(function($item) {
-            if (is_null($item->quarter_cutoff)) {
-                $item->quarter_cutoff = 'TOTAL';
-            }
-            return (array) $item;
-        })->keyBy('quarter_cutoff');
+
+        $dataCollection = $this->getDataCollection();
+
+        // Filter and group by quarter
+        $salesSummary = $dataCollection->filter(function ($row) {
+            return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
+        })->groupBy(function ($row) {
+            return 'Q' . ceil(date('n', strtotime($row->sales_date)) / 3);
+        })->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('net_sales'),
+            ];
+        });
+
+        // Prepare final result with ROLLUP equivalent
+        $finalResult = $salesSummary->toArray();
+        $totalSales = array_sum(array_column($finalResult, 'sum_of_net_sales'));
+
+        // Add total row
+        $finalResult['TOTAL'] = [
+            'sum_of_net_sales' => $totalSales,
+        ];
+
+        return collect($finalResult);
     }
 
     public function getSalesPerQuarterByChannel()
     {
-        return DB::table('temp_store_sales')->select(DB::raw("
-            CONCAT('Q', QUARTER(sales_date)) AS quarter_cutoff,
-            CASE 
-                WHEN channel_code = 'ONL' THEN 'ECOMM'
-                WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
-                WHEN channel_code = 'FRA' THEN 'FRA-DR'
-                WHEN channel_code = 'SVC' THEN 'SC'
-                WHEN channel_code = 'CON' THEN 'CON'
-                ELSE 'OTHER'
-            END AS channel_classification,
-            SUM(net_sales) AS sum_of_net_sales,
-            MIN(reference_number) AS min_reference_number
-        "))
-        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
-        ->groupBy('channel_classification', DB::raw('quarter_cutoff WITH ROLLUP'))
-        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
-        ->get()->map(function($item){
-            if(is_null($item->quarter_cutoff)){
-                $item->quarter_cutoff = 'TOTAL';
-            }
-            return (array) $item;
+        $dataCollection = $this->getDataCollection();
+
+        // Group by quarter and channel classification
+        $salesSummary = $dataCollection->filter(function ($row) {
+            return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
+        })->map(function ($row) {
+                switch ($row->channel_code) {
+                    case 'ONL':
+                        $channelClassification = 'ECOMM';
+                        break;
+                    case 'DLR':
+                    case 'CRP':
+                    case 'OUT':
+                        $channelClassification = 'DLR/CRP';
+                        break;
+                    case 'RTL':
+                        $channelClassification = 'TOTAL-RTL';
+                        break;
+                    case 'FRA':
+                        $channelClassification = 'FRA-DR';
+                        break;
+                    case 'SVC':
+                        $channelClassification = 'SC';
+                        break;
+                    case 'CON':
+                        $channelClassification = 'CON';
+                        break;
+                    default:
+                        $channelClassification = 'OTHER';
+                        break;
+                }
+
+            return [
+                'quarter_cutoff' => 'Q' . ceil(date('n', strtotime($row->sales_date)) / 3),
+                'channel_classification' => $channelClassification,
+                'net_sales' => $row->net_sales,
+                'reference_number' => $row->reference_number,
+            ];
+        })->groupBy(function ($item) {
+            return "{$item['quarter_cutoff']}_{$item['channel_classification']}";
+        })->map(function ($group) {
+            return [
+                'quarter_cutoff' => $group->first()['quarter_cutoff'],
+                'channel_classification' => $group->first()['channel_classification'],
+                'sum_of_net_sales' => $group->sum('net_sales'),
+                'min_reference_number' => $group->min('reference_number'),
+            ];
         });
+
+        // Prepare final result with ROLLUP equivalent
+        $finalResult = collect();
+        foreach ($salesSummary as $key => $summary) {
+            [$quarterCutoff, $channelClassification] = explode('_', $key);
+            $finalResult->push(array_merge($summary, [
+                'quarter_cutoff' => $quarterCutoff,
+                'channel_classification' => $channelClassification,
+            ]));
+        }
+
+        // Add totals for each classification
+        $totalSummary = $finalResult->groupBy('channel_classification')->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('sum_of_net_sales'),
+                'min_reference_number' => $group->min('min_reference_number'),
+            ];
+        })->toArray();
+
+        // Append total summary to the final result
+        foreach ($totalSummary as $classification => $totals) {
+            $finalResult->push(array_merge($totals, [
+                'quarter_cutoff' => 'TOTAL',
+                'channel_classification' => $classification,
+            ]));
+        }
+
+        return $finalResult->values(); // Reset keys and return
     }
+
 
     public function getYearToDate()
     {
+    
+        $dataCollection = $this->getDataCollection();
 
-        return DB::table('temp_store_sales')->select(DB::raw("
-            CASE 
-                WHEN brand_description = 'APPLE' THEN 'APPLE'
-                ELSE 'NON APPLE'
-            END AS category,
-            SUM(net_sales) AS sum_of_net_sales
-        "))
-        ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
-        ->groupBy(DB::raw('category WITH ROLLUP'))
-        ->get()->map(function($item) {
-            if(is_null($item->category)){
-                $item->category = 'TOTAL';
-            }
-            return $item;
-        })->keyBy('category');
+        // Group by category (APPLE vs NON-APPLE)
+        $yearToDateSummary = $dataCollection->filter(function ($row) {
+            return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
+        })->map(function ($row) {
+            return [
+                'category' => in_array($row->brand_description, ['APPLE', 'BEATS']) ? 'APPLE' : 'NON-APPLE',
+                'net_sales' => $row->net_sales,
+            ];
+        })->groupBy('category')->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('net_sales'),
+            ];
+        });
 
+        // Add total row
+        $totalSales = $yearToDateSummary->sum('sum_of_net_sales');
+        $yearToDateSummary['TOTAL'] = [
+            'sum_of_net_sales' => $totalSales,
+        ];
+
+        return collect($yearToDateSummary);
     }
 
-    public function getYearToDateWithSelection(){
-        return DB::table('store_sales', 'ss')::select(DB::raw("
-            CASE 
-                WHEN ai.brand_description = 'APPLE' THEN 'APPLE'
-                ELSE 'NON-APPLE'
-            END AS category,
-            MIN(c.channel_code) AS channel_code,
-            MIN(co.concept_name) AS concept_name,
-            SUM(ss.net_sales) AS sum_of_net_sales
-        "))
-        ->leftJoin('channels as c', 'ss.channels_id', 'c.id')
-        ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
-        ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
-        ->leftJoin('concepts as co', 'cu.concepts_id', 'co.id')
-        ->where('ss.is_final', 1)
-        ->whereYear('ss.sales_date', $this->year)
-        ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [1, $this->previousMonth])
-        ->where('ss.channels_id', 6)
-        ->where('cu.concepts_id', 324)
-        ->where('ss.quantity_sold', '>', 0)
-        ->whereNotNull('ss.net_sales')
-        ->where('ss.sold_price', '>', 0)
-        ->where('ss.channels_id', '!=', 12)
-        ->groupBy(DB::raw('category WITH ROLLUP'))
-        ->get()->map(function($item) {
-            if(is_null($item->category)){
-                $item->category = 'TOTAL';
-            }
-            return $item;
-        })->keyBy('category');
+    public function getYearToDateWithSelection($channel = null, $concept = null)
+    {
+
+
+        $today = date('Y-m-d');
+
+        $cacheKey = "store_sales_table_data_{$today}_{$this->year}";
+
+        // Retrieve the cached data
+        $storeSalesData = Cache::get($cacheKey);
+
+        // If the cache is empty, return an empty summary
+        if (!$storeSalesData) {
+            return []; // Or handle no data scenario as needed
+        }
+    
+        // Convert cached data to a collection
+        $dataCollection =  collect($storeSalesData);
+
+               // return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31"
+
+            //     && $row->channels_id == $channel
+            //     && $row->concepts_id == $concept;
+
+
+        // Filter and group by category, channel, and concept
+        $yearToDateSummary = $dataCollection->filter(function ($row) use($channel, $concept) {
+     
+            // Check the sales date range
+            $dateCondition = $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
+            
+            // // Initialize the filter as true
+            // $channelCondition = true;
+            // $conceptCondition = true;
+
+            // // Only apply the channel condition if a channel is provided
+            // if ($channel !== null) {
+            //     $channelCondition = $row->channels_id == (int)$channel;
+            // }
+
+            // // Only apply the concept condition if a concept is provided
+            // if ($concept !== null) {
+            //     $conceptCondition = $row->concepts_id == (int)$concept;
+            // }
+
+            // if($channel == 'all' ){
+            //     $channelCondition = true;
+            // }
+
+            // if($concept == 'all' ){
+            //     $conceptCondition = true;
+            // }
+
+            // $channelCondition = ($channel === null) || ($channel === 'all') || ($row->channels_id == (int)$channel);
+
+            // Determine channel condition
+            $channelCondition = ($channel === null) || ($channel === 'all') || ($row->channels_id == (int)$channel);
+            
+            // Determine concept condition
+            $conceptCondition = ($concept === null) || ($concept === 'all') || ($row->concepts_id == (int)$concept);
+
+
+            // Combine all conditions
+            return $dateCondition && $channelCondition && $conceptCondition;
+        })->map(function ($row) {
+            return [
+                'category' => in_array($row->brand_description, ['APPLE', 'BEATS']) ? 'APPLE' : 'NON-APPLE',
+                'channel_code' => $row->channel_code,
+                'concept_name' => $row->concept_name,
+                'net_sales' => $row->net_sales,
+            ];
+        })->groupBy('category')->map(function ($group) {
+            return [
+                'channel_code' => $group->min('channel_code'),
+                'concept_name' => $group->min('concept_name'),
+                'sum_of_net_sales' => $group->sum('net_sales'),
+            ];
+        });
+
+        // Add total row
+        $totalSales = $yearToDateSummary->sum('sum_of_net_sales');
+        $yearToDateSummary['TOTAL'] = [
+            'channel_code' => null,
+            'concept_name' => null,
+            'sum_of_net_sales' => $totalSales,
+        ];
+
+        return collect($yearToDateSummary);
+    }
+    
+
+    private function getDataCollection(){
+
+        $cacheKey = $this->getCacheKey();
+    
+        // Retrieve the cached data
+        $storeSalesData = Cache::get($cacheKey);
+    
+        // If the cache is empty, return an empty summary
+        if (!$storeSalesData) {
+            return []; // Or handle no data scenario as needed
+        }
+    
+        // Convert cached data to a collection
+        return collect($storeSalesData);
     }
 
-
+    private function getCacheKey(){
+        $today = date('Y-m-d');
+        $cacheKey = "store_sales_table_data_{$today}_{$this->year}";
+ 
+        return $cacheKey;
+    }
 }

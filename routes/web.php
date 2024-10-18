@@ -229,6 +229,8 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::get('/tabs', [AdminStoreSalesDashboardReportController::class, 'getTabs'] );
 
+    Route::post('/ytd_update', [AdminStoreSalesDashboardReportController::class, 'updateYtdSalesReport'] )->name('ytd_update');
+
 
 
 });
