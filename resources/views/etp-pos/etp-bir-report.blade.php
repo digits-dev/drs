@@ -1,5 +1,6 @@
 @extends('crudbooster::admin_template')
 @push('head')
+    <link rel="stylesheet" href="https://saravanajd.github.io/YearPicker/yearpicker.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style type="text/css">
         @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
@@ -38,20 +39,8 @@
             flex-direction: column;
         }
 
-        /* DATE PICKER */
 
-        .date-input {
-            padding: 10px;
-            border: 1px solid #3C8DBC;
-            border-radius: 7px;
-        }
-
-        .date-input:focus {
-            border: 2px solid #3C8DBC;
-            /* Change this to your desired focus color */
-            outline: none;
-            /* Optional: remove the default outline */
-        }
+       
 
 
         .select2-container--default .select2-selection--multiple {
@@ -282,6 +271,53 @@
         .wrapper {
             overflow: hidden;
         }
+
+        .select-container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .dropdowns {
+        border: none;
+        appearance: none;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #3C8DBC;
+        border-radius: 7px;
+        
+    }
+    .dropdowns:focus {
+        border: 2px solid #3C8DBC;
+        outline: none; 
+    }
+
+    .icon-container {
+        position: absolute;
+        right: 20px;
+        display: flex;
+        justify-content: center;
+        color: #3C8DBC;
+    }
+
+    .yearpicker-container {
+        position: absolute; 
+        top: 50px;  
+        right: 0px;    
+        z-index: 9999;
+     
+    }
+
+    .yearpicker-container .selected {
+        color: #3C8DBC !important;   
+        font-weight: bold;     
+    }
+
+    .yearpicker-year li:hover {
+        color: #3C8DBC !important;                
+        cursor: pointer;             
+    }
+ 
     </style>
 @endpush
 @section('content')
@@ -290,42 +326,79 @@
         <div class="content-panel">
             <p><span style="color: red">Note:</span> Please fill all the fields</p>
             <div class="inputs-container">
-                <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
-                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectStore()">
-                        <option selected value="All">All</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ $customer->customer_code }}">{{ $customer->cutomer_name }}</option>
+                <div class="input-container" id="channel-input-container">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Channel<small id="channelRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                    <select class="js-example-basic-multiple" id="channel" name="channel[]" multiple="multiple" onchange="selectOnChange('channel')">
+                        <option value ="All">All</option>
+                        @foreach ($channels as $channel)
+                            <option value="{{ $channel->channel_code }}">{{ $channel->channel_name }}</option>
                         @endforeach
-                    </select>
-
+                    </select> 
                     @php
-                        $customerCodes = $customers->pluck('customer_code')->toArray();
-                        $customerCodesWithoutPrefix = array_map(function($code) {
-                            return str_replace('CUS-', '', $code);
-                        }, $customerCodes);
-
-                        $all = implode(', ', $customerCodesWithoutPrefix);
+                        $Channels = $channels->pluck('channel_code')->toArray();
+                        $allChannels = implode(', ', $Channels);
                     @endphp
 
-                    <textarea id="all_customer" style="display: none">{{ $all }}</textarea>    
+                    <textarea id="all_channels" style="display: none">{{ $allChannels }}</textarea>    
+
                 </div>
-                <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From   
-                        <small id="dateFromRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
-                        <small id="invalidDateFrom" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> 'Date From' cannot be after 'Date To'.</small> 
-                        <small id="validDateFrom" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date From parameter.</small>
-                    </p>
-                    <input class="date-input" type="date" required placeholder="Select Date" name="date_from"
-                        id="date_from" required>
+                <div class="input-container" id="concept-input-container">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Concept<small id="conceptRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="concept-load"></i> </p>
+                    <select class="js-example-basic-multiple" id="concept" name="concept[]" multiple="multiple" onchange="selectOnChange('concept')">
+                        <option value ="All">All</option>
+                        @foreach ($concepts as $concept)
+                            <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
+                        @endforeach
+                    </select> 
+                    @php
+                        $Concepts = $concepts->pluck('concept_name')->toArray();
+                        $allConcepts = implode(', ', $Concepts);
+                    @endphp
+
+                    <textarea id="all_concepts" style="display: none">{{ $allConcepts }}</textarea>   
                 </div>
+            </div>
+            <div class="inputs-container" style="margin-top: 10px;">
+                <div class="input-container" id="customer-input-container">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="customer-load"></i> </p>
+                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectOnChange('customer')">
+                    </select>
+                    <textarea id="all_customer" style="display: none"></textarea> 
+                </div>
+            </div>
+            <div class="inputs-container" style="margin-top: 10px;">
                 <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date To 
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Month
                         <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
-                        <small id="validDateTo" style="display: none; color: #0bbb31;"> <i class="fa fa-check"></i> Valid Date To parameter.</small>
                     </p>
-                    <input class="date-input" type="date" required placeholder="Select Date" name="date_to"
-                        id="date_to" required>
+                    <div class="form-group select-container">
+                        <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required>
+                            <option value="" selected disabled>Select Month</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+
+                        </select>
+                        <div class="icon-container">
+                            <i class="fa fa-caret-down"></i>
+                        </div>
+                    </div>
+                
+                </div>
+                <div class="input-container" style="position: relative;">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Year
+                        <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                    </p>
+                    <input type="text" id="year-picker" class="dropdowns" name="year-picker" placeholder="Select Year">
                 </div>
             </div>
             <div>
@@ -407,11 +480,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <!-- Buttons for Excel export -->
     <script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
+    {{-- Year Picker --}}
+    <script src="https://saravanajd.github.io/YearPicker/yearpicker.js"></script>
     <script>
         $(document).ready(function() {
             $('.js-example-basic-multiple').select2({
                 placeholder: "Select Store",
             });
+
+            $("#year-picker").yearpicker({     
+                startYear: 1900, 
+                endYear: 2100    
+            });
+
+            // $('#year').on('change', function() {
+            // console.log($(this).val()); // Log the selected year
+            //  });
 
             $('#customer option:not(:first-child)').prop('disabled', true);
 

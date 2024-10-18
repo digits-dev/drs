@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\Channel;
+use App\Models\Concept;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -41,7 +42,12 @@ class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBC
 
 		$data = [];
 		$data['page_title'] = 'BIR Report';
-		$data['customers'] = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name')->where(function($query) { $query->where('cutomer_name', 'like', '%FRA')->orWhere('cutomer_name', 'like', '%RTL');})->get();
+		$data['channels'] = Channel::active();
+		$data['concepts'] = Concept::active();
+		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){
+			return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
+		});
+
 
 	
 		return view('etp-pos.etp-bir-report', $data);

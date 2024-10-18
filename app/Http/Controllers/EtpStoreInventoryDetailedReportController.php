@@ -88,7 +88,6 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 
 		$data = [];
 		$data['page_title'] = 'Store Inventory (Detailed)';
-		$data['customers'] = [];
 		$data['inventory_report'] = [];
 		$data['channels'] = Channel::active();
 		$data['concepts'] = Concept::active();
