@@ -781,4 +781,88 @@
 			return response()->json($data);
 		}
 
+		public function saveChart2(Request $request)
+		{
+			$data = $request->input('image');
+
+			// Remove the data URL prefix
+			$data = str_replace('data:image/png;base64,', '', $data);
+			$data = str_replace(' ', '+', $data);
+
+			// Prepare the image data URL
+			$imageData = 'data:image/png;base64,' . $data;
+
+			try {
+				// Prepare additional data for the PDF view
+				$pdfData = [
+					'chartImage' => $imageData, // Pass the base64 image data directly
+					// Add any other data you want to include in the PDF view
+				];
+
+				// Load the view and generate the PDF
+				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf2', $pdfData)
+					->setPaper('A4', 'landscape')
+					->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
+
+				// Return the PDF as a download
+				return response()->stream(
+					function () use ($pdf) {
+						echo $pdf->output();
+					},
+					200,
+					[
+						'Content-Type' => 'application/pdf',
+						'Content-Disposition' => 'attachment; filename="document.pdf"',
+					]
+				);
+			} catch (\Exception $e) {
+				// Handle exceptions and log errors
+				Log::error('PDF Generation Error: ' . $e->getMessage());
+				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+			}
+		}
+
+		public function saveChart(Request $request)
+		{
+			$images = $request->input('images'); // Get the array of images
+
+			// Prepare an array for base64 images
+			$pdfData = [];
+
+			foreach ($images as $image) {
+				// Remove the data URL prefix
+				$data = str_replace('data:image/png;base64,', '', $image);
+				$data = str_replace(' ', '+', $data);
+				
+				// Prepare the image data URL
+				$imageData = 'data:image/png;base64,' . $data;
+				$pdfData[] = $imageData; // Add to pdfData array
+			}
+
+			try {
+				// Load the view and generate the PDF with all images
+				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf2', ['chartImages' => $pdfData])
+					->setPaper('A4', 'landscape')
+					->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
+
+				// Return the PDF as a download
+				return response()->stream(
+					function () use ($pdf) {
+						echo $pdf->output();
+					},
+					200,
+					[
+						'Content-Type' => 'application/pdf',
+						'Content-Disposition' => 'attachment; filename="document.pdf"',
+					]
+				);
+			} catch (\Exception $e) {
+				// Handle exceptions and log errors
+				Log::error('PDF Generation Error: ' . $e->getMessage());
+				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+			}
+		}
+
+		
+
 	}

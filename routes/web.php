@@ -231,6 +231,8 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::post('/ytd_update', [AdminStoreSalesDashboardReportController::class, 'updateYtdSalesReport'] )->name('ytd_update');
 
+    Route::post('/save_chart', [AdminStoreSalesDashboardReportController::class, 'saveChart'] );
+
 
 
 });

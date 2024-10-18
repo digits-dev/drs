@@ -66,10 +66,10 @@ class StoreSalesDashboardReportService {
             // $currentYear = 2020; 
             // $currentDay = 29;
 
-            // $currentMonth = 4;
-            // $previousYear = 2021;
-            // $currentYear = 2022; 
-            // $currentDay = 23;
+            // $currentMonth = 2;
+            // $previousYear = 2023;
+            // $currentYear = 2024; 
+            // $currentDay = 29;
 
             // $currentMonth = 2;
             // $previousYear = 2018;
@@ -77,10 +77,10 @@ class StoreSalesDashboardReportService {
             // $currentDay = 23;
 
             
-			// $currentMonth = 8;
-			// $previousYear = 2023;
-			// $currentYear = 2024; 
-			// $currentDay = 30;
+			$currentMonth = 8;
+			$previousYear = 2023;
+			$currentYear = 2024; 
+			$currentDay = 30;
 
 
             $years = [

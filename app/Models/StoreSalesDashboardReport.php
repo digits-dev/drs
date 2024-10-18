@@ -422,7 +422,7 @@ class StoreSalesDashboardReport extends Model
         
         $cacheKey = $this->getCacheKey();
 
-        // Cache::forget($cacheKey); 
+        Cache::forget($cacheKey); 
 
         // Cache the results of the query
         $storeSalesData = Cache::remember($cacheKey, 80000, function() {
@@ -461,7 +461,13 @@ class StoreSalesDashboardReport extends Model
 
         // Group the data by week cutoff
         $salesSummary = $dataCollection->filter(function($row) {
-            return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
+
+            if($this->currentDayAsDate <= $this->endDate) {
+                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->currentDayAsDate;
+            } else {
+                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
+            }
+
         })->map(function($row) {
             $weekCutoff = null;
 
@@ -501,7 +507,13 @@ class StoreSalesDashboardReport extends Model
 
         // Group the data by week and channel classification
         $salesSummary = $dataCollection->filter(function($row) {
-            return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
+
+            if($this->currentDayAsDate <= $this->endDate) {
+                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->currentDayAsDate;
+            } else {
+                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
+            }
+
         })->map(function($row) {
             // Determine week cutoff
             $weekCutoff = null;
