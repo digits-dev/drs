@@ -559,6 +559,11 @@
             $('#channel').val(null).trigger('change');
             $('#concept').val(null).trigger('change');
             $('#customer').val(null).trigger('change');
+            $('#customerRequired').hide();
+            $('#channelRequired').hide();
+            $('#conceptRequired').hide();
+            $('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: #3498db !important')
+
         });
 
         $('#btn-submit').on('click', function(event) {
@@ -594,7 +599,6 @@
             if (!isCustomerValid || !isChannelValid || !isConceptValid) {
                 return; // Stop execution if any field is invalid
             }
-
 
             $('#spinner').show();
 

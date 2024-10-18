@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Channel;
+use App\Models\Concept;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
@@ -124,6 +126,9 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 		$data['page_title'] = 'Tender Report';
 		$data['tender_data'] = [];
 		$data['customers'] = $Customers;
+		$data['channels'] = Channel::active();
+		$data['concepts'] = Concept::active();
+		$data['all_customers'] = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
 
 		return view('etp-pos.etp-tender-report', $data);
 	}

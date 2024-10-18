@@ -31,7 +31,7 @@
 
         .inputs-container {
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
 
         .input-container {
@@ -84,7 +84,6 @@
             border: 1.5px solid #1d699c;
             border-radius: 10px;
             color: white;
-            margin-right: 10px;
         }
 
         .form-button .btn-submit:hover {
@@ -305,31 +304,50 @@
         <div class="content-panel">
             <p><span style="color: red">Note:</span> Please fill all the fields</p>
             <div class="inputs-container">
-                <div class="input-container">
+                <div class="input-container" id="channel-input-container">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Channel<small id="channelRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                    <select class="js-example-basic-multiple" id="channel" name="channel[]" multiple="multiple" onchange="selectOnChange('channel')">
+                        <option value ="All">All</option>
+                        @foreach ($channels as $channel)
+                            <option value="{{ $channel->channel_code }}">{{ $channel->channel_name }}</option>
+                        @endforeach
+                    </select> 
+                    @php
+                        $Channels = $channels->pluck('channel_code')->toArray();
+                        $allChannels = implode(', ', $Channels);
+                    @endphp
+
+                    <textarea id="all_channels" style="display: none">{{ $allChannels }}</textarea>    
+
+                </div>
+                <div class="input-container" id="concept-input-container">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Concept<small id="conceptRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="concept-load"></i> </p>
+                    <select class="js-example-basic-multiple" id="concept" name="concept[]" multiple="multiple" onchange="selectOnChange('concept')">
+                        <option value ="All">All</option>
+                        @foreach ($concepts as $concept)
+                            <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
+                        @endforeach
+                    </select> 
+                    @php
+                        $Concepts = $concepts->pluck('concept_name')->toArray();
+                        $allConcepts = implode(', ', $Concepts);
+                    @endphp
+
+                    <textarea id="all_concepts" style="display: none">{{ $allConcepts }}</textarea>   
+                </div>
+            </div>
+            <div class="inputs-container" style="margin-top: 10px;">
+                <div class="input-container" id="customer-input-container">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name<small id="customerRequired"
                             style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i>
                             Required field! </small> </p>
-                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple"
-                        onchange="selectStore()">
-                        <option selected value="All">All</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ str_replace('CUS-', '', $customer->customer_code) }}">
-                                {{ $customer->cutomer_name }}</option>
-                        @endforeach
+                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectOnChange('customer')">
                     </select>
 
-                    @php
-                        $customerCodes = $customers->pluck('customer_code')->toArray();
-                        $customerCodesWithoutPrefix = array_map(function ($code) {
-                            return str_replace('CUS-', '', $code);
-                        }, $customerCodes);
-
-                        $all = implode(', ', $customerCodesWithoutPrefix);
-                    @endphp
-
-                    <textarea id="all_customer" style="display: none">{{ $all }}</textarea>
+                    <textarea id="all_customer" style="display: none"></textarea>
                 </div>
-
+            </div>
+            <div class="inputs-container" style="margin-top: 10px;">      
                 <div class="input-container">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Date From
                         <small id="dateFromRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i
@@ -354,13 +372,12 @@
                 </div>
             </div>
 
-            <div class="inputs-container" style="">
-                <div class="input-container">
-                    <div class="form-button pull-right" style="margin-top: 18px;">
-                        <button class="btn-submit pull-right" id="btn-submit">
-                            Search
-                        </button>
-                    </div>
+            <div class="pull-right" style="gap: 5px; display:flex">
+                <div class="form-button" style="margin-top: 15px;" >
+                    <button type="button" class="btn-submit"  id="btn-reset" style="background:#e73131; border: 1px solid #d34040">Reset</button>
+                </div>
+                <div class="form-button" style="margin-top: 15px;" >
+                    <button class="btn-submit" id="btn-submit">Search</button>
                 </div>
             </div>
         </div>
@@ -456,8 +473,6 @@
                 placeholder: "Select Store",
             });
 
-            $('#customer option:not(:first-child)').prop('disabled', true);
-
             $('#tender_report').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
                 // scrollY: '400px', // Adjust the height to your needs
@@ -476,6 +491,13 @@
                         className: 'btn custom-button'
                     }
                 ],
+                "language": {
+                    "emptyTable": 
+                        `<div style="text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/128/9841/9841554.png" alt="No Data Icon" style="width: 70px; margin-bottom: 10px; margin-top: 10px;">
+                            <p style='font-size: 14px; color: #3C8DBC; font-weigth: 700;'>No matching Data found.</p>
+                        </div>`
+                },
                 initComplete: function() {
                     // Move buttons to the right side
                     const buttons = $('.dt-buttons').detach();
@@ -484,71 +506,181 @@
             });
         });
 
-        function selectStore() {
-            const customerSelect = $('#customer').val();
-
-            if (customerSelect && customerSelect.includes('')) {
-                $('#customer option:not(:first)').prop('disabled', true);
-                $('#customer option:first').prop('disabled', false);
-            } else if (customerSelect == 'All') {
-                $('#customer option:not(:first)').prop('disabled', true);
-                $('#customer option:first').prop('disabled', false);
-            } else if (customerSelect === null || customerSelect.length === 0) {
-                $('#customer option:not(:first)').prop('disabled', false);
-                $('#customer option:first').prop('disabled', false);
+        function selectOnChange(id) {
+            const channelSelect = $(`#${id}`).val();
+            
+            if (channelSelect && channelSelect.includes('')) {
+                $(`#${id} option:not(:first)`).prop('disabled', true);
+                $(`#${id} option:first`).prop('disabled', false);
+            } else if (channelSelect == 'All') {
+                $(`#${id} option:not(:first)`).prop('disabled', true);
+                $(`#${id} option:first`).prop('disabled', false);
+            } else if (channelSelect === null || channelSelect.length === 0) {
+                $(`#${id} option:not(:first)`).prop('disabled', false);
+                $(`#${id} option:first`).prop('disabled', false);
             } else {
-                $('#customer option:not(:first)').prop('disabled', false);
-                $('#customer option:first').prop('disabled', true);
+                $(`#${id} option:not(:first)`).prop('disabled', false);
+                $(`#${id} option:first`).prop('disabled', true);
             }
         }
+
+        $('#channel').change(function() {
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+            const allCustomers = {!! json_encode($all_customers) !!};
+            
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            // Filter customers based on selected channel and concept
+            const filteredCustomers = allCustomers.filter(customer => {
+                const matchesChannel = Array.isArray(channel) ? 
+                    channel.some(ch => customer.cutomer_name.includes(ch)) : 
+                    customer.cutomer_name.includes(channel);
+
+                const matchesConcept = Array.isArray(concept) ? 
+                    concept.includes(customer.concept) : 
+                    customer.concept === concept;
+
+                return matchesChannel && matchesConcept;
+            });
+
+            $('#customer-input-container').show();
+            const select = $('#customer');
+            select.empty(); 
+
+            // Populate select element with filtered customers
+            if (filteredCustomers.length > 0) {
+                select.append('<option value="All">All</option>'); 
+                filteredCustomers.forEach(function(option) {
+                    const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                    select.append(optionHtml);
+                });
+            } else {
+                select.append('<option disabled>No customers found</option>');
+            }
+
+            // Prepare the textarea for all customer codes
+            const customerCodes = filteredCustomers.map(customer => customer.customer_code).join(', ');
+            $('#all_customer').val(customerCodes);
+            $('#customer option:not(:first-child)').prop('disabled', true);
+        });
+
+        $('#concept').change(function() {
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+            const allCustomers = {!! json_encode($all_customers) !!};
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            // Filter customers based on selected concept and channel
+            const filteredCustomers = allCustomers.filter(customer => {
+                const matchesConcept = Array.isArray(concept) ? 
+                    concept.includes(customer.concept) : 
+                    customer.concept === concept;
+
+                const matchesChannel = Array.isArray(channel) ? 
+                    channel.some(ch => customer.cutomer_name.includes(ch)) : 
+                    customer.cutomer_name.includes(channel);
+
+                return matchesConcept && matchesChannel;
+            });
+
+       
+            const select = $('#customer');
+            select.empty(); 
+
+            // Populate select element with filtered customers
+            if (filteredCustomers.length > 0) {
+                select.append('<option value="All">All</option>'); 
+                const customerCodes = filteredCustomers.map(customer => customer.customer_code).join(', ');
+                
+                filteredCustomers.forEach(function(option) {
+                    const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                    select.append(optionHtml);
+                });
+                $('#all_customer').val(customerCodes);
+            }
+        });
 
         $('#btn-submit').on('click', function(event) {
             event.preventDefault();
 
             let customer = $('#customer').val();
-            if (customer == 'All') {
-                const allcustomer = $('#all_customer').val().split(',').map(item => item.trim());
-                customer = allcustomer;
-            }
-
+            const channel = $('#channel').val();
+            const concept = $('#concept').val();
             const dateFrom = $('#date_from').val();
             const dateTo = $('#date_to').val();
             const dateFromObj = new Date(dateFrom);
             const dateToObj = new Date(dateTo);
+           
+            if (customer == 'All') {
+                const allcustomer = $('#all_customer').val().split(',').map(item => item.trim().replace('CUS-', ''));
+                customer = allcustomer;
+            } else{
+                if (customer != null){
+                    let Newcustomer = $('#customer').val().map(function(item) {
+                    return item.replace('CUS-', '');
+                    });
+                    customer = Newcustomer;
+                }
+            }
+
+            // Validate individual fields
+            let isCustomerValid = validateField(customer, 'customer-input-container', 'customerRequired');
+            let isChannelValid = validateField(channel, 'channel-input-container', 'channelRequired');
+            let isConceptValid = validateField(concept, 'concept-input-container', 'conceptRequired');
+
+            let isDateFromValid = validateDate(dateFrom, 'date_from', 'dateFromRequired');
+            let isDateToValid = validateDate(dateTo, 'date_to', 'dateToRequired');
+
+            function validateField(field, fieldId, errorId) {
+                if (field === null || field.length === 0) {
+                    $(`#${fieldId}`).find('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: red !important')
+                    $(`#${errorId}`).show();
+                    return false;
+                } else {
+                    $(`#${fieldId}`).find('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: #3498db !important')
+                    $(`#${fieldId}`).removeClass('inactive');
+                    $(`#${errorId}`).hide();
+                    return true;
+                }
+            }
+
+            function validateDate(field, fieldId, errorId){
+                if (field == "") {
+                    $(`#${fieldId}`).addClass('inactive');
+                    $(`#${errorId}`).show();
+                    return false;
+                } else {
+                    $(`#${fieldId}`).removeClass('inactive');
+                    $(`#${errorId}`).hide();
+                    return true;
+                }
+            }
 
             if (dateFromObj > dateToObj) {
-                $('#date_from').css('border', '1px solid rgba(255, 0, 0, 0.853)');
-                $('#date_to').css('border', '1px solid rgba(255, 0, 0, 0.853)');
+                $('#date_from').addClass('inactive');
+                $('#date_to').addClass('inactive');
                 $('#invalidDateFrom').show();
             }
 
-            if (customer === null || customer.length === 0) {
-                $('#customer').css('border', 'rgba(255, 0, 0, 0.853) !important');
-                $('#customerRequired').show()
-            } else {
-                $('#customer').removeClass('inactive');
-                $('#customerRequired').hide()
-            }
-
-            if (dateFrom == "") {
-                $('#date_from').addClass('inactive');
-                $('#dateFromRequired').show()
-                $('#invalidDateFrom').hide();
-            } else {
-                $('#date_from').removeClass('inactive');
-                $('#dateFromRequired').hide()
-            }
-
-            if (dateTo == "") {
-                $('#date_to').addClass('inactive');
-                $('#dateToRequired').show()
-            } else {
-                $('#date_to').removeClass('inactive');
-                $('#dateToRequired').hide()
-            }
-
-            if (dateFrom == "" || dateTo == "" || customer === null || customer.length === 0 || dateFromObj >
-                dateToObj) {
+            if (!isCustomerValid || !isChannelValid || !isConceptValid || !isDateFromValid || !isDateToValid || dateFromObj > dateToObj) {
                 return;
             }
 
@@ -609,6 +741,26 @@
                     $('#spinner').hide();
                 }
             });
+        });
+
+        $('#btn-reset').on('click', function(event){
+            event.preventDefault();
+
+            $('#channel').val(null).trigger('change');
+            $('#concept').val(null).trigger('change');
+            $('#customer').val(null).trigger('change');
+            $('#date_from').val("");
+            $('#date_to').val("");
+            $('#customerRequired').hide();
+            $('#channelRequired').hide();
+            $('#conceptRequired').hide();
+            $('#invalidDateFrom').hide();
+            $('#dateToRequired').hide();
+            $('#dateFromRequired').hide();
+            $('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: #3498db !important')
+            $('#date_from').removeClass('inactive');
+            $('#date_to').removeClass('inactive');
+
         });
     </script>
 @endpush
