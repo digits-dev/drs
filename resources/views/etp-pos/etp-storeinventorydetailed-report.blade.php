@@ -27,7 +27,7 @@
 
         .inputs-container {
             display: flex;
-            flex-direction: column;
+          
             gap: 10px;
         }
 
@@ -303,8 +303,9 @@
                     @endphp
 
                     <textarea id="all_channels" style="display: none">{{ $allChannels }}</textarea>    
+
                 </div>
-                <div class="input-container" id="concept-input-container" style="display: none">
+                <div class="input-container" id="concept-input-container">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Concept<small id="conceptRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="concept-load"></i> </p>
                     <select class="js-example-basic-multiple" id="concept" name="concept[]" multiple="multiple" onchange="selectOnChange('concept')">
                         <option value ="All">All</option>
@@ -319,23 +320,21 @@
 
                     <textarea id="all_concepts" style="display: none">{{ $allConcepts }}</textarea>   
                 </div>
-                <div class="input-container" id="customer-input-container" style="display: none">
+            </div>
+            <div class="inputs-container" style="margin-top: 10px;">
+                <div class="input-container" id="customer-input-container">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="customer-load"></i> </p>
                     <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectOnChange('customer')">
-                        <option selected value="All">All</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ $customer->customer_code }}">{{ $customer->cutomer_name }}</option>
-                        @endforeach
                     </select>
 
-                    
+                    <textarea id="all_customer" style="display: none"></textarea> 
                 </div>
             </div>
             <div class="pull-right" style="gap: 5px; display:flex">
-                <div class="form-button" style="margin-top: 15px; display:none; " >
+                <div class="form-button" style="margin-top: 15px;" >
                     <button class="btn-submit"  id="btn-reset" style="background:#e73131; border: 1px solid #d34040">Reset</button>
                 </div>
-                <div class="form-button" style="margin-top: 15px; display:none" >
+                <div class="form-button" style="margin-top: 15px;" >
                     <button class="btn-submit" id="btn-submit">Search</button>
                 </div>
             </div>
@@ -408,8 +407,6 @@
                 placeholder: "Select Store",
             });
 
-            $('#customer option:not(:first-child)').prop('disabled', true);
-
 
             $('#store-inventory').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
@@ -428,6 +425,13 @@
                         className: 'btn custom-button'
                     }
                 ],
+                "language": {
+                    "emptyTable": 
+                        `<div style="text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/128/9841/9841554.png" alt="No Data Icon" style="width: 70px; margin-bottom: 10px; margin-top: 10px;">
+                            <p style='font-size: 14px; color: #3C8DBC; font-weigth: 700;'>No matching Data found.</p>
+                        </div>`
+                },
                 initComplete: function() {
                     // Move buttons to the right side
                     const buttons = $('.dt-buttons').detach();
@@ -456,11 +460,10 @@
         }
         
         $('#channel').change(function() {
-            $('#concept-input-container').show();
-
             let concept = $('#concept').val();
             let channel = $('#channel').val();
-    
+            const allCustomers = {!! json_encode($all_customers) !!};
+            
             if (channel == 'All') {
                 const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
                 channel = allchannel;
@@ -471,140 +474,88 @@
                 concept = allconcept;
             }
 
-            if (!channel || (Array.isArray(channel) && channel.length === 0)) {
-                $('#concept-input-container').hide();
-                $('#customer-input-container').hide();
-                $('#concept').val(null).trigger('change');
-                $('#customer').val(null).trigger('change');
+            // Filter customers based on selected channel and concept
+            const filteredCustomers = allCustomers.filter(customer => {
+                const matchesChannel = Array.isArray(channel) ? 
+                    channel.some(ch => customer.cutomer_name.includes(ch)) : 
+                    customer.cutomer_name.includes(channel);
 
-                return;
-            }
+                const matchesConcept = Array.isArray(concept) ? 
+                    concept.includes(customer.concept) : 
+                    customer.concept === concept;
 
-            if (concept != null && channel != null)
-            {
-                $.ajax({
-                    url: 'etp_storeinventorydetailed_report/get_stores',
-                    method: 'POST',
-                    data: {
-                        channel: channel,
-                        concept: concept,
-                        _token: '{{ csrf_token() }}',
-                    },
-                    success: function(response) {
-                        $('#customer-input-container').show();
-                        const select = $('#customer');
-                        const customerDiv = $('#customer-input-container');
-                        let customerCodes = response.map(customer => customer.customer_code);
-                        let all = customerCodes.join(', ');
-                        select.empty();
-    
-                        if (customerCodes.length != 0){
-                            select.append('<option selected value="All">All</option>');
-                        }
-                        
-                        response.forEach(function(option) {
-                            const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
-                            select.append(optionHtml);
-                        });
-    
-                        
-    
-                        customerDiv.append(`<textarea id="all_customer" style="display: none">${all}</textarea>  `)
-                        $('#customer option:not(:first-child)').prop('disabled', true);
-                          
-               
-                    },
-                    error: function(xhr, status, error) {
-                        
-                    }
-                });
-            }
-        });
-        
-        $('#concept').change(function() {
-
-            let concept = $('#concept').val();
-            let channel = $('#channel').val();
-
-            if (concept == 'All') {
-                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
-                concept = allconcept;
-            }
-
-            if (channel == 'All') {
-                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
-                channel = allchannel;
-            }
-
-            if (!concept || (Array.isArray(concept) && concept.length === 0)) {
-                $('#customer-input-container').hide();
-                $('#customer').val(null).trigger('change');
-                $('.form-button').hide();
-                $('#customerRequired').hide()
-
-                return;
-            }
-
-            $('#customer-load').show();
-            $('#concept-load').show();
-            $('#customerRequired').hide()
-            $('#customer').attr('disabled', true);
-            $('#concept').attr('disabled', true);
-            $('#btn-submit').attr('disabled', true);
-
-            $.ajax({
-                url: 'etp_storeinventorydetailed_report/get_stores',
-                method: 'POST',
-                data: {
-                    channel: channel,
-                    concept: concept,
-                    _token: '{{ csrf_token() }}',
-                },
-                success: function(response) {
-                    $('#customer-input-container').show();
-                    const select = $('#customer');
-                    const customerDiv = $('#customer-input-container');
-                    let customerCodes = response.map(customer => customer.customer_code);
-                    let all = customerCodes.join(', ');
-                    select.empty();
-
-                    $('#customer-load').hide();
-                    $('#concept-load').hide();
-
-                    $('#customer').attr('disabled', false);
-                    $('#concept').attr('disabled', false);
-                    $('#btn-submit').attr('disabled', false);
-
-
-                    if (customerCodes.length != 0){
-                        select.append('<option selected value="All">All</option>');
-                    }
-                    
-                    response.forEach(function(option) {
-                        const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
-                        select.append(optionHtml);
-                    });
-
-                    $('.form-button').show();
-                    
-
-                    customerDiv.append(`<textarea id="all_customer" style="display: none">${all}</textarea>  `)
-                    $('#customer option:not(:first-child)').prop('disabled', true);
-                      
-           
-                },
-                error: function(xhr, status, error) {
-                    alert('error fetching data');
-                }
+                return matchesChannel && matchesConcept;
             });
 
+            $('#customer-input-container').show();
+            const select = $('#customer');
+            select.empty(); 
+
+            // Populate select element with filtered customers
+            if (filteredCustomers.length > 0) {
+                select.append('<option value="All">All</option>'); 
+                filteredCustomers.forEach(function(option) {
+                    const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                    select.append(optionHtml);
+                });
+            } else {
+                select.append('<option disabled>No customers found</option>');
+            }
+
+            // Prepare the textarea for all customer codes
+            const customerCodes = filteredCustomers.map(customer => customer.customer_code).join(', ');
+            $('#all_customer').val(customerCodes);
+            $('#customer option:not(:first-child)').prop('disabled', true);
+        });
+
+        $('#concept').change(function() {
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+            const allCustomers = {!! json_encode($all_customers) !!};
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            // Filter customers based on selected concept and channel
+            const filteredCustomers = allCustomers.filter(customer => {
+                const matchesConcept = Array.isArray(concept) ? 
+                    concept.includes(customer.concept) : 
+                    customer.concept === concept;
+
+                const matchesChannel = Array.isArray(channel) ? 
+                    channel.some(ch => customer.cutomer_name.includes(ch)) : 
+                    customer.cutomer_name.includes(channel);
+
+                return matchesConcept && matchesChannel;
+            });
+
+       
+            const select = $('#customer');
+            select.empty(); 
+
+            // Populate select element with filtered customers
+            if (filteredCustomers.length > 0) {
+                select.append('<option value="All">All</option>'); 
+                const customerCodes = filteredCustomers.map(customer => customer.customer_code).join(', ');
+                
+                filteredCustomers.forEach(function(option) {
+                    const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                    select.append(optionHtml);
+                });
+                $('#all_customer').val(customerCodes);
+            }
         });
 
         $('#btn-reset').on('click', function(event){
             event.preventDefault();
 
-            $('#concept-input-container').hide();
-            $('#customer-input-container').hide();
             $('#channel').val(null).trigger('change');
             $('#concept').val(null).trigger('change');
             $('#customer').val(null).trigger('change');
@@ -614,22 +565,36 @@
             event.preventDefault();
 
             let customer = $('#customer').val();
+            const channel = $('#channel').val();
+            const concept = $('#concept').val();
+
             if (customer == 'All'){
                 const allcustomer = $('#all_customer').val().split(',').map(item => item.trim());
-                customer = allcustomer;
+                customer = allcustomer;  
             }
 
-            if(customer === null || customer.length === 0){
-                $('#customer').css('border', 'rgba(255, 0, 0, 0.853) !important');
-                $('#customerRequired').show()
-            } else {
-                $('#customer').removeClass('inactive');
-                $('#customerRequired').hide()
+            function validateField(field, fieldId, errorId) {
+                if (field === null || field.length === 0) {
+                    $(`#${fieldId}`).css('border', 'rgba(255, 0, 0, 0.853) !important');
+                    $(`#${errorId}`).show();
+                    return false;
+                } else {
+                    $(`#${fieldId}`).removeClass('inactive');
+                    $(`#${errorId}`).hide();
+                    return true;
+                }
             }
 
-            if(customer === null || customer.length === 0){
-                return;
+            // Validate individual fields
+            let isCustomerValid = validateField(customer, 'customer', 'customerRequired');
+            let isChannelValid = validateField(channel, 'channel', 'channelRequired');
+            let isConceptValid = validateField(concept, 'concept', 'conceptRequired');
+
+            // Check if all fields are valid
+            if (!isCustomerValid || !isChannelValid || !isConceptValid) {
+                return; // Stop execution if any field is invalid
             }
+
 
             $('#spinner').show();
 

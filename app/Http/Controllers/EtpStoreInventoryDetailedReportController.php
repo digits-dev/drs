@@ -45,11 +45,9 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 				"));
 
 			});
-
 	
 			$customerMap = [];
 			$customerConcept = [];
-	
 
 			// LOOKUP CUSTOMER
 			foreach ($customers_masterfile as $customer) {
@@ -60,7 +58,6 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 			foreach ($customers_masterfile as $customer) {
 				$customerConcept[str_replace('CUS-', '', $customer->customer_code)] = $customer->concept;
 			}
-
 			
 			foreach ($inventory_report as $row) {
 				$row->{'DATE'} = Carbon::parse($row->{'DATE'})->format('Y-m-d');
@@ -95,29 +92,8 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 		$data['inventory_report'] = [];
 		$data['channels'] = Channel::active();
 		$data['concepts'] = Concept::active();
+		$data['all_customers'] = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
 	
 		return view('etp-pos.etp-storeinventorydetailed-report', $data);
-	}
-
-
-	public function getStores(){
-		if (request()->ajax()){
-
-			$channel = request()->channel;
-			$concept = request()->concept;
-
-			$customers = DB::connection('masterfile')->table('customer')
-			->select('customer_code', 'cutomer_name', 'concept')
-			->where(function($query) use ($channel) {
-				foreach ($channel as $ch) {
-					$query->orWhere('cutomer_name', 'like', '%' . $ch . '%');
-				}
-			})
-			->whereIn('concept', $concept)
-			->get();
-		
-			return response()->json($customers);
-
-		}
 	}
 }

@@ -56,7 +56,7 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 
 		foreach ($store_sales as &$sales) {
 
-			$customers_masterfile = Cache::rememberForever('StoreSync' . $sales->customer_name, function () use ($sales) {
+			$customers_masterfile = Cache::remember('StoreSync' . $sales->customer_name, 3600, function () use ($sales) {
 				return DB::connection('masterfile')->table('customer')
 					->where(function ($query) {
 						$query->where('cutomer_name', 'like', '%FRA')
@@ -70,7 +70,7 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 
 		foreach ($store_inventories as &$inventories) {
 
-			$customers_masterfile = Cache::rememberForever('StoreSync' . $inventories->customer_name, function () use ($inventories) {
+			$customers_masterfile = Cache::remember('StoreSync' . $inventories->customer_name, 3600, function () use ($inventories) {
 				return DB::connection('masterfile')->table('customer')
 					->where(function ($query) {
 						$query->where('cutomer_name', 'like', '%FRA')
