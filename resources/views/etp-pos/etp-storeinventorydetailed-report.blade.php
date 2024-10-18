@@ -331,11 +331,15 @@
                     
                 </div>
             </div>
-            <div>
-                <div class="form-button pull-right" style="margin-top: 15px; display:none" >
+            <div class="pull-right" style="gap: 5px; display:flex">
+                <div class="form-button" style="margin-top: 15px; display:none; " >
+                    <button class="btn-submit"  id="btn-reset" style="background:#e73131; border: 1px solid #d34040">Reset</button>
+                </div>
+                <div class="form-button" style="margin-top: 15px; display:none" >
                     <button class="btn-submit" id="btn-submit">Search</button>
                 </div>
             </div>
+           
         </div>
     </form>
 
@@ -545,6 +549,7 @@
             $('#concept-load').show();
             $('#customerRequired').hide()
             $('#customer').attr('disabled', true);
+            $('#concept').attr('disabled', true);
             $('#btn-submit').attr('disabled', true);
 
             $.ajax({
@@ -567,6 +572,7 @@
                     $('#concept-load').hide();
 
                     $('#customer').attr('disabled', false);
+                    $('#concept').attr('disabled', false);
                     $('#btn-submit').attr('disabled', false);
 
 
@@ -594,6 +600,15 @@
 
         });
 
+        $('#btn-reset').on('click', function(event){
+            event.preventDefault();
+
+            $('#concept-input-container').hide();
+            $('#customer-input-container').hide();
+            $('#channel').val(null).trigger('change');
+            $('#concept').val(null).trigger('change');
+            $('#customer').val(null).trigger('change');
+        });
 
         $('#btn-submit').on('click', function(event) {
             event.preventDefault();
