@@ -92,7 +92,9 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 		$data['inventory_report'] = [];
 		$data['channels'] = Channel::active();
 		$data['concepts'] = Concept::active();
-		$data['all_customers'] = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
+		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){
+			return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
+		});
 	
 		return view('etp-pos.etp-storeinventorydetailed-report', $data);
 	}
