@@ -288,8 +288,8 @@
         <div class="panel-heading header-title">Filter Data</div>
         <div class="content-panel">
             <p><span style="color: red">Note:</span> Please fill all the fields</p>
-            <div class="inputs-container">
-                <div class="input-container">
+            <div class="inputs-container" >
+                <div class="input-container" id="channel-input-container">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Channel<small id="channelRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
                     <select class="js-example-basic-multiple" id="channel" name="channel[]" multiple="multiple" onchange="selectOnChange('channel')">
                         <option value ="All">All</option>
@@ -487,7 +487,6 @@
                 return matchesChannel && matchesConcept;
             });
 
-            $('#customer-input-container').show();
             const select = $('#customer');
             select.empty(); 
 
@@ -580,10 +579,11 @@
 
             function validateField(field, fieldId, errorId) {
                 if (field === null || field.length === 0) {
-                    $(`#${fieldId}`).css('border', 'rgba(255, 0, 0, 0.853) !important');
+                    $(`#${fieldId}`).find('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: red !important')
                     $(`#${errorId}`).show();
                     return false;
                 } else {
+                    $(`#${fieldId}`).find('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: #3498db !important')
                     $(`#${fieldId}`).removeClass('inactive');
                     $(`#${errorId}`).hide();
                     return true;
@@ -591,9 +591,9 @@
             }
 
             // Validate individual fields
-            let isCustomerValid = validateField(customer, 'customer', 'customerRequired');
-            let isChannelValid = validateField(channel, 'channel', 'channelRequired');
-            let isConceptValid = validateField(concept, 'concept', 'conceptRequired');
+            let isCustomerValid = validateField(customer, 'customer-input-container', 'customerRequired');
+            let isChannelValid = validateField(channel, 'channel-input-container', 'channelRequired');
+            let isConceptValid = validateField(concept, 'concept-input-container', 'conceptRequired');
 
             // Check if all fields are valid
             if (!isCustomerValid || !isChannelValid || !isConceptValid) {
