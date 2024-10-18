@@ -11,7 +11,16 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 {
 	public function getIndex()
 	{
-		$Customers = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name')->where(function($query) { $query->where('cutomer_name', 'like', '%FRA')->orWhere('cutomer_name', 'like', '%RTL');})->get();
+		$Customers = Cache::remember('filtered_customers', 900, function() {
+			return DB::connection('masterfile')
+				->table('customer as cus')
+				->select('cus.customer_code', 'cus.cutomer_name', 'cus.channel_id', 'cus.concept', 'cha.channel_description')
+				->leftJoin('channels as cha', 'cus.channel_id', '=', 'cha.id')
+				->where(function($query) {
+					$query->where('cus.cutomer_name', 'like', '%FRA')
+						->orWhere('cus.cutomer_name', 'like', '%RTL');
+				})->get();
+		});
 
 		if (request()->ajax()) {
 			
@@ -94,8 +103,16 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 				}
 
 				foreach ($tender_data as $row) {
+					$ammount = $row->AMOUNT; 
+					$mdr = $row->{'Commission %'};
+
+					$mdr_charge = ($mdr * $ammount);
+					$net_amount = ($ammount - $mdr_charge);
+
 					$customerCode = str_replace('CUS-', '', $row->{'STORE ID'});
 					$row->customerName = $customerMap[$customerCode] ?? 'Unknown';
+					$row->mdrCharge = $mdr_charge ?? 'Undefined';
+					$row->netAmount = $net_amount ?? 'Undefined';
 					$row->{'DATE'} = Carbon::parse($row->{'DATE'})->format('Y-m-d');
 					$row->{'TIME'} = Carbon::parse($row->{'TIME'})->format('H:i:s');
 				}

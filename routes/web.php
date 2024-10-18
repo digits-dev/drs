@@ -249,6 +249,7 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::get('etp_bir_report', [EtpBirReportController::class, 'getIndex'])->name('etp_bir_report');
     Route::get('etp_tender_report', [EtpTenderReportController::class, 'getIndex'])->name('etp_tender_report');
     Route::get('etp_storesync_report', [EtpStoreSyncReportController::class, 'getIndex'])->name('etp_storesync_report');
+    Route::get('etp_storesync_report/data', [EtpStoreSyncReportController::class, 'getStoreSync'])->name('etp_storesync_report_data');
     Route::get('etp_storeinventorydetailed_report', [EtpStoreInventoryDetailedReportController::class, 'getIndex'])->name('etp_storeinventorydetailed_report');
 
     // TENDER REPORT
