@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Channel;
+use App\Models\Concept;
 use App\Models\Item;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -89,9 +91,33 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 
 		$data = [];
 		$data['page_title'] = 'Store Inventory (Detailed)';
-		$data['customers'] = DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name')->where(function($query) { $query->where('cutomer_name', 'like', '%FRA')->orWhere('cutomer_name', 'like', '%RTL');})->get();
+		$data['customers'] = [];
 		$data['inventory_report'] = [];
+		$data['channels'] = Channel::active();
+		$data['concepts'] = Concept::active();
 	
 		return view('etp-pos.etp-storeinventorydetailed-report', $data);
+	}
+
+
+	public function getStores(){
+		if (request()->ajax()){
+
+			$channel = request()->channel;
+			$concept = request()->concept;
+
+			$customers = DB::connection('masterfile')->table('customer')
+			->select('customer_code', 'cutomer_name', 'concept')
+			->where(function($query) use ($channel) {
+				foreach ($channel as $ch) {
+					$query->orWhere('cutomer_name', 'like', '%' . $ch . '%');
+				}
+			})
+			->whereIn('concept', $concept)
+			->get();
+		
+			return response()->json($customers);
+
+		}
 	}
 }

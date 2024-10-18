@@ -27,6 +27,7 @@
 
         .inputs-container {
             display: flex;
+            flex-direction: column;
             gap: 10px;
         }
 
@@ -289,24 +290,49 @@
             <p><span style="color: red">Note:</span> Please fill all the fields</p>
             <div class="inputs-container">
                 <div class="input-container">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
-                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectStore()">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Channel<small id="channelRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                    <select class="js-example-basic-multiple" id="channel" name="channel[]" multiple="multiple" onchange="selectOnChange('channel')">
+                        <option value ="All">All</option>
+                        @foreach ($channels as $channel)
+                            <option value="{{ $channel->channel_code }}">{{ $channel->channel_name }}</option>
+                        @endforeach
+                    </select> 
+                    @php
+                        $Channels = $channels->pluck('channel_code')->toArray();
+                        $allChannels = implode(', ', $Channels);
+                    @endphp
+
+                    <textarea id="all_channels" style="display: none">{{ $allChannels }}</textarea>    
+                </div>
+                <div class="input-container" id="concept-input-container" style="display: none">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Concept<small id="conceptRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                    <select class="js-example-basic-multiple" id="concept" name="concept[]" multiple="multiple" onchange="selectOnChange('concept')">
+                        <option value ="All">All</option>
+                        @foreach ($concepts as $concept)
+                            <option value="{{ $concept->concept_name }}">{{ $concept->concept_name }}</option>
+                        @endforeach
+                    </select> 
+                    @php
+                        $Concepts = $concepts->pluck('concept_name')->toArray();
+                        $allConcepts = implode(', ', $Concepts);
+                    @endphp
+
+                    <textarea id="all_concepts" style="display: none">{{ $allConcepts }}</textarea>   
+                </div>
+                <div class="input-container" id="customer-input-container" style="display: none">
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Name <small id="customerRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="customer-load"></i> </p>
+                    <select class="js-example-basic-multiple" id="customer" name="customer[]" multiple="multiple" onchange="selectOnChange('customer')">
                         <option selected value="All">All</option>
                         @foreach ($customers as $customer)
                             <option value="{{ $customer->customer_code }}">{{ $customer->cutomer_name }}</option>
                         @endforeach
                     </select>
 
-                    @php
-                        $customerCodes = $customers->pluck('customer_code')->toArray();
-                        $all = implode(', ', $customerCodes);
-                    @endphp
-
-                    <textarea id="all_customer" style="display: none">{{ $all }}</textarea>    
+                    
                 </div>
             </div>
             <div>
-                <div class="form-button pull-right" style="margin-top: 15px;">
+                <div class="form-button pull-right" style="margin-top: 15px; display:none" >
                     <button class="btn-submit" id="btn-submit">Search</button>
                 </div>
             </div>
@@ -366,12 +392,20 @@
     <!-- Buttons for Excel export -->
     <script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
     <script>
+
         $(document).ready(function() {
-            $('.js-example-basic-multiple').select2({
+            $('#channel').select2({
+                placeholder: "Select Channel",
+            });
+            $('#concept').select2({
+                placeholder: "Select Concept",
+            });
+            $('#customer').select2({
                 placeholder: "Select Store",
             });
 
             $('#customer option:not(:first-child)').prop('disabled', true);
+
 
             $('#store-inventory').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
@@ -398,23 +432,166 @@
             });
         });
 
-        function selectStore() {
-            const customerSelect = $('#customer').val();
-
-            if (customerSelect && customerSelect.includes('')) {
-                $('#customer option:not(:first)').prop('disabled', true);
-                $('#customer option:first').prop('disabled', false);
-            } else if (customerSelect == 'All') {
-                $('#customer option:not(:first)').prop('disabled', true);
-                $('#customer option:first').prop('disabled', false);
-            } else if (customerSelect === null || customerSelect.length === 0) {
-                $('#customer option:not(:first)').prop('disabled', false);
-                $('#customer option:first').prop('disabled', false);
+        
+        function selectOnChange(id) {
+            const channelSelect = $(`#${id}`).val();
+            
+            if (channelSelect && channelSelect.includes('')) {
+                $(`#${id} option:not(:first)`).prop('disabled', true);
+                $(`#${id} option:first`).prop('disabled', false);
+            } else if (channelSelect == 'All') {
+                $(`#${id} option:not(:first)`).prop('disabled', true);
+                $(`#${id} option:first`).prop('disabled', false);
+            } else if (channelSelect === null || channelSelect.length === 0) {
+                $(`#${id} option:not(:first)`).prop('disabled', false);
+                $(`#${id} option:first`).prop('disabled', false);
             } else {
-                $('#customer option:not(:first)').prop('disabled', false);
-                $('#customer option:first').prop('disabled', true);
+                $(`#${id} option:not(:first)`).prop('disabled', false);
+                $(`#${id} option:first`).prop('disabled', true);
             }
         }
+        
+        $('#channel').change(function() {
+            $('#concept-input-container').show();
+
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+    
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            if (!channel || (Array.isArray(channel) && channel.length === 0)) {
+                $('#concept-input-container').hide();
+                $('#customer-input-container').hide();
+                $('#concept').val(null).trigger('change');
+                $('#customer').val(null).trigger('change');
+
+                return;
+            }
+
+            if (concept != null && channel != null)
+            {
+                $.ajax({
+                    url: 'etp_storeinventorydetailed_report/get_stores',
+                    method: 'POST',
+                    data: {
+                        channel: channel,
+                        concept: concept,
+                        _token: '{{ csrf_token() }}',
+                    },
+                    success: function(response) {
+                        $('#customer-input-container').show();
+                        const select = $('#customer');
+                        const customerDiv = $('#customer-input-container');
+                        let customerCodes = response.map(customer => customer.customer_code);
+                        let all = customerCodes.join(', ');
+                        select.empty();
+    
+                        if (customerCodes.length != 0){
+                            select.append('<option selected value="All">All</option>');
+                        }
+                        
+                        response.forEach(function(option) {
+                            const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                            select.append(optionHtml);
+                        });
+    
+                        
+    
+                        customerDiv.append(`<textarea id="all_customer" style="display: none">${all}</textarea>  `)
+                        $('#customer option:not(:first-child)').prop('disabled', true);
+                          
+               
+                    },
+                    error: function(xhr, status, error) {
+                        
+                    }
+                });
+            }
+        });
+        
+        $('#concept').change(function() {
+
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            if (!concept || (Array.isArray(concept) && concept.length === 0)) {
+                $('#customer-input-container').hide();
+                $('#customer').val(null).trigger('change');
+                $('.form-button').hide();
+                $('#customerRequired').hide()
+
+                return;
+            }
+
+            $('#customer-load').show();
+            $('#customerRequired').hide()
+            $('#customer').attr('disabled', true);
+            $('#btn-submit').attr('disabled', true);
+
+            $.ajax({
+                url: 'etp_storeinventorydetailed_report/get_stores',
+                method: 'POST',
+                data: {
+                    channel: channel,
+                    concept: concept,
+                    _token: '{{ csrf_token() }}',
+                },
+                success: function(response) {
+                    $('#customer-input-container').show();
+                    const select = $('#customer');
+                    const customerDiv = $('#customer-input-container');
+                    let customerCodes = response.map(customer => customer.customer_code);
+                    let all = customerCodes.join(', ');
+                    select.empty();
+
+                    $('#customer-load').hide();
+
+                    $('#customer').attr('disabled', false);
+                    $('#btn-submit').attr('disabled', false);
+
+
+                    if (customerCodes.length != 0){
+                        select.append('<option selected value="All">All</option>');
+                    }
+                    
+                    response.forEach(function(option) {
+                        const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                        select.append(optionHtml);
+                    });
+
+                    $('.form-button').show();
+                    
+
+                    customerDiv.append(`<textarea id="all_customer" style="display: none">${all}</textarea>  `)
+                    $('#customer option:not(:first-child)').prop('disabled', true);
+                      
+           
+                },
+                error: function(xhr, status, error) {
+                    alert('error fetching data');
+                }
+            });
+
+        });
+
 
         $('#btn-submit').on('click', function(event) {
             event.preventDefault();
