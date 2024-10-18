@@ -305,7 +305,7 @@
                     <textarea id="all_channels" style="display: none">{{ $allChannels }}</textarea>    
                 </div>
                 <div class="input-container" id="concept-input-container" style="display: none">
-                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Concept<small id="conceptRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> </p>
+                    <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Store Concept<small id="conceptRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> <i class="fa fa-refresh fa-spin fa-3x fa-fw" style="font-size: 14px; color:#2ad34e; display:none" id="concept-load"></i> </p>
                     <select class="js-example-basic-multiple" id="concept" name="concept[]" multiple="multiple" onchange="selectOnChange('concept')">
                         <option value ="All">All</option>
                         @foreach ($concepts as $concept)
@@ -542,6 +542,7 @@
             }
 
             $('#customer-load').show();
+            $('#concept-load').show();
             $('#customerRequired').hide()
             $('#customer').attr('disabled', true);
             $('#btn-submit').attr('disabled', true);
@@ -563,6 +564,7 @@
                     select.empty();
 
                     $('#customer-load').hide();
+                    $('#concept-load').hide();
 
                     $('#customer').attr('disabled', false);
                     $('#btn-submit').attr('disabled', false);
