@@ -429,7 +429,7 @@
 	    //By the way, you can still create your own method in here... :) 
 
 		
-		public function getIndex() {
+		public function getIndex2() {
 
 			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 			
@@ -462,6 +462,51 @@
 			Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.index', $data);
+		}
+
+		public function getIndex()
+		{
+			if (!CRUDBooster::isView()) {
+				CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
+			}
+
+			$data = [];
+			$data['page_title'] = 'Store Sales Dashboard Report';
+			$data['loading'] = true; // Add a loading state
+
+			// Load the basic channels and concepts data immediately for rendering
+			$data['channels'] = Channel::get(['id', 'channel_name']);
+			$data['concepts'] = Concept::get(['id', 'concept_name']);
+
+			return view('dashboard-report.store-sales.index', $data);
+		}
+
+		// New method to fetch the data asynchronously
+		public function fetchData()
+		{
+			$generatedData = $this->dashboardService->getData();
+
+			
+			$prevYear = $generatedData['yearData']['previousYear'];
+			$currYear = $generatedData['yearData']['currentYear'];
+			$month = $generatedData['yearData']['month'];
+			$channel_codes = $generatedData['channel_codes'];
+			$lastThreeDaysDates = $generatedData['lastThreeDaysDates'];
+			$channels = Channel::get(['id', 'channel_name']);
+			$concepts = Concept::get(['id', 'concept_name']);
+			
+			// Generate HTML for each tab using partial views
+			$tab1Html = view('dashboard-report.store-sales.partials.daily', compact('channel_codes', 'prevYear', 'currYear', 'lastThreeDaysDates'))->render();
+			$tab2Html = view('dashboard-report.store-sales.partials.monthly', compact('channel_codes', 'prevYear', 'currYear', 'lastThreeDaysDates'))->render();
+			$tab3Html = view('dashboard-report.store-sales.partials.quarterly', compact('channel_codes', 'prevYear', 'currYear', 'lastThreeDaysDates'))->render();
+			$tab4Html = view('dashboard-report.store-sales.partials.ytd', compact('channel_codes', 'prevYear', 'currYear', 'month', 'channels', 'concepts', 'lastThreeDaysDates'))->render();
+		
+			return response()->json([
+				'tab1Html' => $tab1Html,
+				'tab2Html' => $tab2Html,
+				'tab3Html' => $tab3Html,
+				'tab4Html' => $tab4Html,
+			]);
 		}
 
 		public function exportPDF(Request $request)

@@ -101,6 +101,12 @@
             font-weight: 700;
         }
 
+        /* #loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 16px;
+        } */
     </style>
 
 <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
@@ -111,6 +117,8 @@
 @section('content')
 
 <div class="main-content">
+
+    <div id="loading">Loading data, please wait...</div>
 
     <div class="dashboard-nav-tabs">
         <div class="tabs">
@@ -138,6 +146,13 @@
     </div>
 
     <div class="tab-content-container">
+        <div id="tab1" class="tab-content active"></div>
+        <div id="tab2" class="tab-content"></div>
+        <div id="tab3" class="tab-content"></div>
+        <div id="tab4" class="tab-content"></div>
+    </div>
+
+    {{-- <div class="tab-content-container">
 
         @php
             $prevYear = $yearData['previousYear'];
@@ -256,7 +271,7 @@
             </div>
         </div>
 
-    </div>
+    </div> --}}
 
 </div>
 
@@ -271,6 +286,32 @@
 
 <script>
    $(function() {
+
+    $('#loading').show(); // Show loading indicator
+
+    // Fetch data after the page has loaded
+    $.ajax({
+        url: '{{ route("fetch_store_sales") }}', // Update with your fetch route
+        method: 'GET',
+        success: function(data) {
+            $('#loading').hide(); // Hide loading indicator
+
+            // Populate each tab with data
+            $('#tab1').html(data.tab1Html);
+            $('#tab2').html(data.tab2Html);
+            $('#tab3').html(data.tab3Html);
+            $('#tab4').html(data.tab4Html);
+
+            // Initialize Select2
+            $('#channelSelector').select2();
+            $('#conceptSelector').select2();
+        },
+        error: function(xhr, status, error) {
+            $('#loading').hide(); // Hide loading indicator
+            console.error('Error fetching data:', error);
+            // Handle error (e.g., display an error message)
+        }
+    });
 
     $('.tab').click(function() {
         var tabId = $(this).data('tab');

@@ -233,6 +233,7 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::post('/save_chart', [AdminStoreSalesDashboardReportController::class, 'saveChart'] );
 
+    Route::get('/fetch_data', [AdminStoreSalesDashboardReportController::class, 'fetchData'] )->name('fetch_store_sales');
 
 
 });
