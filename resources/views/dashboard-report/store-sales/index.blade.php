@@ -71,13 +71,13 @@
       
         .tab-content {
             display: none;
-            opacity: 0; /* Start hidden */
-            transition: opacity 150ms ease; /* Add transition */
+            opacity: 0; 
+            transition: opacity 150ms ease; 
         }
 
         .tab-content.active {
-            display: block; /* Make it block when active */
-            opacity: 1; /* Fade in */
+            display: block; 
+            opacity: 1; 
         }
         .tab-content {
             background: white;
@@ -89,11 +89,11 @@
         }
 
         .fade-out {
-            opacity: 0; /* Start fading out */
+            opacity: 0;
         }
 
         .fade-in {
-            opacity: 1; /* Fade in */
+            opacity: 1;
         }
 
         h2{
@@ -101,12 +101,44 @@
             font-weight: 700;
         }
 
-        /* #loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-            font-size: 16px;
-        } */
+      
+        #loading {
+            height: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #3c8dbc;
+            border-radius: 5px;
+        }
+
+        #loading2 {
+            height: 150px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #3c8dbc;
+            border-radius: 5px;
+        }
+
+        .loader {
+            border: 8px solid rgba(60, 141, 188, 0.3); 
+            border-top: 8px solid #3c8dbc; 
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
     </style>
 
 <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
@@ -118,7 +150,6 @@
 
 <div class="main-content">
 
-    <div id="loading">Loading data, please wait...</div>
 
     <div class="dashboard-nav-tabs">
         <div class="tabs">
@@ -129,20 +160,25 @@
         </div>
 
         <div class="export">
-            <a href="{{ route('weekly_export_excel') }}" class="btn btn-primary btn-sm pull-right">
+            <a href="{{ route('export_sales_report_excel') }}" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download" aria-hidden="true"></i> Export to Excel
             </a>
-            <a id="exportPDF" href="{{ route('weekly_export_pdf') }}?perChannel=false&category=total" class="btn btn-primary btn-sm pull-right">
+            <a id="exportPDF" href="{{ route('export_sales_report_pdf') }}?perChannel=false&category=total" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download" aria-hidden="true"></i> Export to PDF
             </a>
 
-            <a id="refreshData" href="{{ CRUDBooster::mainpath() }}?reload_data " class="btn btn-warning   btn-sm pull-right">
+            <btn id="refreshData"  class="btn btn-warning   btn-sm pull-right">
                 <i class="glyphicon glyphicon-refresh" aria-hidden="true"></i> Reload Data
-            </a>
+            </btn>
         </div>
     </div>
 
     <div class="divider">
+    </div>
+
+    <div id="loading" class="text-center">
+        <div class="loader"></div>
+        <p>Loading, please wait...</p>
     </div>
 
     <div class="tab-content-container">
@@ -151,127 +187,6 @@
         <div id="tab3" class="tab-content"></div>
         <div id="tab4" class="tab-content"></div>
     </div>
-
-    {{-- <div class="tab-content-container">
-
-        @php
-            $prevYear = $yearData['previousYear'];
-            $currYear = $yearData['currentYear'];
-            $month = $yearData['month'];
-        @endphp
-
-        <div id="tab1" class="tab-content ">
-
-            <div class="weekly-section">
-                <div class="dashboard">
-                    @foreach ($channel_codes as $channel => $channelData)
-                        @if ($channel == 'OTHER' || $channel == '')
-                            @continue
-                        @endif
-                        
-                        <x-sales-report 
-                            :isTopOpen="$loop->first"
-                            :channel="$channel" 
-                            :data="$channelData"
-                            :prevYear="$prevYear"
-                            :currYear="$currYear"
-                            :lastThreeDaysDates="$lastThreeDaysDates"
-                        />
-                    @endforeach
-                </div>
-            </div>
-
-        </div>
-
-        <div id="tab2" class="tab-content ">
-            <div class="monthly-section">
-                <div class="dashboard">
-                    @foreach ($channel_codes as $channel => $channelData)
-                        @if ($channel == 'OTHER' || $channel == '')
-                            @continue
-                        @endif
-                        
-                        <x-monthly-sales-report 
-                            :isTopOpen="$loop->first"
-                            :channel="$channel" 
-                            :data="$channelData"
-                            :prevYear="$prevYear"
-                            :currYear="$currYear"
-                        />
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        <div id="tab3" class="tab-content ">
-            <div class="quarterly-section">
-                <div class="dashboard">
-                    @foreach ($channel_codes as $channel => $channelData)
-                        @if ($channel == 'OTHER' || $channel == '')
-                            @continue
-                        @endif
-                        
-                        <x-quarterly-sales-report 
-                            :isTopOpen="$loop->first"
-                            :channel="$channel" 
-                            :data="$channelData"
-                            :prevYear="$prevYear"
-                            :currYear="$currYear"
-                        />
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        <div id="tab4" class="tab-content active">
-            <div class="ytd-section">
-                <h2 class="text-start" style="margin-top:25px;">YTD SALES REPORT</h2>
-
-                <div class="" style="display: flex; flex-wrap:wrap; gap:15px; justify-content:flex-start; align-items:ceneter; margin:20px 0px 8px;">
-            
-                    <div class="form-group" >
-                        <label class="control-label" for="channelSelector" >Channel:</label>
-                        
-                        <select id="channelSelector" class="form-control">
-                            <option value="all">All</option>
-
-                            @foreach ($channels as $channel)
-                                <option value="{{$channel->id}}">{{$channel->channel_name}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-group" >
-                        <label class="control-label" for="conceptSelector" >Store Concept:</label>
-                        <select id="conceptSelector" class="form-control">
-                            <option value="all">All</option>
-
-                            @foreach ($concepts as $concept)
-                                <option value="{{$concept->id}}">{{$concept->concept_name}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                
-                    <button id="updateTableButton" class="btn btn-primary" style="align-self: center; margin-top:8px; height:30px;">
-                        <i class="fa fa-refresh" aria-hidden="true"></i> Update Table
-                    </button>
-                </div>
-
-           
-                <div id="ytdSalesReportContainer">
-                    <x-ytd-sales-report 
-                        :prevYear="$prevYear"
-                        :currYear="$currYear"
-                        :month="$month"
-                        :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
-                        :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
-                    />
-                </div>
-            
-            </div>
-        </div>
-
-    </div> --}}
 
 </div>
 
@@ -287,30 +202,41 @@
 <script>
    $(function() {
 
-    $('#loading').show(); // Show loading indicator
+    fetchData();
 
-    // Fetch data after the page has loaded
-    $.ajax({
-        url: '{{ route("fetch_store_sales") }}', // Update with your fetch route
-        method: 'GET',
-        success: function(data) {
-            $('#loading').hide(); // Hide loading indicator
+    function fetchData(reloadData = false){
+        $('.tab-content-container').hide();
+        $('#loading').show(); 
 
-            // Populate each tab with data
-            $('#tab1').html(data.tab1Html);
-            $('#tab2').html(data.tab2Html);
-            $('#tab3').html(data.tab3Html);
-            $('#tab4').html(data.tab4Html);
+        // Fetch data after the page has loaded
+        $.ajax({
+            url: '{{ route("fetch_store_sales") }}' + `${reloadData ? '?reload_data' : '' }`, 
+            method: 'GET',
+            success: function(data) {
+                $('#loading').hide(); 
+                $('.tab-content-container').show();
 
-            // Initialize Select2
-            $('#channelSelector').select2();
-            $('#conceptSelector').select2();
-        },
-        error: function(xhr, status, error) {
-            $('#loading').hide(); // Hide loading indicator
-            console.error('Error fetching data:', error);
-            // Handle error (e.g., display an error message)
-        }
+
+                // Populate each tab with data
+                $('#tab1').html(data.tab1Html);
+                $('#tab2').html(data.tab2Html);
+                $('#tab3').html(data.tab3Html);
+                $('#tab4').html(data.tab4Html);
+
+                // Initialize Select2
+                $('#channelSelector').select2();
+                $('#conceptSelector').select2();
+            },
+            error: function(xhr, status, error) {
+                $('#loading').hide(); 
+                $('.tab-content-container').show();
+                console.error('Error fetching data:', error);
+            }
+        });
+    }
+
+    $('#refreshData').click(function() {
+        fetchData(true);
     });
 
     $('.tab').click(function() {
@@ -319,7 +245,6 @@
         // Fade out the currently active tab content
         $('.tab-content.active').removeClass('active').addClass('fade-out');
 
-        // Use a timeout to ensure the fade-out completes before switching
         setTimeout(() => {
             // Remove fade-out class and hide display style
             $('.tab-content.fade-out').removeClass('fade-out').css('display', 'none');
@@ -328,89 +253,10 @@
             $('.tab').removeClass('active');
             $(this).addClass('active');
             $('#' + tabId).css('display', 'block').addClass('active').css('opacity', '0').animate({ opacity: 1 }, 500); // Fade in
-        }, 150); // Match the timeout with the CSS transition duration
+        }, 150); 
     });
 
-    $('#channelSelector').select2();
-    $('#conceptSelector').select2();
-
-    $('#updateTableButton').on('click', function() {
-        console.log('work');
-        console.log('CSRF Token:', '{{ csrf_token() }}');
-        const selectedChannel = $('#channelSelector').val();
-        const selectedConcept = $('#conceptSelector').val();
-
-        $.ajax({
-            url: '/admin/ytd_update',
-            type: 'POST',
-            data: {
-                channel: selectedChannel,
-                concept: selectedConcept,
-                _token: '{{ csrf_token() }}' // CSRF token for security
-            },
-            success: function(data) {
-                console.log(data);
-
-                // Fallback values
-                const currData = {
-                    apple: data.currApple || 0,
-                    nonApple: data.currNonApple || 0,
-                    totalApple: data.currTotalApple || 0,
-                };
-
-                const prevData = {
-                    apple: data.prevApple || 0,
-                    nonApple: data.prevNonApple || 0,
-                    totalApple: data.prevTotalApple || 0,
-                };
-
-                // Format numbers with two decimal places
-                const formatNumber = (num) => {
-                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                };
-
-                // Calculate increments and percentage changes
-                const calculateChanges = (curr, prev) => {
-                    const change = curr - prev;
-                    const percentageChange = prev ? ((change / prev) * 100) : 0;
-                    return {
-                        change,
-                        percentageChange,
-                        roundedValue: Math.round(percentageChange) + '%',
-                        style: percentageChange < 0 ? 'background:#FEC8CE !important; color:darkred !important;' : ''
-                    };
-                };
-
-                const appleChanges = calculateChanges(currData.apple, prevData.apple);
-                const nonAppleChanges = calculateChanges(currData.nonApple, prevData.nonApple);
-                const totalChanges = calculateChanges(currData.totalApple, prevData.totalApple);
-
-                // Update the DOM
-                const updateDOM = (selector, value) => {
-                    $(selector).text(formatNumber(value));
-                };
-
-                updateDOM('#prevApple', prevData.apple);
-                updateDOM('#prevNonApple', prevData.nonApple);
-                updateDOM('#prevTotalApple', prevData.totalApple);
-                updateDOM('#currApple', currData.apple);
-                updateDOM('#currNonApple', currData.nonApple);
-                updateDOM('#currTotalApple', currData.totalApple);
-                updateDOM('#incDecApple', appleChanges.change);
-                updateDOM('#incDecNonApple', nonAppleChanges.change);
-                updateDOM('#incDecTotal', totalChanges.change);
-
-                // Update percentage change displays
-                $('#percentageChangeApple').text(appleChanges.roundedValue).attr('style', appleChanges.style);
-                $('#percentageChangeNonApple').text(nonAppleChanges.roundedValue).attr('style', nonAppleChanges.style);
-                $('#percentageChangeTotal').text(totalChanges.roundedValue).attr('style', totalChanges.style);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
-            }
-        });
-
-    });
+   
 
 
 });

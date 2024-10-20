@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\StoreSalesDashboardReport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class StoreSalesDashboardReportService {
     
@@ -20,7 +21,7 @@ class StoreSalesDashboardReportService {
         $now = time();
 
         // Get the timestamp for the end of the day (midnight)
-        $endOfDay = strtotime('tomorrow') - 1; // 1 second before tomorrow
+        $endOfDay = strtotime('tomorrow') - 1; 
 
         // Calculate the difference
         return $endOfDay - $now;
@@ -33,21 +34,22 @@ class StoreSalesDashboardReportService {
             // Retrieve data from cache
             $data = Cache::get($this->getCacheKey(), []);
 
+
             if(empty($data)){
                return $this->generateSalesReport();
             }
 
             return $data; 
         } catch (\Exception $e) {
-            \Log::error('Cache Retrieval of Sales Dashboard Report Data Error: ' . $e->getMessage());
-            return []; // Fallback to an empty array or other default behavior
+            Log::error('Cache Retrieval of Sales Dashboard Report Data Error: ' . $e->getMessage());
+            return []; 
         }
     }
    
     // Method to clear the cache (if needed)
     public function clearCache()
     {
-        Cache::forget($this->getCacheKey()); // Clear existing cache
+        Cache::forget($this->getCacheKey()); 
     }
 
 
@@ -56,10 +58,10 @@ class StoreSalesDashboardReportService {
         $data = Cache::lock('sales_report_lock', 5)->get(function () {
             // Generate and cache the data here
 			
-            $currentDay = date('d');
-            $currentMonth = date('m');
-            $currentYear = date('Y'); 
-            $previousYear = date('Y', strtotime('-1 year'));
+            // $currentDay = date('d');
+            // $currentMonth = date('m');
+            // $currentYear = date('Y'); 
+            // $previousYear = date('Y', strtotime('-1 year'));
             
             // $currentMonth = 3;
             // $previousYear = 2019;
@@ -76,12 +78,16 @@ class StoreSalesDashboardReportService {
             // $currentYear = 2019; 
             // $currentDay = 23;
 
-            
-			$currentMonth = 8;
-			$previousYear = 2023;
-			$currentYear = 2024; 
-			$currentDay = 30;
+            //bug
+			// $currentMonth = 8;
+			// $previousYear = 2021;
+			// $currentYear = 2022; 
+			// $currentDay = 7;
 
+			$currentMonth = 9;
+			$previousYear = 2021;
+			$currentYear = 2022; 
+			$currentDay = 7;
 
             $years = [
                 ['year' => $previousYear],
@@ -103,8 +109,6 @@ class StoreSalesDashboardReportService {
                 self::processSalesData($yearData['year'], $currentMonth, $currentDay, $data);
             }
 
-            // dd($data['channel_codes']);
-
             // Store the data in cache
             Cache::put($this->getCacheKey(), $data, $this->getCacheExpiration());
 
@@ -112,28 +116,18 @@ class StoreSalesDashboardReportService {
 
         });
 
-        // Check if data is null (indicating lock was not acquired)
         if (is_null($data)) {
-            // Handle the case when the lock was not acquired
-            \Log::warning('Could not acquire lock for daily sales report generation.');
+            Log::warning('Could not acquire lock for daily sales report generation.');
             
-            // Optionally, you can return an empty array or existing cached data
-            return Cache::get($this->getCacheKey(), []); // Return cached data if available
+            return Cache::get($this->getCacheKey(), []); 
         }
 
-        return $data; // Return the generated data
+        return $data; 
 
     }
 
     private function processDailySalesData($year, $month, $day, &$data, $storeSalesDR) {
 
-        // $test1 = $storeSalesDR->getYearToDate();
-        // $test2 = $storeSalesDR->getYearToDateWithSelection();
-
-        // dd($test1);
-        // dd($test2);
-
-       
         $data['channel_codes']['TOTAL'][$year]['weeks'] = $storeSalesDR->getSalesSummary();
 
         $data['channel_codes']['TOTAL'][$year]['last_three_days'] = $storeSalesDR->getSalesSummaryForLastThreeDays();
@@ -212,7 +206,7 @@ class StoreSalesDashboardReportService {
                 }
             }
         }
-        
+
     }
 
     private function getLastThreeDaysOrDates($type = 'day', $date = null)
@@ -252,582 +246,6 @@ class StoreSalesDashboardReportService {
         return $formattedDays;
     }
 
-    
-    public static function generateQuickChart($chartType, $isPerChannel, $dataCategory, $channelCodes, $lastThreeDays, $year = null,  $previousYear = null, $currentYear = null){
-
-        if($isPerChannel) {
-            $maxValue = self::calculateMaxValues($dataCategory, $channelCodes, $lastThreeDays, $previousYear, $currentYear)[$dataCategory];
-            $buffer = $maxValue * 0.15; 
-            $maxValWithBuffer = round(($maxValue + $buffer) / 1000000) * 1000000; //To make the max val with ending 000,000
-
-            $chartData = self::generateDataPerChannel($chartType,$isPerChannel,  $dataCategory, $year, $channelCodes, $lastThreeDays, $maxValWithBuffer);
-        } else {
-            $chartData = self::generateDataForOverallTotal($chartType,$isPerChannel,  $dataCategory, $previousYear, $currentYear, $channelCodes, $lastThreeDays);
-        }
-
-        // Encode the chart configuration as a JSON string
-        $chartConfigJson = json_encode($chartData);
-        
-        // Create the QuickChart URL with specified width and height
-        $width = 1000;  
-        $height = 600;
-
-        $version = 2.4;
-
-        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height . '&version=' . $version;
-
-        return $quickChartUrl;
-    }
-
-    private static function generateDataForOverallTotal($chartType, $isPerChannel = false, $dataCategory = 'total', $prevYear, $currYear, $channelCodes, $lastThreeDaysDates ) {
-        $labels = [];
-        $pieLabels = [];
-        $keyDates = $lastThreeDaysDates !== null ? array_keys($lastThreeDaysDates) : [];
-
-        $colors = [self::generateRandomColor(), self::generateRandomColor()];
-
-    
-        // LABELS
-        switch ($dataCategory) {
-            case 'total':
-                $labels = ['TOTAL'];
-                break;
-            case 'weekly':
-                $labels = ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
-                break;
-            case 'last_three_days':
-                $labels = $keyDates;
-                break;
-            default:
-                $labels = [];
-        }
-    
-        // Function to generate data for each year
-
-        $prevData = self::getDataForOverall($prevYear, $channelCodes, $dataCategory, $isPerChannel, $colors[0]);
-    
-        $currData = self::getDataForOverall($currYear, $channelCodes, $dataCategory, $isPerChannel, $colors[1]);
-
-    
-        // Pie data generation
-        $pieData = [];
-        foreach ($channelCodes as $channelCode => $channelData) {
-            $dataStorage = [];
-            $weeksPrev = $channelData[$prevYear]['weeks'] ?? [];
-            $lastThreeDaysPrev = $channelData[$prevYear]['last_three_days'] ?? [];
-            $weeksCurr = $channelData[$currYear]['weeks'] ?? [];
-            $lastThreeDaysCurr = $channelData[$currYear]['last_three_days'] ?? [];
-    
-            if (!$isPerChannel && $channelCode === 'TOTAL') {
-                $keys = [];
-                switch ($dataCategory) {
-                    case 'total':
-                        $keys = ['TOTAL'];
-                        break;
-                    case 'weekly':
-                        $keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        break;
-                }
-    
-                if ($dataCategory === 'last_three_days') {
-                    foreach ($lastThreeDaysPrev as $day) {
-                        $netSales = $day['sum_of_net_sales'] ?? 0;
-
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
-                            $pieLabels[] = $prevYear . ' ' . $formattedDate;
-                        }
-
-                    }
-
-                    foreach ($lastThreeDaysCurr as $day) {
-                        $netSales = $day['sum_of_net_sales'] ?? 0;
-                        
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
-                            $pieLabels[] = $currYear . ' ' . $formattedDate;
-                        }
-                    }
-
-                } else {
-                    foreach ($keys as $key) {
-                        $netSales = $weeksPrev[$key]['sum_of_net_sales'] ?? 0;
-
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $pieLabels[] = $prevYear . ' ' . $key;
-                        }
-                        
-                    }
-
-                    foreach ($keys as $key) {
-                        $netSales = $weeksCurr[$key]['sum_of_net_sales'] ?? 0;
-
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $pieLabels[] = $currYear . ' ' . $key;
-                        }
-                    }
-                }
-    
-                $pieData[] = [
-                    'label' => $channelCode,
-                    'data' => $dataStorage,
-                    'borderWidth' => 2,
-                    'fill' => false,
-                    // 'backgroundColor' => $colors,
-                ];
-            }
-        }
-
-        // Chart js version 2.9.4
-
-        return [
-            'type' => $chartType,
-            'data' => [
-                'labels' => $chartType == 'pie' ? $pieLabels : $labels,
-                'datasets' => $chartType == 'pie' ? $pieData : array_merge($prevData, $currData),
-            ],
-            'options' => [
-                'layout' => ['padding' => 20],
-                'title' => [
-                    'display' => true,
-                    'text' => "Sales Data",
-                    'fontSize' => 16,
-                    'padding' => 20,
-                ],
-                'legend' => [
-                    'display' => true,
-                    'position' => 'right',
-                    'labels' => [
-                        'boxWidth' => 10
-                    ]
-                ],
-                'plugins' => [
-                    'tickFormat' => [
-                        'locale' => 'en-US',
-                        'useGrouping' => true,
-                        'applyToDataLabels' => true,
-                    ],
-                    "datalabels" => [
-                        "display" => $chartType == 'pie' ? true : false,
-                        "anchor" =>  $chartType == 'pie' ? "center" : "end",
-                        "align" =>  $chartType == 'pie' ? "center" : "end",
-                        "color" => "#000",
-                    ],
-                ],
-            ],
-        ];
-
-        // Chart js version 4.4.4
-
-        // return [
-        //     'type' => $chartType,
-        //     'data' => [
-        //         'labels' => $chartType == 'pie' ? $pieLabels : $labels,
-        //         'datasets' => $chartType == 'pie' ? $pieData : array_merge($prevData, $currData),
-        //     ],
-        //     'options' => [
-        //         'layout' => ['padding' => 20],
-        //         'plugins' => [
-        //             'title' => [
-        //                 'display' => true,
-        //                 'text' => "Sales Data",
-        //                 'font' => ['size' => 16],
-        //                 'padding' => 20,
-        //             ],
-        //             'legend' => [
-        //                 'display' => true,
-        //                 'position' => 'right',
-        //                 'labels' => [
-        //                     'boxWidth' => 10
-        //                 ]
-        //             ],
-        //             "datalabels" => [
-        //                 "display" => $chartType == 'pie' ? true : false,
-        //                 "anchor" =>  $chartType == 'pie' ? "center" : "end",
-        //                 "align" =>  $chartType == 'pie' ? "center" : "end",
-        //                 "color" => "#000",
-        //             ],
-        //         ],
-        //         'locale' => 'en-PH',
-        //         'scales' => [
-        //             'y' => $chartType === 'pie' ? ['display' => false] : ['beginAtZero' => true]
-        //         ],
-         
-        //     ],
-        // ];
-    }
-    
-    private static function getDataForOverall($year, $channelCodes, $dataCategory, $isPerChannel, $color) {
-        $dataStorage = [];
-        foreach ($channelCodes as $channelCode => $channelData) {
-            $weeks = $channelData[$year]['weeks'] ?? [];
-            $lastThreeDays = $channelData[$year]['last_three_days'] ?? [];
-
-            if (!$isPerChannel && $channelCode === 'TOTAL') {
-                $keys = [];
-                switch ($dataCategory) {
-                    case 'total':
-                        $keys = ['TOTAL'];
-                        break;
-                    case 'weekly':
-                        $keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        break;
-                }
-
-                if ($dataCategory === 'last_three_days') {
-                    foreach ($lastThreeDays as $day) {
-                        $dataForChannel[]  = $day['sum_of_net_sales'] ?? 0;
-                    }
-                } else {
-                    foreach ($keys as $key) {
-                        $dataForChannel[]  = $weeks[$key]['sum_of_net_sales'] ?? 0;
-                    }
-                }
-
-                // return [
-                // 	'label' => "$year $channelCode",
-                // 	'data' => $dataStorage,
-                // 	'borderWidth' => 2,
-                // ];
-
-                // Create dataset entry
-                $dataStorage[] = [
-                    'label' => "$year $channelCode",
-                    'data' => $dataForChannel,
-                    'borderWidth' => 2,
-                    'fill' => false,
-                    // 'backgroundColor' => $color,
-                ];
-            }
-        }
-        return $dataStorage;
-    }
-
-    public static function generateDataPerChannel($chartType, $isPerChannel = true, $dataCategory = 'total', $year, $channelCodes, $lastThreeDaysDates, $yScaleMaxVal) {
-        $labels = [];
-        $datasets = [];
-        $keyDates = $lastThreeDaysDates !== null ? array_keys($lastThreeDaysDates) : [];
-    
-        // LABELS
-        switch ($dataCategory) {
-            case 'total':
-                $labels = ['TOTAL'];
-                break;
-            case 'weekly':
-                $labels = ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'];
-                break;
-            case 'last_three_days':
-                $labels = $keyDates;
-                break;
-            default:
-                $labels = [];
-        }
-
-        $newData = [];
-
-        foreach ($channelCodes as $channelCode => $channelData) {
-            $dataStorage = [];
-            $weeks = $channelData[$year]['weeks'] ?? [];
-            $lastThreeDaysData = $channelData[$year]['last_three_days'] ?? [];
-    
-            // Channel code mapping
-            switch ($channelCode) {
-                case 'TOTAL-RTL':
-                    $channelCode = 'RETAIL';
-                    break;
-                case 'DLR/CRP':
-                    $channelCode = 'OUT';
-                    break;
-                case 'FRA-DR':
-                    $channelCode = 'FRA';
-                    break;
-            }
-    
-            if ($isPerChannel && $channelCode && $channelCode !== "TOTAL") {
-                $keys = [];
-    
-                switch ($dataCategory) {
-                    case 'total':
-                        $keys = ['TOTAL'];
-                        break;
-                    case 'weekly':
-                        $keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        break;
-                }
-    
-                if ($dataCategory === 'last_three_days') {
-                    foreach ($lastThreeDaysData as $day) {
-                        $netSales = $day['sum_of_net_sales'] ?? 0;
-                        $dataStorage[] = $netSales;
-                    }
-                } else {
-                    foreach ($keys as $key) {
-                        $netSales = $weeks[$key]['sum_of_net_sales'] ?? 0;
-                        $dataStorage[] = $netSales;
-                    }
-                }
-    
-                $maxVal = !empty($dataStorage) ? max($dataStorage) : 0;
-    
-                $newData[] = [
-                    'label' => $channelCode,
-                    'data' => $dataStorage,
-                    'borderWidth' => 2,
-                    'maxVal' => $maxVal,
-                    'fill' => false,
-                ];
-            }
-        }
-
-        // Chart js version 2.9.4
-
-        return [
-            'type' => $chartType,
-            'data' => [
-                'labels' => $labels,
-                'datasets' => $newData,
-            ],
-            'options' => [
-                'layout' => ['padding' => 20],
-                'title' => [
-                    'display' => true,
-                    'text' => "{$year} Sales Data",
-                    'fontSize' => 16,
-                    'padding' => 20
-                ],
-                'legend' => [
-                    'display' => true,
-                    'position' => 'right',
-                    'labels' => [
-                        'boxWidth' => 10
-                    ]
-                ],
-                'plugins' => [
-                    'tickFormat' => [
-                        'locale' => 'en-US',
-                        'useGrouping' => true,
-                        'applyToDataLabels' => true,
-                    ],
-                    // "datalabels" => [
-                    // 	"anchor" => "end",
-                    // 	"align" => "end",
-                    // 	"color" => "#000",
-                    // ],
-                    "datalabels" => [
-                        "display" => $chartType == 'pie' ? true : false,
-                        "anchor" =>  $chartType == 'pie' ? "center" : "end",
-                        "align" =>  $chartType == 'pie' ? "center" : "end",
-                        "color" => "#000",
-                    ],
-                ],
-                'scales' => [
-                    'yAxes' => [[
-                        'display' => $chartType !== 'pie',
-                        'ticks'=> [
-                            'max' => $yScaleMaxVal, 
-                            // 'beginAtZero' => true,
-                            // 'color' => '#000'
-                        ],]
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    public static function generateDataForPiePerChannel($chartType, $isPerChannel = true, $dataCategory = 'total', $prevYear, $currYear, $channelCodes, $lastThreeDaysDates, $channelKey){
-        $pieLabels = [];
-        $datasets = [];
-
-        foreach ($channelCodes as $channelCode => $channelData) {
-            $dataStorage = [];
-            $weeksPrevYear = $channelData[$prevYear]['weeks'] ?? [];
-            $lastThreeDaysPrevYear = $channelData[$prevYear]['last_three_days'] ?? [];
-            $weeksCurrYear = $channelData[$currYear]['weeks'] ?? [];
-            $lastThreeDaysCurrYear = $channelData[$currYear]['last_three_days'] ?? [];
-
-            switch ($channelCode) {
-                case 'TOTAL-RTL':
-                    $channelCode = 'RETAIL';
-                    break;
-                case 'DLR/CRP':
-                    $channelCode = 'OUT';
-                    break;
-                case 'FRA-DR':
-                    $channelCode = 'FRA';
-                    break;
-                default:
-                    $channelCode;
-            }
-
-            if ($isPerChannel && $channelCode == $channelKey) {
-                $keys = [];
-                switch ($dataCategory) {
-                    case 'total':
-                        $keys = ['TOTAL'];
-                        break;
-                    case 'weekly':
-                        $keys = ['WK01', 'WK02', 'WK03', 'WK04'];
-                        break;
-                    default:
-                        $keys = [];
-                }
-
-                // Handle 'last_three_days' category
-                if ($dataCategory == 'last_three_days') {
-                    foreach ($lastThreeDaysPrevYear as $day) {
-                        $netSales = $day['sum_of_net_sales'] ?? 0;
-
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
-                            $pieLabels[] = $prevYear . ' ' . $formattedDate;
-                        }
-                    }
-
-                    foreach ($lastThreeDaysCurrYear as $day) {
-                        $netSales = $day['sum_of_net_sales'] ?? 0;
-
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $formattedDate = Carbon::parse($day['date_of_the_day'])->format('d-M');
-                            $pieLabels[] = $currYear . ' ' . $formattedDate;
-                        }
-                    }
-                } else {
-                    // Handle 'weekly' or 'total' category
-                    foreach ($keys as $key) {
-                        $netSales = $weeksPrevYear[$key]['sum_of_net_sales'] ?? 0;
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $pieLabels[] = $prevYear . ' ' . $key;
-                        }
-                    }
-
-                    foreach ($keys as $key) {
-                        $netSales = $weeksCurrYear[$key]['sum_of_net_sales'] ?? 0;
-                        if ($netSales != 0) {
-                            $dataStorage[] = $netSales;
-                            $pieLabels[] = $currYear . ' ' . $key;
-                        }
-                    }
-                }
-
-                // Store the pie chart data for the current channel
-                $datasets[] = [
-                    'label' => $channelCode,
-                    'data' => $dataStorage,
-                    'borderWidth' => 2,
-                ];
-            }
-        }
-
-        // Prepare the response data for chart rendering
-        $chartData = [
-            'type' => $chartType,
-            'data' => [
-                'labels' => $chartType == 'pie' ? $pieLabels : [],
-                'datasets' => $chartType == 'pie' ? $datasets : [],
-            ],
-            'options' => [
-                'layout' => [
-                    'padding' => 20
-                ],
-                'title' => [
-                    'display' => true,
-                    'text' => "$channelKey Sales Data",
-                    'fontSize' => 16,
-                    'padding' => 20,
-                ],
-                'legend' => [
-                    'display' => true,
-                    'position' => 'right',
-                    'labels' => [
-                        'boxWidth' => 10
-                    ]
-                ],
-                'plugins' => [
-                    'tickFormat' => [
-                        'locale' => 'en-US',
-                        'useGrouping' => true,
-                        'applyToDataLabels' => true,
-                    ],
-                    "datalabels" => [
-                        "display" => $chartType == 'pie' ? true : false,
-                        "anchor" =>  $chartType == 'pie' ? "center" : "end",
-                        "align" =>  $chartType == 'pie' ? "center" : "end",
-                        "color" => "#000",
-                    ],
-                ],
-                'scales' => [
-                    'yAxes' => [[
-                        'display' => $chartType !== 'pie',
-                        ],
-                    ]
-              
-                ]
-            ]
-        ];
-
-        // if(count($chartData['data']['datasets'][0]['data']) === 0) {return null;}
-
-        if (empty($chartData['data']['datasets'][0]['data'])) {
-            return null;
-        }
-
-        // dump($chartData);
-
-        // Encode the chart configuration as a JSON string
-        $chartConfigJson = json_encode($chartData);
-        
-        // Create the QuickChart URL with specified width and height
-        $width = 1000;  
-        $height = 600;
-        $version = 2;
-
-        $quickChartUrl = 'https://quickchart.io/chart?c=' . urlencode($chartConfigJson) . '&width=' . $width . '&height=' . $height . '&version=' . $version;
-
-        return $quickChartUrl;
-    }
-
-    private static function calculateMaxValues($categoryVal, $channelCodes, $lastThreeDays, $prevYear, $currYear) {
-        $maxValues = [];
-    
-        $chartConfigs = [
-            ['year' => $prevYear, 'type' => 'line', 'category' => $categoryVal],
-            ['year' => $currYear, 'type' => 'line', 'category' => $categoryVal],
-        ];
-    
-        foreach ($chartConfigs as $config) {
-            // Assuming you have a method generateDataPerChannel that returns the same structure
-            $chartData = self::generateDataPerChannel($config['type'], true, $config['category'], $config['year'], $channelCodes, $lastThreeDays, 0);
-
-            
-            $dataEntries = $chartData['data']['datasets'];
-    
-            foreach ($dataEntries as $dataset) {
-                $maxVal = $dataset['maxVal'] ?? 0;
-    
-                if (!isset($maxValues[$config['category']]) || $maxVal > $maxValues[$config['category']]) {
-                    $maxValues[$config['category']] = $maxVal;
-                }
-            }
-        }
-    
-        return $maxValues;
-    }
-
-    private static function generateRandomColor() {
-        $red = rand(0, 255);
-        $green = rand(0, 255);
-        $blue = rand(0, 255);
-        
-        return sprintf("#%02x%02x%02x", $red, $green, $blue);
-    }
-
     private function processMonthlySalesData($year, $month, $day, &$data, $storeSalesDR) {
 
         // Get and store sales summary
@@ -848,7 +266,6 @@ class StoreSalesDashboardReportService {
                 'sum_of_net_sales' => $sale['sum_of_net_sales'],
             ];
         }
-
     }
 
     private function processQuarterlySalesData($year, $month, $day, &$data, $storeSalesDR) {
@@ -872,22 +289,13 @@ class StoreSalesDashboardReportService {
                 'sum_of_net_sales' => $sale['sum_of_net_sales'],
             ];
         }
-        
-    }
-
-    private function processYTDSalesData($year, $month, $day, &$data, $storeSalesDR) {
-
-        // Get and store sales summary
-        $data['channel_codes']['TOTAL'][$year]['YTD'] = $storeSalesDR->getYearToDate();
-
     }
 
     private function processSalesData($year, $month, $day, &$data) {
         $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
-        $test  = $storeSalesDR->getStoreSalesData();
-        // dump($year);
-        // dump(count($test)); // Show the number of rows returned
-        // dump(array_slice($test, 0, 5)); // Show the first 5 results
+
+        $storeSalesDR->getStoreSalesData();
+
         self::processDailySalesData($year, $month, $day, $data, $storeSalesDR);
 
         self::processMonthlySalesData($year, $month, $day, $data, $storeSalesDR);
@@ -896,8 +304,15 @@ class StoreSalesDashboardReportService {
        
         // Get YTD
         $data['channel_codes']['TOTAL'][$year]['ytd'] = $storeSalesDR->getYearToDate();
+    }
 
-        // Drop the temporary table
-        // $storeSalesDR->dropTempTable();
+    public function updateYTDReport($updateData){
+        $data = $this->getData();
+
+        $data['channel_codes']['TOTAL'][$updateData['prevYear']]['ytd'] = $updateData['prevData'];
+        $data['channel_codes']['TOTAL'][$updateData['currYear']]['ytd'] = $updateData['currData'];
+
+        // Update the data in cache
+        Cache::put($this->getCacheKey(), $data, $this->getCacheExpiration());
     }
 }

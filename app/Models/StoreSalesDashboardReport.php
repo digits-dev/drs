@@ -29,26 +29,31 @@ class StoreSalesDashboardReport extends Model
     protected $endDate;
 
     protected $currentDayAsDate;
+    protected $previousDayAsDate;
 
     public function __construct(array $attributes = []){
         parent::__construct($attributes);
         
         // Initialize year and month, and set properties
         if (isset($attributes['year']) && isset($attributes['month']) && isset($attributes['day'])) {
+            $previousDay = date($this->day, strtotime('-1 day'));
+            $previousMonthRaw = $attributes['month'] - 1;
+
             $this->year = $attributes['year'];
-            $this->previousMonthRaw = $attributes['month'] - 1;
-            $this->previousMonth = str_pad($attributes['month'] - 1, 2, '0', STR_PAD_LEFT); ;
+            $this->previousMonth = str_pad($previousMonthRaw, 2, '0', STR_PAD_LEFT); ;
             $this->month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT); // always two digits
-            // $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT); // always two digits
-            $this->day = $attributes['day']; // always two digits
+            $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT);  // always two digits
 
             $this->yearMonth = "{$this->year}-{$this->month}";
             $this->currentDayAsDate = "{$this->year}-{$this->month}-{$this->day}";
+            $this->previousDayAsDate = "{$this->year}-{$this->month}-{$previousDay}";
             $this->startDate = "{$this->year}-{$this->month}-01";
             $this->endDate = date("Y-m-d", strtotime("last day of {$this->startDate}"));
         }
 
+        Log::info("Current Day as Date $this->currentDayAsDate");
         Log::info("Month $this->month");
+        Log::info("Previous Month $this->previousMonth");
         Log::info("RAW Month $this->rawMonth");
         Log::info("Year $this->year");
         Log::info("Day $this->day");
@@ -425,7 +430,7 @@ class StoreSalesDashboardReport extends Model
         Cache::forget($cacheKey); 
 
         // Cache the results of the query
-        $storeSalesData = Cache::remember($cacheKey, 80000, function() {
+        $storeSalesData = Cache::remember($cacheKey, $this->getCacheExpiration(), function() {
             return DB::select("
                 SELECT 
                     store_sales.sales_date,
@@ -457,13 +462,16 @@ class StoreSalesDashboardReport extends Model
     public function getSalesSummary()
     {
 
+        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
+        $lastDay = end($lastThreeDays);
+
         $dataCollection = $this->getDataCollection();
 
         // Group the data by week cutoff
-        $salesSummary = $dataCollection->filter(function($row) {
+        $salesSummary = $dataCollection->filter(function($row) use($lastDay) {
 
-            if($this->currentDayAsDate <= $this->endDate) {
-                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->currentDayAsDate;
+            if($lastDay <= $this->endDate) {
+                return $row->sales_date >= $this->startDate && $row->sales_date <= $lastDay;
             } else {
                 return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
             }
@@ -503,13 +511,16 @@ class StoreSalesDashboardReport extends Model
 
     public function getSalesWeeklyPerChannel()
     {
+        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
+        $lastDay = end($lastThreeDays);
+
         $dataCollection = $this->getDataCollection();
 
         // Group the data by week and channel classification
-        $salesSummary = $dataCollection->filter(function($row) {
+        $salesSummary = $dataCollection->filter(function($row) use($lastDay) {
 
-            if($this->currentDayAsDate <= $this->endDate) {
-                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->currentDayAsDate;
+            if($lastDay <= $this->endDate) {
+                return $row->sales_date >= $this->startDate && $row->sales_date <= $lastDay;
             } else {
                 return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
             }
@@ -1014,6 +1025,15 @@ class StoreSalesDashboardReport extends Model
             ];
         });
 
+        // Add channel and store concept
+        $channelName = Channel::select('channel_name')->where('id', $channel)->value('channel_name');
+        $conceptName = Concept::select('concept_name')->where('id',$concept)->value('concept_name');
+
+        $yearToDateSummary['SELECTED'] = [
+            'channel_name' => $channelName,
+            'concept_name' => $conceptName,
+        ];
+
         // Add total row
         $totalSales = $yearToDateSummary->sum('sum_of_net_sales');
         $yearToDateSummary['TOTAL'] = [
@@ -1047,5 +1067,17 @@ class StoreSalesDashboardReport extends Model
         $cacheKey = "store_sales_table_data_{$today}_{$this->year}";
  
         return $cacheKey;
+    }
+
+    private function getCacheExpiration()
+    {
+        // Get the current time
+        $now = time();
+
+        // Get the timestamp for the end of the day (midnight)
+        $endOfDay = strtotime('tomorrow') - 1; 
+
+        // Calculate the difference
+        return $endOfDay - $now;
     }
 }

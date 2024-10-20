@@ -42,14 +42,7 @@
         .dashboard{
             margin-top: 90px;
         }
-/* 
-        td {
-            white-space: initial !important;        
-            overflow: unset !important;          
-            text-overflow: unset !important;   
-            padding: 0 !important;
-        } */
-        
+
         .sales-report td {
             padding: 3px 2.5px !important; 
         }
@@ -58,13 +51,21 @@
 
 </head>
 <body>
+
+    @php
+        $prevYear = $yearData['previousYear'];
+        $currYear = $yearData['currentYear'];
+        $month = $yearData['month'];
+    @endphp
+
+    {{-- DAILY SALES REPORT  --}}
     <div class="dashboard ">
         @foreach ($channel_codes as $channel => $channelData)
             @if ($channel == 'OTHER' || $channel == '')
                 @continue
             @endif
             
-            <x-sales-report 
+            <x-pdf.daily-sales-report 
                 :isTopOpen="$loop->first"
                 :channel="$channel" 
                 :data="$channelData"
@@ -75,15 +76,15 @@
         @endforeach
     </div>
 
+    {{-- MONTHLY SALES REPORT  --}}
     <div class="page-break"></div>
-
     <div class="dashboard ">
         @foreach ($channel_codes as $channel => $channelData)
             @if ($channel == 'OTHER' || $channel == '')
                 @continue
             @endif
             
-            <x-monthly-sales-report-pdf 
+            <x-pdf.monthly-sales-report
                 :isTopOpen="$loop->first"
                 :channel="$channel" 
                 :data="$channelData"
@@ -93,8 +94,8 @@
         @endforeach
     </div>
 
+    {{-- QUARTERLY SALES REPORT  --}}
     <div class="page-break"></div>
-
     <div class="dashboard ">
         @foreach ($channel_codes as $channel => $channelData)
             @if ($channel == 'OTHER' || $channel == '')
@@ -111,9 +112,29 @@
         @endforeach
     </div>
 
-    @foreach ($chartUrls  as $chartUrl)
+    {{-- YTD SALES REPORT  --}}
+    <div class="page-break"></div>
+    <div class="dashboard ">
+        @php
+            $channelName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['channel_name'];
+            $conceptName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['concept_name'];
+        @endphp
+
+        <x-pdf.ytd-sales-report
+            :channelName="$channelName ? $channelName : 'ALL'"
+            :storeConcept="$conceptName ? $conceptName : 'ALL'"
+            :prevYear="$yearData['previousYear']" 
+            :currYear="$yearData['currentYear']"
+            :month="$yearData['month']"
+            :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
+            :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
+        />
+    </div>
+
+    {{-- CHARTS  --}}
+
+    {{-- @foreach ($chartUrls  as $chartUrl)
         @if(!empty($chartUrl))
-            {{-- page break --}}
             <div class="page-break"></div>
             <div class="content">
                 <img src="{{ $chartUrl }}" 
@@ -121,9 +142,8 @@
                 style="width:100%; height:700px; border: 1px solid #ccc;">
             </div>
 
-            {{-- <div class="page-break"></div> --}}
         @endif
-    @endforeach
+    @endforeach --}}
 
 </body>
 </html>

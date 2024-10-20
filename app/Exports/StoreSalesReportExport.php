@@ -5,7 +5,7 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 
-class WeeklySalesExport implements FromView
+class StoreSalesReportExport implements FromView
 {
 
     protected $data;
@@ -18,6 +18,6 @@ class WeeklySalesExport implements FromView
 
     public function view(): View
     {
-        return view('dashboard-report.store-sales.exports.weekly-sales-excel', $this->data);
+        return view('dashboard-report.store-sales.exports.excel-sales-report', $this->data);
     }
 }

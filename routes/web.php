@@ -217,23 +217,16 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
 
 
-
     //DASHBOARD REPORT
-    Route::get('/pdf_show', [AdminStoreSalesDashboardReportController::class, 'showPDF'] );
-    Route::get('/pdf', [AdminStoreSalesDashboardReportController::class, 'exportPDF'] )->name('weekly_export_pdf');
-    Route::get('/custom_excel', [AdminStoreSalesDashboardReportController::class, 'exportExcel'] )->name('weekly_export_excel');
-    Route::get('/custom_excel_view', [AdminStoreSalesDashboardReportController::class, 'showExcel'] );
-
-    Route::get('/pdf_snap', [AdminStoreSalesDashboardReportController::class, 'generatePDF2'] );
-
-
-    Route::get('/tabs', [AdminStoreSalesDashboardReportController::class, 'getTabs'] );
-
+    Route::get('/export_sales_report_pdf', [AdminStoreSalesDashboardReportController::class, 'exportPDF'] )->name('export_sales_report_pdf');
+    Route::get('/export_sales_report_excel', [AdminStoreSalesDashboardReportController::class, 'exportExcel'] )->name('export_sales_report_excel');
+    Route::get('/fetch_sales_report_data', [AdminStoreSalesDashboardReportController::class, 'fetchData'] )->name('fetch_store_sales');
     Route::post('/ytd_update', [AdminStoreSalesDashboardReportController::class, 'updateYtdSalesReport'] )->name('ytd_update');
 
+
+    Route::get('/pdf_show', [AdminStoreSalesDashboardReportController::class, 'showPDF'] );
     Route::post('/save_chart', [AdminStoreSalesDashboardReportController::class, 'saveChart'] );
 
-    Route::get('/fetch_data', [AdminStoreSalesDashboardReportController::class, 'fetchData'] )->name('fetch_store_sales');
 
 
 });

@@ -6,7 +6,7 @@
                 @continue
             @endif
 
-            <x-sales-report 
+            <x-daily-sales-report 
                 :isTopOpen="$loop->first"
                 :channel="$channel" 
                 :data="$channelData"

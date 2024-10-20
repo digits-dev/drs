@@ -1,13 +1,13 @@
 <?php namespace App\Http\Controllers;
 
-	use App\Exports\WeeklySalesExport;
+	use App\Exports\StoreSalesReportExport;
 	use App\Models\Channel;
 	use App\Models\Concept;
 	use App\Models\StoreSalesDashboardReport;
 	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
 	use Barryvdh\DomPDF\Facade as DomPDF;
 	use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
-	use Log;
+	use Illuminate\Support\Facades\Log;
 	use Maatwebsite\Excel\Facades\Excel;
 	use DB;
 	use CRUDBooster;
@@ -424,45 +424,7 @@
 
 	    }
 
-
-
 	    //By the way, you can still create your own method in here... :) 
-
-		
-		public function getIndex2() {
-
-			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-			
-			$data = [];
-			$data['page_title'] = 'Store Sales Dashboard Report';
-
-			$reloadData = request()->has('reload_data');
-
-			// dd($reloadData);
-
-			if($reloadData){
-				$generatedData = $this->dashboardService->generateSalesReport();
-			} else {
-				$generatedData = $this->dashboardService->getData();
-
-				if(empty($generatedData)){
-					$generatedData = $this->dashboardService->generateSalesReport();
-				}
-			}
-
-			$data = array_merge($data, $generatedData);
-
-			$data['channels'] = Channel::get(['id','channel_name'] );
-			$data['concepts'] = Concept::get(['id','concept_name'] );
-
-			// dd($data['channel_codes']);
-
-			// dd($data);
-
-			Log::info(json_encode($data, JSON_PRETTY_PRINT));
-
-			return view('dashboard-report.store-sales.index', $data);
-		}
 
 		public function getIndex()
 		{
@@ -484,8 +446,12 @@
 		// New method to fetch the data asynchronously
 		public function fetchData()
 		{
-			$generatedData = $this->dashboardService->getData();
 
+			$reloadData = request()->has('reload_data');
+
+			// dd($reloadData);
+
+			$generatedData = $reloadData ? $this->dashboardService->generateSalesReport() : $this->dashboardService->getData();
 			
 			$prevYear = $generatedData['yearData']['previousYear'];
 			$currYear = $generatedData['yearData']['currentYear'];
@@ -525,53 +491,25 @@
 			// Merge the generated data into the data array
 			$data = array_merge($data, $generatedData);
 
-			$chartUrls = []; // Array to hold chart URLs
-
-			// $chartConfigTotal = self::getChartConfigForTotal($dataCategory, $generatedData);
-
-			// $chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
-
-			// $chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
-
-
-			// if($isPerChannel){ 
-			// 	$lastIndex = 0;
-			// 	foreach($chartConfigPerChannel as $index => $chart) {
-			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
-			// 		$lastIndex = $index;
-			// 	}
-
-			// 	foreach($chartConfigPiePerChannel as $index => $chart){
-			// 		$lastIndex += 1;
-			// 		$url = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
-					
-			// 		if($url){
-			// 			$chartUrls["quickChartUrl{$lastIndex}"] = $url;
-			// 		}
-					
-			// 	}
-			// } else {
-			// 	foreach($chartConfigTotal as $index => $chart) {
-			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], false, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], null, $chart['prevYear'], $chart['currYear']);
-			// 	}
-			// }
-
-			$data['chartUrls'] = $chartUrls;
-			
 			
 			try {	
 				// Load the view and generate the PDF
-				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf', $data)
+				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.exports.pdf-sales-report', $data)
 						->setPaper('A4', 'landscape')
 						->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
 					
 				// Return the PDF as a download
-				\Log::info('Data for PDF: ');
+				Log::info('Data for PDF: ');
 				Log::info(json_encode($data, JSON_PRETTY_PRINT));
-				return $pdf->download('document.pdf');
+
+
+				$dateTime = date('Y-m-d_H-i-s');
+				$fileName = "sales-report_{$dateTime}.pdf";
+
+				return $pdf->download($fileName);
 			} catch (\Exception $e) {
 				// Handle exceptions and log errors
-				\Log::error('PDF Generation Error: ' . $e->getMessage());
+				Log::error('PDF Generation Error: ' . $e->getMessage());
 				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
 			}
 		}
@@ -592,199 +530,17 @@
 
 			$data = array_merge($data, $generatedData);
 
-			$chartUrls = []; // Array to hold chart URLs
-
-			// $chartConfigTotal = self::getChartConfigForTotal($dataCategory, $generatedData);
-
-			// $chartConfigPerChannel = self::getChartConfigPerChannel($dataCategory, $generatedData);
-
-			// $chartConfigPiePerChannel = self::getChannelsKey($dataCategory, $generatedData);
-
-			// // generateQuickChartForPiePerChannel
-			// if($isPerChannel){ 
-			// 	$lastIndex = 0;
-			// 	foreach($chartConfigPerChannel as $index => $chart) {
-			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], true, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['year'], $generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear']);
-			// 		$lastIndex = $index;
-			// 	}
-
-			// 	foreach($chartConfigPiePerChannel as $index => $chart){
-			// 		$lastIndex += 1;
-			// 		$chartUrls["quickChartUrl{$lastIndex}"] = SSDashboardReportService::generateDataForPiePerChannel( $chart['type'], true, $chart['category'],$generatedData['yearData']['previousYear'], $generatedData['yearData']['currentYear'], $chart['channelCodes'], $chart['lastThreeDays'], $chart['key']);
-			// 	}
-			// } else {
-			// 	foreach($chartConfigTotal as $index => $chart) {
-			// 		$chartUrls["quickChartUrl{$index}"] = SSDashboardReportService::generateQuickChart( $chart['type'], false, $chart['category'], $chart['channelCodes'], $chart['lastThreeDays'], null, $chart['prevYear'], $chart['currYear']);
-			// 	}
-			// }
-
-			$data['chartUrls'] = $chartUrls;
-
 			return view('dashboard-report.store-sales.test-pdf', $data);
 		}
 
 		public function exportExcel(){
 
+			$dateTime = date('Y-m-d_H-i-s');
+			$fileName = "sales-report_{$dateTime}.xlsx";
+
 			$data = $this->dashboardService->getData();
-		
-			return Excel::download(new WeeklySalesExport($data), 'custom-excel.xlsx');
-		}
-
-		private function getChartConfigForTotal($dataCategory, $generatedData){
-			return [
-				[
-					'type' => 'bar',
-					'category' => $dataCategory,
-					'prevYear' => $generatedData['yearData']['previousYear'],
-					'currYear' => $generatedData['yearData']['currentYear'],
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-				], 
-				[
-					'type' => 'pie',
-					'category' => $dataCategory,
-					'prevYear' => $generatedData['yearData']['previousYear'],
-					'currYear' => $generatedData['yearData']['currentYear'],
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-				], 
-				[
-					'type' => 'line',
-					'category' => $dataCategory,
-					'prevYear' => $generatedData['yearData']['previousYear'],
-					'currYear' => $generatedData['yearData']['currentYear'],
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-				], 
-			];
-		}
-
-		private function getChartConfigPerChannel($dataCategory, $generatedData){
-			return [
-				[
-					'type' => 'bar',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-					'year' => $generatedData['yearData']['previousYear'],
-				], 
-				[
-					'type' => 'bar',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-					'year' => $generatedData['yearData']['currentYear'],
-				], 
-				[
-					'type' => 'pie',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-					'year' => $generatedData['yearData']['previousYear'],
-				], 
-				[
-					'type' => 'pie',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-					'year' => $generatedData['yearData']['currentYear'],
-				], 
-				[
-					'type' => 'line',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-					'year' => $generatedData['yearData']['previousYear'],
-				], 
-				[
-					'type' => 'line',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-					'year' => $generatedData['yearData']['currentYear'],
-				], 
-			];
-		}
-
-		private function getChannelsKey($dataCategory, $generatedData){
-			return [
-				[
-					'type' => 'pie',
-					'key' => 'ECOMM',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'],
-				],
-				[
-					'type' => 'pie',
-					'key' => 'RETAIL',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
-				],
-				[
-					'type' => 'pie',
-					'key' => 'SC',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
-				],
-				[
-					'type' => 'pie',
-					'key' => 'OUT',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
-				],
-				[
-					'type' => 'pie',
-					'key' => 'CON',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
-				],
-				[
-					'type' => 'pie',
-					'key' => 'FRA',
-					'category' => $dataCategory,
-					'channelCodes' => $generatedData['channel_codes'], 
-					'lastThreeDays' => $generatedData['lastThreeDaysDates'], 
-				],
-			];
-		}
-
-
-		
-		public function getTabs() {
-
-			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-
-			$data = [];
-			$data['page_title'] = 'Store Sales Dashboard Report';
-
-			$reloadData = request()->has('reload_data');
-
-			// dd($reloadData);
-
-			if($reloadData){
-				$generatedData = $this->dashboardService->generateSalesReport();
-			} else {
-				$generatedData = $this->dashboardService->getData();
-
-				if(empty($generatedData)){
-					$generatedData = $this->dashboardService->generateSalesReport();
-				}
-			}
-
-			$data = array_merge($data, $generatedData);
-
-			// dd($data['channel_codes']);
-
-			// dd($data);
-
-			Log::info(json_encode($data, JSON_PRETTY_PRINT));
-
-			return view('dashboard-report.store-sales.tabs', $data);
+	
+			return Excel::download(new StoreSalesReportExport($data), $fileName);
 		}
 
 		public function updateYtdSalesReport(Request $request)
@@ -799,18 +555,31 @@
 			$channelId = $request->input('channel');
 			$conceptId = $request->input('concept');
 
-			$currentMonth = 4;
-            $previousYear = 2021;
-            $currentYear = 2022; 
-            $currentDay = 23;
+			// $currentMonth = 4;
+            // $previousYear = 2021;
+            // $currentYear = 2022; 
+            // $currentDay = 23;
+
+			$currentMonth = 9;
+			$previousYear = 2021;
+			$currentYear = 2022; 
+			$currentDay = 7;
 
 			$prevInstance = new StoreSalesDashboardReport(['year' => $previousYear, 'month' => $currentMonth, 'day' => $currentDay]);
 			$currInstance = new StoreSalesDashboardReport(['year' => $currentYear, 'month' => $currentMonth, 'day' => $currentDay]);
 
 			$prevData = $prevInstance->getYearToDateWithSelection($channelId, $conceptId);
 			$currData = $currInstance->getYearToDateWithSelection($channelId, $conceptId);
+
+			$updateCacheData = [
+				'prevYear' => $previousYear,
+				'currYear' => $currentYear,
+				'prevData' => $prevData,
+				'currData' => $currData,
+			];
 			
-			
+			$this->dashboardService->updateYTDReport($updateCacheData);
+
 			$data = [
 				'currApple' => $currData['APPLE']['sum_of_net_sales'],
 				'currNonApple' => $currData['NON-APPLE']['sum_of_net_sales'],

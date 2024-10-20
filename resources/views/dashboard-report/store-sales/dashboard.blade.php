@@ -13,14 +13,14 @@
 <style>
   #charts_container {
     width: 100%;
-    display: flex; /* Allows flexbox layout */
-    flex-wrap: wrap; /* Enables wrapping for multiple charts */
+    display: flex; 
+    flex-wrap: wrap; 
 }
 .chart {
-    flex: 1 1 auto; /* Allow charts to grow and shrink */
-    min-width: 300px; /* Set a minimum width */
-    height: 500px; /* Fixed height */
-    position: relative; /* Ensure positioning works */
+    flex: 1 1 auto;
+    min-width: 300px; 
+    height: 500px;
+    position: relative; 
 }
 </style>
 

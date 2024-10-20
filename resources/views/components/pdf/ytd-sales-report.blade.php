@@ -3,11 +3,14 @@
     'currYear',
     'month',
     'prevYearYTDData',
-    'currYearYTDData'
+    'currYearYTDData',
+    'channelName' => '',
+    'storeConcept' => ''
 ])
 
 @php
     $monthName = strtoupper(date('F', mktime(0, 0, 0, $month - 1, 1)));
+
 @endphp
 
 
@@ -29,6 +32,18 @@
             </colgroup>
 
             <thead>
+
+                    
+                <tr>
+                    <th  class="none" style="text-align: left; font-size:14px; height:50px;" colspan="6" ><b>YTD SALES REPORT</b></th>
+                </tr>
+                <tr>
+                    <th  class="none" style="text-align: left; font-size:12px;" colspan="6" ><b>CHANNEL: {{$channelName}} </b></th>
+                </tr>
+                <tr>
+                    <th  class="none" style="text-align: left; font-size:12px; height:20px;" colspan="6" ><b>STORE CONCEPT: {{$storeConcept}}</b></th>
+                </tr>
+
                 
                 <tr>
                     <th>GROUP</th>
