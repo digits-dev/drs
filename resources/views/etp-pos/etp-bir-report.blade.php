@@ -522,12 +522,21 @@
                         className: 'btn custom-button'
                     }
                 ],
+                "order": [[1, "desc"]], 
                 columnDefs: [
                     { "targets": [1, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17 ], "width": "100px" },  // Set 100px width for multiple columns
                     { "targets": [2, 3], "width": "180px" },
                     { "targets": 12, "width": "150px" },
-                    { "targets": 0, "width": "250px" }
+                    { "targets": 0, "width": "250px" },
+                    { "targets": 1, "type": "date" }
                 ],
+                "language": {
+                    "emptyTable": 
+                        `<div style="text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/128/9841/9841554.png" alt="No Data Icon" style="width: 70px; margin-bottom: 10px; margin-top: 10px;">
+                            <p style='font-size: 14px; color: #3C8DBC; font-weigth: 700;'>No matching Data found.</p>
+                        </div>`
+                },
                 initComplete: function() {
                     // Move buttons to the right side
                     const buttons = $('.dt-buttons').detach();
@@ -536,42 +545,76 @@
             });
 
             $('#bir_report tbody').on('click', 'td', function() {
-                const cellData = $(this).text();
-                $(this).css('background-color', '#3C8DBC').css('color', 'white');
+                const cell = $(this);
+                let cellData = cell.text().trim();  
+                cellData = cellData.replace("Copied!", "").trim();
 
-                // Check if the Clipboard API is supported
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(cellData)
-                        .then(() => {
+                if (cellData !== "") {
+                    $('.popover-tooltip').remove();
+                    clearTimeout(cell.data('timeout'));
 
-                            // Reset cell color after 1 second
-                            setTimeout(() => {
-                                $(this).css('background-color', '').css('color',
-                                ''); // Reset background color
-                            }, 1000);
-                        })
-                        .catch(err => {
-                            alert('Failed to copy: ', err);
+                    cell.css('background-color', 'lightgray').css('color', '#28A745');
+
+                    const popover = $('<small class="popover-tooltip"> <i class="fa fa-check"></i> Copied!</small>');
+                    $('body').append(popover); // Append popover to the body
+
+                    // Get the cell's position relative to the document
+                    const cellOffset = cell.offset();
+
+                    popover.css({
+                        position: 'absolute',
+                        top: cellOffset.top - 20 + 'px', 
+                        left: cellOffset.left + (cell.outerWidth() / 2) - (popover.outerWidth() / 2) + 'px',
+                        backgroundColor: '#28A745',
+                        color: '#fff',
+                        borderRadius: '5px',
+                        padding: '5px 10px',
+                        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
+                        fontSize: '11px',
+                        whiteSpace: 'nowrap',
+                        display: 'block',
+                        opacity: 1,
+                        zIndex: 9999 
+                    });
+
+                    const timeout = setTimeout(() => {
+                        popover.fadeOut(300, function() {
+                            $(this).remove();
                         });
-                } else {
-                    // Fallback for older browsers
-                    const textarea = document.createElement('textarea');
-                    textarea.value = cellData;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                        document.execCommand('copy');
-                    } catch (err) {
-                        alert('Failed to copy using execCommand: ', err);
-                    } finally {
-                        document.body.removeChild(textarea);
-                    }
+                    }, 500);
 
-                    // Reset cell color after 1 second
-                    setTimeout(() => {
-                        $(this).css('background-color', '').css('color',
-                        ''); // Reset background color
-                    }, 1000);
+                    cell.data('timeout', timeout);
+
+                    // Clipboard API logic
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(cellData)
+                            .then(() => {
+                                setTimeout(() => {
+                                    cell.css('background-color', '').css('color', ''); 
+                                }, 1000);
+                            })
+                            .catch(err => {
+                                alert('Failed to copy: ', err);
+                            });
+                    } else {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = cellData;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        try {
+                            if (cellData !== 'Copied!') { 
+                                document.execCommand('copy');
+                            }
+                        } catch (err) {
+                            alert('Failed to copy using execCommand: ', err);
+                        } finally {
+                            document.body.removeChild(textarea);
+                        }
+
+                        setTimeout(() => {
+                            cell.css('background-color', '').css('color', '');
+                        }, 500);
+                    }
                 }
             });
 

@@ -165,6 +165,7 @@
         width: 12px;
         height: 12px;
         margin: 5px;
+        /* background-color: #f1f1f1; */
         background-color: #3498db;
         border-radius: 50%;
         animation: bounce 0.4s infinite alternate; /* Reduced duration to 0.4s for faster bounce */
@@ -208,6 +209,18 @@
         transition: width 0.4s ease;
     }
 
+    .ld-note{
+        font-size: 15px; 
+        color: #3C8DBC; 
+        /* color: #f1f1f1;  */
+        font-weight: normal;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    /* #tdAll{
+        background-image: url('https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdmwxYnUzbzE3ZmdncXpiOXNzMmM5ejByNzE0bGRmMXNpNmx3Z2xhZCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/V4NSR1NG2p0KeJJyr5/200.webp');
+    } */
+
 </style>
     
 @endpush
@@ -231,14 +244,14 @@
                     <tr>
                         <td style="display: none"></td>
                         <td style="display: none"></td>
-                        <td colspan="5"><span class="tblLoading" style="display: show;" id="loadingTable">
+                        <td colspan="5" id="tdAll"><span class="tblLoading" style="display: show;" id="loadingTable">
                             <div class="spinner-dots">
                                 <div></div>
                                 <div></div>
                                 <div></div>
                             </div>
                             
-                            <span id="loadingData" style="display: none;">Loading Data</span> <span id="pleaseWait">Syncing, Please wait</span>
+                            <p style='display:none;' class="ld-note" id="loadingData">Loading Data</p> <p id="pleaseWait" class="ld-note">Syncing, Please wait</p>
                             
                         <div class="cus-progress-container">
                             <div class="cus-progress-bar" id="animated-cus-progress-bar"></div>
@@ -286,6 +299,13 @@
                         className: 'btn custom-button'
                     }
                 ],
+                "language": {
+                    "emptyTable": 
+                        `<div style="text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/128/9841/9841554.png" alt="No Data Icon" style="width: 70px; margin-bottom: 10px; margin-top: 10px;">
+                            <p style='font-size: 14px; color: #3C8DBC; font-weigth: 700;'>No matching Data found.</p>
+                        </div>`
+                },
                 initComplete: function() {
             // Move buttons to the right side
             const buttons = $('.dt-buttons').detach();
