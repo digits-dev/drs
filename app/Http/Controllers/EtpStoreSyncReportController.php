@@ -19,18 +19,25 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 		return view('etp-pos.etp-storesync-page', $data);
 	}
 
-	public function getStoreSync(){
+	public function getStoreSync()
+	{
 		$customerMap = [];
 		$storesMap = [];
 		$inventoryMap = [];
+
 		$customers_masterfile = Cache::remember('filtered_customers', 900, function() {
 			return DB::connection('masterfile')->table('customer')
 				->select('customer_code', 'cutomer_name', 'concept')
 				->where(function ($query) {
 					$query->where('cutomer_name', 'like', '%FRA')
-						->orWhere('cutomer_name', 'like', '%RTL');})
+						->orWhere('cutomer_name', 'like', '%RTL');
+				})
 				->get();
-			});
+		});
+
+		foreach ($customers_masterfile as $customer) {
+			$customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
+		}
 
 		$store_sales = Cache::remember('filtered_store_sales', 900, function() {
 			return DB::table('store_sales')
@@ -39,7 +46,7 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 				->groupBy('customer_name')
 				->orderBy('latest_sales_date', 'desc')
 				->get();
-			});
+		});
 
 		$store_inventories = Cache::remember('filtered_store_inventories', 900, function() {
 			return DB::table('store_inventories')
@@ -48,38 +55,32 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 				->groupBy('customer_name')
 				->orderBy('latest_inventory_date', 'desc')
 				->get();
-			});
+		});
 
-		foreach ($customers_masterfile as $customer) {
-			$customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
+		$customerNames = array_merge(
+			$store_sales->pluck('customer_name')->toArray(),
+			$store_inventories->pluck('customer_name')->toArray()
+		);
+
+		$customerData = Cache::remember('StoreSync_batch', 3600, function () use ($customerNames) {
+			return DB::connection('masterfile')->table('customer')
+				->whereIn('cutomer_name', $customerNames)
+				->get()
+				->keyBy('cutomer_name');
+		});
+
+		foreach ($store_sales as $sales) {
+			if (isset($customerData[$sales->customer_name])) {
+				$customer = $customerData[$sales->customer_name];
+				$storesMap[explode('-', $customer->customer_code)[1]] = $sales->latest_sales_date;
+			}
 		}
 
-		foreach ($store_sales as &$sales) {
-
-			$customers_masterfile = Cache::remember('StoreSync' . $sales->customer_name, 3600, function () use ($sales) {
-				return DB::connection('masterfile')->table('customer')
-					->where(function ($query) {
-						$query->where('cutomer_name', 'like', '%FRA')
-							->orWhere('cutomer_name', 'like', '%RTL');
-					})
-					->where('cutomer_name', $sales->customer_name)
-					->first();
-			});
-			$storesMap[explode('-', $customers_masterfile->customer_code)[1]] = $sales->latest_sales_date;
-		}
-
-		foreach ($store_inventories as &$inventories) {
-
-			$customers_masterfile = Cache::remember('StoreSync' . $inventories->customer_name, 3600, function () use ($inventories) {
-				return DB::connection('masterfile')->table('customer')
-					->where(function ($query) {
-						$query->where('cutomer_name', 'like', '%FRA')
-							->orWhere('cutomer_name', 'like', '%RTL');
-					})
-					->where('cutomer_name', $inventories->customer_name)
-					->first();
-			});
-			$inventoryMap[explode('-', $customers_masterfile->customer_code)[1]] = $inventories->latest_inventory_date;
+		foreach ($store_inventories as $inventories) {
+			if (isset($customerData[$inventories->customer_name])) {
+				$customer = $customerData[$inventories->customer_name];
+				$inventoryMap[explode('-', $customer->customer_code)[1]] = $inventories->latest_inventory_date;
+			}
 		}
 
 		$data = [];
@@ -87,7 +88,7 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 		$data['store_sync_data'] = Cache::remember('filtered_store_sync_data', 900, function() {
 			return DB::connection('sqlsrv')
 				->select(DB::raw("exec [SP_Custom_StoreSyncReport]"));
-			});
+		});
 
 		foreach ($data['store_sync_data'] as $row) {
 			$row->store_last_sync =  Carbon::parse($storesMap[$row->Warehouse] ?? ' ')->format('Y-m-d');

@@ -153,38 +153,7 @@
         align-items: center;
         flex-direction: column; /* Stack spinner and text vertically */
         z-index: 9999;
-    }
-
-    .spinner-dots {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .spinner-dots div {
-        width: 12px;
-        height: 12px;
-        margin: 5px;
-        /* background-color: #f1f1f1; */
-        background-color: #3498db;
-        border-radius: 50%;
-        animation: bounce 0.4s infinite alternate; /* Reduced duration to 0.4s for faster bounce */
-    }
-
-    .spinner-dots div:nth-child(2) {
-        animation-delay: 0.1s; /* Reduced delay to 0.1s */
-    }
-
-    .spinner-dots div:nth-child(3) {
-        animation-delay: 0.2s; /* Reduced delay to 0.2s */
-    }
-
-    @keyframes bounce {
-        to {
-            opacity: 0.3;
-            transform: translateY(-15px);
-        }
-    }
+    }   
 
     .tblLoading{
         padding: 10px 0px 10px 10px;
@@ -217,9 +186,30 @@
         font-family: Arial, Helvetica, sans-serif;
     }
 
-    /* #tdAll{
-        background-image: url('https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdmwxYnUzbzE3ZmdncXpiOXNzMmM5ejByNzE0bGRmMXNpNmx3Z2xhZCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/V4NSR1NG2p0KeJJyr5/200.webp');
-    } */
+    .spinner-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .spinner {
+            width: 50px;
+            height: 50px;
+            border: 7px solid rgba(0, 0, 0, 0.1);
+            border-top: 7px solid #3498db;
+            border-radius: 50%;
+            animation: spin 0.4s linear infinite;
+            margin-bottom: 5px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
 
 </style>
     
@@ -246,9 +236,8 @@
                         <td style="display: none"></td>
                         <td colspan="5" id="tdAll"><span class="tblLoading" style="display: show;" id="loadingTable">
                             <div class="spinner-dots">
-                                <div></div>
-                                <div></div>
-                                <div></div>
+                                
+                            <div class="spinner"></div>
                             </div>
                             
                             <p style='display:none;' class="ld-note" id="loadingData">Loading Data</p> <p id="pleaseWait" class="ld-note">Syncing, Please wait</p>
