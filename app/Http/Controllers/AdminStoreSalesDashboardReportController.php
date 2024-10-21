@@ -452,20 +452,56 @@
 			// dd($reloadData);
 
 			$generatedData = $reloadData ? $this->dashboardService->generateSalesReport() : $this->dashboardService->getData();
-			
-			$prevYear = $generatedData['yearData']['previousYear'];
-			$currYear = $generatedData['yearData']['currentYear'];
 			$month = $generatedData['yearData']['month'];
+
+			if($month == 1){
+
+				$prevYear = $generatedData['yearData']['nextPreviousYear'];
+				$currYear = $generatedData['yearData']['previousYear'];
+
+				$currYearForDaily = $generatedData['yearData']['currentYear'];
+
+			} else {
+				$prevYear = $generatedData['yearData']['previousYear'];
+				$currYear = $generatedData['yearData']['currentYear'];
+			}
+
 			$channel_codes = $generatedData['channel_codes'];
 			$lastThreeDaysDates = $generatedData['lastThreeDaysDates'];
 			$channels = Channel::get(['id', 'channel_name']);
 			$concepts = Concept::get(['id', 'concept_name']);
+
+
+			$data = [
+				'channel_codes' => $channel_codes,
+				'prevYear' => $prevYear,
+				'currYear' => $currYear,
+				'lastThreeDaysDates' => $lastThreeDaysDates,
+			];
 			
 			// Generate HTML for each tab using partial views
-			$tab1Html = view('dashboard-report.store-sales.partials.daily', compact('channel_codes', 'prevYear', 'currYear', 'lastThreeDaysDates'))->render();
-			$tab2Html = view('dashboard-report.store-sales.partials.monthly', compact('channel_codes', 'prevYear', 'currYear', 'lastThreeDaysDates'))->render();
-			$tab3Html = view('dashboard-report.store-sales.partials.quarterly', compact('channel_codes', 'prevYear', 'currYear', 'lastThreeDaysDates'))->render();
-			$tab4Html = view('dashboard-report.store-sales.partials.ytd', compact('channel_codes', 'prevYear', 'currYear', 'month', 'channels', 'concepts', 'lastThreeDaysDates'))->render();
+			$tab1Html = view('dashboard-report.store-sales.partials.daily', [
+				'channel_codes' => $channel_codes,
+				'prevYear' => $month == 1 ? $currYear : $prevYear,
+				'currYear' => $month == 1 ? $currYearForDaily : $currYear,
+				'lastThreeDaysDates' => $lastThreeDaysDates,
+			])->render();
+			
+			$tab2Html = view('dashboard-report.store-sales.partials.monthly',
+			 $data)->render();
+			 
+			$tab3Html = view('dashboard-report.store-sales.partials.quarterly',
+			 $data)->render();
+
+			$tab4Html = view('dashboard-report.store-sales.partials.ytd', [
+				'channel_codes' => $channel_codes,
+				'prevYear' => $prevYear,
+				'currYear' => $currYear,
+				'lastThreeDaysDates' => $lastThreeDaysDates,
+				'month' => $month, 
+				'channels' => $channels, 
+				'concepts' => $concepts,
+			])->render();
 		
 			return response()->json([
 				'tab1Html' => $tab1Html,
@@ -560,10 +596,36 @@
             // $currentYear = 2022; 
             // $currentDay = 23;
 
-			$currentMonth = 9;
-			$previousYear = 2021;
-			$currentYear = 2022; 
-			$currentDay = 7;
+			// $currentMonth = 9;
+			// $previousYear = 2021;
+			// $currentYear = 2022; 
+			// $currentDay = 7;
+
+			
+			$currentDay = date('d');
+            $currentMonth = date('m');
+            $previousYear = date('Y', strtotime('-1 year'));
+            $currentYear = date('Y'); 
+ 
+
+			// $currentMonth = 1;
+			// $previousYear = 2021;
+			// $currentYear = 2022; 
+			// $currentDay = 7;
+
+			// $currentMonth = 9;
+			// $previousYear = 2021;
+			// $currentYear = 2022; 
+			// $currentDay = 21;
+			
+
+            if($currentMonth == 1){
+                // $previousYear = 2020;
+                // $currentYear = 2021;
+                $previousYear =  date('Y', strtotime('-2 years'));
+                $currentYear = date('Y', strtotime('-1 year'));
+
+            } 
 
 			$prevInstance = new StoreSalesDashboardReport(['year' => $previousYear, 'month' => $currentMonth, 'day' => $currentDay]);
 			$currInstance = new StoreSalesDashboardReport(['year' => $currentYear, 'month' => $currentMonth, 'day' => $currentDay]);

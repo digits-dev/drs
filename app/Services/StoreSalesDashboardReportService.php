@@ -39,6 +39,8 @@ class StoreSalesDashboardReportService {
                return $this->generateSalesReport();
             }
 
+			\Log::info(json_encode($data, JSON_PRETTY_PRINT));
+
             return $data; 
         } catch (\Exception $e) {
             Log::error('Cache Retrieval of Sales Dashboard Report Data Error: ' . $e->getMessage());
@@ -58,10 +60,10 @@ class StoreSalesDashboardReportService {
         $data = Cache::lock('sales_report_lock', 5)->get(function () {
             // Generate and cache the data here
 			
-            // $currentDay = date('d');
-            // $currentMonth = date('m');
-            // $currentYear = date('Y'); 
-            // $previousYear = date('Y', strtotime('-1 year'));
+            $currentDay = date('d');
+            $currentMonth = date('m');
+            $currentYear = date('Y'); 
+            $previousYear = date('Y', strtotime('-1 year'));
             
             // $currentMonth = 3;
             // $previousYear = 2019;
@@ -84,20 +86,41 @@ class StoreSalesDashboardReportService {
 			// $currentYear = 2022; 
 			// $currentDay = 7;
 
-			$currentMonth = 9;
-			$previousYear = 2021;
-			$currentYear = 2022; 
-			$currentDay = 7;
+			// $currentMonth = 9;
+			// $previousYear = 2021;
+			// $currentYear = 2022; 
+			// $currentDay = 21;
+
+            if($currentMonth == 1){
+                // $nextPreviousYear = 2020;
+                // $previousYear = 2021;
+                // $currentYear = 2022; 
+
+                $nextPreviousYear =  date('Y', strtotime('-2 years'));
+                $previousYear = date('Y', strtotime('-1 year'));
+                $currentYear = date('Y'); 
+
+            } else {
+                // $nextPreviousYear = null;
+                // $previousYear = 2021;
+                // $currentYear = 2022; 
+
+                $nextPreviousYear =  null;
+                $previousYear = date('Y', strtotime('-1 year'));
+                $currentYear = date('Y'); 
+            }
 
             $years = [
+                ['year' => $nextPreviousYear],
                 ['year' => $previousYear],
                 ['year' => $currentYear],
             ];
             
             $data = [
                 'yearData' => [
-                    'previousYear' => $years[0]['year'],
-                    'currentYear' => $years[1]['year'],
+                    'nextPreviousYear' => $years[0]['year'],
+                    'previousYear' => $years[1]['year'],
+                    'currentYear' => $years[2]['year'],
                     'month' => $currentMonth,
                 ],
                 'channel_codes' => [],
@@ -106,8 +129,12 @@ class StoreSalesDashboardReportService {
             $data['lastThreeDaysDates'] = self::getLastThreeDaysOrDates('date', "{$currentYear}-{$currentMonth}-{$currentDay}");
 
             foreach ($years as $yearData) {
-                self::processSalesData($yearData['year'], $currentMonth, $currentDay, $data);
+                if($yearData['year']){
+                    self::processSalesData($yearData['year'], $currentMonth, $currentDay, $data);
+                }
             }
+
+            // dd($data);
 
             // Store the data in cache
             Cache::put($this->getCacheKey(), $data, $this->getCacheExpiration());
@@ -246,7 +273,7 @@ class StoreSalesDashboardReportService {
         return $formattedDays;
     }
 
-    private function processMonthlySalesData($year, $month, $day, &$data, $storeSalesDR) {
+    private function processMonthlySalesData($year, &$data, $storeSalesDR) {
 
         // Get and store sales summary
         $data['channel_codes']['TOTAL'][$year]['months'] = $storeSalesDR->getSalesPerMonth();
@@ -268,7 +295,7 @@ class StoreSalesDashboardReportService {
         }
     }
 
-    private function processQuarterlySalesData($year, $month, $day, &$data, $storeSalesDR) {
+    private function processQuarterlySalesData($year, &$data, $storeSalesDR) {
 
         // Get and store sales summary
         $data['channel_codes']['TOTAL'][$year]['quarters'] = $storeSalesDR->getSalesPerQuarter();
@@ -294,13 +321,17 @@ class StoreSalesDashboardReportService {
     private function processSalesData($year, $month, $day, &$data) {
         $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
 
-        $storeSalesDR->getStoreSalesData();
+        $test = $storeSalesDR->getStoreSalesData();
+
+        // $count = count($test);
+        // dump("year $year", $count);
+        // dump(array_slice($test, 0, 10));
 
         self::processDailySalesData($year, $month, $day, $data, $storeSalesDR);
 
-        self::processMonthlySalesData($year, $month, $day, $data, $storeSalesDR);
+        self::processMonthlySalesData($year, $data, $storeSalesDR);
 
-        self::processQuarterlySalesData($year, $month, $day, $data, $storeSalesDR);
+        self::processQuarterlySalesData($year, $data, $storeSalesDR);
        
         // Get YTD
         $data['channel_codes']['TOTAL'][$year]['ytd'] = $storeSalesDR->getYearToDate();

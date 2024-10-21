@@ -9,7 +9,7 @@
             <label class="control-label" for="channelSelector" >Channel:</label>
             
             <select id="channelSelector" class="form-control" style="width:150px;">
-                <option value="all">All</option>
+                <option value="all">ALL</option>
 
                 @foreach ($channels as $channel)
                     <option value="{{$channel->id}}">{{$channel->channel_name}}</option>
@@ -20,7 +20,7 @@
         <div class="form-group" >
             <label class="control-label" for="conceptSelector" >Store Concept:</label>
             <select id="conceptSelector" class="form-control" style="width:250px;">
-                <option value="all">All</option>
+                <option value="all">ALL</option>
 
                 @foreach ($concepts as $concept)
                     <option value="{{$concept->id}}">{{$concept->concept_name}}</option>

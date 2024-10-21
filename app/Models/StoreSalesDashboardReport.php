@@ -14,49 +14,58 @@ class StoreSalesDashboardReport extends Model
     use HasFactory;
 
     protected $table = 'temp_store_sales';
-
     public $timestamps = false;
-
     protected $fillable = ['year', 'month', 'day'];
-
     protected $year;
-
     protected $rawMonth;
     protected $month;
     protected $day;
     protected $yearMonth;
     protected $startDate;
     protected $endDate;
-
     protected $currentDayAsDate;
-    protected $previousDayAsDate;
 
     public function __construct(array $attributes = []){
         parent::__construct($attributes);
         
         // Initialize year and month, and set properties
         if (isset($attributes['year']) && isset($attributes['month']) && isset($attributes['day'])) {
-            $previousDay = date($this->day, strtotime('-1 day'));
-            $previousMonthRaw = $attributes['month'] - 1;
 
             $this->year = $attributes['year'];
-            $this->previousMonth = str_pad($previousMonthRaw, 2, '0', STR_PAD_LEFT); ;
-            $this->month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT); // always two digits
-            $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT);  // always two digits
+            $month = str_pad($attributes['month'], 2, '0', STR_PAD_LEFT);
+            $this->day = str_pad($attributes['day'], 2, '0', STR_PAD_LEFT);  
 
-            $this->yearMonth = "{$this->year}-{$this->month}";
+
+            if($month == '01') {
+                // $currentYear = date("Y");
+                $currentYear = 2022;
+
+                if($currentYear == $attributes['year']){
+                    $this->month = $month;
+                } else {
+                    $this->month = 12;
+                    $this->previousMonth = 12;
+                }
+            } else {
+                $this->month = $month;
+                $previousMonthRaw = $attributes['month'] - 1;
+                $this->previousMonth = str_pad($previousMonthRaw, 2, '0', STR_PAD_LEFT); ;
+            }
+            
             $this->currentDayAsDate = "{$this->year}-{$this->month}-{$this->day}";
-            $this->previousDayAsDate = "{$this->year}-{$this->month}-{$previousDay}";
+            $this->yearMonth = "{$this->year}-{$this->month}";
             $this->startDate = "{$this->year}-{$this->month}-01";
             $this->endDate = date("Y-m-d", strtotime("last day of {$this->startDate}"));
+           
         }
 
-        Log::info("Current Day as Date $this->currentDayAsDate");
-        Log::info("Month $this->month");
-        Log::info("Previous Month $this->previousMonth");
-        Log::info("RAW Month $this->rawMonth");
         Log::info("Year $this->year");
+        Log::info("RAW Month $this->rawMonth");
+        Log::info("Previous Month $this->previousMonth");
+        Log::info("Month $this->month");
         Log::info("Day $this->day");
+
+        Log::info("Current Day as Date $this->currentDayAsDate");
         Log::info("YearMonth $this->yearMonth");
         Log::info("StartDate $this->startDate");
         Log::info("EndDate $this->endDate");
@@ -428,6 +437,9 @@ class StoreSalesDashboardReport extends Model
         $cacheKey = $this->getCacheKey();
 
         Cache::forget($cacheKey); 
+
+        // dump('stores', $this->year);
+        // dump('stores', $this->month);
 
         // Cache the results of the query
         $storeSalesData = Cache::remember($cacheKey, $this->getCacheExpiration(), function() {
@@ -957,19 +969,12 @@ class StoreSalesDashboardReport extends Model
         // Retrieve the cached data
         $storeSalesData = Cache::get($cacheKey);
 
-        // If the cache is empty, return an empty summary
         if (!$storeSalesData) {
-            return []; // Or handle no data scenario as needed
+            return []; 
         }
     
         // Convert cached data to a collection
         $dataCollection =  collect($storeSalesData);
-
-               // return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31"
-
-            //     && $row->channels_id == $channel
-            //     && $row->concepts_id == $concept;
-
 
         // Filter and group by category, channel, and concept
         $yearToDateSummary = $dataCollection->filter(function ($row) use($channel, $concept) {
@@ -977,36 +982,11 @@ class StoreSalesDashboardReport extends Model
             // Check the sales date range
             $dateCondition = $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
             
-            // // Initialize the filter as true
-            // $channelCondition = true;
-            // $conceptCondition = true;
-
-            // // Only apply the channel condition if a channel is provided
-            // if ($channel !== null) {
-            //     $channelCondition = $row->channels_id == (int)$channel;
-            // }
-
-            // // Only apply the concept condition if a concept is provided
-            // if ($concept !== null) {
-            //     $conceptCondition = $row->concepts_id == (int)$concept;
-            // }
-
-            // if($channel == 'all' ){
-            //     $channelCondition = true;
-            // }
-
-            // if($concept == 'all' ){
-            //     $conceptCondition = true;
-            // }
-
-            // $channelCondition = ($channel === null) || ($channel === 'all') || ($row->channels_id == (int)$channel);
-
             // Determine channel condition
             $channelCondition = ($channel === null) || ($channel === 'all') || ($row->channels_id == (int)$channel);
             
             // Determine concept condition
             $conceptCondition = ($concept === null) || ($concept === 'all') || ($row->concepts_id == (int)$concept);
-
 
             // Combine all conditions
             return $dateCondition && $channelCondition && $conceptCondition;
@@ -1053,9 +1033,8 @@ class StoreSalesDashboardReport extends Model
         // Retrieve the cached data
         $storeSalesData = Cache::get($cacheKey);
     
-        // If the cache is empty, return an empty summary
         if (!$storeSalesData) {
-            return []; // Or handle no data scenario as needed
+            return []; 
         }
     
         // Convert cached data to a collection

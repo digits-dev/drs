@@ -206,6 +206,7 @@
 
     function fetchData(reloadData = false){
         $('.tab-content-container').hide();
+        $('.export').hide();
         $('#loading').show(); 
 
         // Fetch data after the page has loaded
@@ -215,6 +216,8 @@
             success: function(data) {
                 $('#loading').hide(); 
                 $('.tab-content-container').show();
+                $('.export').show();
+
 
 
                 // Populate each tab with data
@@ -230,6 +233,7 @@
             error: function(xhr, status, error) {
                 $('#loading').hide(); 
                 $('.tab-content-container').show();
+                $('.export').show();
                 console.error('Error fetching data:', error);
             }
         });
