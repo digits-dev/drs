@@ -108,7 +108,7 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 					$ammount = $row->AMOUNT; 
 					$mdr = $row->{'Commission %'};
 
-					$mdr_charge = ($mdr * $ammount);
+					$mdr_charge = ($mdr * 0.01 * $ammount);
 					$net_amount = ($ammount - $mdr_charge);
 
 					$customerCode = str_replace('CUS-', '', $row->{'STORE ID'});
