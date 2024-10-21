@@ -150,6 +150,11 @@
             float: right;
         }
 
+        table.dataTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+
         .dataTables_wrapper .top {
             display: flex;
             justify-content: space-between;
@@ -369,10 +374,10 @@
             <div class="inputs-container" style="margin-top: 10px;">
                 <div class="input-container">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Month
-                        <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                        <small id="monthRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
                     </p>
                     <div class="form-group select-container">
-                        <select  class="dropdowns" name="brand" id="brand" class="form-control" title="brand" required>
+                        <select  class="dropdowns" class="form-control" name="month" id="month">
                             <option value="" selected disabled>Select Month</option>
                             <option value="01">January</option>
                             <option value="02">February</option>
@@ -396,13 +401,16 @@
                 </div>
                 <div class="input-container" style="position: relative;">
                     <p style="padding: 0; margin:0; font-size:14px; font-weight: 500">Year
-                        <small id="dateToRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
+                        <small id="yearRequired" style="display: none; color: rgba(255, 0, 0, 0.853);"> <i class="fa fa-exclamation-circle"></i> Required field! </small> 
                     </p>
                     <input type="text" id="year-picker" class="dropdowns" name="year-picker" placeholder="Select Year">
                 </div>
             </div>
-            <div>
-                <div class="form-button pull-right" style="margin-top: 15px;">
+            <div class="pull-right" style="gap: 5px; display:flex">
+                <div class="form-button" style="margin-top: 15px;" >
+                    <button type="button" class="btn-submit"  id="btn-reset" style="background:#e73131; border: 1px solid #d34040">Reset</button>
+                </div>
+                <div class="form-button" style="margin-top: 15px;" >
                     <button class="btn-submit" id="btn-submit">Search</button>
                 </div>
             </div>
@@ -415,10 +423,10 @@
         <table class="table" id="bir_report">
             <thead>
                 <tr>
+                    <th>Store Name</th>
                     <th>Date</th>
-                    <th>From</th>
-                    <th>Beginning Balance</th>
-                    <th>Ending Balance</th>
+                    <th>Beginning Invoice Number</th>
+                    <th>Ending Invoice Number</th>
                     <th>Net Amount</th>
                     <th>Discount</th>
                     <th>Returns</th>
@@ -436,11 +444,9 @@
                 </tr>
             </thead>
             <tbody>
-                {{-- @if (!empty($store_sync_data) && is_array($store_sync_data)) --}}
-                @foreach (range(0, 2) as $row)
                     <tr>
+                        <td>Store Name</td>
                         <td>Date</td>
-                        <td>From</td>
                         <td>Beginning Balance</td>
                         <td>Ending Balance</td>
                         <td>Net Amount</td>
@@ -458,8 +464,6 @@
                         <td>Z-Counter</td>
                         <td>Remark</td>
                     </tr>
-                @endforeach
-                {{-- @endif --}}
             </tbody>
         </table>
 
@@ -484,7 +488,13 @@
     <script src="https://saravanajd.github.io/YearPicker/yearpicker.js"></script>
     <script>
         $(document).ready(function() {
-            $('.js-example-basic-multiple').select2({
+            $('#channel').select2({
+                placeholder: "Select Channel",
+            });
+            $('#concept').select2({
+                placeholder: "Select Concept",
+            });
+            $('#customer').select2({
                 placeholder: "Select Store",
             });
 
@@ -493,16 +503,11 @@
                 endYear: 2100    
             });
 
-            // $('#year').on('change', function() {
-            // console.log($(this).val()); // Log the selected year
-            //  });
-
-            $('#customer option:not(:first-child)').prop('disabled', true);
+            $("#year-picker").blur();
 
             $('#bir_report').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
-                // scrollY: '400px', // Adjust the height to your needs
-                scrollX: true, // Ensure horizontal scrolling if needed
+                scrollX: true,
                 scrollCollapse: true,
                 paging: true,
                 fixedHeader: false,
@@ -516,6 +521,12 @@
                         text: '<i class="fa fa-download"></i> Download Excel',
                         className: 'btn custom-button'
                     }
+                ],
+                columnDefs: [
+                    { "targets": [1, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17 ], "width": "100px" },  // Set 100px width for multiple columns
+                    { "targets": [2, 3], "width": "180px" },
+                    { "targets": 12, "width": "150px" },
+                    { "targets": 0, "width": "250px" }
                 ],
                 initComplete: function() {
                     // Move buttons to the right side
@@ -565,72 +576,190 @@
             });
 
         });
-
-        function selectStore() {
-            const customerSelect = $('#customer').val();
-
-            if (customerSelect && customerSelect.includes('')) {
-                $('#customer option:not(:first)').prop('disabled', true);
-                $('#customer option:first').prop('disabled', false);
-            } else if (customerSelect == 'All') {
-                $('#customer option:not(:first)').prop('disabled', true);
-                $('#customer option:first').prop('disabled', false);
-            } else if (customerSelect === null || customerSelect.length === 0) {
-                $('#customer option:not(:first)').prop('disabled', false);
-                $('#customer option:first').prop('disabled', false);
+        
+        function selectOnChange(id) {
+            const channelSelect = $(`#${id}`).val();
+            
+            if (channelSelect && channelSelect.includes('')) {
+                $(`#${id} option:not(:first)`).prop('disabled', true);
+                $(`#${id} option:first`).prop('disabled', false);
+            } else if (channelSelect == 'All') {
+                $(`#${id} option:not(:first)`).prop('disabled', true);
+                $(`#${id} option:first`).prop('disabled', false);
+            } else if (channelSelect === null || channelSelect.length === 0) {
+                $(`#${id} option:not(:first)`).prop('disabled', false);
+                $(`#${id} option:first`).prop('disabled', false);
             } else {
-                $('#customer option:not(:first)').prop('disabled', false);
-                $('#customer option:first').prop('disabled', true);
+                $(`#${id} option:not(:first)`).prop('disabled', false);
+                $(`#${id} option:first`).prop('disabled', true);
             }
         }
+
+        $('#channel').change(function() {
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+            const allCustomers = {!! json_encode($all_customers) !!};
+            
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            // Filter customers based on selected channel and concept
+            const filteredCustomers = allCustomers.filter(customer => {
+                const matchesChannel = Array.isArray(channel) ? 
+                    channel.some(ch => customer.cutomer_name.includes(ch)) : 
+                    customer.cutomer_name.includes(channel);
+
+                const matchesConcept = Array.isArray(concept) ? 
+                    concept.includes(customer.concept) : 
+                    customer.concept === concept;
+
+                return matchesChannel && matchesConcept;
+            });
+
+            const select = $('#customer');
+            select.empty(); 
+
+            // Populate select element with filtered customers
+            if (filteredCustomers.length > 0) {
+                select.append('<option value="All">All</option>'); 
+                filteredCustomers.forEach(function(option) {
+                    const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                    select.append(optionHtml);
+                });
+            } else {
+                select.append('<option disabled>No customers found</option>');
+            }
+
+            // Prepare the textarea for all customer codes
+            const customerCodes = filteredCustomers.map(customer => customer.customer_code).join(', ');
+            $('#all_customer').val(customerCodes);
+            $('#customer option:not(:first-child)').prop('disabled', true);
+        });
+
+        $('#concept').change(function() {
+            let concept = $('#concept').val();
+            let channel = $('#channel').val();
+            const allCustomers = {!! json_encode($all_customers) !!};
+
+            if (concept == 'All') {
+                const allconcept = $('#all_concepts').val().split(',').map(item => item.trim());
+                concept = allconcept;
+            }
+
+            if (channel == 'All') {
+                const allchannel = $('#all_channels').val().split(',').map(item => item.trim());
+                channel = allchannel;
+            }
+
+            // Filter customers based on selected concept and channel
+            const filteredCustomers = allCustomers.filter(customer => {
+                const matchesConcept = Array.isArray(concept) ? 
+                    concept.includes(customer.concept) : 
+                    customer.concept === concept;
+
+                const matchesChannel = Array.isArray(channel) ? 
+                    channel.some(ch => customer.cutomer_name.includes(ch)) : 
+                    customer.cutomer_name.includes(channel);
+
+                return matchesConcept && matchesChannel;
+            });
+
+       
+            const select = $('#customer');
+            select.empty(); 
+
+            // Populate select element with filtered customers
+            if (filteredCustomers.length > 0) {
+                select.append('<option value="All">All</option>'); 
+                const customerCodes = filteredCustomers.map(customer => customer.customer_code).join(', ');
+                
+                filteredCustomers.forEach(function(option) {
+                    const optionHtml = `<option value="${option.customer_code}">${option.cutomer_name}</option>`;
+                    select.append(optionHtml);
+                });
+                $('#all_customer').val(customerCodes);
+            }
+        });
+
+        
+        $('#btn-reset').on('click', function(event){
+            event.preventDefault();
+
+            $('#channel').val(null).trigger('change');
+            $('#concept').val(null).trigger('change');
+            $('#customer').val(null).trigger('change');
+            $('#month').val(null).trigger('change');
+            $('#year-picker').val(null).trigger('change');
+            $('#customerRequired').hide();
+            $('#channelRequired').hide();
+            $('#conceptRequired').hide();
+            $('#monthRequired').hide();
+            $('#yearRequired').hide();
+            $('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: #3498db !important')
+            $('#month').css('border-color', '#3498db');
+            $('#year-picker').css('border-color', '#3498db');
+
+        });
+
 
         $('#btn-submit').on('click', function(event) {
             event.preventDefault();
 
             let customer = $('#customer').val();
+            const channel = $('#channel').val();
+            const concept = $('#concept').val();
+            const month = $('#month').val();
+            const year = $('#year-picker').val();
+
             if (customer == 'All'){
                 const allcustomer = $('#all_customer').val().split(',').map(item => item.trim());
-                customer = allcustomer;
+                customer = allcustomer;  
             }
 
-            const date_from = $('#date_from').val();
-            const date_to = $('#date_to').val();
-            const dateFromObj = new Date(date_from);
-            const dateToObj = new Date(date_to);
-
-            if(dateFromObj > dateToObj){
-                $('#date_from').css('border', '1px solid rgba(255, 0, 0, 0.853)');
-                $('#date_to').css('border', '1px solid rgba(255, 0, 0, 0.853)');
-                $('#invalidDateFrom').show();
+            function validateField(field, fieldId, errorId) {
+                if (field === null || field.length === 0) {
+                    $(`#${fieldId}`).find('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: red !important')
+                    $(`#${errorId}`).show();
+                    return false;
+                } else {
+                    $(`#${fieldId}`).find('.select2-container--default .select2-selection--multiple').attr('style', 'border-color: #3498db !important')
+                    $(`#${fieldId}`).removeClass('inactive');
+                    $(`#${errorId}`).hide();
+                    return true;
+                }
             }
 
-            if(customer === null || customer.length === 0){
-                $('#customer').css('border', 'rgba(255, 0, 0, 0.853) !important');
-                $('#customerRequired').show()
-            } else {
-                $('#customer').removeClass('inactive');
-                $('#customerRequired').hide()
+            function validateDate(field, fieldId, errorId) {
+                if (field === null || field.length === 0) {
+                    $(`#${fieldId}`).css('border-color', 'red');
+                    $(`#${errorId}`).show();
+                    return false;
+                } else {
+                    $(`#${fieldId}`).css('border-color', ''); // Reset border color or set it to default
+                    $(`#${fieldId}`).removeClass('inactive');
+                    $(`#${errorId}`).hide();
+                    return true;
+                }
             }
 
-            if(date_from == ""){
-                $('#date_from').addClass('inactive');
-                $('#dateFromRequired').show()
-                $('#invalidDateFrom').hide();
-            } else {
-                $('#date_from').removeClass('inactive');
-                $('#dateFromRequired').hide()
-            }
+            // Validate individual fields
+            let isCustomerValid = validateField(customer, 'customer-input-container', 'customerRequired');
+            let isChannelValid = validateField(channel, 'channel-input-container', 'channelRequired');
+            let isConceptValid = validateField(concept, 'concept-input-container', 'conceptRequired');
+            let isMonthValid = validateDate(month, 'month', 'monthRequired');
+            let isYearValid = validateDate(year, 'year-picker', 'yearRequired');
 
-            if(date_to == ""){
-                $('#date_to').addClass('inactive');
-                $('#dateToRequired').show()
-            } else {
-                $('#date_to').removeClass('inactive');
-                $('#dateToRequired').hide()
-            }
 
-            if(date_from == "" || date_to == "" || customer === null || customer.length === 0 || dateFromObj > dateToObj){
-                return;
+
+            if (!isCustomerValid || !isChannelValid || !isConceptValid || !isMonthValid || !isYearValid) {
+                return; 
             }
 
             $('#spinner').show();
@@ -640,8 +769,8 @@
                 method: 'POST',
                 data: { 
                     customer: customer,
-                    date_from: date_from,
-                    date_to: date_to,
+                    month: month,
+                    year: year,
                     _token: '{{ csrf_token() }}',
                 },
                 success: function(response) {
@@ -649,28 +778,30 @@
                     const tbody = $('#bir_report tbody');
                     tbody.empty(); 
 
+                    console.log(response);
+
                     response.forEach(function(row) {
                         const tr = '<tr>' +
-                            '<td>' + row['Date'] + '</td>' +
-                            '<td>' + row['From'] + '</td>' +
-                            '<td>' + row['Beginning Balance'] + '</td>' +
-                            '<td>' + row['Ending Balance'] + '</td>' +
-                            '<td>' + row['Net Amount'] + '</td>' +
-                            '<td>' + row['Discount'] + '</td>' +
-                            '<td>' + row['Returns'] + '</td>' +
-                            '<td>' + row['Voids'] + '</td>' +
-                            '<td>' + row['Deductions'] + '</td>' +
-                            '<td>' + row['Gross Amount'] + '</td>' +
-                            '<td>' + row['VATable Sales'] + '</td>' +
-                            '<td>' + row['VAT'] + '</td>' +
-                            '<td>' + row['Sales VAT-Exempt'] + '</td>' +
-                            '<td>' + row['Zero Rated'] + '</td>' +
-                            '<td>' + row['Sales'] + '</td>' +
-                            '<td>' + row['Reset Counter'] + '</td>' +
-                            '<td>' + row['Z-Counter'] + '</td>' +
-                            '<td>' + row['Remark'] + '</td>' +
+                            '<td>' + row['CustomerName'] + '</td>' +               // Store Name
+                            '<td>' + row['CreateDate'] + '</td>' +              // Date
+                            '<td>' + row['DocRangeFrom'] + '</td>' +            // Beginning Invoice Number 
+                            '<td>' + row['DocRangeTo'] + '</td>' +              // Ending Invoice Number
+                            '<td>' + row['NetTotalAmt'] + '</td>' +             // Net Amount
+                            '<td>' + '</td>' +                                  // Discount 
+                            '<td>' + '</td>' +                                  // Returns
+                            '<td>' + '</td>' +                                  // Voids
+                            '<td>' + '</td>' +                                  // Deductions
+                            '<td>' + row['GrossTotalAmt'] + '</td>' +           // Gross Amount 
+                            '<td>' + row['VatableTotalAmt'] + '</td>' +         // VATable Sales
+                            '<td>' + row['VatTotalAmt'] + '</td>' +             // VAT
+                            '<td>' + row['SalesVatExmptAmt'] + '</td>' +        // Sales VAT-Exempt
+                            '<td>' + row['ZeroRatedSalesAmt'] + '</td>' +       // Zero Rated
+                            '<td>' + '</td>' +                                  // Sales 
+                            '<td>' + '</td>' +                                  // Reset Counter
+                            '<td>' + '</td>' +                                  // Z Counter
+                            '<td>' + '</td>' +                                  // Remark
                             '</tr>';
-                        tbody.append(tr); // Add the new row to the table body
+                        tbody.append(tr);
                     });
 
                     // If you want to refresh the DataTable instance
