@@ -23,7 +23,6 @@ class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBC
 			foreach ($customers_masterfile as $customer) {
 				$customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
 			}
-			
 
 			$month = request()->month;
 			$year = request()->year;
@@ -59,21 +58,19 @@ class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBC
 				$row['CreateDate'] = Carbon::parse($row['CreateDate'])->format('Y-m-d');
 			}
 			
-
 			return response()->json($final_bir);
 
 		}
 
+		$concepts = ['BASEUS','BEYOND THE BOX','DIGITAL WALKER','OMG','OUTERSPACE','SERVICE CENTER','POP UP STORE','STORK','SOUNDPEATS','XIAOMI','CLEARANCE','OPEN SOURCE',];
+
 		$data = [];
 		$data['page_title'] = 'BIR Report';
-		$data['channels'] = Channel::active();
-		$data['concepts'] = Concept::active();
+		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();
+		$data['concepts'] = Concept::whereIn('concept_name', $concepts)->active();
 		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){
 			return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
 		});
-
-		
-
 
 
 		return view('etp-pos.etp-bir-report', $data);

@@ -392,7 +392,7 @@
                         <th>Time</th>
                         <th>Store ID</th>
                         <th>Branch</th>
-                        <th>Ref#</th>
+                        <th>Invoice Ref#</th>
                         <th>Account ID</th>
                         <th>Name</th>
                         <th>Amount</th>
@@ -404,8 +404,8 @@
                         <th>EDC</th>
                         <th>Expiry</th>
                         <th>AP No</th>
-                        <th>MDR</th>
-                        <th>MDR Change</th>
+                        <th>MDR %</th>
+                        <th>MDR Charge</th>
                         <th>Net Amount</th>
                         <th>OP ID</th>
                         <th>Details</th>

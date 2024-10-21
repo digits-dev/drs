@@ -437,10 +437,7 @@
                     <th>VAT</th>
                     <th>Sales VAT-Exempt</th>
                     <th>Zero Rated</th>
-                    <th>Sales</th>
-                    <th>Reset Counter</th>
-                    <th>Z-Counter</th>
-                    <th>Remark</th>
+                  
                 </tr>
             </thead>
             <tbody>
@@ -459,10 +456,7 @@
                         <td>VAT</td>
                         <td>Sales VAT-Exempt</td>
                         <td>Zero Rated</td>
-                        <td>Sales</td>
-                        <td>Reset Counter</td>
-                        <td>Z-Counter</td>
-                        <td>Remark</td>
+                       
                     </tr>
             </tbody>
         </table>
@@ -524,10 +518,10 @@
                 ],
                 "order": [[1, "desc"]], 
                 columnDefs: [
-                    { "targets": [1, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17 ], "width": "100px" },  // Set 100px width for multiple columns
+                    { "targets": [1, 4, 5, 6, 7, 8, 9, 10, 11, 13 ], "width": "100px" },  // Set 100px width for multiple columns
                     { "targets": [2, 3], "width": "180px" },
                     { "targets": 12, "width": "150px" },
-                    { "targets": 0, "width": "250px" },
+                    { "targets": 0, "width": "280px" },
                     { "targets": 1, "type": "date" }
                 ],
                 "language": {
@@ -839,10 +833,6 @@
                             '<td>' + row['VatTotalAmt'] + '</td>' +             // VAT
                             '<td>' + row['SalesVatExmptAmt'] + '</td>' +        // Sales VAT-Exempt
                             '<td>' + row['ZeroRatedSalesAmt'] + '</td>' +       // Zero Rated
-                            '<td>' + '</td>' +                                  // Sales 
-                            '<td>' + '</td>' +                                  // Reset Counter
-                            '<td>' + '</td>' +                                  // Z Counter
-                            '<td>' + '</td>' +                                  // Remark
                             '</tr>';
                         tbody.append(tr);
                     });
