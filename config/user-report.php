@@ -169,7 +169,6 @@ return [
         "category_description"  =>"CATEGORY",
         "margin_category_description"   =>"MARGIN CATEGORY",
         "vendor_type_code"              =>"VENDOR TYPE CODE",
-        "vendor_name"              =>"VENDOR NAME",
         "inventory_type_description"    =>"INVENTORY TYPE CODE",
         "sku_status_description"        =>"SKU STATUS",
         "brand_status"      =>"BRAND STATUS",
@@ -179,10 +178,14 @@ return [
         "qtyinv_lc"        =>"INV VAL @ LC",
         "dtp_ecom"      =>"SC ECOMM",
         "qtyinv_ecom"      =>"INV VAL @ ECOMM",
-        "product_quality"  => "PRODUCT QUALITY"
+        "product_quality"  => "PRODUCT QUALITY",
+        "vendor_name"              =>"VENDOR NAME",
+        "bill_to" => "STORE COMPANY NAME",
+        'from_warehouse' => "FROM WAREHOUSE",
+        'to_warehouse' =>"TO WAREHOUSE"
     ],
 
-    'supplier_intransit_inventories' => [
+    'supplier_intransit_inventories' => [   
         "reference_number"  =>"REFERENCE #",
         "system_name"       =>"SYSTEM",
         "organization_name" =>"ORG",
