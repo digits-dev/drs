@@ -41,6 +41,10 @@ use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
 use App\Http\Controllers\EtpStoreSyncReportController;
 use App\Http\Controllers\EtpTenderReportController;
 use App\Http\Controllers\AdminAnnouncementsController;
+use App\Http\Controllers\GashaponInventoryController;
+use App\Http\Controllers\AdminGashaponInventoryUploadsController;
+use App\Http\Controllers\AdminGashaponInventoriesController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -77,15 +81,13 @@ Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PAT
     Route::post('reset-password', [AdminCmsUsersController::class, 'postSendEmailResetPassword'])->name('reset-password');
     Route::post('waive-change-password',[AdminCmsUsersController::class, 'waiveChangePassword'])->name('waive-change-password');
 
-     //ANNOUNCEMENT
-     Route::get('unread-announcement', [AdminAnnouncementsController::class, 'getUnreadAnnouncements'])->name('show-announcement');
-     Route::post('read-announcement', [AdminAnnouncementsController::class, 'markAnnouncementAsRead'])->name('read-announcement');
-     Route::get('announcement', [AdminAnnouncementsController::class, 'getAnnouncements'])->name('announcement');
+    //ANNOUNCEMENT
+    Route::get('unread-announcement', [AdminAnnouncementsController::class, 'getUnreadAnnouncements'])->name('show-announcement');
+    Route::post('read-announcement', [AdminAnnouncementsController::class, 'markAnnouncementAsRead'])->name('read-announcement');
+    Route::get('announcement', [AdminAnnouncementsController::class, 'getAnnouncements'])->name('announcement');
 });
 
 Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CBBackend','check.user'], 'prefix'=>'admin'], function(){
-
-
 
     //import store sales
     Route::post('sales_upload/import-upload',[StoreSaleController::class, 'storeSalesUpload'])->name('store-sales.upload');
@@ -241,10 +243,24 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::get('supplier_intransit_inventory_uploads/regenerate-file/{id}',[AdminSupplierIntransitInventoryUploadsController::class, 'regenerateFile']);
     Route::get('supplier_intransit_inventory_uploads/download-uploaded-file/{id}',[AdminSupplierIntransitInventoryUploadsController::class, 'downloadUploadedFile']);
     Route::get('supplier_intransit_inventory/detail/{id}', [AdminSupplierIntransitInventoryUploadsController::class, 'getDetail'])->name('supplier_intransit_inventory.detail');
-    Route::any('supplier_intransit_inventory/filter',[AdminSupplierIntransitInventoriesController::class, 'filterGashaponSupplierIntransitInventory'])->name('supplier-intransit-inventory.filter');
+    Route::any('supplier_intransit_inventory/filter',[AdminSupplierIntransitInventoriesController::class, 'filterSupplierIntransitInventory'])->name('supplier-intransit-inventory.filter');
     Route::post('supplier-intransit-inventory-concepts',[AdminSupplierIntransitInventoriesController::class, 'concepts'])->name('supplier-intransit-inventory-concepts');
    
-    
+    //GASHAPON INVENTORY
+    Route::post('gashapon_inventory_uploads/import-upload',[GashaponInventoryController::class, 'GashaponInventoryUpload'])->name('gashapon-inventory.upload');
+    Route::get('gashapon_inventory_uploads/import',[GashaponInventoryController::class, 'GashaponInventoryUploadView'])->name('gashapon-inventory.upload-view');
+    Route::get('gashapon_inventory_uploads/template',[GashaponInventoryController::class, 'uploadTemplate'])->name('gashapon-inventory.template');
+    Route::post('gashapon_inventory_uploads/export',[GashaponInventoryController::class, 'exportGashaponInventory'])->name('gashapon-inventory.export');
+    Route::get('gashapon_inventory_uploads/batch/{batch_id}',[GashaponInventoryController::class, 'getBatchDetails']);
+    Route::get('gashapon_inventory_uploads/batch/{batch_id}',[GashaponInventoryController::class, 'getBatchDetails']);
+    Route::get('gashapon_inventory_uploads/generate-file/{id}',[AdminGashaponInventoryUploadsController::class, 'generateFile']);
+    Route::get('gashapon_inventory_uploads/export-batch/{id}',[AdminGashaponInventoryUploadsController::class, 'exportBatch']);
+    Route::get('gashapon_inventory_uploads/regenerate-file/{id}',[AdminGashaponInventoryUploadsController::class, 'regenerateFile']);
+    Route::get('gashapon_inventory_uploads/download-uploaded-file/{id}',[AdminGashaponInventoryUploadsController::class, 'downloadUploadedFile']);
+    Route::get('gashapon_inventory/detail/{id}', [AdminGashaponInventoryUploadsController::class, 'getDetail'])->name('gashapon_inventory.detail');
+    Route::any('gashapon_inventory/filter',[AdminGashaponInventoriesController::class, 'filterGashaponInventory'])->name('gashapon-inventory.filter');
+    Route::post('gashapon-inventory-concepts',[AdminGashaponInventoriesController::class, 'concepts'])->name('gashapon-inventory-concepts');
+
     // ETP ROUTES
     Route::get('etp_bir_report', [EtpBirReportController::class, 'getIndex'])->name('etp_bir_report');
     Route::get('etp_tender_report', [EtpTenderReportController::class, 'getIndex'])->name('etp_tender_report');
