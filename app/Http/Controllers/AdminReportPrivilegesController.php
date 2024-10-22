@@ -360,6 +360,7 @@ use App\Models\ReportType;
             $data['tables'] = [
                 'store_sales'=>'STORE SALES',
 				'gashapon_store_sales'=>'GASHAPON STORE SALES',
+				'gashapon_inventories'=>'GASHAPON INVENTORY',
                 'digits_sales'=>'DIGITS SALES',
                 'store_inventories'=>'STORE INVENTORY',
 				'supplier_intransit_inventories'=>'SUPPLIER INTRANSIT INVENTORY',

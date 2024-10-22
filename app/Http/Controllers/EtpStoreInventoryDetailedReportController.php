@@ -24,9 +24,11 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 			}, request()->customer);
 
 			$allCustomer = "'" . implode("','", $customers) . "'";
-			$date = Carbon::parse(now())->format('Ymd');
+			$lastThirtydays = Carbon::now()->subDays(30)->format('Ymd');
+			$currentDate = Carbon::parse(now())->format('Ymd');
 
-			$inventory_report = Cache::remember("{$allCustomer}{$date}", 900, function() use($allCustomer , $date){
+
+			$inventory_report = Cache::remember("{$allCustomer}{$currentDate}", 900, function() use($allCustomer , $currentDate, $lastThirtydays){
 
 				return DB::connection('sqlsrv')->select(DB::raw("
 				SELECT 
@@ -41,7 +43,7 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 				WHERE 
 					P.Company = 100
 					AND P.WareHouse IN ($allCustomer)
-					AND P.LastIssueDate = $date;
+					AND P.LastIssueDate BETWEEN $lastThirtydays AND $currentDate;
 				"));
 
 			});
@@ -86,11 +88,13 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 
 		}
 
+		$concepts = ['BASEUS','BEYOND THE BOX','DIGITAL WALKER','OMG','OUTERSPACE','SERVICE CENTER','POP UP STORE','STORK','SOUNDPEATS','XIAOMI','CLEARANCE','OPEN SOURCE',];
+
 		$data = [];
 		$data['page_title'] = 'Store Inventory (Detailed)';
 		$data['inventory_report'] = [];
-		$data['channels'] = Channel::active();
-		$data['concepts'] = Concept::active();
+		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();
+		$data['concepts'] = Concept::whereIn('concept_name', $concepts)->active();
 		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){
 			return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
 		});

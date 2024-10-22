@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Imports\SupplierIntransitInventoryImport;
-use App\Models\SupplierIntransitInventoryUpload;
-use App\Models\SupplierIntransitInventoryUploadLine;
+use App\Imports\GashaponInventoryImport;
+use App\Models\GashaponInventoryUpload;
+use App\Models\GashaponInventoryUploadLine;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -15,9 +15,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Bus;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
-use App\Jobs\SupplierIntransitInventoryImportJob;
-
-class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
+use App\Jobs\GashaponInventoryImportJob;
+class ProcessGashaponInventoryUploadJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $batch_number;
@@ -28,7 +27,7 @@ class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
     public $created_by;
     public $timeout = 3600;
     public $from_date;
-    public $supplier_intransit_inventory_uploads_id;
+    public $gashapon_inventory_uploads_id;
 
     /**
      * Create a new job instance.
@@ -46,7 +45,7 @@ class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
         $this->file_path = $args['file_path'];
         $this->created_by = $args['created_by'];
         $this->from_date = $args['from_date'];
-        $supplier_intransit_inventory_upload = SupplierIntransitInventoryUpload::create([
+        $gashapon_inventory_upload = GashaponInventoryUpload::create([
             'batch' => $this->batch_number,
             'folder_name' => $this->folder_name,
             'file_name' => $this->file_name,
@@ -54,7 +53,7 @@ class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
             'created_by' => $this->created_by,
             'from_date' => $this->from_date,
         ]);
-        $this->supplier_intransit_inventory_uploads_id = $supplier_intransit_inventory_upload->id;
+        $this->gashapon_inventory_uploads_id = $gashapon_inventory_upload->id;
 
     }
 
@@ -66,7 +65,7 @@ class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
     public function handle()
     {
         HeadingRowFormatter::default('slug');
-        $excel_data = Excel::toArray(new SupplierIntransitInventoryImport($this->batch_number), $this->excel_path)[0];
+        $excel_data = Excel::toArray(new GashaponInventoryImport($this->batch_number), $this->excel_path)[0];
   
         $excelReportType = array_unique(array_column($excel_data, "report_type"));
         
@@ -82,8 +81,8 @@ class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
         $chunks = array_chunk($excel_data, $chunk_count);
         $batch = Bus::batch([])->dispatch();
 
-        $supplier_intransit_inventory_upload = SupplierIntransitInventoryUpload::find($this->supplier_intransit_inventory_uploads_id);
-        $supplier_intransit_inventory_upload->update([
+        $gashapon_inventory_upload = GashaponInventoryUpload::find($this->gashapon_inventory_uploads_id);
+        $gashapon_inventory_upload->update([
             'job_batches_id' => $batch->id,
             'row_count' => $row_count,
             'chunk_count' => $chunk_count,
@@ -92,26 +91,26 @@ class ProcessSupplierIntransitInventoryUploadJob implements ShouldQueue
 
         foreach ($chunks as $key => $chunk) {
             $json = json_encode($chunk);
-            $supplier_intransit_inventory_upload_line = new SupplierIntransitInventoryUploadLine([
-                'supp_intransit_inventory_uploads_id' => $supplier_intransit_inventory_upload->id,
+            $gashapon_inventory_upload_line = new GashaponInventoryUploadLine([
+                'gashapon_inventory_uploads_id' => $gashapon_inventory_upload->id,
                 'chunk_index' => $key,
                 'chunk_data' => $json,
             ]);
 
-            $supplier_intransit_inventory_upload_line->save();
+            $gashapon_inventory_upload_line->save();
 
-            $batch->add(new SupplierIntransitInventoryImportJob($supplier_intransit_inventory_upload_line->id));
+            $batch->add(new GashaponInventoryImportJob($gashapon_inventory_upload_line->id));
         }
 
-        $supplier_intransit_inventory_upload->update(['status' => 'IMPORTING']);
+        $gashapon_inventory_upload->update(['status' => 'IMPORTING']);
         
     }
 
     public function failed($e) {
         $error_message = $e->getMessage();
-        $supplier_intransit_inventory_upload = SupplierIntransitInventoryUpload::find($this->supplier_intransit_inventory_uploads_id);
-        $supplier_intransit_inventory_upload->update(['status' => 'IMPORT FAILED']);
-        $supplier_intransit_inventory_upload->appendNewError($error_message);
+        $gashapon_inventory_upload = GashaponInventoryUpload::find($this->gashapon_inventory_uploads_id);
+        $gashapon_inventory_upload->update(['status' => 'IMPORT FAILED']);
+        $gashapon_inventory_upload->appendNewError($error_message);
     }
 
 }

@@ -407,7 +407,7 @@
 				->rawColumns(['action'])
 				->toJson();
 			}else{
-				$query = GashaponStoreSales::getYajraDefaultData()->where('is_final', 1);
+				$query = GashaponStoreSales::getYajraDefaultData();
 				$dt = new DataTables();
 				return $dt->collection($query)
 				->addIndexColumn()

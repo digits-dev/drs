@@ -2,8 +2,8 @@
 
 	use App\Models\Channel;
 	use App\Models\System;
-	use App\Models\SupplierIntransitInventory;
-	use App\Models\SupplierIntransitInventoriesReport;
+	use App\Models\GashaponInventory;
+	use App\Models\GashaponInventoriesReport;
 	use App\Models\ReportPrivilege;
 	use Session;
 	use Illuminate\Http\Request;
@@ -12,7 +12,7 @@
 	use File;
 	use Yajra\DataTables\DataTables;
 
-	class AdminSupplierIntransitInventoriesController extends \crocodicstudio\crudbooster\controllers\CBController {
+	class AdminGashaponInventoriesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
 
@@ -32,7 +32,7 @@
 			$this->button_filter = true;
 			$this->button_import = false;
 			$this->button_export = true;
-			$this->table = "supplier_intransit_inventories";
+			$this->table = "gashapon_inventories";
 			# END CONFIGURATION DO NOT REMOVE THIS LINE
 
 			# START COLUMNS DO NOT REMOVE THIS LINE
@@ -329,14 +329,14 @@
             if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
 
             $data = [];
-            $data['page_title'] = 'Supplier Intransit Inventory';
+            $data['page_title'] = 'Gashapon Inventory';
             $data['channels'] = Channel::active();
             $data['systems'] = System::active();
 			
-			// $data['result'] = SupplierIntransitInventory::where('is_final', 1)->paginate(10);
+			// $data['result'] = GashaponInventory::where('is_final', 1)->paginate(10);
 			// $ids = $data['result']->pluck('id')->toArray();
-			// $data['rows'] = SupplierIntransitInventory::generateReport($ids)->get();
-			return view('supplier-intransit.report-yajra',$data);
+			// $data['rows'] = GashaponInventory::generateReport($ids)->get();
+			return view('gashapon-inventory.report-yajra',$data);
 
         }
 
@@ -345,9 +345,9 @@
 				return CRUDBooster::redirect(CRUDBooster::mainPath(), trans('crudbooster.denied_access'));
 			}
 			$data = [];
-			$data['page_title'] = 'Supplier Intransit Sales Details';
-			$data['supplier_intransit_inventory_details'] = SupplierIntransitInventory::generateReport([$id])->first();
-			$data['report_privilege'] = ReportPrivilege::myReport(9,CRUDBooster::myPrivilegeId());
+			$data['page_title'] = 'Gashapon Sales Details';
+			$data['gashapon_inventory_details'] = GashaponInventory::generateReport([$id])->first();
+			$data['report_privilege'] = ReportPrivilege::myReport(10,CRUDBooster::myPrivilegeId());
 			
 			$headerArray = explode(',', $data['report_privilege']->report_header);
 			$queryArray = explode(',', $data['report_privilege']->report_query);
@@ -357,7 +357,7 @@
 			
 			$data['report'] = array_combine($queryArray, $headerArray);
 
-			return view('supplier-intransit.details',$data);
+			return view('gashapon-inventory.details',$data);
 		}
 
 		// public function filterStoreInventory(Request $request) {
@@ -374,7 +374,7 @@
 		// 	return view('store-inventory.filtered-report',$data);
 		// }
 
-		public function filterSupplierIntransitInventory(Request $request) {
+		public function filterGashaponInventory(Request $request) {
 			ini_set('memory_limit', '-1');
         	ini_set('max_execution_time', 3000);
 			$data['searchval'] = $request->search;
@@ -384,7 +384,7 @@
 			$data['dateto'] = $request->dateto;
 			$data['concepts_id'] = $request->concepts_id;
 			if($request->datefrom && $request->dateto){
-				$query = SupplierIntransitInventory::filterForReport(SupplierIntransitInventory::generateReport(), $request->all())
+				$query = GashaponInventory::filterForReport(GashaponInventory::generateReport(), $request->all())
 				->where('is_final', 1);
 				$dt = new DataTables();
 				return $dt->eloquent($query)
@@ -417,7 +417,7 @@
 				->rawColumns(['action'])
 				->toJson();
 			}else{
-				$query = SupplierIntransitInventory::getYajraDefaultData();
+				$query = GashaponInventory::getYajraDefaultData();
 				$dt = new DataTables();
 				return $dt->collection($query)
 				->addIndexColumn()

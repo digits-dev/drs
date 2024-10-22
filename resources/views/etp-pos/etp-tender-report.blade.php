@@ -392,11 +392,9 @@
                         <th>Time</th>
                         <th>Store ID</th>
                         <th>Branch</th>
-                        <th>Ref#</th>
-                        <th>Account ID</th>
+                        <th>Invoice Ref#</th>
                         <th>Name</th>
                         <th>Amount</th>
-                        <th>Posted</th>
                         <th>Tender</th>
                         <th>Credit Card Name</th>
                         <th>Credit Card Number</th>
@@ -404,11 +402,10 @@
                         <th>EDC</th>
                         <th>Expiry</th>
                         <th>AP No</th>
-                        <th>MDR</th>
-                        <th>MDR Change</th>
+                        <th>MDR %</th>
+                        <th>MDR Charge</th>
                         <th>Net Amount</th>
                         <th>OP ID</th>
-                        <th>Details</th>
                         <th>Cashier</th>
                     </tr>
                 </thead>
@@ -427,10 +424,8 @@
                                 <td>{{ $row->{'STORE ID'} }}</td>
                                 <td>{{ $row->customerName }}</td>
                                 <td>{{ $row->{'RECEIPT#'} }}</td>
-                                <td></td>
                                 <td>{{ $row->{'Name of Customer'} }}</td>
                                 <td>{{ $row->AMOUNT }}</td>
-                                <td></td>
                                 <td>{{ $row->TENDER }}</td>
                                 <td>{{ $row->{'Credit Card Name'} }}</td>
                                 <td>{{ $row->{'Credit Card Number'} }}</td>
@@ -442,7 +437,6 @@
                                 <td></td>
                                 <td></td>
                                 <td>{{ $row->{'OP ID'} }}</td>
-                                <td></td>
                                 <td>{{ $row->User }}</td>
                             </tr>
                         @endforeach
@@ -710,10 +704,8 @@
                             '<td>' + row['STORE ID'] + '</td>' +
                             '<td>' + row.customerName + '</td>' +
                             '<td>' + row['RECEIPT#'] + '</td>' +
-                            '<td></td>' +
                             '<td>' + row['Name of Customer'] + '</td>' +
                             '<td>' + row.AMOUNT + '</td>' +
-                            '<td></td>' +
                             '<td>' + row.TENDER + '</td>' +
                             '<td>' + row['Credit Card Name'] + '</td>' +
                             '<td>' + row['Credit Card Number'] + '</td>' +
@@ -725,7 +717,6 @@
                             '<td>' + row.mdrCharge + '</td>' +
                             '<td>' + row.netAmount + '</td>' +
                             '<td>' + row['OP ID'] + '</td>' +
-                            '<td></td>' +
                             '<td>' + row.User + '</td>' +
                             '</tr>';
                         tbody.append(tr); // Add the new row to the table body

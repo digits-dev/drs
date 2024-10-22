@@ -14,42 +14,65 @@ class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBC
     public function getIndex(){
 
 		if (request()->ajax()){
+			$customers_masterfile = Cache::remember('CustomersMasterfileBIR', 3600, function() {
+				return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name')->get();
+			});
+	
+			// LOOKUP CUSTOMER
+			$customerMap = [];
+			foreach ($customers_masterfile as $customer) {
+				$customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
+			}
+
+			$month = request()->month;
+			$year = request()->year;
+
+			$start_date = date("Ymd", strtotime("{$year}-{$month}-01"));
+    		$end_date = date("Ymd", strtotime(date("Y-m-t", strtotime($start_date))));
 
 			$customers = array_map(function($customer) {
 				return str_replace('CUS-', '', $customer);
 			}, request()->customer);
-			$customers_list = implode("','", array_map('addslashes', $customers));
-			$date_from = Carbon::parse(request()->date_from)->format('Ymd');
-			$date_to = Carbon::parse(request()->date_to)->format('Ymd');
 
-			$store_sync_data = DB::connection('sqlsrv')->select(DB::raw("
-				SELECT 
-					Warehouse,
-					LEFT(MAX(EASTimeStamp), 8) AS Date,
-					RIGHT(MAX(EASTimeStamp), 6) AS Time
-				FROM 
-					CashOrderTrn C (NOLOCK)
-				WHERE 
-					Warehouse  IN ('$customers_list')
-					AND LEFT(EASTimeStamp, 8) BETWEEN '$date_from' AND '$date_to'
-				GROUP BY 
-					Warehouse
-			"));
+			$final_bir = []; 
 
-			return response()->json($store_sync_data);
+			foreach ($customers as $per) {
+
+				$bir_report1 = DB::connection('sqlsrv')->select("SET NOCOUNT ON; exec [RptSpSalesTaxSummaryReport_BIR] 100, ? , $start_date , $end_date" , [$per]);
+
+				$bir_report2 = DB::connection('sqlsrv')->select("SET NOCOUNT ON; exec [RptSpESalesSummaryReport_BIR] 100, ? , $start_date , $end_date", [$per]);
+				
+				$bir_report = [];
+
+				foreach ($bir_report1 as $index => $report1) {
+					if (isset($bir_report2[$index])) {
+						$bir_report[] = array_merge((array)$report1, (array)$bir_report2[$index]);
+					}
+				}
+				
+				$final_bir = array_merge($final_bir, $bir_report);
+			}
+
+			foreach ($final_bir as &$row) {
+				$row['CustomerName'] = $customerMap[$row['Warehouse']] ?? ' ';
+				$row['CreateDate'] = Carbon::parse($row['CreateDate'])->format('Y-m-d');
+			}
+			
+			return response()->json($final_bir);
 
 		}
 
+		$concepts = ['BASEUS','BEYOND THE BOX','DIGITAL WALKER','OMG','OUTERSPACE','SERVICE CENTER','POP UP STORE','STORK','SOUNDPEATS','XIAOMI','CLEARANCE','OPEN SOURCE',];
+
 		$data = [];
 		$data['page_title'] = 'BIR Report';
-		$data['channels'] = Channel::active();
-		$data['concepts'] = Concept::active();
+		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();
+		$data['concepts'] = Concept::whereIn('concept_name', $concepts)->active();
 		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){
 			return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
 		});
 
 
-	
 		return view('etp-pos.etp-bir-report', $data);
 	}
 

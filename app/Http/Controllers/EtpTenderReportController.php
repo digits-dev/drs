@@ -108,7 +108,7 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 					$ammount = $row->AMOUNT; 
 					$mdr = $row->{'Commission %'};
 
-					$mdr_charge = ($mdr * $ammount);
+					$mdr_charge = ($mdr * 0.01 * $ammount);
 					$net_amount = ($ammount - $mdr_charge);
 
 					$customerCode = str_replace('CUS-', '', $row->{'STORE ID'});
@@ -122,12 +122,14 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 			return response()->json($tender_data);
 		}
 
+		$concepts = ['BASEUS','BEYOND THE BOX','DIGITAL WALKER','OMG','OUTERSPACE','SERVICE CENTER','POP UP STORE','STORK','SOUNDPEATS','XIAOMI','CLEARANCE','OPEN SOURCE',];
+
 		$data = [];
 		$data['page_title'] = 'Tender Report';
 		$data['tender_data'] = [];
 		$data['customers'] = $Customers;
-		$data['channels'] = Channel::active();
-		$data['concepts'] = Concept::active();
+		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();
+		$data['concepts'] = Concept::whereIn('concept_name', $concepts)->active();
 		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){
 			return DB::connection('masterfile')->table('customer')->select('customer_code', 'cutomer_name', 'concept')->get();
 		});

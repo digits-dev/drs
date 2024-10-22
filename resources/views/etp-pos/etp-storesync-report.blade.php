@@ -1,3 +1,10 @@
+<style>
+    table.dataTable tbody tr:first-child {
+        background-color: rgba(156, 255, 156, 0.762); 
+    }
+
+</style>
+
 <div>
     <button class="btn btn-primary btn-sm" onclick="location.reload()" style="margin-bottom: 15px;"> <i
             class="fa fa-refresh"></i> Refresh</button>

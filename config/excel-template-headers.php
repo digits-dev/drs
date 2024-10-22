@@ -45,6 +45,24 @@ return [
         'SALE MEMO REF'
     ],
 
+    'gashapon-inventory' => [
+        'REFERENCE NUMBER',
+        'SYSTEM',
+        'ORG',
+        'REPORT TYPE',
+        'CHANNEL CODE',
+        'SUB INVENTORY',
+        'CUSTOMER LOCATION',
+        'INVENTORY AS OF DATE',
+        'ITEM NUMBER',
+        'ITEM DESCRIPTION',
+        'INVENTORY QTY',
+        'STORE COST',
+        'STORE COST ECOMM',
+        'LANDED COST',
+        'PRODUCT QUALITY'
+    ],
+
     'store-inventory' => [
         'REFERENCE NUMBER',
         'SYSTEM',

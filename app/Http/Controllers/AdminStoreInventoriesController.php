@@ -435,7 +435,7 @@
 				->rawColumns(['action'])
 				->toJson();
 			}else{
-				$query = StoreInventory::getYajraDefaultData()->where('is_final', 1);
+				$query = StoreInventory::getYajraDefaultData();
 				$dt = new DataTables();
 				return $dt->collection($query)
 				->addIndexColumn()

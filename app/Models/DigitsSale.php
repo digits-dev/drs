@@ -228,7 +228,7 @@ class DigitsSale extends Model
             'digits_sales.qtysold_lc AS qtysold_lc',
             'digits_sales.dtp_ecom AS dtp_ecom',
             'digits_sales.qtysold_ecom AS qtysold_ecom'
-        )->limit(10)->get();
+        )->where('is_final', 1)->limit(10)->get();
     }
 
     public static function boot()

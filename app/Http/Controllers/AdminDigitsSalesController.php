@@ -418,7 +418,7 @@
 				->rawColumns(['action'])
 				->toJson();
 			}else{
-				$query = DigitsSale::getYajraDefaultData()->where('is_final', 1);
+				$query = DigitsSale::getYajraDefaultData();
 				$dt = new DataTables();
 				return $dt->collection($query)
 				->addIndexColumn()
