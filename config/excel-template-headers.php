@@ -60,7 +60,10 @@ return [
         'STORE COST',
         'STORE COST ECOMM',
         'LANDED COST',
-        'PRODUCT QUALITY'
+        'PRODUCT QUALITY',
+        'VENDOR NAME',
+        'FROM WAREHOUSE',
+        'TO WAREHOUSE'
     ],
 
     'supplier-intransit-inventory' => [
