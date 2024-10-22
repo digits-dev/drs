@@ -334,6 +334,8 @@ class StoreInventoryController extends Controller
                 $itemNumbers[] = $item->{"ITEM NUMBER"};
             }
 
+            $storeWarehouse = StoreInventory::scopeGetWareHourseFromPosEtp($storeId, $itemNumbers);
+            
             $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
 
             // Create Excel Data
@@ -349,7 +351,11 @@ class StoreInventoryController extends Controller
                 $itemNumber = $excel['ITEM_NUMBER'];
                 $sub_inventory = "POS - " . $excel['SUB_INVENTORY'];
                 $cusCode = "CUS-" . $excel['STORE_ID'];
-                
+
+                // $this->getWarehouse($storeWarehouse, '30000699', '20240929');
+
+                $warehouse = $this->getWarehouse($storeWarehouse, $itemNumber, $excel['DATE']);
+
                 if (isset($masterfileCache[$cusCode])) {
                     // Retrieve from cache if exists
                     $masterfile = $masterfileCache[$cusCode];
@@ -375,6 +381,8 @@ class StoreInventoryController extends Controller
                 $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
                 $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
                 $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
+                $toExcel['from_warehouse'] = $warehouse['Warehouse'];
+                $toExcel['to_warehouse'] = $warehouse['ToWarehouse'];
 
                 $toExcelContent[] = $toExcel;
 
@@ -495,6 +503,25 @@ class StoreInventoryController extends Controller
 
 
         return $results;
+    }
+
+    function getWarehouse($data, $itemNumber, $transactionDate){
+        $filteredData = array_filter($data, function ($item) use ($itemNumber, $transactionDate) {
+            return $item->ItemNumber === $itemNumber && $item->TransactionDate === $transactionDate;
+        });
+
+        // Get the first matching result if available
+        $firstMatch = reset($filteredData); // Reset returns the first element of the array or false if empty
+
+        // Check if a match was found and return the associative array
+        if ($firstMatch) {
+            return [
+                'Warehouse' => $firstMatch->Warehouse,
+                'ToWarehouse' => $firstMatch->ToWarehouse,
+            ];
+        }
+
+        return null; 
     }
 
 }   
