@@ -39,23 +39,20 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 			$customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
 		}
 
-		$store_sales = Cache::remember('filtered_store_sales', 900, function() {
-			return DB::table('store_sales')
+		$store_sales =  DB::table('store_sales')
 				->select('customer_name', DB::raw('MAX(sales_date) as latest_sales_date'))
 				->leftJoin('customers', 'store_sales.customers_id', '=', 'customers.id')
 				->groupBy('customer_name')
 				->orderBy('latest_sales_date', 'desc')
 				->get();
-		});
+		
 
-		$store_inventories = Cache::remember('filtered_store_inventories', 900, function() {
-			return DB::table('store_inventories')
+		$store_inventories = DB::table('store_inventories')
 				->select('customer_name', DB::raw('MAX(inventory_date) as latest_inventory_date'))
 				->leftJoin('customers', 'store_inventories.customers_id', '=', 'customers.id')
 				->groupBy('customer_name')
 				->orderBy('latest_inventory_date', 'desc')
 				->get();
-		});
 
 		$customerNames = array_merge(
 			$store_sales->pluck('customer_name')->toArray(),
