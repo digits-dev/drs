@@ -516,7 +516,7 @@
                         className: 'btn custom-button'
                     }
                 ],
-                "order": [[1, "desc"]], 
+                "order": [[0, "desc"], [1, "desc"]], 
                 columnDefs: [
                     { "targets": [1, 4, 5, 6, 7, 8, 9, 10, 11, 13 ], "width": "100px" },  // Set 100px width for multiple columns
                     { "targets": [2, 3], "width": "180px" },
