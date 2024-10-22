@@ -191,7 +191,7 @@ class WarehouseInventory extends Model
             'warehouse_inventories.qtyinv_lc AS qtyinv_lc',
             'warehouse_inventories.dtp_ecom AS dtp_ecom',
             'warehouse_inventories.qtyinv_ecom as qtyinv_ecom',
-        )->limit(10)->get();
+        )->where('is_final', 1)->limit(10)->get();
     }
     
     public static function boot()

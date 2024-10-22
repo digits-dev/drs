@@ -439,7 +439,7 @@
 				->rawColumns(['action'])
 				->toJson();
 			}else{
-				$query = WarehouseInventory::getYajraDefaultData()->where('is_final', 1);
+				$query = WarehouseInventory::getYajraDefaultData();
 				$dt = new DataTables();
 				return $dt->collection($query)
 				
