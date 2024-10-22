@@ -41,7 +41,9 @@ class StoreInventoryExcel implements FromCollection, WithHeadings
             'STORE COST',
             'STORE COST ECOMM',
             'LANDED COST',
-            'PRODUCT QUALITY'
+            'PRODUCT QUALITY',
+            'FROM WAREHOUSE',
+            'TO WAREHOUSE'
         ];
     }
 }
