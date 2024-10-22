@@ -105,12 +105,15 @@ class StoreInventory extends Model
             'store_inventories.batch_number',
             'store_inventories.is_final',
             'store_inventories.reference_number',
+            'store_inventories.from_warehouse AS from_warehouse',
+            'store_inventories.to_warehouse AS to_warehouse',
             'systems.system_name AS system_name',
             'organizations.organization_name AS organization_name',
             'report_types.report_type AS report_type',
             'channels.channel_code AS channel_code',
             'inventory_transaction_types.inventory_transaction_type',
             DB::raw('COALESCE(customers.customer_name, employees.employee_name) AS customer_location'),
+            DB::raw('COALESCE(customers.bill_to, employees.bill_to) AS bill_to'),
             'concepts.concept_name AS concept_name',
             'store_inventories.inventory_date AS inventory_date',
             'store_inventories.item_code AS item_code',
@@ -209,6 +212,36 @@ class StoreInventory extends Model
             --and P.LastIssueDate between @FromDate and @ToDate
         "));
         
+        return $data;
+    }
+
+    public function scopeGetWareHourseFromPosEtp($warehouse, $itemNumbers){
+
+        if (!empty($itemNumbers)) {
+            $placeholders = implode(',', array_fill(0, count($itemNumbers), '?'));
+        } else {
+            return [];
+        }
+
+        $data = DB::connection('sqlsrv')->select(DB::raw("
+            SELECT d.Company, d.Warehouse, d.ToWarehouse, d.TransactionDate, 
+                l.ItemNumber, l.ItemDescription, l.LotNumber, 
+                l.DispatchedQuantity, l.ReceivedQuantity, 
+                l.DispatchedQuantity - l.ReceivedQuantity AS QuantityInTransit
+            FROM DOHead (nolock) d
+            INNER JOIN doline L 
+                ON d.Company = l.Company 
+                AND d.Division = l.Division 
+                AND d.Warehouse = l.Warehouse 
+                AND d.OrderNumber = l.OrderNumber
+            WHERE d.Status = 2
+            AND d.TransactionStatus IN (0, 2)   
+            AND d.Company = 100
+            AND d.Division = '100'
+            AND d.Warehouse = ?
+            AND l.ItemNumber IN ($placeholders)
+        "), array_merge([$warehouse], $itemNumbers));
+
         return $data;
     }
 
