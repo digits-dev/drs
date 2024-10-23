@@ -351,17 +351,33 @@ class StoreInventoryController extends Controller
                 $itemNumber = $excel['ITEM_NUMBER'];
                 $sub_inventory = "POS - " . $excel['SUB_INVENTORY'];
                 $cusCode = "CUS-" . $excel['STORE_ID'];
-
-                // $this->getWarehouse($storeWarehouse, '30000699', '20240929');
+                $fromWareHouse = '';
+                $toWareHouse = '';
+                
 
                 $warehouse = $this->getWarehouse($storeWarehouse, $itemNumber, $excel['DATE']);
+                $warehouses = null;
+
+                if (!empty($warehouse)) {
+                    $warehouses = DB::connection('masterfile')->table('customer')
+                        ->whereIn('customer_code', [
+                            "CUS-" . $warehouse['Warehouse'], 
+                            "CUS-" . $warehouse['ToWarehouse']
+                        ])
+                        ->get()
+                        ->keyBy('customer_code');
+                
+                    $fromWareHouse = $warehouses->get("CUS-" . $warehouse['Warehouse'])->warehouse_name ?? null;
+                    $toWareHouse = $warehouses->get("CUS-" . $warehouse['ToWarehouse'])->warehouse_name ?? null;
+                }
 
                 if (isset($masterfileCache[$cusCode])) {
-                    // Retrieve from cache if exists
                     $masterfile = $masterfileCache[$cusCode];
                 } else {
-                    // Query the database and store in cache
-                    $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
+                    $masterfile = $warehouses && $warehouses->has($cusCode)
+                    ? $warehouses->get($cusCode)
+                    : DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
+                
                     $masterfileCache[$cusCode] = $masterfile;
                 }
 
@@ -381,8 +397,8 @@ class StoreInventoryController extends Controller
                 $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
                 $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
                 $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-                $toExcel['from_warehouse'] = $warehouse['Warehouse'];
-                $toExcel['to_warehouse'] = $warehouse['ToWarehouse'];
+                $toExcel['from_warehouse'] = $fromWareHouse;
+                $toExcel['to_warehouse'] = $toWareHouse;
 
                 $toExcelContent[] = $toExcel;
 
@@ -510,10 +526,8 @@ class StoreInventoryController extends Controller
             return $item->ItemNumber === $itemNumber && $item->TransactionDate === $transactionDate;
         });
 
-        // Get the first matching result if available
-        $firstMatch = reset($filteredData); // Reset returns the first element of the array or false if empty
+        $firstMatch = reset($filteredData);
 
-        // Check if a match was found and return the associative array
         if ($firstMatch) {
             return [
                 'Warehouse' => $firstMatch->Warehouse,
