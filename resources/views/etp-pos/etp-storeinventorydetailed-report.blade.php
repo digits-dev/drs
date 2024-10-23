@@ -625,7 +625,7 @@
                             '<td>' + row['ITEM NUMBER'] + '</td>' +
                             '<td>' + row['item_description'] + '</td>' +
                             '<td>' + row['SERIAL NUMBER'] + '</td>' +
-                            '<td>' + row['TOTAL QTY'] + '</td>' +
+                            '<td>' + Math.round(row['TOTAL QTY'] || 0) + '</td>' +
                             '<td>' + row['brand'] + '</td>' +
                             '</tr>';
                         tbody.append(tr); // Add the new row to the table body
