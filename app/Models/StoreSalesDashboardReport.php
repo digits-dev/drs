@@ -1059,4 +1059,89 @@ class StoreSalesDashboardReport extends Model
         // Calculate the difference
         return $endOfDay - $now;
     }
+
+    public static function generateChartData($from, $to, $store, $concept, $channel, $mall, $brand, $category, $sqm = null, $group = null){
+
+
+        $lastDate = date("Y-m-d", strtotime("last day of {$to}"));
+
+        $sql = "
+        SELECT 
+                  CONCAT('M', MONTH(store_sales.sales_date)) AS month,
+                CONCAT('Y', YEAR(store_sales.sales_date)) AS year,
+            SUM(store_sales.net_sales) AS net_sales
+        FROM store_sales 
+        LEFT JOIN channels ON store_sales.channels_id = channels.id
+        LEFT JOIN customers ON store_sales.customers_id = customers.id
+        LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
+        LEFT JOIN concepts ON customers.concepts_id = concepts.id
+        WHERE store_sales.is_final = 1 
+            AND store_sales.sales_date BETWEEN ? AND ?
+            AND store_sales.quantity_sold > 0
+            AND store_sales.net_sales IS NOT NULL
+            AND store_sales.sold_price > 0
+            AND store_sales.channels_id != 12 
+            AND customers.id = ?
+            AND concepts.id = ?
+            AND channels.id = ?
+            AND customers.mall = ?
+            AND all_items.brand_description = ?
+            AND all_items.category_description = ?
+       GROUP BY year, month;
+    ";
+
+    // Parameters for binding
+    $params = [
+        $from . '-01',
+        $lastDate,
+        $store,
+        $concept,
+        $channel,
+        $mall,
+        $brand,
+        $category
+    ];
+
+    // For debugging, display the SQL and parameters
+    // dump($sql, $params);
+
+    return DB::select(DB::raw($sql), $params);
+
+
+    }
+    // DATE_FORMAT(store_sales.sales_date, '%Y-%m') AS yearMonth,
+
+
+    public static function forTestData() {
+
+       return Cache::remember('today12', 50000, function(){
+            return DB::select(DB::raw("
+            SELECT 
+                CONCAT('M', MONTH(store_sales.sales_date)) AS month,
+                CONCAT('Y', YEAR(store_sales.sales_date)) AS year,
+    
+        SUM(store_sales.net_sales) AS net_sales
+    FROM store_sales 
+    LEFT JOIN channels ON store_sales.channels_id = channels.id
+    LEFT JOIN customers ON store_sales.customers_id = customers.id
+    LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
+    LEFT JOIN concepts ON customers.concepts_id = concepts.id
+    WHERE store_sales.is_final = 1 
+        AND store_sales.sales_date BETWEEN '2022-01-01' AND '2024-09-30'
+        AND store_sales.quantity_sold > 0
+        AND store_sales.net_sales IS NOT NULL
+        AND store_sales.sold_price > 0
+        AND store_sales.channels_id != 12 
+        AND customers.id = 807
+        AND concepts.id = 324
+        AND channels.id = 6
+        AND customers.mall = 'CENTURY CITY'
+        AND all_items.brand_description = 'APPLE'
+        AND all_items.category_description = 'UNITS'
+    GROUP BY year, month;
+
+    "));
+        });
+        
+    }
 }

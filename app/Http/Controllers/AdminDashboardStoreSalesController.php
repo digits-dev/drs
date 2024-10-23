@@ -1,7 +1,12 @@
 <?php namespace App\Http\Controllers;
 
+	use App\Models\AllItem;
+	use App\Models\Channel;
+	use App\Models\Concept;
+	use App\Models\Customer;
+	use App\Models\StoreSalesDashboardReport;
+	use Illuminate\Http\Request;
 	use Session;
-	use Request;
 	use DB;
 	use CRUDBooster;
 	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
@@ -443,16 +448,114 @@
 
 			$data = array_merge($data, $generatedData);
 
-			// $data['channels'] = Channel::get(['id','channel_name'] );
-			// $data['concepts'] = Concept::get(['id','concept_name'] );
+			$data['channels'] = Channel::get(['id','channel_name as name'] );
+			$data['concepts'] = Concept::get(['id','concept_name as name'] );
+			$data['customers'] = Customer::get(['id','customer_name as name'] );
+			$data['brands'] = AllItem::select('brand_description as name')->whereNotNull('brand_description')->distinct()->get();
+			$data['malls'] = Customer::select('mall as name')->whereNotNull('mall')->distinct()->get();
+			$data['categories'] = AllItem::select('category_description as name')->whereNotNull('category_description')->distinct()->get();
+
 
 			// dd($data['channel_codes']);
 
 			// dd($data);
 
+
+
 			\Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.dashboard', $data);
+		}
+
+		public function generateCharts(Request $request){
+
+			dd($request->all());
+
+			// $request->validate(
+			// 	[  
+			// 	  'date_from' => ['required', 'date_format:Y-m', 'before_or_equal:date_to'],
+			// 	  'date_to'   => ['required', 'date_format:Y-m', 'after_or_equal:date_from'],
+			// 	], [],
+			// 	[
+			// 	  'date_from' => 'date from',
+			// 	  'date_to' => 'date to'
+			// 	]
+			// );
+
+			$test = StoreSalesDashboardReport::generateChartData(
+				$request->date_from,
+				$request->date_to,
+				$request->store,
+				$request->concept,
+				$request->channel,
+				$request->mall,
+				$request->brand,
+				$request->category,
+			);
+
+			// dd($test);
+
+
+			// \Log::info(json_encode($test, JSON_PRETTY_PRINT));
+	
+
+
+			$years = self::getYearsInRange($request->date_from, $request->date_to);
+
+
+			// $test = StoreSalesDashboardReport::forTestData();
+
+			// dump($test);
+
+		    $googleChartData = [];
+			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
+
+			foreach($monthOrder	 as $month) {
+				$googleChartData[$month] = [];
+			}
+
+        	foreach ($test as $row) {
+				// Initialize the month if it doesn't exist
+				if (!isset($googleChartData[$row->month])) {
+					$googleChartData[$row->month] = [];
+				}
+			
+				// Add or update the net sales for the year
+				$googleChartData[$row->month][$row->year] = $row->net_sales;
+			}
+
+			$data = [
+				'chartData' => $googleChartData,
+				'years' => $years,
+			];
+
+
+			return response()->json($data);
+
+
+		}
+
+
+		private function getYearsInRange($start, $end)
+		{
+			// Convert the input into DateTime objects
+			$startDate = \DateTime::createFromFormat('Y-m', $start);
+			$endDate = \DateTime::createFromFormat('Y-m', $end);
+
+			// Initialize an array to hold the years
+			$years = [];
+
+			// Loop through the months from start to end
+			while ($startDate <= $endDate) {
+				$year = $startDate->format('Y');
+				if (!in_array($year, $years)) {
+					$years[] = $year;
+				}
+				// Move to the next month
+				$startDate->modify('+1 month');
+			}
+
+			return $years;
 		}
 
 

@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\AdminDashboardStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesDashboardReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminCmsUsersController;
@@ -226,6 +227,9 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::get('/pdf_show', [AdminStoreSalesDashboardReportController::class, 'showPDF'] );
     Route::post('/save_chart', [AdminStoreSalesDashboardReportController::class, 'saveChart'] );
+
+
+    Route::post('/generate_charts', [AdminDashboardStoreSalesController::class, 'generateCharts'])->name('charts');
 
 
 
