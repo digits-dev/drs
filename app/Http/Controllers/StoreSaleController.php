@@ -241,8 +241,33 @@ class StoreSaleController extends Controller
     }
 
     //PULL FROM ETP
-    public function StoresSalesFromPosEtp(){
-        $result = StoreSale::getStoresSalesFromPosEtp();
+    public function StoresSalesFromPosEtp(Request $request){
+        $datefrom = $request->datefrom ? date("Ymd", strtotime($request->datefrom)) : date("Ymd", strtotime("-5 hour"));
+        $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
+        // $datefrom = $request->datefrom ?? date("Y-m-d H:i:s", strtotime("-5 hour"));
+        // $dateto = $request->dateto ?? date("Y-m-d H:i:s", strtotime("-1 hour"));
+        // $result = StoreSale::getStoresSalesFromPosEtp()->whereBetween('C.CreateDate', [$datefrom, $dateto]);
+        $result = DB::connection('sqlsrv')->select(DB::raw("
+                    SELECT 
+                        C.Warehouse AS 'STORE ID',
+                        C.InvoiceNumber AS 'RECEIPT #',
+                        C.CreateDate AS 'SOLD DATE',
+                        C.ItemNumber AS 'ITEM NUMBER',
+                        C.InvoiceQuantity AS 'QTY SOLD',
+                        C.SalesPrice AS 'SOLD PRICE',
+                        C.LotNumber AS 'ITEM SERIAL',
+                        C.SalesPerson AS 'SALES PERSON'
+                    FROM CashOrderTrn C (nolock)
+                    WHERE 
+                        C.Company = 100
+                        AND C.Division = '100'
+                        AND C.InvoiceType = 31
+                        AND C.FreeField2 = '0'
+                        AND C.CreateDate BETWEEN :datefrom AND :dateto
+                "), [
+                    'datefrom' => $datefrom,
+                    'dateto' => $dateto,
+                ]);
         // Group sales data by store ID
         $groupedSalesData = collect($result)->groupBy('STORE ID');
         foreach ($groupedSalesData as $storeId => $storeData) {
