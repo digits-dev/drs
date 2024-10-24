@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SUpplierIntransitInventory;
-use App\Models\SUpplierIntransitInventoryInventoriesReport;
+use App\Models\SupplierIntransitInventory;
+use App\Models\SupplierIntransitInventoryInventoriesReport;
 use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
-use App\Exports\SUpplierIntransitInventoryExport;
-use App\Imports\SUpplierIntransitInventoryImport;
-use App\Jobs\ProcessSUpplierIntransitInventoryUploadJob;
-use App\Models\SUpplierIntransitInventoryUpload;
+use App\Exports\SupplierIntransitInventoryExport;
+use App\Imports\SupplierIntransitInventoryImport;
+use App\Jobs\ProcessSupplierIntransitInventoryUploadJob;
+use App\Models\SupplierIntransitInventoryUpload;
 use App\Rules\ExcelFileValidationRule;
 use CRUDBooster;
 use Illuminate\Bus\Batch;
@@ -20,8 +20,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use DB;
-use App\Jobs\ExportSUpplierIntransitInventoryCreateFileJob;
-use App\Jobs\AppendMoreSUpplierIntransitInventoryJob;
+use App\Jobs\ExportSupplierIntransitInventoryCreateFileJob;
+use App\Jobs\AppendMoreSupplierIntransitInventoryJob;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ReportPrivilege;
 use Illuminate\Support\Facades\Response;
