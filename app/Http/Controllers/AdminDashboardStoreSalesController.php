@@ -433,20 +433,20 @@
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard ';
 
-			$reloadData = request()->has('reload_data');
+			// $reloadData = request()->has('reload_data');
 
 
-			if($reloadData){
-				$generatedData = $this->dashboardService->generateSalesReport();
-			} else {
-				$generatedData = $this->dashboardService->getData();
+			// if($reloadData){
+			// 	$generatedData = $this->dashboardService->generateSalesReport();
+			// } else {
+			// 	$generatedData = $this->dashboardService->getData();
 
-				if(empty($generatedData)){
-					$generatedData = $this->dashboardService->generateSalesReport();
-				}
-			}
+			// 	if(empty($generatedData)){
+			// 		$generatedData = $this->dashboardService->generateSalesReport();
+			// 	}
+			// }
 
-			$data = array_merge($data, $generatedData);
+			// $data = array_merge($data, $generatedData);
 
 			$data['channels'] = Channel::get(['id','channel_name as name'] );
 			$data['concepts'] = Concept::get(['id','concept_name as name'] );
@@ -469,7 +469,7 @@
 
 		public function generateCharts(Request $request){
 
-			dd($request->all());
+			// dump($request->all());
 
 			// $request->validate(
 			// 	[  
@@ -485,20 +485,19 @@
 			$test = StoreSalesDashboardReport::generateChartData(
 				$request->date_from,
 				$request->date_to,
-				$request->store,
-				$request->concept,
-				$request->channel,
+				$request->stores,
+				$request->concepts,
+				$request->channels,
 				$request->mall,
-				$request->brand,
-				$request->category,
+				$request->brands,
+				$request->categories,
 			);
 
 			// dd($test);
 
 
-			// \Log::info(json_encode($test, JSON_PRETTY_PRINT));
+			\Log::info(json_encode($test, JSON_PRETTY_PRINT));
 	
-
 
 			$years = self::getYearsInRange($request->date_from, $request->date_to);
 

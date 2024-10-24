@@ -65,6 +65,11 @@
         border: none;
         font-size: 15px;
     }
+
+    .custom-modal {
+        max-width: 70%; /* Adjust this value as needed */
+        width: 100%;
+    }
    
 
 
@@ -77,7 +82,7 @@
 <div class="main-content">
 
     <br>
-    <div class="container">
+    {{-- <div class="container">
         <h4 style="margin-bottom: 20px;">Generate Charts</h4>
         <form id="chartForm" method="POST">
             @csrf
@@ -159,7 +164,7 @@
                     <div class="form-group">
                         <label for="mall">Mall:</label>
                         <select class="form-control" id="mall" name="mall" >
-                            <option value="" disabled selected>Select Mall</option>
+                            <option value="all" selected>ALL</option>
 
                             @foreach ($malls as $mall)
                                 <option>{{$mall->name}}</option>
@@ -197,7 +202,12 @@
                 </div>
             </div>
         </form>
-    </div>
+    </div> --}}
+
+    
+    <!-- Button to trigger modal -->
+<button type="button" class="btn btn-info" data-toggle="modal" data-target="#chartModal">Generate Chart</button>
+<button id="saveChartBtn">Save Chart</button>
 
     <div class="container" style="margin-top: 20px; border-radius:15px;">
         <h5 >Selected Values:</h5>
@@ -214,125 +224,137 @@
         </table>
     </div>
   
-
-    {{-- <div id="loading" class="text-center">
-        <div class="loader"></div>
-        <p>Loading, please wait...</p>
-    </div> --}}
-
-    
-
-
-    <!-- Button to trigger modal -->
-{{-- <button type="button" class="btn btn-info" data-toggle="modal" data-target="#chartModal">Generate Chart</button>
-
-<div class="modal fade" id="chartModal" tabindex="-1" role="dialog" aria-labelledby="chartModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="chartModalLabel">Generate Charts</h4>
-            </div>
-            <div class="modal-body">
-                <form id="chartForm"  method="POST">
-                    @csrf
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="yearFrom">Month Year From:</label>
-                                <input type="month" class="form-control" id="yearFrom" name="date_from" >
+    {{-- MODAL  --}}
+    <div class="modal fade" id="chartModal" tabindex="-1" role="dialog" aria-labelledby="chartModalLabel">
+        <div class="modal-dialog custom-modal" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="chartModalLabel">Generate Charts</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="chartForm" method="POST">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="yearFrom">Month Year From:</label>
+                                    <input type="month" class="form-control" id="yearFrom" name="date_from" >
+                                </div>
+            
+                                <div class="form-group">
+                                    <label for="store">Store:</label>
+                                    <select class="form-control select2" id="store" name="stores[]" multiple='multiple' >
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($customers as $customer)
+                                            <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                        @endforeach
+            
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="channel">Channel:</label>
+                                    <select class="form-control select2" id="channel" name="channels[]"  multiple='multiple' >
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($channels as $channel)
+                                            <option value="{{$channel->id}}">{{$channel->name}}</option>
+                                        @endforeach
+                            
+                                    </select>
+                                </div>
+                                
+                                
+                            
+                                <div class="form-group">
+                                    <label for="brand">Brand:</label>
+                                    <select class="form-control select2" id="brand" name="brands[]"  multiple='multiple' >
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($brands as $brand)
+                                            <option>{{$brand->name}}</option>
+                                        @endforeach
+                                    
+                                    </select>
+                                </div>
+            
+                                <div class="form-group">
+                                    <label for="category">Category:</label>
+                                    <select class="form-control select2" id="category" name="categories[]" multiple='multiple'>
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($categories as $category)
+                                            <option>{{$category->name}}</option>
+                                        @endforeach
+                                        
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="store">Store:</label>
-                                <select class="form-control" id="store" name="store" >
-                                    <option value="">Select Store</option>
-                                    @foreach ($customers as $customer)
-                                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="channel">Channel:</label>
-                                <select class="form-control" id="channel" name="channel" >
-                                    <option value="">Select Channel</option>
-                                    @foreach ($channels as $channel)
-                                        <option value="{{ $channel->id }}">{{ $channel->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="brand">Brand:</label>
-                                <select class="form-control" id="brand" name="brand" >
-                                    <option value="">Select Brand</option>
-                                    @foreach ($brands as $brand)
-                                        <option>{{ $brand->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="category">Category:</label>
-                                <select class="form-control" id="category" name="category" >
-                                    <option value="">Select Category</option>
-                                    @foreach ($categories as $category)
-                                        <option >{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="yearTo">Month Year To:</label>
+                                    <input type="month" class="form-control" id="yearTo" name="date_to" >
+                                </div>
+                
+                                <div class="form-group">
+                                    <label for="storeConcept">Store Concept:</label>
+                                    <select class="form-control select2" id="storeConcept" name="concepts[]"  multiple='multiple' >
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($concepts as $concept)
+                                            <option value="{{$concept->id}}">{{$concept->name}}</option>
+                                        @endforeach
+            
+                                    </select>
+                                </div>
+            
+                                <div class="form-group">
+                                    <label for="mall">Mall:</label>
+                                    <select class="form-control" id="mall" name="mall" >
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($malls as $mall)
+                                            <option>{{$mall->name}}</option>
+                                        @endforeach
+                                
+                                    </select>
+                                </div>
+                
+                                <div class="form-group">
+                                    <label for="sqm">Square Meters (sqm):</label>
+                                    <select class="form-control" id="sqm" name="sqm" >
+                                        <option value="" disabled selected>Select SQM</option>
+                                        <option value="50">50 sqm</option>
+                                        <option value="100">100 sqm</option>
+                                        <option value="150">150 sqm</option>
+                                    </select>
+                                </div>
+            
+                                <div class="form-group">
+                                    <label for="group">Group:</label>
+                                    <select class="form-control" id="group" name="group" >
+                                        <option value="" disabled selected>Select Group</option>
+                                        <option value="group1">Group 1</option>
+                                        <option value="group2">Group 2</option>
+                                        <option value="group3">Group 3</option>
+                                    </select>
+                                </div>
+                            
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="yearTo">Month Year To:</label>
-                                <input type="month" class="form-control" id="yearTo" name="date_to" >
-                            </div>
-                            <div class="form-group">
-                                <label for="storeConcept">Store Concept:</label>
-                                <select class="form-control" id="storeConcept" name="concept" >
-                                    <option value="">Select Store Concept</option>
-                                    @foreach ($concepts as $concept)
-                                        <option value="{{ $concept->id }}">{{ $concept->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="mall">Mall:</label>
-                                <select class="form-control" id="mall" name="mall" >
-                                    <option value="">Select Mall</option>
-                                    @foreach ($malls as $mall)
-                                        <option >{{ $mall->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="sqm">Square Meters (sqm):</label>
-                                <select class="form-control" id="sqm" name="sqm" >
-                                    <option value="">Select SQM</option>
-                                    <option value="50">50 sqm</option>
-                                    <option value="100">100 sqm</option>
-                                    <option value="150">150 sqm</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="group">Group:</label>
-                                <select class="form-control" id="group" name="group" >
-                                    <option value="">Select Group</option>
-                                    <option value="group1">Group 1</option>
-                                    <option value="group2">Group 2</option>
-                                    <option value="group3">Group 3</option>
-                                </select>
+                        <div class="row">
+                            <div  style="display: flex; gap:20px; justify-content:center; margin-top:20px;">
+                                <button type="reset" class="btn btn-secondary" style="width:80px;">Reset</button>
+                                <button type="submit" class="btn btn-primary" style="width:80px;">Submit</button>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div style="display: flex; gap:20px; justify-content:center; margin-top:20px;">
-                            <button type="reset" class="btn btn-secondary" style="width:80px;">Cancel</button>
-                            <button type="submit" class="btn btn-primary" style="width:80px;">Confirm</button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div> --}}
 
     <div id="loading" class="text-center" style="display: none">
         <div class="loader"></div>
@@ -340,7 +362,7 @@
     </div>
 
     <br>
-    <button id="saveChartBtn">Save Chart</button>
+
     {{-- <div id="chart_div"></div> --}}
 
     <div id="charts_container"></div>
@@ -360,8 +382,17 @@
 
 $(function() {
 
-    $('select').select2({
-        width:'100%',
+    // $('select').select2({
+    //     width:'100%',
+    // });
+
+    $('#chartModal').modal('show');
+
+
+    $('.select2').select2({
+        placeholder: "Select an option",
+        allowClear: true,
+        width:'100%'
     });
 
     function handleSelect2Event(selector) {
@@ -438,9 +469,11 @@ $(function() {
 
                 console.log(data);
 
-                drawChart(data.chartData, data.years);
+                drawChart(data.chartData, data.years, 'bar');
+                drawChart(data.chartData, data.years, 'line');
 
                 $('#loading').hide();
+                $('#chartModal').modal('hide');
 
                 
                 // Do the same for channels, brands, categories, concepts, malls, etc.
@@ -457,16 +490,21 @@ $(function() {
         // Clear previous rows
         $('#selectedValues tbody').empty();
         
-        // Collect values
         let values = {
             "Month Year From": $('#yearFrom').val(),
             "Month Year To": $('#yearTo').val(),
-            "Store": $('#store option:selected').text(),
-            "Channel": $('#channel option:selected').text(),
-            "Brand": $('#brand option:selected').text(),
-            "Category": $('#category option:selected').text(),
-            "Store Concept": $('#storeConcept option:selected').text(),
-            "Mall": $('#mall option:selected').text(),
+            "Store": $('#store').val().map(function(value) {
+                return $('#store option[value="' + value + '"]').text();
+            }).join(', '),  
+            "Channel": $('#channel').val().map(function(value) {
+                return $('#channel option[value="' + value + '"]').text();
+            }).join(', '), 
+            "Brand": $('#brand').val().join(', '), 
+            "Category": $('#category').val().join(', '), 
+            "Store Concept": $('#storeConcept').val().map(function(value) {
+                return $('#storeConcept option[value="' + value + '"]').text();
+            }).join(', '), 
+            "Mall": $('#mall option:selected').text(), 
             "Square Meters": $('#sqm option:selected').text(),
             "Group": $('#group option:selected').text()
         };
@@ -476,7 +514,7 @@ $(function() {
             $('#selectedValues tbody').append(`
                 <tr>
                     <td>${field}</td>
-                    <td>${value || 'N/A'}</td>
+                    <td>${value || 'ALL'}</td>
                 </tr>
             `);
         });
@@ -782,7 +820,7 @@ $(function() {
         'September', 'October', 'November', 'December'
     ];
 
-    function drawChart(months, years) {
+    function drawChart(months, years, type) {
         const dataArray = [['Channel', ...years]];
 
         console.log(months);
@@ -831,7 +869,107 @@ $(function() {
         chartDiv.className = 'chart';
         document.getElementById('charts_container').appendChild(chartDiv);
 
-        const channelChart = new google.visualization.ColumnChart(chartDiv);
+        let channelChart;
+
+        switch(type){
+            case 'bar':
+                channelChart = new google.visualization.ColumnChart(chartDiv);
+            break;
+            case 'line':
+                channelChart = new google.visualization.LineChart(chartDiv);
+            break;
+        }
+         
+        channelChart.draw(data, options);
+        
+        // Add resize event listener
+        window.addEventListener('resize', () => {
+            channelChart.draw(data, options);
+        });
+
+        // Get the chart as an image and store it
+        const imgUri = channelChart.getImageURI();
+        chartImages.push(imgUri);
+    }
+
+    function drawChartWithControlledLastMonth(months, years, type) {
+        const dataArray = [['Channel', ...years]];
+
+        console.log(months);
+        
+        // Find the latest year from the years array
+        const latestYear = Math.max(...years.map(year => parseInt(year)));
+
+        // Filter months for the latest year
+        const monthsForLatestYear = Object.entries(months).filter(([monthKey, monthData]) => {
+            const yearKey = monthData[`Y${latestYear}`] !== undefined; // Check if data exists for the latest year
+            return yearKey; // Include only those months which have data for the latest year
+        });
+        
+        // Determine the last month available in the latest year
+        const lastMonthKey = Math.max(...monthsForLatestYear.map(([monthKey]) => parseInt(monthKey.replace('M', ''))));
+
+        // Filter to only include months up to the last month of the latest year
+        const filteredMonths = monthsForLatestYear.filter(([monthKey]) => {
+            const monthIndex = parseInt(monthKey.replace('M', ''));
+            return monthIndex <= lastMonthKey;
+        });
+
+        // Populate dataArray with filtered months
+        filteredMonths.forEach(([monthKey, monthData]) => {
+            const monthIndex = parseInt(monthKey.replace('M', '')) - 1; // Adjust month index
+            const rowData = [`${monthNames[monthIndex]}`]; // Start row with month name
+
+            // Loop through years to dynamically add sales data
+            years.forEach(year => {
+                rowData.push(monthData[`Y${year}`] || 0); // Add sales for the year, default to 0 if undefined
+            });
+
+            // Push the row data to the array
+            dataArray.push(rowData);
+        });
+
+        const data = google.visualization.arrayToDataTable(dataArray);
+
+        const options = {
+            title: ` Sales Report`,
+            hAxis: { title: 'Months' },
+            vAxis: { title: 'Sales' },
+            isStacked: false,
+            chartArea: {
+                width:'100%',
+                height:'100%',
+                top: 100, 
+                left: 150, 
+                right:50,
+                bottom:50,
+            },
+            legend:{position: 'top', textStyle: { fontSize: 13}, alignment:'end'},
+            annotations: {
+                textStyle: {
+                    color: '#000', 
+                    fontSize: 12 
+                }
+            }
+        };
+
+        // Create a new div for each chart
+        const chartDiv = document.createElement('div');
+        chartDiv.id = `2024-chart`;
+        chartDiv.className = 'chart';
+        document.getElementById('charts_container').appendChild(chartDiv);
+
+        let channelChart;
+
+        switch(type){
+            case 'bar':
+                channelChart = new google.visualization.ColumnChart(chartDiv);
+            break;
+            case 'line':
+                channelChart = new google.visualization.LineChart(chartDiv);
+            break;
+        }
+         
         channelChart.draw(data, options);
         
         // Add resize event listener
@@ -961,9 +1099,6 @@ $(function() {
     }
 });
 
-
-
-            // $('#store_concept_name option:not(:first-child)').prop('disabled', true);
 
 
 </script>

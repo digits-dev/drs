@@ -1060,56 +1060,97 @@ class StoreSalesDashboardReport extends Model
         return $endOfDay - $now;
     }
 
-    public static function generateChartData($from, $to, $store, $concept, $channel, $mall, $brand, $category, $sqm = null, $group = null){
+    // DATE_FORMAT(store_sales.sales_date, '%Y-%m') AS yearMonth,
 
-
+    public static function generateChartData($from, $to, $store, $concept, $channel, $mall, $brand, $category, $sqm = null, $group = null)
+    {
         $lastDate = date("Y-m-d", strtotime("last day of {$to}"));
 
-        $sql = "
-        SELECT 
-                  CONCAT('M', MONTH(store_sales.sales_date)) AS month,
-                CONCAT('Y', YEAR(store_sales.sales_date)) AS year,
-            SUM(store_sales.net_sales) AS net_sales
-        FROM store_sales 
-        LEFT JOIN channels ON store_sales.channels_id = channels.id
-        LEFT JOIN customers ON store_sales.customers_id = customers.id
-        LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
-        LEFT JOIN concepts ON customers.concepts_id = concepts.id
-        WHERE store_sales.is_final = 1 
-            AND store_sales.sales_date BETWEEN ? AND ?
-            AND store_sales.quantity_sold > 0
-            AND store_sales.net_sales IS NOT NULL
-            AND store_sales.sold_price > 0
-            AND store_sales.channels_id != 12 
-            AND customers.id = ?
-            AND concepts.id = ?
-            AND channels.id = ?
-            AND customers.mall = ?
-            AND all_items.brand_description = ?
-            AND all_items.category_description = ?
-       GROUP BY year, month;
-    ";
+        $params = [
+            $from,
+            $to,
+            implode('|', (array)$store),
+            implode('|', (array)$concept),
+            implode('|', (array)$channel),
+            $mall,
+            implode('|', (array)$brand),
+            implode('|', (array)$category),
+        ];
 
-    // Parameters for binding
-    $params = [
-        $from . '-01',
-        $lastDate,
-        $store,
-        $concept,
-        $channel,
-        $mall,
-        $brand,
-        $category
-    ];
-
-    // For debugging, display the SQL and parameters
-    // dump($sql, $params);
-
-    return DB::select(DB::raw($sql), $params);
+        \Log::info('start params');
+        \Log::info($from);
+        \Log::info($to);
+        \Log::info($store);
+        \Log::info($concept);
+        \Log::info($channel);
+        \Log::info($mall);
+        \Log::info($brand);
+        \Log::info($category);
+        \Log::info('end params');
 
 
+
+        $cacheKey = 'chartData_' . md5(implode('|', $params));
+        \Log::info($cacheKey);
+
+
+        return Cache::remember($cacheKey, 50000, 
+            function() use ($from, $lastDate, $store, $concept, $channel, $mall, $brand, $category) {
+            $query = DB::table('store_sales', 'ss')
+                ->select(
+                    DB::raw("CONCAT('M', MONTH(sales_date)) AS month"),
+                    DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
+                    DB::raw("SUM(net_sales) AS net_sales")
+                )
+                ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
+                ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
+                ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
+                ->leftJoin('concepts as con', 'cu.concepts_id', 'con.id')
+                ->where('ss.is_final', 1)
+                ->whereBetween('ss.sales_date', ["{$from}-01", $lastDate])
+                ->where('ss.quantity_sold', '>', 0)
+                ->whereNotNull('ss.net_sales')
+                ->where('ss.sold_price', '>', 0)
+                ->where('ss.channels_id', '!=', 12);
+
+                 // Conditional parameters
+                if (!empty($store)) {
+                    $query->whereIn('cu.id', (array)$store);
+                }
+
+                if (!empty($concept)) {
+                    $query->whereIn('con.id', (array)$concept);
+                }
+
+                if (!empty($channel)) {
+                    $query->whereIn('ch.id', (array)$channel);
+                }
+
+                if (!empty($mall) && $mall !== 'all') {
+                    $query->where('cu.mall', $mall);
+                }
+
+                if (!empty($brand)) {
+                    $query->whereIn('ai.brand_description', (array)$brand);
+                }
+
+                if (!empty($category)) {
+                    $query->whereIn('ai.category_description', (array)$category);
+                }
+
+                $query->groupBy(DB::raw("year, month"));
+
+                // For debugging: Log the raw SQL and parameters
+                \Log::info(json_encode([
+                    'query' => $query->toSql(),
+                    'bindings' => $query->getBindings()
+                ], JSON_PRETTY_PRINT));
+
+                return $query->get();
+               
+        });
     }
-    // DATE_FORMAT(store_sales.sales_date, '%Y-%m') AS yearMonth,
+
 
 
     public static function forTestData() {
