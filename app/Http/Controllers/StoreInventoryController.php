@@ -20,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\Exports\StoreInventoryExport;
 use App\Imports\StoreInventoryImport;
+use Illuminate\Support\Facades\Cache;
 use App\Models\StoreInventoriesReport;
 use App\Rules\ExcelFileValidationRule;
 use Illuminate\Support\Facades\Storage;
@@ -306,14 +307,29 @@ class StoreInventoryController extends Controller
     }
 
     public function StoresInventoryFromPosEtp(){
-        $result = StoreInventory::getStoresSalesFromPosEtp();
+        $result = StoreInventory::scopeGetStoresInventoryFromPosEtp();
+        $groupedSalesData = collect($result)->groupBy('Warehouse');
 
+        $itemNumbers = $groupedSalesData->flatMap(function($storeData) {
+            return $storeData->pluck('ItemNumber');
+        })->unique()->toArray();
+
+        $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
+
+        $warehouseCodes = $groupedSalesData->flatMap(function($storeData) {
+            return [
+                "CUS-" . $storeData->first()->Warehouse,    
+                "CUS-" . $storeData->first()->ToWarehouse
+            ];
+        })->unique()->toArray();
+
+        $masterfile = DB::connection('masterfile')->table('customer')
+            ->whereIn('customer_code', $warehouseCodes)
+            ->get()
+            ->keyBy('customer_code');
         
-        // Group sales data by store ID
-        $groupedSalesData = collect($result)->groupBy('STORE ID');
-
-
         foreach ($groupedSalesData as $storeId => $storeData) {
+
             $time = microtime(true);
             $batch_number = str_replace('.', '', $time);;
             $folder_name = "$batch_number-" . Str::random(5);
@@ -324,75 +340,32 @@ class StoreInventoryController extends Controller
             if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
                 mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
             }
-            $toExcelContent = [];
-
-            // Initialize the cache arrays
-            $masterfileCache = [];
-            $itemNumbers = [];
-
-            foreach($storeData as $item){
-                $itemNumbers[] = $item->{"ITEM NUMBER"};
-            }
-
-            $storeWarehouse = StoreInventory::scopeGetWareHourseFromPosEtp($storeId, $itemNumbers);
-            
-            $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
+            $toExcelContent = [];   
 
             // Create Excel Data
             foreach($storeData as &$excel){
+
                 $counter = Counter::where('id',2)->value('reference_code');
-                $modified = [];
-                foreach ($excel as $key => $value) {
-                    // Replace spaces with underscores in keys
-                    $newKey = str_replace(' ', '_', $key);
-                    $modified[$newKey] = $value;
-                }
-                $excel = $modified;
-                $itemNumber = $excel['ITEM_NUMBER'];
-                $sub_inventory = "POS - " . $excel['SUB_INVENTORY'];
-                $cusCode = "CUS-" . $excel['STORE_ID'];
-                $fromWareHouse = '';
-                $toWareHouse = '';
-                
-
-                $warehouse = $this->getWarehouse($storeWarehouse, $itemNumber, $excel['DATE']);
-                $warehouses = null;
-
-                if (!empty($warehouse)) {
-                    $warehouses = DB::connection('masterfile')->table('customer')
-                        ->whereIn('customer_code', [
-                            "CUS-" . $warehouse['Warehouse'], 
-                            "CUS-" . $warehouse['ToWarehouse']
-                        ])
-                        ->get()
-                        ->keyBy('customer_code');
-                
-                    $fromWareHouse = $warehouses->get("CUS-" . $warehouse['Warehouse'])->warehouse_name ?? null;
-                    $toWareHouse = $warehouses->get("CUS-" . $warehouse['ToWarehouse'])->warehouse_name ?? null;
-                }
-
-                if (isset($masterfileCache[$cusCode])) {
-                    $masterfile = $masterfileCache[$cusCode];
-                } else {
-                    $masterfile = $warehouses && $warehouses->has($cusCode)
-                    ? $warehouses->get($cusCode)
-                    : DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
-                
-                    $masterfileCache[$cusCode] = $masterfile;
-                }
+                $itemNumber = $excel->ItemNumber;
+                $sub_inventory = "POS - " . $excel->SubInventory;
+                $cusCode = "CUS-" . $excel->Warehouse;
+                $toWarehouseCode = "CUS-" . $excel->ToWarehouse; 
+                    
+                $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
+                $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
 
                 $toExcel = [];
                 $toExcel['reference_number'] = $counter;
                 $toExcel['system'] = 'POS';
                 $toExcel['org'] = $itemDetails[$itemNumber]['org'];
                 $toExcel['report_type'] = 'STORE INVENTORY';
-                $toExcel['channel_code'] = $masterfile->channel_code_id;
+                $toExcel['channel_code'] = $masterfile[$cusCode]->channel_code_id;
                 $toExcel['sub_inventory'] = $sub_inventory;
-                $toExcel['customer_location'] = $masterfile->cutomer_name;
-                $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel['DATE'])->format('Y-m-d');
-                $toExcel['item_number'] = $excel['ITEM_NUMBER'];
+                $toExcel['customer_location'] = $masterfile[$cusCode]->cutomer_name;
+                $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel->TransactionDate)->format('Y-m-d');
+                $toExcel['item_number'] = $excel->ItemNumber;
                 $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                $toExcel['total_qty'] = $excel['TOTAL_QTY'];
+                $toExcel['total_qty'] = $excel->QuantityInTransit;
                 $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                 $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
                 $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
@@ -406,7 +379,6 @@ class StoreInventoryController extends Controller
             }
 
             Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
-
 
             // Full path of the stored Excel file
             $full_excel_path = storage_path('app') . '/' . $excel_path;
@@ -471,71 +443,160 @@ class StoreInventoryController extends Controller
         ];
     }
     
+    // function fetchItemDataInBatch($itemNumbers)
+    // {
+    //     $results = [];
+    //     $itemNumberSet = collect($itemNumbers)->unique();
+
+    //     // Define a cache key based on the unique item numbers
+    //     $cacheKey = 'item_data_' . md5(implode(',', $itemNumberSet->toArray()));
+
+    //     // Check if the data is already cached
+    //     $cachedResults = Cache::get($cacheKey);
+
+    //     if ($cachedResults) {
+    //         return $cachedResults;
+    //     }
+
+    //     $itemMasterRecords = DB::connection('imfs')
+    //     ->table('item_masters') 
+    //     ->whereIn('digits_code', $itemNumberSet)
+    //     ->get()
+    //     ->keyBy('digits_code');
+
+    //     foreach ($itemMasterRecords as $record) {
+    //         $results[$record->digits_code] = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
+    //     }
+
+    //     $foundItemNumbers = collect(array_keys($results));
+    //     $missingItemNumbers = $itemNumberSet->diff($foundItemNumbers); 
+
+    //     if ($missingItemNumbers->isEmpty()) {
+    //         Cache::put($cacheKey, $results, now()->addMinutes(60)); 
+    //         return $results;
+    //     }
+
+    //     // Check the second database
+    //     $rmaItemMasterRecords = DB::connection('imfs')
+    //     ->table('rma_item_masters')
+    //     ->whereIn('digits_code', $missingItemNumbers)
+    //     ->get()
+    //     ->keyBy('digits_code');
+
+    //     foreach ($rmaItemMasterRecords as $record) {
+    //         $results[$record->digits_code] = $this->prepareItemData($record, 'RMA');
+    //     }
+
+    //     // Check for missing item numbers again
+    //     $foundItemNumbersAfterRMA = collect(array_keys($results));
+    //     $missingItemNumbersAfterRMA = $missingItemNumbers->diff($foundItemNumbersAfterRMA); 
+
+    //     if ($missingItemNumbersAfterRMA->isNotEmpty()) {
+    //         $aimfsItemMasterRecords = DB::connection('aimfs')
+    //             ->table('digits_imfs')
+    //             ->whereIn('digits_code', $missingItemNumbersAfterRMA)
+    //             ->get()
+    //             ->keyBy('digits_code');
+
+    //         foreach ($aimfsItemMasterRecords as $record) {
+    //             $results[$record->digits_code] = $this->prepareItemData($record, 'ADMIN');
+    //         }
+    //     }
+
+    //     Cache::put($cacheKey, $results, now()->addMinutes(60)); 
+
+    //     return $results;
+    // }
+
     function fetchItemDataInBatch($itemNumbers)
     {
         $results = [];
         $itemNumberSet = collect($itemNumbers)->unique();
 
-        $itemMasterRecords = DB::connection('imfs')
-        ->table('item_masters') 
-        ->whereIn('digits_code', $itemNumberSet)
-        ->get();
+        // Prepare cache keys for each item number
+        $cacheKeys = $itemNumberSet->mapWithKeys(function ($itemNumber) {
+            return ['item_data_' . $itemNumber => $itemNumber];
+        });
 
-        foreach ($itemMasterRecords as $record) {
-            $results[$record->digits_code] = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
-        }
+        // Batch fetch all cached items
+        $cachedItems = Cache::many($cacheKeys->keys()->toArray());
 
-        $foundItemNumbers = collect(array_keys($results));
-        $missingItemNumbers = $itemNumberSet->diff($foundItemNumbers); 
-
-        if ($missingItemNumbers->isEmpty()) {
-            return $results;
-        }
-
-        // Check the second database
-        $rmaItemMasterRecords = DB::connection('imfs')
-        ->table('rma_item_masters')
-        ->whereIn('digits_code', $missingItemNumbers)
-        ->get();
-
-        foreach ($rmaItemMasterRecords as $record) {
-            $results[$record->digits_code] = $this->prepareItemData($record, 'RMA');
-        }
-
-        // Check for missing item numbers again
-        $foundItemNumbersAfterRMA = collect(array_keys($results));
-        $missingItemNumbersAfterRMA = $missingItemNumbers->diff($foundItemNumbersAfterRMA); 
-
-        if ($missingItemNumbersAfterRMA->isNotEmpty()) {
-            $aimfsItemMasterRecords = DB::connection('aimfs')
-                ->table('digits_imfs')
-                ->whereIn('digits_code', $missingItemNumbersAfterRMA)
-                ->get();
-
-            foreach ($aimfsItemMasterRecords as $record) {
-                $results[$record->digits_code] = $this->prepareItemData($record, 'ADMIN');
+        // Separate found items from missing items
+        $missingItemNumbers = collect();
+        foreach ($cacheKeys as $cacheKey => $itemNumber) {
+            if (isset($cachedItems[$cacheKey])) {
+                $results[$itemNumber] = $cachedItems[$cacheKey];
+            } else {
+                $missingItemNumbers->push($itemNumber);
             }
         }
 
+        // If there are missing items, fetch them from the databases
+        if ($missingItemNumbers->isNotEmpty()) {
+            $this->fetchAndCacheMissingItems($missingItemNumbers, $results);
+        }
 
         return $results;
     }
 
-    function getWarehouse($data, $itemNumber, $transactionDate){
-        $filteredData = array_filter($data, function ($item) use ($itemNumber, $transactionDate) {
-            return $item->ItemNumber === $itemNumber && $item->TransactionDate === $transactionDate;
-        });
+    protected function fetchAndCacheMissingItems($missingItemNumbers, &$results)
+    {
+        $cacheBatch = [];
 
-        $firstMatch = reset($filteredData);
+        // Fetch from the first database (item_masters)
+        $itemMasterRecords = DB::connection('imfs')
+            ->table('item_masters')
+            ->whereIn('digits_code', $missingItemNumbers)
+            ->get()
+            ->keyBy('digits_code');
 
-        if ($firstMatch) {
-            return [
-                'Warehouse' => $firstMatch->Warehouse,
-                'ToWarehouse' => $firstMatch->ToWarehouse,
-            ];
+        foreach ($itemMasterRecords as $record) {
+            $itemData = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
+            $results[$record->digits_code] = $itemData;
+            $cacheBatch['item_data_' . $record->digits_code] = $itemData;
         }
 
-        return null; 
+        $foundItemNumbers = collect(array_keys($results));
+        $stillMissingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
+
+        // Fetch missing items from the RMA database
+        if ($stillMissingItemNumbers->isNotEmpty()) {
+            $rmaItemMasterRecords = DB::connection('imfs')
+                ->table('rma_item_masters')
+                ->whereIn('digits_code', $stillMissingItemNumbers)
+                ->get()
+                ->keyBy('digits_code');
+
+            foreach ($rmaItemMasterRecords as $record) {
+                $itemData = $this->prepareItemData($record, 'RMA');
+                $results[$record->digits_code] = $itemData;
+                $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+            }
+
+            $foundItemNumbersAfterRMA = collect(array_keys($results));
+            $missingItemNumbersAfterRMA = $stillMissingItemNumbers->diff($foundItemNumbersAfterRMA);
+
+            // Fetch from the third database (aimfs)
+            if ($missingItemNumbersAfterRMA->isNotEmpty()) {
+                $aimfsItemMasterRecords = DB::connection('aimfs')
+                    ->table('digits_imfs')
+                    ->whereIn('digits_code', $missingItemNumbersAfterRMA)
+                    ->get()
+                    ->keyBy('digits_code');
+
+                foreach ($aimfsItemMasterRecords as $record) {
+                    $itemData = $this->prepareItemData($record, 'ADMIN');
+                    $results[$record->digits_code] = $itemData;
+                    $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+                }
+            }
+        }
+
+        // Batch insert the missing items into the cache
+        if (!empty($cacheBatch)) {
+            Cache::putMany($cacheBatch, now()->addMinutes(60));
+        }
     }
+
 
 }   
