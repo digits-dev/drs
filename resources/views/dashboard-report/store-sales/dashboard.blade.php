@@ -19,10 +19,11 @@
     }
     .chart {
         flex: 1 1 auto;
+        width: 100%;
         min-width: 300px; 
         height: 700px; /*pie chart size*/ 
-        height: 500px; /* column chart size */
-
+        height: 550px; /* column chart size */
+        margin-bottom: 20px;
         position: relative; 
     }
 
@@ -34,24 +35,29 @@
     }
 
     #loading {
-        height: 500px;
+        height: 100%;
         width: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        color: #3c8dbc;
+        color: white;
         border-radius: 5px;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+
     }
 
     .loader {
-        border: 8px solid rgba(60, 141, 188, 0.3); 
-        border-top: 8px solid #3c8dbc; 
+        border: 8px solid lightgray;
+        border-top: 8px solid white;
         border-radius: 50%;
         width: 50px;
         height: 50px;
         animation: spin 1s linear infinite;
         margin-bottom: 20px;
+        color: white;
     }
 
     @keyframes spin {
@@ -70,8 +76,48 @@
         max-width: 70%; /* Adjust this value as needed */
         width: 100%;
     }
+
+    #formSelectedValues{
+        margin-top: 20px; 
+        width:100%;
+        padding:10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: white;
+        display: none;
+        position:relative;
+    }
    
 
+    .no-data-container {
+            text-align: center;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            width: 100%;
+            height: 250px;
+            display: grid;
+            place-content: center;
+        }
+        .no-data-icon {
+            font-size: 50px;
+            color: #0793ff;
+            margin-bottom: 15px;
+        }
+        .no-data-message {
+            font-size: 20px;
+            color: #333;
+        }
+        
+
+
+        .text-danger {
+    color: red;
+    margin-top: 5px;
+    font-size: 0.875em;
+}
 
 </style>
 
@@ -206,155 +252,238 @@
 
     
     <!-- Button to trigger modal -->
-<button type="button" class="btn btn-info" data-toggle="modal" data-target="#chartModal">Generate Chart</button>
-<button id="saveChartBtn">Save Chart</button>
+<button  class="btn btn-sm btn-primary" data-toggle="modal" data-target="#chartModal">
+    <i class="fa fa-bar-chart" aria-hidden="true"></i>  Generate Chart
+</button>
 
-    <div class="container" style="margin-top: 20px; border-radius:15px;">
-        <h5 >Selected Values:</h5>
+<button id="saveChartBtn" class="btn btn-sm btn-info pull-right" > 
+    <i class="fa fa-download" aria-hidden="true"></i>  Download Chart
+</button>
+
+   {{-- MODAL  --}}
+   <div class="modal fade" id="chartModal" tabindex="-1" role="dialog" aria-labelledby="chartModalLabel">
+    <div class="modal-dialog custom-modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="chartModalLabel">Generate Chart</h4>
+            </div>
+            <div class="modal-body">
+                <form id="chartForm" method="POST">
+                    @csrf
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="yearFrom">Year From:</label>
+                                <select class="form-control" id="yearFrom" name="year_from" required>
+                                    <option value="" disabled selected>Select Year</option>
+                                    @php
+                                        $startYear = 2019;
+                                        $currentYear = date('Y');
+                                    @endphp
+                                    @for ($year = $startYear; $year <= $currentYear; $year++)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="monthFrom">Month From:</label>
+                                <select class="form-control" id="monthFrom" name="month_from" required >
+                                    <option value="" disabled selected>Select Month</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+        
+                            <div class="form-group">
+                                <label for="store">Store:</label>
+                                <select class="form-control select2" id="store" name="stores[]" multiple='multiple' required>
+                                    <option value="all" selected>ALL</option>
+        
+                                    @foreach ($customers as $customer)
+                                        <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                    @endforeach
+        
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="channel">Channel:</label>
+                                <select class="form-control select2" id="channel" name="channels[]"  multiple='multiple' required>
+                                    <option value="all" selected>ALL</option>
+        
+                                    @foreach ($channels as $channel)
+                                        <option value="{{$channel->id}}">{{$channel->name}}</option>
+                                    @endforeach
+                        
+                                </select>
+                            </div>
+                        
+                            <div class="form-group">
+                                <label for="brand">Brand:</label>
+                                <select class="form-control select2" id="brand" name="brands[]"  multiple='multiple' required>
+                                    <option value="all" selected>ALL</option>
+        
+                                    @foreach ($brands as $brand)
+                                        <option>{{$brand->name}}</option>
+                                    @endforeach
+                                
+                                </select>
+                            </div>
+        
+                            <div class="form-group">
+                                <label for="category">Category:</label>
+                                <select class="form-control select2" id="category" name="categories[]" multiple='multiple' required>
+                                    <option value="all" selected>ALL</option>
+        
+                                    @foreach ($categories as $category)
+                                        <option>{{$category->name}}</option>
+                                    @endforeach
+                                    
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="yearTo">Year To:</label>
+                                <select class="form-control" id="yearTo" name="year_to" required>
+                                    <option value="" disabled selected>Select Year</option>
+                                    @php
+                                        $startYear = 2019;
+                                        $currentYear = date('Y');
+                                    @endphp
+                                    @for ($year = $startYear; $year <= $currentYear; $year++)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="monthTo">Month To:</label>
+                                <select class="form-control" id="monthTo" name="month_to" required>
+                                    <option value="" disabled selected>Select Month</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+            
+                            <div class="form-group">
+                                <label for="storeConcept">Store Concept:</label>
+                                <select class="form-control select2" id="storeConcept" name="concepts[]"  multiple='multiple' required>
+                                    <option value="all" selected>ALL</option>
+        
+                                    @foreach ($concepts as $concept)
+                                        <option value="{{$concept->id}}">{{$concept->name}}</option>
+                                    @endforeach
+        
+                                </select>
+                            </div>
+        
+                            <div class="form-group">
+                                <label for="mall">Mall:</label>
+                                <select class="form-control select2" id="mall" name="malls[]" multiple='multiple' required>
+                                    <option value="all" selected>ALL</option>
+        
+                                    @foreach ($malls as $mall)
+                                        <option>{{$mall->name}}</option>
+                                    @endforeach
+                            
+                                </select>
+                            </div>
+            
+                            <div class="form-group">
+                                <label for="sqm">Square Meters (sqm):</label>
+                                <select class="form-control" id="sqm" name="sqm" >
+                                    <option value="" disabled selected>Select SQM</option>
+                                    <option value="50">50 sqm</option>
+                                    <option value="100">100 sqm</option>
+                                    <option value="150">150 sqm</option>
+                                </select>
+                            </div>
+        
+                            <div class="form-group">
+                                <label for="group">Group:</label>
+                                <select class="form-control" id="group" name="group" >
+                                    <option value="" disabled selected>Select Group</option>
+                                    <option value="group1">Group 1</option>
+                                    <option value="group2">Group 2</option>
+                                    <option value="group3">Group 3</option>
+                                </select>
+                            </div>
+                        
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div  style="display: flex; gap:20px; justify-content:center; margin-top:20px;">
+                            <button id="clearForm" type="reset" class="btn btn-secondary" style="width:80px;">Reset</button>
+                            <button type="submit" class="btn btn-primary" style="width:80px;">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    <div id="formSelectedValues">
+        <h5 style="margin-bottom:20px; font-weight:bold;" >The Selected Parameters for Chart Creation: </h5>
         <table id="selectedValues" class="table table-bordered table-striped" style="display: none; margin-top: 10px; ">
+            <colgroup>
+                <col style="width: 180px;">
+                <col>
+            </colgroup>
             <thead>
                 <tr>
                     <th>Field</th>
-                    <th>Selected</th>
+                    <th>Value</th>
                 </tr>
             </thead>
             <tbody>
                 <!-- Selected values will be populated here -->
             </tbody>
         </table>
-    </div>
-  
-    {{-- MODAL  --}}
-    <div class="modal fade" id="chartModal" tabindex="-1" role="dialog" aria-labelledby="chartModalLabel">
-        <div class="modal-dialog custom-modal" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="chartModalLabel">Generate Charts</h4>
-                </div>
-                <div class="modal-body">
-                    <form id="chartForm" method="POST">
-                        @csrf
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="yearFrom">Month Year From:</label>
-                                    <input type="month" class="form-control" id="yearFrom" name="date_from" >
-                                </div>
-            
-                                <div class="form-group">
-                                    <label for="store">Store:</label>
-                                    <select class="form-control select2" id="store" name="stores[]" multiple='multiple' >
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($customers as $customer)
-                                            <option value="{{$customer->id}}">{{$customer->name}}</option>
-                                        @endforeach
-            
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="channel">Channel:</label>
-                                    <select class="form-control select2" id="channel" name="channels[]"  multiple='multiple' >
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($channels as $channel)
-                                            <option value="{{$channel->id}}">{{$channel->name}}</option>
-                                        @endforeach
-                            
-                                    </select>
-                                </div>
-                                
-                                
-                            
-                                <div class="form-group">
-                                    <label for="brand">Brand:</label>
-                                    <select class="form-control select2" id="brand" name="brands[]"  multiple='multiple' >
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($brands as $brand)
-                                            <option>{{$brand->name}}</option>
-                                        @endforeach
-                                    
-                                    </select>
-                                </div>
-            
-                                <div class="form-group">
-                                    <label for="category">Category:</label>
-                                    <select class="form-control select2" id="category" name="categories[]" multiple='multiple'>
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($categories as $category)
-                                            <option>{{$category->name}}</option>
-                                        @endforeach
-                                        
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="yearTo">Month Year To:</label>
-                                    <input type="month" class="form-control" id="yearTo" name="date_to" >
-                                </div>
-                
-                                <div class="form-group">
-                                    <label for="storeConcept">Store Concept:</label>
-                                    <select class="form-control select2" id="storeConcept" name="concepts[]"  multiple='multiple' >
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($concepts as $concept)
-                                            <option value="{{$concept->id}}">{{$concept->name}}</option>
-                                        @endforeach
-            
-                                    </select>
-                                </div>
-            
-                                <div class="form-group">
-                                    <label for="mall">Mall:</label>
-                                    <select class="form-control" id="mall" name="mall" >
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($malls as $mall)
-                                            <option>{{$mall->name}}</option>
-                                        @endforeach
-                                
-                                    </select>
-                                </div>
-                
-                                <div class="form-group">
-                                    <label for="sqm">Square Meters (sqm):</label>
-                                    <select class="form-control" id="sqm" name="sqm" >
-                                        <option value="" disabled selected>Select SQM</option>
-                                        <option value="50">50 sqm</option>
-                                        <option value="100">100 sqm</option>
-                                        <option value="150">150 sqm</option>
-                                    </select>
-                                </div>
-            
-                                <div class="form-group">
-                                    <label for="group">Group:</label>
-                                    <select class="form-control" id="group" name="group" >
-                                        <option value="" disabled selected>Select Group</option>
-                                        <option value="group1">Group 1</option>
-                                        <option value="group2">Group 2</option>
-                                        <option value="group3">Group 3</option>
-                                    </select>
-                                </div>
-                            
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div  style="display: flex; gap:20px; justify-content:center; margin-top:20px;">
-                                <button type="reset" class="btn btn-secondary" style="width:80px;">Reset</button>
-                                <button type="submit" class="btn btn-primary" style="width:80px;">Submit</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+
+        <div id="loading" class="text-center" style="display: none">
+            <div class="loader"></div>
+            <p>Loading, please wait...</p>
         </div>
     </div>
+
+    <div id="noDataMessage" class="no-data-container">
+
+        <i class="fa fa-bar-chart no-data-icon" aria-hidden="true" ></i>
+        
+        <div class="no-data-message" style="margin-bottom:10px;">
+            <strong>No Chart Available.</strong>
+        </div>
+        <p>Please click on the "Generate Chart" button to create charts. Fill up the fields and click "Submit".</p>
+    </div>
+  
+ 
 
     <div id="loading" class="text-center" style="display: none">
         <div class="loader"></div>
@@ -421,7 +550,7 @@ $(function() {
     }
 
     // Apply the event handler to multiple selectors
-    const selectors = ['#store', '#channel', '#brand', '#category', '#storeConcept'];
+    const selectors = ['#store', '#channel', '#brand', '#category', '#storeConcept', '#mall'];
     selectors.forEach(selector => handleSelect2Event(selector));
 
     // Trigger the change event for initialization
@@ -431,8 +560,10 @@ $(function() {
     $('#chartForm').on('submit', function(e) {
         e.preventDefault(); // Prevent default form submission
 
-        const dateFrom = $('#yearFrom').val();
-        const dateTo = $('#yearTo').val();
+        const yearFrom = $('#yearFrom').val();
+        const yearTo = $('#yearTo').val();
+        const monthFrom = $('#monthFrom').val();
+        const monthTo = $('#monthTo').val();
         const stores = $('#store').val();
         const channels = $('#channel').val();
         const brands = $('#brand').val();
@@ -445,14 +576,21 @@ $(function() {
         console.log(stores);
         console.log(concepts);
 
+        $('#charts_container').empty();
+        $('#formSelectedValues').hide();
+        $('#chartModal').modal('hide');
         $('#loading').show();
+
+
 
         $.ajax({
             url: '{{ route("charts") }}', // Adjust this to your route
             method: 'POST', // or 'POST' depending on your backend setup
             data: {
-                date_from: dateFrom,
-                date_to: dateTo,
+                yearFrom,
+                yearTo,
+                monthFrom,
+                monthTo,
                 stores,
                 channels,
                 brands,
@@ -469,19 +607,79 @@ $(function() {
 
                 console.log(data);
 
-                drawChart(data.chartData, data.years, 'bar');
-                drawChart(data.chartData, data.years, 'line');
+                if (data.chartData) {
+                    $('#noDataMessage').hide(); // Hide the no data message
+
+                    // Populate charts with the data
+                    drawChart(data.chartData, data.years, 'bar');
+                    drawChart(data.chartData, data.years, 'line');
+
+                    drawChartWithDynamicMonths(data.chartData, data.years, 'bar');
+                    drawChartWithDynamicMonths(data.chartData, data.years, 'line');
+                } else {
+
+                    $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
+                    $('#noDataMessage').show(); // Show the no data message
+                }
+
+                resetForm();
 
                 $('#loading').hide();
-                $('#chartModal').modal('hide');
+
+
+
+                // drawChart(data.chartData, data.years, 'bar');
+                // drawChart(data.chartData, data.years, 'line');
+
+                // drawChartWithDynamicMonths(data.chartData, data.years, 'bar')
+                // drawChartWithDynamicMonths(data.chartData, data.years, 'line')
+
+    
+
+                // drawChartWithControlledLastMonth(data.chartData, data.years, 'bar');
+                // drawChartWithControlledLastMonth(data.chartData, data.years, 'line');
+
 
                 
                 // Do the same for channels, brands, categories, concepts, malls, etc.
             },
             error: function(xhr) {
+                $('#chartModal').modal('show');
                 $('#loading').hide();
+
                 console.error('Error fetching data:', xhr);
-                // Handle error
+
+                // Check if the response contains validation errors
+                if (xhr.status === 422) { // 422 Unprocessable Entity status for validation errors
+                    const errors = xhr.responseJSON.errors; // Get the errors from the response
+
+                    // Clear previous error messages
+                    $('.form-group .text-danger').remove();
+
+                    // Loop through each error and display it
+                    $.each(errors, function(key, messages) {
+                        // Find the relevant input field and append the error message
+                        const input = $(`#${key}`);
+                        input.parent().append(`<div class="text-danger">${messages.join(', ')}</div>`);
+                    });
+
+                     // Populate fields with submitted values to retain user input
+                    $('#yearFrom').val(yearFrom);
+                    $('#yearTo').val(yearTo);
+                    $('#monthFrom').val(monthFrom);
+                    $('#monthTo').val(monthTo);
+                    $('#store').val(stores).trigger('change'); // Trigger change for select2
+                    $('#channel').val(channels).trigger('change');
+                    $('#brand').val(brands).trigger('change');
+                    $('#category').val(categories).trigger('change');
+                    $('#storeConcept').val(concepts).trigger('change');
+                    $('#mall').val(mall).trigger('change');
+                    $('#sqm').val(sqm);
+                    $('#group').val(group);
+                } else {
+                    // Handle other types of errors
+                    // alert('An error occurred while processing your request. Please try again.');
+                }
             }
         });
 
@@ -491,8 +689,10 @@ $(function() {
         $('#selectedValues tbody').empty();
         
         let values = {
-            "Month Year From": $('#yearFrom').val(),
-            "Month Year To": $('#yearTo').val(),
+            "Year From": $('#yearFrom option:selected').text(),
+            "Year To": $('#yearTo option:selected').text(),
+            "Month From": $('#monthFrom option:selected').text(),
+            "Month To": $('#monthTo option:selected').text(),
             "Store": $('#store').val().map(function(value) {
                 return $('#store option[value="' + value + '"]').text();
             }).join(', '),  
@@ -504,9 +704,9 @@ $(function() {
             "Store Concept": $('#storeConcept').val().map(function(value) {
                 return $('#storeConcept option[value="' + value + '"]').text();
             }).join(', '), 
-            "Mall": $('#mall option:selected').text(), 
-            "Square Meters": $('#sqm option:selected').text(),
-            "Group": $('#group option:selected').text()
+            "Mall": $('#mall').val().join(', '), 
+            "Square Meters": $('#sqm').val() ?? 'N/A',
+            "Group": $('#group').val() ?? 'N/A'
         };
         
         // Populate the table
@@ -519,10 +719,31 @@ $(function() {
             `);
         });
 
+        $('.no-data-container').hide();
+
+        $('#formSelectedValues').show();
+
         // Show the table
         $('#selectedValues').show();
     });
 
+
+    $('#clearForm').on('click', function() {
+        resetForm();
+    });
+
+    function resetForm(){
+        // Reset the form to its initial state
+        $('#chartForm')[0].reset(); 
+
+        // If you're using Select2, refresh the select elements
+        $('#store').val('all').trigger('change');
+        $('#channel').val('all').trigger('change');
+        $('#brand').val('all').trigger('change');
+        $('#category').val('all').trigger('change');
+        $('#storeConcept').val('all').trigger('change');
+        $('#mall').val('all').trigger('change');
+    }
 
 
     const prevYear = @json($yearData['previousYear']);
@@ -821,7 +1042,7 @@ $(function() {
     ];
 
     function drawChart(months, years, type) {
-        const dataArray = [['Channel', ...years]];
+        const dataArray = [['Month', ...years]];
 
         console.log(months);
         
@@ -865,7 +1086,7 @@ $(function() {
 
         // Create a new div for each chart
         const chartDiv = document.createElement('div');
-        chartDiv.id = `2024-chart`;
+        // chartDiv.id = `2024-chart`;
         chartDiv.className = 'chart';
         document.getElementById('charts_container').appendChild(chartDiv);
 
@@ -892,8 +1113,8 @@ $(function() {
         chartImages.push(imgUri);
     }
 
-    function drawChartWithControlledLastMonth(months, years, type) {
-        const dataArray = [['Channel', ...years]];
+    function drawChartWithDynamicMonths(months, years, type) {
+        const dataArray = [['Month', ...years]];
 
         console.log(months);
         

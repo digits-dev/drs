@@ -469,37 +469,51 @@
 
 		public function generateCharts(Request $request){
 
-			// dump($request->all());
+			// dd($request->all());
 
-			// $request->validate(
-			// 	[  
-			// 	  'date_from' => ['required', 'date_format:Y-m', 'before_or_equal:date_to'],
-			// 	  'date_to'   => ['required', 'date_format:Y-m', 'after_or_equal:date_from'],
-			// 	], [],
-			// 	[
-			// 	  'date_from' => 'date from',
-			// 	  'date_to' => 'date to'
-			// 	]
-			// );
-
-			$test = StoreSalesDashboardReport::generateChartData(
-				$request->date_from,
-				$request->date_to,
-				$request->stores,
-				$request->concepts,
-				$request->channels,
-				$request->mall,
-				$request->brands,
-				$request->categories,
+			$request->validate(
+				[  
+				  'yearFrom' => ['required', 'date_format:Y', 'before_or_equal:yearTo'],
+				  'yearTo'   => ['required', 'date_format:Y', 'after_or_equal:yearFrom'],
+				  'monthFrom' => ['required', 'date_format:m', 'before_or_equal:monthTo'],
+				  'monthTo'   => ['required', 'date_format:m', 'after_or_equal:monthFrom'],
+				], [],
+				[
+				  'yearFrom' => 'year from',
+				  'yearTo'   => 'year to',
+				  'monthFrom' => 'month from',
+				  'monthTo'   => 'month to',
+				]
 			);
 
-			// dd($test);
+			$args = [
+				'yearFrom' => $request->yearFrom,
+				'yearTo' => $request->yearTo,
+				'monthFrom' => $request->monthFrom,
+				'monthTo' => $request->monthTo,
+				'stores' => $request->stores,
+				'concepts' => $request->concepts,
+				'channels' => $request->channels,
+				'malls' => $request->malls,
+				'brands' => $request->brands,
+				'categories' => $request->categories,
+			];
 
+			$test = StoreSalesDashboardReport::generateChartData($args);
+
+			if ($test->isEmpty()) {
+				// Return a response indicating no data
+				return response()->json([
+					'chartData' => false,
+				]);
+			}
+
+			// dd($test);
 
 			\Log::info(json_encode($test, JSON_PRETTY_PRINT));
 	
 
-			$years = self::getYearsInRange($request->date_from, $request->date_to);
+			$years = self::getYearsInRange($request->yearFrom, $request->yearTo);
 
 
 			// $test = StoreSalesDashboardReport::forTestData();
@@ -534,24 +548,18 @@
 
 		}
 
-
 		private function getYearsInRange($start, $end)
 		{
-			// Convert the input into DateTime objects
-			$startDate = \DateTime::createFromFormat('Y-m', $start);
-			$endDate = \DateTime::createFromFormat('Y-m', $end);
+			// Convert the input into integers
+			$startYear = (int) $start;
+			$endYear = (int) $end;
 
 			// Initialize an array to hold the years
 			$years = [];
 
-			// Loop through the months from start to end
-			while ($startDate <= $endDate) {
-				$year = $startDate->format('Y');
-				if (!in_array($year, $years)) {
-					$years[] = $year;
-				}
-				// Move to the next month
-				$startDate->modify('+1 month');
+			// Loop through the years from start to end
+			for ($year = $startYear; $year <= $endYear; $year++) {
+				$years[] = (string) $year;
 			}
 
 			return $years;

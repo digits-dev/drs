@@ -1062,7 +1062,100 @@ class StoreSalesDashboardReport extends Model
 
     // DATE_FORMAT(store_sales.sales_date, '%Y-%m') AS yearMonth,
 
-    public static function generateChartData($from, $to, $store, $concept, $channel, $mall, $brand, $category, $sqm = null, $group = null)
+    public static function generateChartData($params)
+    {
+        extract($params); 
+
+        $params = [
+            $yearFrom,
+            $yearTo,
+            $monthFrom,
+            $monthTo,
+            implode('|', (array)$stores),
+            implode('|', (array)$concepts),
+            implode('|', (array)$channels),
+            implode('|', (array)$malls),
+            implode('|', (array)$brands),
+            implode('|', (array)$categories),
+        ];
+
+        \Log::info('start params');
+        \Log::info($yearFrom);
+        \Log::info($yearTo);
+        \Log::info($monthFrom);
+        \Log::info($monthTo);
+        \Log::info($stores);
+        \Log::info($concepts);
+        \Log::info($channels);
+        \Log::info($malls);
+        \Log::info($brands);
+        \Log::info($categories);
+        \Log::info('end params');
+
+
+        $cacheKey = 'chartData_' . md5(implode('|', $params));
+        \Log::info($cacheKey);
+
+
+        return Cache::remember($cacheKey, 50000, 
+            function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories) {
+            $query = DB::table('store_sales', 'ss')
+                ->select(
+                    DB::raw("CONCAT('M', MONTH(sales_date)) AS month"),
+                    DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
+                    DB::raw("SUM(net_sales) AS net_sales")
+                )
+                ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
+                ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
+                ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
+                ->leftJoin('concepts as con', 'cu.concepts_id', 'con.id')
+                ->where('ss.is_final', 1)
+                ->whereBetween(DB::raw('YEAR(ss.sales_date)'), [$yearFrom, $yearTo])
+                ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [$monthFrom, $monthTo])
+                ->where('ss.quantity_sold', '>', 0)
+                ->whereNotNull('ss.net_sales')
+                ->where('ss.sold_price', '>', 0)
+                ->where('ss.channels_id', '!=', 12);
+
+                 // Conditional parameters
+                if (!empty($stores)) {
+                    $query->whereIn('cu.id', (array)$stores);
+                }
+
+                if (!empty($concepts)) {
+                    $query->whereIn('con.id', (array)$concepts);
+                }
+
+                if (!empty($channels)) {
+                    $query->whereIn('ch.id', (array)$channels);
+                }
+
+                if (!empty($malls)) {
+                    $query->whereIn('cu.mall', $malls);
+                }
+
+                if (!empty($brands)) {
+                    $query->whereIn('ai.brand_description', (array)$brands);
+                }
+
+                if (!empty($categories)) {
+                    $query->whereIn('ai.category_description', (array)$categories);
+                }
+
+                $query->groupBy(DB::raw("year, month"));
+
+                // For debugging: Log the raw SQL and parameters
+                \Log::info(json_encode([
+                    'query' => $query->toSql(),
+                    'bindings' => $query->getBindings()
+                ], JSON_PRETTY_PRINT));
+
+                return $query->get();
+               
+        });
+    }
+
+    public static function generateChartDataForMultipleChannel($from, $to, $store, $concept, $channel, $mall, $brand, $category, $sqm = null, $group = null)
     {
         $lastDate = date("Y-m-d", strtotime("last day of {$to}"));
 
@@ -1087,7 +1180,6 @@ class StoreSalesDashboardReport extends Model
         \Log::info($brand);
         \Log::info($category);
         \Log::info('end params');
-
 
 
         $cacheKey = 'chartData_' . md5(implode('|', $params));
