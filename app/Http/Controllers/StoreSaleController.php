@@ -34,16 +34,20 @@ use App\Models\ReportPrivilege;
 use Illuminate\Support\Facades\Response;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\Models\Counter;
+use App\Models\Customer;
+use Illuminate\Support\Facades\Log;
 
 class StoreSaleController extends Controller
 {
     private $report_type;
     public $batchId;
     private $userReport;
+    privtae $customer;
     public function __construct(){
         DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping("enum", "string");
         $this->report_type = ['STORE SALES'];
         $this->userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+        $this->customer = Customer::active();
     }
     /**
      * Display a listing of the resource.
@@ -315,55 +319,69 @@ class StoreSaleController extends Controller
                     $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
                     $masterfileCache[$cusCode] = $masterfile;
                 }
-    
-                // Prepare data for output
-                $toExcel = [];
-                $toExcel['reference_number'] = $counter;
-                $toExcel['system'] = 'POS';
-                $toExcel['org'] = $itemDetails[$itemNumber]['org'];
-                $toExcel['report_type'] = 'STORE SALES';
-                $toExcel['channel_code'] = $masterfile->channel_code_id;
-                $toExcel['customer_location'] = $masterfile->cutomer_name;
-                $toExcel['receipt_number'] = $excel['RECEIPT_#'];
-                $toExcel['sold_date'] = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
-                $toExcel['item_number'] = $excel['ITEM_NUMBER'];
-                $toExcel['rr_ref'] = $rr_ref;
-                $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                $toExcel['qty_sold'] = $excel['QTY_SOLD'];
-                $toExcel['sold_price'] = $excel['SOLD_PRICE'];
-                $toExcel['net_sales'] = $excel['QTY_SOLD'] * $excel['SOLD_PRICE'];
-                $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
-                $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
-                $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                $toExcel['sales_memo_ref'] = $itemDetails[$itemNumber]['sales_memo_ref'];
-                $toExcel['item_serial'] = $excel['ITEM_SERIAL'];
-                $toExcel['sales_person'] = $excel['SALES_PERSON'];
-                $toExcelContent[] = $toExcel;
+                $sales_date = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
+                $v_customer = $this->customer->where('customer_name',$masterfile->cutomer_name)->first();
+                
+                $isExistInStoreSales = StoreSale::where('customers_id', $v_customer->id ?? null)
+                                                 ->where('receipt_number', $excel['RECEIPT_#'])
+                                                 ->where('item_code', $excel['ITEM_NUMBER'])
+                                                 ->where('sales_date', $sales_date)
+                                                 ->where('item_serial', $excel['ITEM_SERIAL'])
+                                                 ->exists();
+                if(!$isExistInStoreSales){
+                    // Prepare data for output
+                    $toExcel = [];
+                    $toExcel['reference_number'] = $counter;
+                    $toExcel['system'] = 'POS';
+                    $toExcel['org'] = $itemDetails[$itemNumber]['org'];
+                    $toExcel['report_type'] = 'STORE SALES';
+                    $toExcel['channel_code'] = $masterfile->channel_code_id;
+                    $toExcel['customer_location'] = $masterfile->cutomer_name;
+                    $toExcel['receipt_number'] = $excel['RECEIPT_#'];
+                    $toExcel['sold_date'] = $sales_date;
+                    $toExcel['item_number'] = $excel['ITEM_NUMBER'];
+                    $toExcel['rr_ref'] = $rr_ref;
+                    $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
+                    $toExcel['qty_sold'] = $excel['QTY_SOLD'];
+                    $toExcel['sold_price'] = $excel['SOLD_PRICE'];
+                    $toExcel['net_sales'] = $excel['QTY_SOLD'] * $excel['SOLD_PRICE'];
+                    $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
+                    $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
+                    $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
+                    $toExcel['sales_memo_ref'] = $itemDetails[$itemNumber]['sales_memo_ref'];
+                    $toExcel['item_serial'] = $excel['ITEM_SERIAL'];
+                    $toExcel['sales_person'] = $excel['SALES_PERSON'];
+                    $toExcelContent[] = $toExcel;
+                }
                 // Increment the counter for the next iteration
                 Counter::where('id', 1)->increment('reference_code');
             }
-    
-            // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
-            Excel::store(new StoreSalesExcel($toExcelContent), $excel_path, 'local');
-    
-            // Full path of the stored Excel file
-            $full_excel_path = storage_path('app') . '/' . $excel_path;
-    
-            // Prepare arguments for the job
-            $args = [
-                'batch_number' => $batch_number,
-                'excel_path' => $full_excel_path,
-                'report_type' => $this->report_type,
-                'folder_name' => $folder_name,
-                'file_name' => $excel_file_name,
-                'created_by' => CRUDBooster::myId(),
-                'from_date' => $from_date,
-                'to_date' => $to_date,
-                'data_type' => 'PULL'
-            ];
-    
-            // Dispatch the processing job for each store
-            ProcessStoreSalesUploadJob::dispatch($args);
+            if (!empty($toExcelContent)) {
+                // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
+                Excel::store(new StoreSalesExcel($toExcelContent), $excel_path, 'local');
+        
+                // Full path of the stored Excel file
+                $full_excel_path = storage_path('app') . '/' . $excel_path;
+        
+                // Prepare arguments for the job
+                $args = [
+                    'batch_number' => $batch_number,
+                    'excel_path' => $full_excel_path,
+                    'report_type' => $this->report_type,
+                    'folder_name' => $folder_name,
+                    'file_name' => $excel_file_name,
+                    'created_by' => CRUDBooster::myId(),
+                    'from_date' => $from_date,
+                    'to_date' => $to_date,
+                    'data_type' => 'PULL'
+                ];
+        
+                // Dispatch the processing job for each store
+                ProcessStoreSalesUploadJob::dispatch($args);
+            } else {
+                // Log or handle the case when there is no data to export
+                Log::info("No new data for store ID: $storeId. Skipping job dispatch.");
+            }
         }
     }
     
