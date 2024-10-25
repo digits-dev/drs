@@ -198,7 +198,7 @@ class StoreInventory extends Model
     }
 
     //FROM ETP
-    public function scopeGetStoresInventoryFromPosEtp(){
+    public function scopeGetStoresInventoryFromPosEtp($datefrom, $dateto){
         $data = 
         //DB::connection('sqlsrv')->select(DB::raw('exec [SP_Custom_InventoryReportSummary] 100,'100','0572';'));
         // DB::connection('sqlsrv')->select(DB::raw("
@@ -227,6 +227,7 @@ class StoreInventory extends Model
             AND d.Company = 100
             AND d.Division = '100'
             AND (d.Warehouse = '0572' OR d.Warehouse = '0311')
+            and d.TransactionDate between '$datefrom' and '$dateto'
         "));
         
         return $data;
