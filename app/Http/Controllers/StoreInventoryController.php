@@ -20,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\Exports\StoreInventoryExport;
 use App\Imports\StoreInventoryImport;
+use App\Jobs\ExportStoreInventoryJob;
 use Illuminate\Support\Facades\Cache;
 use App\Models\StoreInventoriesReport;
 use App\Rules\ExcelFileValidationRule;
@@ -306,10 +307,14 @@ class StoreInventoryController extends Controller
         }
     }
 
-    public function StoresInventoryFromPosEtp(){
-        $result = StoreInventory::scopeGetStoresInventoryFromPosEtp();
-        $groupedSalesData = collect($result)->groupBy('Warehouse');
+    public function StoresInventoryFromPosEtp(Request $request){
+        $datefrom = $request->datefrom ? date("Ymd", strtotime($request->datefrom)) : date("Ymd", strtotime("-5 hour"));
+        $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
+        
+        $result = StoreInventory::scopeGetStoresInventoryFromPosEtp($datefrom, $dateto);
 
+        $groupedSalesData = collect($result)->groupBy('Warehouse');
+        
         $itemNumbers = $groupedSalesData->flatMap(function($storeData) {
             return $storeData->pluck('ItemNumber');
         })->unique()->toArray();
@@ -379,6 +384,8 @@ class StoreInventoryController extends Controller
             }
 
             Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
+
+            // ExportStoreInventoryJob::dispatch($toExcelContent, $excel_path);
 
             // Full path of the stored Excel file
             $full_excel_path = storage_path('app') . '/' . $excel_path;
