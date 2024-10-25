@@ -61,7 +61,7 @@ Route::get('/', function () {
 });
 
 Route::get('/get-store-sales', [StoreSaleController::class, 'StoresSalesFromPosEtp']);
-Route::get('/test-store-inventory-etp', [StoreInventoryController::class, 'StoresInventoryFromPosEtp']);
+Route::get('/test-store-inventory-etp/{datefrom?}/{dateto?}', [StoreInventoryController::class, 'StoresInventoryFromPosEtp']);
 
 Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
     Route::post('login', [CBHook::class, 'postLogin'])->name('postLogin');
