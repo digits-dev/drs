@@ -198,33 +198,21 @@ class StoreInventory extends Model
     }
 
     //FROM ETP
-    public function scopeGetStoresSalesFromPosEtp(){
+    public function scopeGetStoresInventoryFromPosEtp(){
         $data = 
         //DB::connection('sqlsrv')->select(DB::raw('exec [SP_Custom_InventoryReportSummary] 100,'100','0572';'));
+        // DB::connection('sqlsrv')->select(DB::raw("
+        //     select P.WareHouse 'STORE ID',
+        //     P.LastIssueDate 'DATE',
+        //     P.ItemNumber 'ITEM NUMBER',
+        //     P.BalanceApproved 'TOTAL QTY',
+        //     P.Location 'SUB INVENTORY'
+        //     From ProductLocationBalance P (Nolock)
+        //     where P.Company= 100
+        //     --and P.LastIssueDate between @FromDate and @ToDate
+        // "));
         DB::connection('sqlsrv')->select(DB::raw("
-            select P.WareHouse 'STORE ID',
-            P.LastIssueDate 'DATE',
-            P.ItemNumber 'ITEM NUMBER',
-            P.BalanceApproved 'TOTAL QTY',
-            P.Location 'SUB INVENTORY'
-            From ProductLocationBalance P (Nolock)
-            where P.Company= 100
-            --and P.LastIssueDate between @FromDate and @ToDate
-        "));
-        
-        return $data;
-    }
-
-    public function scopeGetWareHourseFromPosEtp($warehouse, $itemNumbers){
-
-        if (!empty($itemNumbers)) {
-            $placeholders = implode(',', array_fill(0, count($itemNumbers), '?'));
-        } else {
-            return [];
-        }
-
-        $data = DB::connection('sqlsrv')->select(DB::raw("
-            SELECT d.Company, d.Warehouse, d.ToWarehouse, d.TransactionDate, 
+            SELECT d.Company, d.Warehouse, d.ToWarehouse, d.TransactionDate, l.WarehouseLocation AS 'SubInventory',
                 l.ItemNumber, l.ItemDescription, l.LotNumber, 
                 l.DispatchedQuantity, l.ReceivedQuantity, 
                 l.DispatchedQuantity - l.ReceivedQuantity AS QuantityInTransit
@@ -238,10 +226,9 @@ class StoreInventory extends Model
             AND d.TransactionStatus IN (0, 2)   
             AND d.Company = 100
             AND d.Division = '100'
-            AND d.Warehouse = ?
-            AND l.ItemNumber IN ($placeholders)
-        "), array_merge([$warehouse], $itemNumbers));
-
+            AND (d.Warehouse = '0572' OR d.Warehouse = '0311')
+        "));
+        
         return $data;
     }
 
