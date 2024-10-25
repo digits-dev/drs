@@ -499,52 +499,102 @@
 				'categories' => $request->categories,
 			];
 
-			$test = StoreSalesDashboardReport::generateChartData($args);
+			if(!$args['channels']){
+				$test = StoreSalesDashboardReport::generateChartDataForMultipleChannel($args);
 
-			if ($test->isEmpty()) {
-				// Return a response indicating no data
-				return response()->json([
-					'chartData' => false,
-				]);
-			}
+				// dd('multiple', $test);
 
-			// dd($test);
-
-			\Log::info(json_encode($test, JSON_PRETTY_PRINT));
-	
-
-			$years = self::getYearsInRange($request->yearFrom, $request->yearTo);
-
-
-			// $test = StoreSalesDashboardReport::forTestData();
-
-			// dump($test);
-
-		    $googleChartData = [];
-			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
-
-			foreach($monthOrder	 as $month) {
-				$googleChartData[$month] = [];
-			}
-
-        	foreach ($test as $row) {
-				// Initialize the month if it doesn't exist
-				if (!isset($googleChartData[$row->month])) {
-					$googleChartData[$row->month] = [];
+				if ($test->isEmpty()) {
+					// Return a response indicating no data
+					return response()->json([
+						'chartData' => false,
+					]);
 				}
+	
+				// dd($test);
+	
+				\Log::info(json_encode($test, JSON_PRETTY_PRINT));
+		
+	
+				$years = self::getYearsInRange($request->yearFrom, $request->yearTo);
+	
+	
+				// $test = StoreSalesDashboardReport::forTestData();
+	
+				// dump($test);
+	
+				$googleChartData = [];
+
+				 // Process sales per channel
+
+				 foreach ($test as $sale) {
 			
-				// Add or update the net sales for the year
-				$googleChartData[$row->month][$row->year] = $row->net_sales;
+					$channelCode = $sale->channel_code;
+		 
+					if (!isset($googleChartData[$channelCode])) {
+						$googleChartData[$channelCode] = [];
+					}
+		 
+					$googleChartData[$channelCode][$sale->year] = $sale->net_sales;
+				 }
+
+	
+				$data = [ 
+					'multipleChannel' => true,
+					'chartData' => $googleChartData,
+					'years' => $years,
+				];
+
+				return response()->json($data);
+
+			} else {
+				$test = StoreSalesDashboardReport::generateChartData($args);
+
+				if ($test->isEmpty()) {
+					// Return a response indicating no data
+					return response()->json([
+						'chartData' => false,
+					]);
+				}
+	
+				// dd($test);
+	
+				\Log::info(json_encode($test, JSON_PRETTY_PRINT));
+		
+	
+				$years = self::getYearsInRange($request->yearFrom, $request->yearTo);
+	
+	
+				// $test = StoreSalesDashboardReport::forTestData();
+	
+				// dump($test);
+	
+				$googleChartData = [];
+				$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
+	
+				foreach($monthOrder	 as $month) {
+					$googleChartData[$month] = [];
+				}
+	
+				foreach ($test as $row) {
+					// Initialize the month if it doesn't exist
+					if (!isset($googleChartData[$row->month])) {
+						$googleChartData[$row->month] = [];
+					}
+				
+					// Add or update the net sales for the year
+					$googleChartData[$row->month][$row->year] = $row->net_sales;
+				}
+	
+				$data = [
+					'multipleChannel' => false,
+					'chartData' => $googleChartData,
+					'years' => $years,
+				];
+	
+	
+				return response()->json($data);
 			}
-
-			$data = [
-				'chartData' => $googleChartData,
-				'years' => $years,
-			];
-
-
-			return response()->json($data);
-
 
 		}
 

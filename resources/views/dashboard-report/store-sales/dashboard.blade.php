@@ -610,12 +610,25 @@ $(function() {
                 if (data.chartData) {
                     $('#noDataMessage').hide(); // Hide the no data message
 
-                    // Populate charts with the data
-                    drawChart(data.chartData, data.years, 'bar');
-                    drawChart(data.chartData, data.years, 'line');
+                    if(data.multipleChannel){
+                        drawChartMultipleChannel(data.chartData, data.years);
 
-                    drawChartWithDynamicMonths(data.chartData, data.years, 'bar');
-                    drawChartWithDynamicMonths(data.chartData, data.years, 'line');
+                    } else {
+                        // Populate charts with the data
+                        drawChart(data.chartData, data.years, 'bar');
+                        drawChart(data.chartData, data.years, 'line');
+
+                        drawChartWithDynamicMonths(data.chartData, data.years, 'bar');
+                        drawChartWithDynamicMonths(data.chartData, data.years, 'line');
+                    }
+
+
+                    // Populate charts with the data
+                    // drawChart(data.chartData, data.years, 'bar');
+                    // drawChart(data.chartData, data.years, 'line');
+
+                    // drawChartWithDynamicMonths(data.chartData, data.years, 'bar');
+                    // drawChartWithDynamicMonths(data.chartData, data.years, 'line');
                 } else {
 
                     $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
@@ -1202,6 +1215,61 @@ $(function() {
         const imgUri = channelChart.getImageURI();
         chartImages.push(imgUri);
     }
+
+    function drawChartMultipleChannel(channelCodes, years) {
+
+        const dataArray = [['Channel', 'data']];
+
+        Object.keys(channelCodes).forEach(channel => {
+
+            years.forEach(year => {
+                dataArray.push([`${channel} ${year}`, channelCodes[channel][`Y${year}`]|| 0]); 
+            });
+
+        });
+
+        console.log(dataArray);
+
+        const data = google.visualization.arrayToDataTable(dataArray);
+
+        const monthFrom = $('#monthFrom option:selected').text();
+        const monthTo = $('#monthTo option:selected').text();
+
+         const options = {
+             title: `Sales Report from ${monthFrom} to ${monthTo}`,
+             is3D: true,
+             pieSliceText: 'value',
+             chartArea: {
+                 width:'50%',
+                 height:'50%',
+                 top: 100, 
+                 left: 250, 
+                 right:0,
+                 bottom:0,
+             },
+             legend:{position: 'right', textStyle: { fontSize: 13}, alignment:'center'},
+         };
+
+        // Create a new div for each chart
+        const chartDiv = document.createElement('div');
+        // chartDiv.id = `2024-chart`;
+        chartDiv.className = 'chart';
+        document.getElementById('charts_container').appendChild(chartDiv);
+
+        const channelChart = new google.visualization.PieChart(chartDiv);
+         
+        channelChart.draw(data, options);
+        
+        // Add resize event listener
+        window.addEventListener('resize', () => {
+            channelChart.draw(data, options);
+        });
+
+        // Get the chart as an image and store it
+        const imgUri = channelChart.getImageURI();
+        chartImages.push(imgUri);
+    }
+
 
 
     function drawChart4() {

@@ -1154,44 +1154,47 @@ class StoreSalesDashboardReport extends Model
                
         });
     }
-
-    public static function generateChartDataForMultipleChannel($from, $to, $store, $concept, $channel, $mall, $brand, $category, $sqm = null, $group = null)
+    public static function generateChartDataForMultipleChannel($params)
     {
-        $lastDate = date("Y-m-d", strtotime("last day of {$to}"));
+        extract($params); 
 
         $params = [
-            $from,
-            $to,
-            implode('|', (array)$store),
-            implode('|', (array)$concept),
-            implode('|', (array)$channel),
-            $mall,
-            implode('|', (array)$brand),
-            implode('|', (array)$category),
+            $yearFrom,
+            $yearTo,
+            $monthFrom,
+            $monthTo,
+            implode('|', (array)$stores),
+            implode('|', (array)$concepts),
+            implode('|', (array)$channels),
+            implode('|', (array)$malls),
+            implode('|', (array)$brands),
+            implode('|', (array)$categories),
         ];
 
-        \Log::info('start params');
-        \Log::info($from);
-        \Log::info($to);
-        \Log::info($store);
-        \Log::info($concept);
-        \Log::info($channel);
-        \Log::info($mall);
-        \Log::info($brand);
-        \Log::info($category);
+        \Log::info('multiple start params');
+        \Log::info($yearFrom);
+        \Log::info($yearTo);
+        \Log::info($monthFrom);
+        \Log::info($monthTo);
+        \Log::info($stores);
+        \Log::info($concepts);
+        \Log::info($channels);
+        \Log::info($malls);
+        \Log::info($brands);
+        \Log::info($categories);
         \Log::info('end params');
 
 
-        $cacheKey = 'chartData_' . md5(implode('|', $params));
+        $cacheKey = 'chartDataMultiple_' . md5(implode('|', $params));
         \Log::info($cacheKey);
 
 
         return Cache::remember($cacheKey, 50000, 
-            function() use ($from, $lastDate, $store, $concept, $channel, $mall, $brand, $category) {
+            function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories) {
             $query = DB::table('store_sales', 'ss')
                 ->select(
-                    DB::raw("CONCAT('M', MONTH(sales_date)) AS month"),
                     DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
+                    'ch.channel_code',
                     DB::raw("SUM(net_sales) AS net_sales")
                 )
                 ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
@@ -1199,38 +1202,39 @@ class StoreSalesDashboardReport extends Model
                 ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
                 ->leftJoin('concepts as con', 'cu.concepts_id', 'con.id')
                 ->where('ss.is_final', 1)
-                ->whereBetween('ss.sales_date', ["{$from}-01", $lastDate])
+                ->whereBetween(DB::raw('YEAR(ss.sales_date)'), [$yearFrom, $yearTo])
+                ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [$monthFrom, $monthTo])
                 ->where('ss.quantity_sold', '>', 0)
                 ->whereNotNull('ss.net_sales')
                 ->where('ss.sold_price', '>', 0)
                 ->where('ss.channels_id', '!=', 12);
 
                  // Conditional parameters
-                if (!empty($store)) {
-                    $query->whereIn('cu.id', (array)$store);
+                if (!empty($stores)) {
+                    $query->whereIn('cu.id', (array)$stores);
                 }
 
-                if (!empty($concept)) {
-                    $query->whereIn('con.id', (array)$concept);
+                if (!empty($concepts)) {
+                    $query->whereIn('con.id', (array)$concepts);
                 }
 
-                if (!empty($channel)) {
-                    $query->whereIn('ch.id', (array)$channel);
+                if (!empty($channels)) {
+                    $query->whereIn('ch.id', (array)$channels);
                 }
 
-                if (!empty($mall) && $mall !== 'all') {
-                    $query->where('cu.mall', $mall);
+                if (!empty($malls)) {
+                    $query->whereIn('cu.mall', $malls);
                 }
 
-                if (!empty($brand)) {
-                    $query->whereIn('ai.brand_description', (array)$brand);
+                if (!empty($brands)) {
+                    $query->whereIn('ai.brand_description', (array)$brands);
                 }
 
-                if (!empty($category)) {
-                    $query->whereIn('ai.category_description', (array)$category);
+                if (!empty($categories)) {
+                    $query->whereIn('ai.category_description', (array)$categories);
                 }
 
-                $query->groupBy(DB::raw("year, month"));
+                $query->groupBy(DB::raw("year, channel_code"));
 
                 // For debugging: Log the raw SQL and parameters
                 \Log::info(json_encode([
@@ -1242,6 +1246,7 @@ class StoreSalesDashboardReport extends Model
                
         });
     }
+
 
 
 
