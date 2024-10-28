@@ -231,6 +231,7 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::post('/generate_charts', [AdminDashboardStoreSalesController::class, 'generateCharts'])->name('charts');
 
-
+    Route::get('/charts_test', [AdminDashboardStoreSalesController::class, 'getIndex2'] );
+s
 
 });

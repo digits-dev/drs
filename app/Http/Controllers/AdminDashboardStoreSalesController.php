@@ -499,6 +499,7 @@
 				'categories' => $request->categories,
 			];
 
+
 			if(!$args['channels']){
 				$test = StoreSalesDashboardReport::generateChartDataForMultipleChannel($args);
 
@@ -614,6 +615,50 @@
 
 			return $years;
 		}
+
+
+		public function getIndex2() {
+
+			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+			
+			$data = [];
+			$data['page_title'] = 'Store Sales Dashboard ';
+
+			// $reloadData = request()->has('reload_data');
+
+
+			// if($reloadData){
+			// 	$generatedData = $this->dashboardService->generateSalesReport();
+			// } else {
+			// 	$generatedData = $this->dashboardService->getData();
+
+			// 	if(empty($generatedData)){
+			// 		$generatedData = $this->dashboardService->generateSalesReport();
+			// 	}
+			// }
+
+			// $data = array_merge($data, $generatedData);
+
+			$data['channels'] = Channel::get(['id','channel_name as name'] );
+			$data['concepts'] = Concept::get(['id','concept_name as name'] );
+			$data['customers'] = Customer::get(['id','customer_name as name'] );
+			$data['brands'] = AllItem::select('brand_description as name')->whereNotNull('brand_description')->distinct()->get();
+			$data['malls'] = Customer::select('mall as name')->whereNotNull('mall')->distinct()->get();
+			$data['categories'] = AllItem::select('category_description as name')->whereNotNull('category_description')->distinct()->get();
+
+
+			// dd($data['channel_codes']);
+
+			// dd($data);
+
+
+
+			\Log::info(json_encode($data, JSON_PRETTY_PRINT));
+
+			return view('dashboard-report.store-sales.dashboard-test', $data);
+		}
+
+	
 
 
 	}

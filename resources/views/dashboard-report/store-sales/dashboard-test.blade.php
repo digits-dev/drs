@@ -453,20 +453,21 @@ $(function() {
     $('#chartForm').on('submit', function(e) {
         e.preventDefault(); 
 
-        const types = $('#type').val();
-        const yearFrom = $('#yearFrom').val();
-        const yearTo = $('#yearTo').val();
-        const monthFrom = $('#monthFrom').val();
-        const monthTo = $('#monthTo').val();
-        const stores = $('#store').val();
-        const channels = $('#channel').val();
-        const brands = $('#brand').val();
-        const categories = $('#category').val();
-        const concepts = $('#storeConcept').val();
-        const mall = $('#mall').val();
-        const sqm  = $('#sqm').val();
-        const group = $('#group').val();
-
+        const formData = {
+            types: $('#type').val(),
+            yearFrom: $('#yearFrom').val(),
+            yearTo: $('#yearTo').val(),
+            monthFrom: $('#monthFrom').val(),
+            monthTo: $('#monthTo').val(),
+            stores: $('#store').val(),
+            channels: $('#channel').val(),
+            brands: $('#brand').val(),
+            categories: $('#category').val(),
+            concepts: $('#storeConcept').val(),
+            mall: $('#mall').val(),
+            sqm: $('#sqm').val(),
+            group: $('#group').val(),
+        }
 
         $('#charts_container').empty();
         $('#formSelectedValues').hide();
@@ -477,113 +478,9 @@ $(function() {
         $.ajax({
             url: '{{ route("charts") }}', 
             method: 'POST', 
-            data: {
-                yearFrom,
-                yearTo,
-                monthFrom,
-                monthTo,
-                stores,
-                channels,
-                brands,
-                categories,
-                concepts,
-                mall,
-                sqm,
-                group,
-            },
-            success: function(data) {
-
-                chartImagesToDownload = [];
-
-                const chartTypes = ['line', 'bar', 'pie'];
-
-                if (data.chartData) {
-                    $('#noDataMessage').hide(); 
-
-                    if(data.multipleChannel){
-                        drawChartMultipleChannel(data.chartData, data.years);
-
-                        data.years.forEach(year => drawChartMultipleChannelByYear(data.chartData, year));
-
-                    } else {
-
-                        if(types.length === 0){
-                            chartTypes.forEach(type => {
-
-                                if(type == 'pie'){
-                                    drawChartWithDynamicMonthsInPie(data.chartData, data.years);
-                            
-                                } else {
-                                    drawChart(data.chartData, data.years, type);
-                                    drawChartWithDynamicMonths(data.chartData, data.years, type);
-                                }
-                            });
-
-                        } else {
-                            types.forEach(type => {
-
-                                if(type == 'pie'){
-                                    drawChartWithDynamicMonthsInPie(data.chartData, data.years);
-                            
-                                } else {
-                                    drawChart(data.chartData, data.years, type);
-                                    drawChartWithDynamicMonths(data.chartData, data.years, type);
-                                }
-                        
-                            });
-                        }
-
-                    }
-
-                } else {
-
-                    $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
-                    $('#noDataMessage').show();
-                }
-
-                console.log('ito yung mga chart images', chartImagesToDownload);
-
-                resetForm();
-
-                $('#loading').hide();
-
-            },
-            error: function(xhr) {
-                $('#chartModal').modal('show');
-                $('#loading').hide();
-
-                console.error('Error fetching data:', xhr);
-
-                // Check if the response contains validation errors
-                if (xhr.status === 422) { 
-                    const errors = xhr.responseJSON.errors;
-
-                    // Clear previous error messages
-                    $('.form-group .text-danger').remove();
-
-                    // Loop through each error and display it
-                    $.each(errors, function(key, messages) {
-                        // Find the relevant input field and append the error message
-                        const input = $(`#${key}`);
-                        input.parent().append(`<div class="text-danger">${messages.join(', ')}</div>`);
-                    });
-
-                    // Populate fields with submitted values to retain user input
-                    $('#type').val(types);
-                    $('#yearFrom').val(yearFrom);
-                    $('#yearTo').val(yearTo);
-                    $('#monthFrom').val(monthFrom);
-                    $('#monthTo').val(monthTo);
-                    $('#store').val(stores).trigger('change'); 
-                    $('#channel').val(channels).trigger('change');
-                    $('#brand').val(brands).trigger('change');
-                    $('#category').val(categories).trigger('change');
-                    $('#storeConcept').val(concepts).trigger('change');
-                    $('#mall').val(mall).trigger('change');
-                    $('#sqm').val(sqm);
-                    $('#group').val(group);
-                } 
-            }
+            data: formData,
+            success: handleSuccess,
+            error: handleError
         });
 
         // Clear previous rows
@@ -634,6 +531,103 @@ $(function() {
         // Show the table
         $('#selectedValues').show();
     });
+
+    function handleSuccess(data) {
+
+        chartImagesToDownload = [];
+
+        const chartTypes = ['line', 'bar', 'pie'];
+
+        if (data.chartData) {
+            $('#noDataMessage').hide(); 
+
+            if(data.multipleChannel){
+                drawChartMultipleChannel(data.chartData, data.years);
+
+                data.years.forEach(year => drawChartMultipleChannelByYear(data.chartData, year));
+
+            } else {
+
+                if(types.length === 0){
+                    chartTypes.forEach(type => {
+
+                        if(type == 'pie'){
+                            drawChartWithDynamicMonthsInPie(data.chartData, data.years);
+                    
+                        } else {
+                            drawChart(data.chartData, data.years, type);
+                            drawChartWithDynamicMonths(data.chartData, data.years, type);
+                        }
+                    });
+
+                } else {
+                    types.forEach(type => {
+
+                        if(type == 'pie'){
+                            drawChartWithDynamicMonthsInPie(data.chartData, data.years);
+                    
+                        } else {
+                            drawChart(data.chartData, data.years, type);
+                            drawChartWithDynamicMonths(data.chartData, data.years, type);
+                        }
+                
+                    });
+                }
+
+            }
+
+        } else {
+
+            $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
+            $('#noDataMessage').show();
+        }
+
+        console.log('ito yung mga chart images', chartImagesToDownload);
+
+        resetForm();
+
+        $('#loading').hide();
+
+    }
+
+    function handleError(xhr) {
+        $('#chartModal').modal('show');
+        $('#loading').hide();
+
+        console.error('Error fetching data:', xhr);
+
+        // Check if the response contains validation errors
+        if (xhr.status === 422) { 
+            const errors = xhr.responseJSON.errors;
+
+            // Clear previous error messages
+            $('.form-group .text-danger').remove();
+
+            // Loop through each error and display it
+            $.each(errors, function(key, messages) {
+                // Find the relevant input field and append the error message
+                const input = $(`#${key}`);
+                input.parent().append(`<div class="text-danger">${messages.join(', ')}</div>`);
+            });
+
+            // Populate fields with submitted values to retain user input
+            $('#type').val(types);
+            $('#yearFrom').val(yearFrom);
+            $('#yearTo').val(yearTo);
+            $('#monthFrom').val(monthFrom);
+            $('#monthTo').val(monthTo);
+            $('#store').val(stores).trigger('change'); 
+            $('#channel').val(channels).trigger('change');
+            $('#brand').val(brands).trigger('change');
+            $('#category').val(categories).trigger('change');
+            $('#storeConcept').val(concepts).trigger('change');
+            $('#mall').val(mall).trigger('change');
+            $('#sqm').val(sqm);
+            $('#group').val(group);
+        } 
+    }
+
+
 
     $('#clearForm').on('click', function() {
         resetForm();
