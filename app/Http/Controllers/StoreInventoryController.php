@@ -471,7 +471,6 @@ class StoreInventoryController extends Controller
                     $sub_inventory = $this->getSubInventory($itemNumber, $toWarehouse, $itemKey, $subInv);
 
                     if (!StoreInventory::isNotExist($item['item']->Date,$item['totalQty'], $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)){
-                        dump(true);
                         unset($toExcelContent[$index]);
                     }
                 }
