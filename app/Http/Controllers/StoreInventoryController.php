@@ -310,101 +310,149 @@ class StoreInventoryController extends Controller
     public function StoresInventoryFromPosEtp(Request $request){
         $datefrom = $request->datefrom ? date("Ymd", strtotime($request->datefrom)) : date("Ymd", strtotime("-5 hour"));
         $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
-        
-        $result = StoreInventory::scopeGetStoresInventoryFromPosEtp($datefrom, $dateto);
 
-        $groupedSalesData = collect($result)->groupBy('Warehouse');
+        $firstQueryResult  = StoreInventory::scopeGetStoresInventoryFromPosEtp($datefrom, $dateto);
+        $secondQueryResult = StoreInventory::scopeGetInTransitInventoryFromPosEtp($datefrom, $dateto);
+
+        $mergedResults  = collect($firstQueryResult)->merge($secondQueryResult);
+
         
-        $itemNumbers = $groupedSalesData->flatMap(function($storeData) {
-            return $storeData->pluck('ItemNumber');
-        })->unique()->toArray();
+        StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResults);
+
+
+        $groupedSalesData = $mergedResults->groupBy(function ($item) {
+            return $item->SubInventory === 'DEMO' ? 'DEMO' : 'NOT DEMO';
+        });
+        
+        $demoItemNumbers = $groupedSalesData->get('DEMO', collect())
+        ->pluck('ItemNumber')
+        ->map(function ($itemNumber) {
+            return str_replace(['Q1_', 'Q2_'], '', $itemNumber);
+        })
+        ->toArray();
+
+        $notDemoItemNumbers = $groupedSalesData->get('NOT DEMO', collect())
+        ->pluck('ItemNumber')
+        ->map(function ($itemNumber) {
+            return str_replace(['Q1_', 'Q2_'], '', $itemNumber);
+        })
+        ->toArray();
+        
+        $itemNumbers = collect($demoItemNumbers)
+        ->merge($notDemoItemNumbers)
+        ->unique()
+        ->values()
+        ->toArray();
 
         $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
 
-        $warehouseCodes = $groupedSalesData->flatMap(function($storeData) {
-            return [
-                "CUS-" . $storeData->first()->Warehouse,    
-                "CUS-" . $storeData->first()->ToWarehouse
-            ];
-        })->unique()->toArray();
+        $warehouseCodes = collect($firstQueryResult)
+        ->merge($secondQueryResult) // Merge results from both queries
+        ->flatMap(function($storeData) {
+            $warehouseCode = !empty($storeData->StoreId) ? "CUS-" . $storeData->StoreId : '';
+            $toWarehouseCode = !empty($storeData->ToWarehouse) ? "CUS-" . $storeData->ToWarehouse : '';
+
+            return [$warehouseCode, $toWarehouseCode];
+        })
+        ->filter() // Remove empty values
+        ->unique() // Remove duplicates
+        ->toArray();
 
         $masterfile = DB::connection('masterfile')->table('customer')
             ->whereIn('customer_code', $warehouseCodes)
             ->get()
             ->keyBy('customer_code');
         
-        foreach ($groupedSalesData as $storeId => $storeData) {
 
-            $time = microtime(true);
-            $batch_number = str_replace('.', '', $time);;
-            $folder_name = "$batch_number-" . Str::random(5);
-            $dateNow = Carbon::now()->format('Ymd');
-            $excel_file_name = "stores-inventory-$batch_number-$dateNow.xlsx";
-            $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
-    
-            if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
-                mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
-            }
-            $toExcelContent = [];   
+        $groupedByStoreId = $groupedSalesData->map(function ($items) {
+            return $items->groupBy('StoreId');
+        });
 
-            // Create Excel Data
-            foreach($storeData as &$excel){
+        foreach($groupedByStoreId as $itemKey => $item){
 
-                $counter = Counter::where('id',2)->value('reference_code');
-                $itemNumber = $excel->ItemNumber;
-                $sub_inventory = "POS - " . $excel->SubInventory;
-                $cusCode = "CUS-" . $excel->Warehouse;
-                $toWarehouseCode = "CUS-" . $excel->ToWarehouse; 
+            foreach ($item as $storeId => $storeData) { 
+                $time = microtime(true);
+                $batch_number = str_replace('.', '', $time);;
+                $folder_name = "$batch_number-" . Str::random(5);
+                $dateNow = Carbon::now()->format('Ymd');
+                $excel_file_name = "stores-inventory-$batch_number-$dateNow.xlsx";
+                $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
+        
+                if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
+                    mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
+                }
+                $toExcelContent = [];  
+                
+                // Create Excel Data
+                foreach($storeData as &$excel){
+
+                    $itemNumber = str_replace(['Q1_', 'Q2_'], '', $excel->ItemNumber);
+                    $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel, $itemKey);
+                    $cusCode = "CUS-" . $excel->StoreId;
+
+                    if (StoreInventory::isNotExist($excel, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
+                        $counter = Counter::where('id', 2)->value('reference_code');
+                        $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
+                        $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
+                        $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
+
+                        $toExcel = [];
+                        $toExcel['reference_number'] = $counter;
+                        $toExcel['system'] = 'POS';
+                        $toExcel['org'] = $itemDetails[$itemNumber]['org'];
+                        $toExcel['report_type'] = 'STORE INVENTORY';
+                        $toExcel['channel_code'] = $masterfile[$cusCode]->channel_code_id;
+                        $toExcel['sub_inventory'] = $sub_inventory;
+                        $toExcel['customer_location'] = $masterfile[$cusCode]->cutomer_name;
+                        $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
+                        $toExcel['item_number'] = $itemNumber;
+                        $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
+                        $toExcel['total_qty'] = $excel->TotalQty;
+                        $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
+                        $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
+                        $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
+                        $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
+                        if (substr($excel->ItemNumber, 0, 3) === 'Q1_') {
+                            $toExcel['from_warehouse'] = null;
+                        } else {
+                            $toExcel['from_warehouse'] = $fromWareHouse;
+                        }
+                        $toExcel['to_warehouse'] = $toWareHouse;
+                        
+                        $toExcelContent[] = $toExcel;
+                        Counter::where('id',2)->increment('reference_code');
+                    }
+
+                }
+
+                if(!empty($toExcelContent)){
                     
-                $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
-                $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
-
-                $toExcel = [];
-                $toExcel['reference_number'] = $counter;
-                $toExcel['system'] = 'POS';
-                $toExcel['org'] = $itemDetails[$itemNumber]['org'];
-                $toExcel['report_type'] = 'STORE INVENTORY';
-                $toExcel['channel_code'] = $masterfile[$cusCode]->channel_code_id;
-                $toExcel['sub_inventory'] = $sub_inventory;
-                $toExcel['customer_location'] = $masterfile[$cusCode]->cutomer_name;
-                $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel->TransactionDate)->format('Y-m-d');
-                $toExcel['item_number'] = $excel->ItemNumber;
-                $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                $toExcel['total_qty'] = $excel->QuantityInTransit;
-                $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
-                $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
-                $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-                $toExcel['from_warehouse'] = $fromWareHouse;
-                $toExcel['to_warehouse'] = $toWareHouse;
-
-                $toExcelContent[] = $toExcel;
-
-                Counter::where('id',2)->increment('reference_code');
+                    Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
+    
+                    // ExportStoreInventoryJob::dispatch($toExcelContent, $excel_path);
+        
+                    // Full path of the stored Excel file
+                    $full_excel_path = storage_path('app') . '/' . $excel_path;
+        
+                    // Prepare arguments for the job
+                    $args = [
+                        'batch_number' => $batch_number,
+                        'excel_path' => $full_excel_path,
+                        'report_type' => $this->report_type,
+                        'folder_name' => $folder_name,
+                        'file_name' => $excel_file_name,
+                        'created_by' => CRUDBooster::myId(),
+                        'from_date' => null,
+                        'data_type' => 'PULL'
+                    ];
+        
+                    // Dispatch the processing job for each store
+                    ProcessStoreInventoryUploadJob::dispatch($args);
+                }
+                
             }
-
-            Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
-
-            // ExportStoreInventoryJob::dispatch($toExcelContent, $excel_path);
-
-            // Full path of the stored Excel file
-            $full_excel_path = storage_path('app') . '/' . $excel_path;
-
-            // Prepare arguments for the job
-            $args = [
-                'batch_number' => $batch_number,
-                'excel_path' => $full_excel_path,
-                'report_type' => $this->report_type,
-                'folder_name' => $folder_name,
-                'file_name' => $excel_file_name,
-                'created_by' => CRUDBooster::myId(),
-                'from_date' => null,
-                'data_type' => 'PULL'
-            ];
-
-            // Dispatch the processing job for each store
-            ProcessStoreInventoryUploadJob::dispatch($args);
         }
+
     }
 
     private function productQuality($inv_type_id, $pos_sub)
@@ -603,6 +651,26 @@ class StoreInventoryController extends Controller
         if (!empty($cacheBatch)) {
             Cache::putMany($cacheBatch, now()->addMinutes(60));
         }
+    }
+
+    function getSubInventory($itemNumber, $item, $itemKey)
+    {
+        if($itemKey == "DEMO"){
+            return "POS - DEMO";
+        }else{
+            $prefix = substr($itemNumber, 0, 3);
+
+        if ($prefix === 'Q1_' && $item->SubInventory === "GOOD") {
+            return "POS - GOOD";
+        } elseif ($prefix === 'Q2_') {
+            if($item->ToWarehouse === '0312'){
+                return "POS - RMA";
+            }else{
+                return "POS - TRANSIT";
+            }
+        }
+        }
+        
     }
 
 
