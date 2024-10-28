@@ -396,6 +396,9 @@
 
 $(function() {
 
+    // Load the Visualization API and the corechart package.
+    google.charts.load('current', {'packages': ['corechart']});
+
     let chartImagesToDownload = [];
 
     const monthNames = [
@@ -409,63 +412,65 @@ $(function() {
     $('.select2').select2({
         placeholder: "Select an option",
         allowClear: true,
-        width:'100%'
+        width: '100%',
+        tags: true
     });
 
-    // Apply the event handler to multiple selectors
+    // Handle the "ALL" option
     const selectors = ['#store', '#channel', '#brand', '#category', '#storeConcept', '#mall', '#type'];
-    selectors.forEach(selector => handleSelect2Event(selector));
-
-    // Trigger the change event for initialization
-    selectors.forEach(selector => $(selector).change());
-
-    // Load the Visualization API and the corechart package.
-    google.charts.load('current', {'packages': ['corechart']});
-
-    $('#saveChartBtn').click(saveChart);
+    selectors.forEach(selector => {
+        $(selector + ' option:not(:first-child)').prop('disabled', true);
+        handleSelect2Event(selector);
+    });
 
 
     function handleSelect2Event(selector) {
-        $(selector).change(function () {
-            const options = this.options;
-            const isAllSelected = Array.from(options).some(item => item.selected && $(item).text() === "ALL");
+        $(selector).on('select2:select', function (e) {
+            const selectedValue = e?.params?.data?.id;
 
-            $.each(options, function (i, item) {
-                const isNotAll = $(item).text() !== "ALL";
+            // If "ALL" is selected, disable other options
+            if (selectedValue === 'all') {
+                $(selector).find('option:not(:first-child)').prop('disabled', true);
+                $(selector).val('all').trigger('change'); // Ensure "ALL" is selected
+            } else {
+                // If another option is selected, unselect "ALL"
+                $(selector).find('option[value="all"]').prop('selected', false).trigger('change');
+            }
+        });
 
-                if (isAllSelected) {
-                    // Deselect other options and disable all
-                    if (isNotAll) {
-                        item.selected = false; 
-                    }
-                    $(item).prop("disabled", true);
-                } else {
-                    // Enable all options if "All" is not selected
-                    $(item).prop("disabled", false);
-                }
-            });
+        $(selector).on('select2:unselecting', function (e) {
+            const unselectedValue = e?.params?.args?.data?.id;
 
-            // Trigger a change event to update the UI
-            $(this).trigger('change.select2'); 
+            // If "ALL" is unselected, re-enable all options
+            if (unselectedValue === 'all') {
+                $(selector).find('option').prop('disabled', false);
+            }
         });
     }
+
+    $('#saveChartBtn').click(saveChart);
 
     $('#chartForm').on('submit', function(e) {
         e.preventDefault(); 
 
-        const types = $('#type').val();
-        const yearFrom = $('#yearFrom').val();
-        const yearTo = $('#yearTo').val();
-        const monthFrom = $('#monthFrom').val();
-        const monthTo = $('#monthTo').val();
-        const stores = $('#store').val();
-        const channels = $('#channel').val();
-        const brands = $('#brand').val();
-        const categories = $('#category').val();
-        const concepts = $('#storeConcept').val();
-        const mall = $('#mall').val();
-        const sqm  = $('#sqm').val();
-        const group = $('#group').val();
+        const formData = {
+            types: $('#type').val(),
+            yearFrom: $('#yearFrom').val(),
+            yearTo: $('#yearTo').val(),
+            monthFrom: $('#monthFrom').val(),
+            monthTo: $('#monthTo').val(),
+            stores: $('#store').val(),
+            channels: $('#channel').val(),
+            brands: $('#brand').val(),
+            categories: $('#category').val(),
+            concepts: $('#storeConcept').val(),
+            mall: $('#mall').val(),
+            sqm: $('#sqm').val(),
+            group: $('#group').val(),
+        }
+
+        console.log(formData);
+        debugger;
 
 
         $('#charts_container').empty();
@@ -477,20 +482,7 @@ $(function() {
         $.ajax({
             url: '{{ route("charts") }}', 
             method: 'POST', 
-            data: {
-                yearFrom,
-                yearTo,
-                monthFrom,
-                monthTo,
-                stores,
-                channels,
-                brands,
-                categories,
-                concepts,
-                mall,
-                sqm,
-                group,
-            },
+            data: formData,
             success: function(data) {
 
                 chartImagesToDownload = [];
@@ -622,7 +614,7 @@ $(function() {
             $('#selectedValues tbody').append(`
                 <tr>
                     <td>${field}</td>
-                    <td>${value || 'ALL'}</td>
+                    <td>${value.toUpperCase()}</td>
                 </tr>
             `);
         });
