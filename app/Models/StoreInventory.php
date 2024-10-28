@@ -238,13 +238,13 @@ class StoreInventory extends Model
         return $data;
     }
 
-    public static function isNotExist($item, $customerLocation, $itemNumber, $subInventory){
+    public static function isNotExist($date, $totalQty, $customerLocation, $itemNumber, $subInventory){
 
         $customer = Customer::active();
         $subInventoryTb = InventoryTransactionType::active();
 
         try {
-            $inventoryDate = Carbon::createFromFormat('Ymd', $item->Date)->format('Y-m-d');
+            $inventoryDate = Carbon::createFromFormat('Ymd', $date)->format('Y-m-d');
         } catch (\Exception $e) {
             return true; 
         }
@@ -259,7 +259,7 @@ class StoreInventory extends Model
         return !self::where('customers_id', $v_customer->id)
             ->where('inventory_date', $inventoryDate)
             ->where('item_code', $itemNumber)
-            ->where('quantity_inv', $item->TotalQty)
+            ->where('quantity_inv', $totalQty)
             ->where('inventory_transaction_types_id', $v_sub_inventory->id)
             ->exists();
     }
@@ -271,6 +271,19 @@ class StoreInventory extends Model
             $subInv = [];
             $newDatasKeys =[];
 
+            $uniqueItems = [];
+
+            foreach ($newEntries as $item) {
+                $key = $item->StoreId . '-' . $item->Date . '-' . $item->ItemNumber . '-' . $item->SubInventory;
+                
+                if (isset($uniqueItems[$key])) {
+                    $uniqueItems[$key]->TotalQty += $item->TotalQty;
+                } else {
+                    $uniqueItems[$key] = $item;
+                }
+            }
+
+            $uniqueItems = array_values($uniqueItems);
 
             $uniqueOldSubInventoryId = collect($oldData)
             ->pluck('inventory_transaction_types_id') 
@@ -306,7 +319,7 @@ class StoreInventory extends Model
     
             $customerNameCache = [];
     
-            foreach ($newEntries as $entry) {
+            foreach ($uniqueItems as $entry) {
                 $subInventory = '';
                 $date = Carbon::createFromFormat('Ymd', $entry->Date)->format('Y-m-d');
     

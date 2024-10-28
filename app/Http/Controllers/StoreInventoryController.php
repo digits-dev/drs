@@ -316,14 +316,18 @@ class StoreInventoryController extends Controller
 
         $mergedResults  = collect($firstQueryResult)->merge($secondQueryResult);
 
+        $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
+            return clone $item; 
+        });
         
-        StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResults);
+        StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResultsCopy);
 
+        $uniqueInventory = [];
 
         $groupedSalesData = $mergedResults->groupBy(function ($item) {
             return $item->SubInventory === 'DEMO' ? 'DEMO' : 'NOT DEMO';
         });
-        
+
         $demoItemNumbers = $groupedSalesData->get('DEMO', collect())
         ->pluck('ItemNumber')
         ->map(function ($itemNumber) {
@@ -368,7 +372,9 @@ class StoreInventoryController extends Controller
             return $items->groupBy('StoreId');
         });
 
+
         foreach($groupedByStoreId as $itemKey => $item){
+
 
             foreach ($item as $storeId => $storeData) { 
                 $time = microtime(true);
@@ -381,49 +387,95 @@ class StoreInventoryController extends Controller
                 if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
                     mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
                 }
-                $toExcelContent = [];  
-                
+                $toExcelContent = []; 
+                $uniqueInventory =  [];
+
+                $index = 0;
+
+
                 // Create Excel Data
                 foreach($storeData as &$excel){
 
                     $itemNumber = str_replace(['Q1_', 'Q2_'], '', $excel->ItemNumber);
-                    $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel, $itemKey);
+                    $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel->ToWarehouse, $itemKey, $excel->SubInventory);
                     $cusCode = "CUS-" . $excel->StoreId;
 
-                    if (StoreInventory::isNotExist($excel, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
-                        $counter = Counter::where('id', 2)->value('reference_code');
-                        $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
-                        $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
-                        $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
-
-                        $toExcel = [];
-                        $toExcel['reference_number'] = $counter;
-                        $toExcel['system'] = 'POS';
-                        $toExcel['org'] = $itemDetails[$itemNumber]['org'];
-                        $toExcel['report_type'] = 'STORE INVENTORY';
-                        $toExcel['channel_code'] = $masterfile[$cusCode]->channel_code_id;
-                        $toExcel['sub_inventory'] = $sub_inventory;
-                        $toExcel['customer_location'] = $masterfile[$cusCode]->cutomer_name;
-                        $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
-                        $toExcel['item_number'] = $itemNumber;
-                        $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                        $toExcel['total_qty'] = $excel->TotalQty;
-                        $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
-                        $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
-                        $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                        $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-                        if (substr($excel->ItemNumber, 0, 3) === 'Q1_') {
-                            $toExcel['from_warehouse'] = null;
-                        } else {
-                            $toExcel['from_warehouse'] = $fromWareHouse;
-                        }
-                        $toExcel['to_warehouse'] = $toWareHouse;
+                    if (StoreInventory::isNotExist($excel->Date, $excel->TotalQty, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
                         
-                        $toExcelContent[] = $toExcel;
-                        Counter::where('id',2)->increment('reference_code');
+                        $key = $excel->StoreId . $excel->Date . $excel->ItemNumber . $sub_inventory;
+                        
+                        if(isset($uniqueInventory[$key])){
+                            $index = $uniqueInventory[$key]['index'];
+                            $currQty = $uniqueInventory[$key]['totalQty'];
+                            $toExcelContent[$index]['total_qty'] = $currQty + $excel->TotalQty;
+                            $uniqueInventory[$key]['totalQty'] = $toExcelContent[$index]['total_qty'];
+
+                        }else{
+
+                            $uniqueInventory[$key] = [
+                                "index" => $index,
+                                "totalQty" => $excel->TotalQty,
+                                "itemKey" => $itemKey,
+                                "item" => $excel
+                            ];
+
+
+                            $counter = Counter::where('id', 2)->value('reference_code');
+                            $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
+                            $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
+                            $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
+    
+                            $toExcel = [];
+                            $toExcel['reference_number'] = $counter;
+                            $toExcel['system'] = 'POS';
+                            $toExcel['org'] = $itemDetails[$itemNumber]['org'];
+                            $toExcel['report_type'] = 'STORE INVENTORY';
+                            $toExcel['channel_code'] = $masterfile[$cusCode]->channel_code_id;
+                            $toExcel['sub_inventory'] = $sub_inventory;
+                            $toExcel['customer_location'] = $masterfile[$cusCode]->cutomer_name;
+                            $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
+                            $toExcel['item_number'] = $itemNumber;
+                            $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
+                            $toExcel['total_qty'] = $excel->TotalQty;
+                            $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
+                            $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
+                            $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
+                            $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
+                            if (substr($excel->ItemNumber, 0, 3) === 'Q1_') {
+                                $toExcel['from_warehouse'] = null;
+                            } else {
+                                $toExcel['from_warehouse'] = $fromWareHouse;
+                            }
+                            $toExcel['to_warehouse'] = $toWareHouse;
+                            
+                            $toExcelContent[] = $toExcel;
+                            Counter::where('id',2)->increment('reference_code');
+                            $index++;
+                        }
+                        
+                        
                     }
 
                 }
+
+                foreach($uniqueInventory as $item);
+                {
+                    $excel = $item['item'];
+                    $cusCode = "CUS-" . $item['item']->StoreId;
+                    $toWarehouse = $item['item']->ToWarehouse;
+                    $itemKey = $item['itemKey'];
+                    $subInv = $item['item']->SubInventory;
+                    $index = $item['index'];
+                    $itemNumber = str_replace(['Q1_', 'Q2_'], '', $item['item']->ItemNumber);
+
+                    $sub_inventory = $this->getSubInventory($itemNumber, $toWarehouse, $itemKey, $subInv);
+
+                    if (!StoreInventory::isNotExist($item['item']->Date,$item['totalQty'], $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)){
+                        dump(true);
+                        unset($toExcelContent[$index]);
+                    }
+                }
+
 
                 if(!empty($toExcelContent)){
                     
@@ -654,17 +706,17 @@ class StoreInventoryController extends Controller
         }
     }
 
-    function getSubInventory($itemNumber, $item, $itemKey)
+    function getSubInventory($itemNumber, $toWarehouse, $itemKey, $subInventory)
     {
         if($itemKey == "DEMO"){
             return "POS - DEMO";
         }else{
             $prefix = substr($itemNumber, 0, 3);
 
-        if ($prefix === 'Q1_' && $item->SubInventory === "GOOD") {
+        if ($prefix === 'Q1_' && $subInventory === "GOOD") {
             return "POS - GOOD";
         } elseif ($prefix === 'Q2_') {
-            if($item->ToWarehouse === '0312'){
+            if($toWarehouse === '0312'){
                 return "POS - RMA";
             }else{
                 return "POS - TRANSIT";
