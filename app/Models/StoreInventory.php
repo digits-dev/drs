@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use CRUDBooster;
+use Carbon\Carbon;
+use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class StoreInventory extends Model
 {
@@ -198,24 +200,12 @@ class StoreInventory extends Model
     }
 
     //FROM ETP
-    public function scopeGetStoresInventoryFromPosEtp($datefrom, $dateto){
-        $data = 
-        //DB::connection('sqlsrv')->select(DB::raw('exec [SP_Custom_InventoryReportSummary] 100,'100','0572';'));
-        // DB::connection('sqlsrv')->select(DB::raw("
-        //     select P.WareHouse 'STORE ID',
-        //     P.LastIssueDate 'DATE',
-        //     P.ItemNumber 'ITEM NUMBER',
-        //     P.BalanceApproved 'TOTAL QTY',
-        //     P.Location 'SUB INVENTORY'
-        //     From ProductLocationBalance P (Nolock)
-        //     where P.Company= 100
-        //     --and P.LastIssueDate between @FromDate and @ToDate
-        // "));
-        DB::connection('sqlsrv')->select(DB::raw("
-            SELECT d.Company, d.Warehouse, d.ToWarehouse, d.TransactionDate, l.WarehouseLocation AS 'SubInventory',
-                l.ItemNumber, l.ItemDescription, l.LotNumber, 
+    public function scopeGetInTransitInventoryFromPosEtp($dateFrom, $dateTo){
+        $data = DB::connection('sqlsrv')->select(DB::raw("
+            SELECT d.Company, d.Warehouse AS 'StoreId', d.ToWarehouse, d.TransactionDate As 'Date',
+                CONCAT('Q2_', l.ItemNumber) AS 'ItemNumber', l.ItemDescription, l.LotNumber, 
                 l.DispatchedQuantity, l.ReceivedQuantity, 
-                l.DispatchedQuantity - l.ReceivedQuantity AS QuantityInTransit
+                l.DispatchedQuantity - l.ReceivedQuantity AS TotalQty
             FROM DOHead (nolock) d
             INNER JOIN doline L 
                 ON d.Company = l.Company 
@@ -226,11 +216,157 @@ class StoreInventory extends Model
             AND d.TransactionStatus IN (0, 2)   
             AND d.Company = 100
             AND d.Division = '100'
-            AND (d.Warehouse = '0572' OR d.Warehouse = '0311')
-            and d.TransactionDate between '$datefrom' and '$dateto'
+            AND (d.ToWarehouse = '0312' OR d.ToWarehouse = '0311')
+            AND d.TransactionDate between '$dateFrom' and '$dateTo'
         "));
         
         return $data;
+    }
+
+    public function scopeGetStoresInventoryFromPosEtp($dateFrom, $dateTo){
+        $data = DB::connection('sqlsrv')->select(DB::raw("
+            select P.WareHouse 'StoreId',
+            P.LastIssueDate 'Date',
+            CONCAT('Q1_', P.ItemNumber) AS 'ItemNumber',
+            P.BalanceApproved 'TotalQty',
+            P.Location 'SubInventory'
+            From ProductLocationBalance P (Nolock)
+            where P.Company= 100
+            AND P.LastIssueDate between '$dateFrom' and '$dateTo'
+        "));
+
+        return $data;
+    }
+
+    public static function isNotExist($item, $customerLocation, $itemNumber, $subInventory){
+
+        $customer = Customer::active();
+        $subInventoryTb = InventoryTransactionType::active();
+
+        try {
+            $inventoryDate = Carbon::createFromFormat('Ymd', $item->Date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return true; 
+        }
+
+        $v_customer = $customer->where('customer_name',trim($customerLocation))->first();
+        $v_sub_inventory = $subInventoryTb->where('inventory_transaction_type', trim($subInventory))->first();
+
+        if (!$v_customer) {
+            return true;
+        }
+
+        return !self::where('customers_id', $v_customer->id)
+            ->where('inventory_date', $inventoryDate)
+            ->where('item_code', $itemNumber)
+            ->where('quantity_inv', $item->TotalQty)
+            ->where('inventory_transaction_types_id', $v_sub_inventory->id)
+            ->exists();
+    }
+
+    public static function syncOldEntriesFromNewEntries($dateFrom, $dateTo, $newEntries) {
+        $oldData = self::fetchNewInventoryData($dateFrom, $dateTo);
+
+        if(!empty($oldData)){
+            $subInv = [];
+            $newDatasKeys =[];
+
+
+            $uniqueOldSubInventoryId = collect($oldData)
+            ->pluck('inventory_transaction_types_id') 
+            ->filter(function ($value) {
+                return !is_null($value); 
+            })
+            ->unique();
+    
+    
+            $subInventory = InventoryTransactionType::whereIn('id', $uniqueOldSubInventoryId)->get();
+    
+            if ($subInventory->isNotEmpty()) {
+                foreach ($subInventory as $sub) {
+                    $subInv[$sub->id] = [
+                        'name' => $sub->inventory_transaction_type,
+                    ];
+                }   
+            }
+    
+            $uniqueOldCustomerIds = collect($oldData)->pluck('customers_id')->unique();
+            $cusNames = [];
+    
+            $customers = Customer::whereIn('id', $uniqueOldCustomerIds)->get();
+    
+            if ($customers->isNotEmpty()) {
+                foreach ($customers as $customer) {
+                    $cusNames[$customer->id] = [
+                        'name' => $customer->customer_name,
+                    ];
+                }
+                
+            }
+    
+            $customerNameCache = [];
+    
+            foreach ($newEntries as $entry) {
+                $subInventory = '';
+                $date = Carbon::createFromFormat('Ymd', $entry->Date)->format('Y-m-d');
+    
+                if(isset($customerNameCache[$entry->StoreId])){
+                    $customerName = $customerNameCache[$entry->StoreId];
+                }else{
+                    $customerName = DB::connection('masterfile')->table('customer')
+                    ->where('customer_code', "CUS-" . $entry->StoreId)
+                    ->pluck('cutomer_name')
+                    ->first();
+    
+                    $customerNameCache[$entry->StoreId] = $customerName;
+                }
+                
+                $itemNumber = str_replace(['Q1_', 'Q2_'], '', $entry->ItemNumber);
+                
+                $prefix = substr($entry->ItemNumber, 0, 3);
+        
+                if ($prefix === 'Q1_') {
+                    if($entry->SubInventory === "GOOD" || $entry->SubInventory === "DEMO"){
+                        $subInventory = "POS - " . $entry->SubInventory;
+                    }else{
+                        $subInventory = '';
+                    }
+                } elseif ($prefix === 'Q2_') {
+                    if($entry->ToWarehouse === '0312'){
+                        $subInventory = "POS - RMA";
+                    }else{
+                        $subInventory = "POS - TRANSIT";
+                    }
+                }   
+    
+                $key = $customerName . '-' . $date . '-' . $itemNumber . '-' . intval($entry->TotalQty) . '-' . $subInventory;
+                
+                $newDatasKeys[$key] = $entry;
+            }
+            
+    
+            $idsToUpdate = [];
+
+            foreach ($oldData as $entry) {
+                $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $entry['quantity_inv'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
+    
+                if (!isset($newDatasKeys[$key])) {
+                    $idsToUpdate[] = $entry['id'];
+                }
+    
+            }
+    
+            if (!empty($idsToUpdate)) {
+                self::whereIn('id', $idsToUpdate)->update(['quantity_inv' => 0]);
+            }
+
+        }
+
+        
+    }
+
+    private static function fetchNewInventoryData($dateFrom, $dateTo) {
+        return self::whereBetween('inventory_date', [$dateFrom, $dateTo])->get()->toArray();
     }
 
     public static function boot()
