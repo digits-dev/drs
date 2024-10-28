@@ -274,14 +274,17 @@ class StoreSale extends Model
         {
             if (CRUDBooster::myId()) {
                 $model->created_by = CRUDBooster::myId();
+            }else{
+                $model->created_by = 136;
             }
         });
         static::updating(function($model)
         {
             if (CRUDBooster::myId()) {
                 $model->updated_by = CRUDBooster::myId();
+            }else{
+                $model->updated_by = 136;
             }
-
         });
     }
 }

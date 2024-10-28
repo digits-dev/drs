@@ -350,7 +350,7 @@ class StoreSaleController extends Controller
                     'report_type' => $this->report_type,
                     'folder_name' => $folder_name,
                     'file_name' => $excel_file_name,
-                    'created_by' => CRUDBooster::myId(),
+                    'created_by' => CRUDBooster::myId() ?? 136,
                     'from_date' => $from_date,
                     'to_date' => $to_date,
                     'data_type' => 'PULL'
