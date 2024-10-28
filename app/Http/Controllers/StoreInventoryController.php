@@ -354,8 +354,8 @@ class StoreInventoryController extends Controller
 
             return [$warehouseCode, $toWarehouseCode];
         })
-        ->filter() // Remove empty values
-        ->unique() // Remove duplicates
+        ->filter()
+        ->unique()
         ->toArray();
 
         $masterfile = DB::connection('masterfile')->table('customer')
@@ -619,6 +619,7 @@ class StoreInventoryController extends Controller
             $rmaItemMasterRecords = DB::connection('imfs')
                 ->table('rma_item_masters')
                 ->whereIn('digits_code', $stillMissingItemNumbers)
+                ->where('rma_categories_id', '!=',5)
                 ->get()
                 ->keyBy('digits_code');
 
