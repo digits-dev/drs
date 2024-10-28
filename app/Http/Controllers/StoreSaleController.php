@@ -42,7 +42,7 @@ class StoreSaleController extends Controller
     private $report_type;
     public $batchId;
     private $userReport;
-    privtae $customer;
+    private $customer;
     public function __construct(){
         DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping("enum", "string");
         $this->report_type = ['STORE SALES'];
@@ -248,32 +248,11 @@ class StoreSaleController extends Controller
     public function StoresSalesFromPosEtp(Request $request){
         $datefrom = $request->datefrom ? date("Ymd", strtotime($request->datefrom)) : date("Ymd", strtotime("-5 hour"));
         $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
-        // $datefrom = $request->datefrom ?? date("Y-m-d H:i:s", strtotime("-5 hour"));
-        // $dateto = $request->dateto ?? date("Y-m-d H:i:s", strtotime("-1 hour"));
-        // $result = StoreSale::getStoresSalesFromPosEtp()->whereBetween('C.CreateDate', [$datefrom, $dateto]);
-        $result = DB::connection('sqlsrv')->select(DB::raw("
-                    SELECT 
-                        C.Warehouse AS 'STORE ID',
-                        C.InvoiceNumber AS 'RECEIPT #',
-                        C.CreateDate AS 'SOLD DATE',
-                        C.ItemNumber AS 'ITEM NUMBER',
-                        C.InvoiceQuantity AS 'QTY SOLD',
-                        C.SalesPrice AS 'SOLD PRICE',
-                        C.LotNumber AS 'ITEM SERIAL',
-                        C.SalesPerson AS 'SALES PERSON'
-                    FROM CashOrderTrn C (nolock)
-                    WHERE 
-                        C.Company = 100
-                        AND C.Division = '100'
-                        AND C.InvoiceType = 31
-                        AND C.FreeField2 = '0'
-                        AND C.CreateDate BETWEEN :datefrom AND :dateto
-                "), [
-                    'datefrom' => $datefrom,
-                    'dateto' => $dateto,
-                ]);
+      
+        $result = StoreSale::getStoresSalesFromPosEtp($datefrom,$dateto);
+        // dd($result);
         // Group sales data by store ID
-        $groupedSalesData = collect($result)->groupBy('STORE ID');
+        $groupedSalesData = collect($result)->groupBy('STOREID');
         foreach ($groupedSalesData as $storeId => $storeData) {
             $time = microtime(true);
             $batch_number = str_replace('.', '', $time);
@@ -287,13 +266,10 @@ class StoreSaleController extends Controller
             }
             $toExcelContent = [];
             // Initialize the cache arrays
-            // $itemMasterCache = [];
-            // $rmaItemMasterCache = [];
-            // $aimfsItemMasterCache = [];
             $masterfileCache = [];
 
             foreach($storeData as $item){
-                $itemNumbers[] = $item->{"ITEM NUMBER"};
+                $itemNumbers[] = $item->ITEMNUMBER;
             }
 
             $itemDetails = self::fetchItemDataInBatch($itemNumbers);
@@ -307,10 +283,10 @@ class StoreSaleController extends Controller
                     $modified[$newKey] = $value;
                 }
                 $excel = $modified;
-                $itemNumber = $excel['ITEM_NUMBER'];
+                $itemNumber = $excel['ITEMNUMBER'];
       
                 // MASTERFILE CACHING
-                $cusCode = "CUS-" . $excel['STORE_ID'];
+                $cusCode = "CUS-" . $excel['STOREID'];
                 if (isset($masterfileCache[$cusCode])) {
                     // Retrieve from cache if exists
                     $masterfile = $masterfileCache[$cusCode];
@@ -319,16 +295,20 @@ class StoreSaleController extends Controller
                     $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
                     $masterfileCache[$cusCode] = $masterfile;
                 }
-                $sales_date = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
+                $sales_date = Carbon::createFromFormat('Ymd', $excel['SOLDDATE'])->format('Y-m-d');
                 $v_customer = $this->customer->where('customer_name',$masterfile->cutomer_name)->first();
                 
                 $isExistInStoreSales = StoreSale::where('customers_id', $v_customer->id ?? null)
-                                                 ->where('receipt_number', $excel['RECEIPT_#'])
-                                                 ->where('item_code', $excel['ITEM_NUMBER'])
+                                                 ->where('receipt_number', $excel['RECEIPT#'])
+                                                 ->where('item_code', $excel['ITEMNUMBER'])
                                                  ->where('sales_date', $sales_date)
-                                                 ->where('item_serial', $excel['ITEM_SERIAL'])
-                                                 ->exists();
-                if(!$isExistInStoreSales){
+                                                 ->orWhere('item_serial', $excel['ITEMSERIAL'])
+                                                 ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
+                                                 ->keyBy(function ($item) {
+                                                     return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
+                                                 });
+                $key = "{$v_customer->id}-{$excel['RECEIPT#']}-{$excel['ITEMNUMBER']}-{$sales_date}-{$excel['ITEMSERIAL']}";
+                if (!isset($isExistInStoreSales[$key])) {
                     // Prepare data for output
                     $toExcel = [];
                     $toExcel['reference_number'] = $counter;
@@ -337,24 +317,24 @@ class StoreSaleController extends Controller
                     $toExcel['report_type'] = 'STORE SALES';
                     $toExcel['channel_code'] = $masterfile->channel_code_id;
                     $toExcel['customer_location'] = $masterfile->cutomer_name;
-                    $toExcel['receipt_number'] = $excel['RECEIPT_#'];
+                    $toExcel['receipt_number'] = $excel['RECEIPT#'];
                     $toExcel['sold_date'] = $sales_date;
-                    $toExcel['item_number'] = $excel['ITEM_NUMBER'];
-                    $toExcel['rr_ref'] = $rr_ref;
+                    $toExcel['item_number'] = $excel['ITEMNUMBER'];
+                    $toExcel['rr_ref'] = $itemDetails[$itemNumber]['rr_ref'];
                     $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                    $toExcel['qty_sold'] = $excel['QTY_SOLD'];
-                    $toExcel['sold_price'] = $excel['SOLD_PRICE'];
-                    $toExcel['net_sales'] = $excel['QTY_SOLD'] * $excel['SOLD_PRICE'];
+                    $toExcel['qty_sold'] = $excel['QTYSOLD'];
+                    $toExcel['sold_price'] = $excel['SOLDPRICE'] - ($excel['Discount_32'] + $excel['Discount_35']);
+                    $toExcel['net_sales'] = $excel['QTYSOLD'] * $excel['SOLDPRICE'];
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                     $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
                     $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                    $toExcel['sales_memo_ref'] = $itemDetails[$itemNumber]['sales_memo_ref'];
-                    $toExcel['item_serial'] = $excel['ITEM_SERIAL'];
-                    $toExcel['sales_person'] = $excel['SALES_PERSON'];
+                    $toExcel['sales_memo_ref'] = $excel['PramotionID_32'] ?? $excel['PramotionID_35'];
+                    $toExcel['item_serial'] = $excel['ITEMSERIAL'];
+                    $toExcel['sales_person'] = $excel['SALESPERSON'];
                     $toExcelContent[] = $toExcel;
+                    // Increment the counter for the next iteration
+                    Counter::where('id', 1)->increment('reference_code');
                 }
-                // Increment the counter for the next iteration
-                Counter::where('id', 1)->increment('reference_code');
             }
             if (!empty($toExcelContent)) {
                 // Create the Excel file using Laravel Excel (Maatwebsite Excel package)
@@ -393,7 +373,7 @@ class StoreSaleController extends Controller
             'store_cost_eccom' => $ecomStoreMargin,
             'landed_cost' => $item->landed_cost,
             'inventory_type_id' => $item->inventory_types_id,
-            'sales_memo_ref'   => NULL
+            'rr_ref' => $item->current_srp == 0 ? 'GWP' : $item->digits_code
         ];
     }
     
