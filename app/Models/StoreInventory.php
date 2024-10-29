@@ -363,6 +363,7 @@ class StoreInventory extends Model
                 $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $entry['quantity_inv'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
 
                 if (!isset($newDatasKeys[$key])) {
+                    \Log::info("SIZO[ID: " . $entry['id'] . ", QTY: " . $entry['quantity_inv'] . "]");
                     $idsToUpdate[] = $entry['id'];
                 }
                 
