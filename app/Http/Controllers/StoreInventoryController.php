@@ -390,7 +390,7 @@ class StoreInventoryController extends Controller
                 $toExcelContent = []; 
                 $uniqueInventory =  [];
 
-                $index = 0;
+                $index = -1;
 
 
                 // Create Excel Data
@@ -402,8 +402,8 @@ class StoreInventoryController extends Controller
 
                     if (StoreInventory::isNotExist($excel->Date, $excel->TotalQty, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
                         
-                        $key = $excel->StoreId . $excel->Date . $excel->ItemNumber . $sub_inventory;
-                        
+                        $key = $excel->StoreId . $excel->Date . $excel->ItemNumber . ($excel->SubInventory ?? $sub_inventory);
+
                         if(isset($uniqueInventory[$key])){
                             $index = $uniqueInventory[$key]['index'];
                             $currQty = $uniqueInventory[$key]['totalQty'];
@@ -411,9 +411,9 @@ class StoreInventoryController extends Controller
                             $uniqueInventory[$key]['totalQty'] = $toExcelContent[$index]['total_qty'];
 
                         }else{
-
+                            
                             $uniqueInventory[$key] = [
-                                "index" => $index,
+                                "index" => ++$index,
                                 "totalQty" => $excel->TotalQty,
                                 "itemKey" => $itemKey,
                                 "item" => $excel
@@ -450,7 +450,6 @@ class StoreInventoryController extends Controller
                             
                             $toExcelContent[] = $toExcel;
                             Counter::where('id',2)->increment('reference_code');
-                            $index++;
                         }
                         
                         
@@ -458,7 +457,7 @@ class StoreInventoryController extends Controller
 
                 }
 
-                foreach($uniqueInventory as $item);
+                foreach($uniqueInventory as $item)
                 {
                     $excel = $item['item'];
                     $cusCode = "CUS-" . $item['item']->StoreId;
@@ -468,16 +467,14 @@ class StoreInventoryController extends Controller
                     $index = $item['index'];
                     $itemNumber = str_replace(['Q1_', 'Q2_'], '', $item['item']->ItemNumber);
 
-                    $sub_inventory = $this->getSubInventory($itemNumber, $toWarehouse, $itemKey, $subInv);
+                    $sub_inventory = $this->getSubInventory($item['item']->ItemNumber, $toWarehouse, $itemKey, $subInv);
 
                     if (!StoreInventory::isNotExist($item['item']->Date,$item['totalQty'], $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)){
                         unset($toExcelContent[$index]);
                     }
                 }
 
-
                 if(!empty($toExcelContent)){
-                    
                     Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
     
                     // ExportStoreInventoryJob::dispatch($toExcelContent, $excel_path);
