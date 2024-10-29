@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\QueryLogger;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -1117,38 +1118,34 @@ class StoreSalesDashboardReport extends Model
                 ->where('ss.sold_price', '>', 0)
                 ->where('ss.channels_id', '!=', 12);
 
-                 // Conditional parameters
-                if (!empty($stores)) {
+                // Conditional parameters
+                if (!empty($stores) && $stores[0] !== 'all') {
                     $query->whereIn('cu.id', (array)$stores);
                 }
 
-                if (!empty($concepts)) {
+                if (!empty($concepts) && $concepts[0] !== 'all') {
                     $query->whereIn('con.id', (array)$concepts);
                 }
 
-                if (!empty($channels)) {
+                if (!empty($channels) && $channels[0] !== 'all') {
                     $query->whereIn('ch.id', (array)$channels);
                 }
 
-                if (!empty($malls)) {
+                if (!empty($malls) && $malls[0] !== 'all') {
                     $query->whereIn('cu.mall', $malls);
                 }
 
-                if (!empty($brands)) {
+                if (!empty($brands) && $brands[0] !== 'all') {
                     $query->whereIn('ai.brand_description', (array)$brands);
                 }
 
-                if (!empty($categories)) {
+                if (!empty($categories) && $categories[0] !== 'all') {
                     $query->whereIn('ai.category_description', (array)$categories);
                 }
 
                 $query->groupBy(DB::raw("year, month"));
 
-                // For debugging: Log the raw SQL and parameters
-                \Log::info(json_encode([
-                    'query' => $query->toSql(),
-                    'bindings' => $query->getBindings()
-                ], JSON_PRETTY_PRINT));
+                QueryLogger::logQuery($query);
 
                 return $query->get();
                
@@ -1209,38 +1206,34 @@ class StoreSalesDashboardReport extends Model
                 ->where('ss.sold_price', '>', 0)
                 ->where('ss.channels_id', '!=', 12);
 
-                 // Conditional parameters
-                if (!empty($stores)) {
+                // Conditional parameters
+                if (!empty($stores) && $stores[0] !== 'all') {
                     $query->whereIn('cu.id', (array)$stores);
                 }
 
-                if (!empty($concepts)) {
+                if (!empty($concepts) && $concepts[0] !== 'all') {
                     $query->whereIn('con.id', (array)$concepts);
                 }
 
-                if (!empty($channels)) {
+                if (!empty($channels) && $channels[0] !== 'all') {
                     $query->whereIn('ch.id', (array)$channels);
                 }
 
-                if (!empty($malls)) {
+                if (!empty($malls) && $malls[0] !== 'all') {
                     $query->whereIn('cu.mall', $malls);
                 }
 
-                if (!empty($brands)) {
+                if (!empty($brands) && $brands[0] !== 'all') {
                     $query->whereIn('ai.brand_description', (array)$brands);
                 }
 
-                if (!empty($categories)) {
+                if (!empty($categories) && $categories[0] !== 'all') {
                     $query->whereIn('ai.category_description', (array)$categories);
                 }
 
                 $query->groupBy(DB::raw("year, channel_code"));
 
-                // For debugging: Log the raw SQL and parameters
-                \Log::info(json_encode([
-                    'query' => $query->toSql(),
-                    'bindings' => $query->getBindings()
-                ], JSON_PRETTY_PRINT));
+                QueryLogger::logQuery($query);
 
                 return $query->get();
                

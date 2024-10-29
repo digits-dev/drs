@@ -698,9 +698,30 @@
 			}
 		}
 
+	
+
 		public function saveChart(Request $request)
 		{
-			$images = $request->input('images'); // Get the array of images
+			$images = $request->input('images'); 
+			$data = $request->input('data'); 
+
+			function hasManyItems($string, $minCount = 5) {
+				return count(array_filter(array_map('trim', explode(',', $string)))) > $minCount;
+			}
+
+			function hasManyCharacters($string, $minLength = 200) {
+				// Trim the string and check its length
+				return strlen(trim($string)) > $minLength;
+			}
+
+			$hasManyStore = hasManyCharacters($data['Store']);
+			$hasManyChannel = hasManyCharacters($data['Channel']);
+			$hasManyBrand = hasManyCharacters($data['Brand']);
+			$hasManyCategory = hasManyCharacters($data['Category']);
+			$hasManyStoreConcept = hasManyCharacters($data['Store Concept']);
+			$hasManyStoreMall = hasManyCharacters($data['Mall']);
+
+			$hasManyValues = $hasManyStore || $hasManyChannel || $hasManyBrand || $hasManyCategory || $hasManyStoreConcept || $hasManyStoreMall;
 
 			// Prepare an array for base64 images
 			$pdfData = [];
@@ -717,9 +738,13 @@
 
 			try {
 				// Load the view and generate the PDF with all images
-				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf2', ['chartImages' => $pdfData])
+				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf2', [
+					'chartImages' => $pdfData, 
+					'data' => $request->input('data'),
+					'hasManyValues' => $hasManyValues,
+					])
 					->setPaper('A4', 'landscape')
-					->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
+					->setOptions(['margin-top' => 10, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
 
 				// Return the PDF as a download
 				return response()->stream(

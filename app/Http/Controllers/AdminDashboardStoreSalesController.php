@@ -5,7 +5,9 @@
 	use App\Models\Concept;
 	use App\Models\Customer;
 	use App\Models\StoreSalesDashboardReport;
+	use Barryvdh\Snappy\Facades\SnappyPdf;
 	use Illuminate\Http\Request;
+	use Illuminate\Support\Facades\Log;
 	use Session;
 	use DB;
 	use CRUDBooster;
@@ -432,22 +434,7 @@
 			
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard ';
-
-			// $reloadData = request()->has('reload_data');
-
-
-			// if($reloadData){
-			// 	$generatedData = $this->dashboardService->generateSalesReport();
-			// } else {
-			// 	$generatedData = $this->dashboardService->getData();
-
-			// 	if(empty($generatedData)){
-			// 		$generatedData = $this->dashboardService->generateSalesReport();
-			// 	}
-			// }
-
-			// $data = array_merge($data, $generatedData);
-
+			
 			$data['channels'] = Channel::get(['id','channel_name as name'] );
 			$data['concepts'] = Concept::get(['id','concept_name as name'] );
 			$data['customers'] = Customer::get(['id','customer_name as name'] );
@@ -455,28 +442,28 @@
 			$data['malls'] = Customer::select('mall as name')->whereNotNull('mall')->distinct()->get();
 			$data['categories'] = AllItem::select('category_description as name')->whereNotNull('category_description')->distinct()->get();
 
-
-			// dd($data['channel_codes']);
-
-			// dd($data);
-
-
-
-			\Log::info(json_encode($data, JSON_PRETTY_PRINT));
+			// \Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.dashboard', $data);
 		}
 
 		public function generateCharts(Request $request){
 
-			// dd($request->all());
-
-			$request->validate(
+			$validatedData = $request->validate(
 				[  
+				'types' => ['required'],
 				  'yearFrom' => ['required', 'date_format:Y', 'before_or_equal:yearTo'],
 				  'yearTo'   => ['required', 'date_format:Y', 'after_or_equal:yearFrom'],
 				  'monthFrom' => ['required', 'date_format:m', 'before_or_equal:monthTo'],
 				  'monthTo'   => ['required', 'date_format:m', 'after_or_equal:monthFrom'],
+				  'stores' => ['required'],
+				  'channels' => ['required'],
+				  'brands' => ['required'],
+				  'categories' => ['required'],
+				  'concepts' => ['required'],
+				  'mall' => ['required'],
+				//   'sqm' => ['required'],
+				//   'group' => ['required'],
 				], [],
 				[
 				  'yearFrom' => 'year from',
@@ -486,117 +473,86 @@
 				]
 			);
 
-			$args = [
-				'yearFrom' => $request->yearFrom,
-				'yearTo' => $request->yearTo,
-				'monthFrom' => $request->monthFrom,
-				'monthTo' => $request->monthTo,
-				'stores' => $request->stores,
-				'concepts' => $request->concepts,
-				'channels' => $request->channels,
-				'malls' => $request->malls,
-				'brands' => $request->brands,
-				'categories' => $request->categories,
+
+			if($validatedData['channels'][0] === 'all'){
+				return self::processAllChannels($validatedData);
+			} else {
+				return self::processSelectedChannels($validatedData);
+			}
+
+		}
+
+		private function processAllChannels($requestData){
+			$googleChartData = [];
+
+			$years = self::getYearsInRange($requestData['yearFrom'], $requestData['yearTo']);
+
+			$generatedData = StoreSalesDashboardReport::generateChartDataForMultipleChannel($requestData);
+			\Log::info(json_encode($generatedData, JSON_PRETTY_PRINT));
+
+			if ($generatedData->isEmpty()) {
+				return response()->json([
+					'chartData' => false,
+				]);
+			}
+
+			// Process sales per channel
+			foreach ($generatedData as $sale) {
+				$channelCode = $sale->channel_code;
+
+				if (!isset($googleChartData[$channelCode])) {
+					$googleChartData[$channelCode] = [];
+				}
+				
+				$googleChartData[$channelCode][$sale->year] = $sale->net_sales;
+			}
+
+
+			$data = [ 
+				'multipleChannel' => true,
+				'chartData' => $googleChartData,
+				'years' => $years,
 			];
 
 
-			if(!$args['channels']){
-				$test = StoreSalesDashboardReport::generateChartDataForMultipleChannel($args);
+			return response()->json($data);
+		}
 
-				// dd('multiple', $test);
+		private function processSelectedChannels($requestData){
+			$googleChartData = [];
+			$years = self::getYearsInRange($requestData['yearFrom'], $requestData['yearTo']);
+			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
 
-				if ($test->isEmpty()) {
-					// Return a response indicating no data
-					return response()->json([
-						'chartData' => false,
-					]);
-				}
-	
-				// dd($test);
-	
-				\Log::info(json_encode($test, JSON_PRETTY_PRINT));
-		
-	
-				$years = self::getYearsInRange($request->yearFrom, $request->yearTo);
-	
-	
-				// $test = StoreSalesDashboardReport::forTestData();
-	
-				// dump($test);
-	
-				$googleChartData = [];
+			$generatedData = StoreSalesDashboardReport::generateChartData($requestData);
+			\Log::info(json_encode($generatedData, JSON_PRETTY_PRINT));
 
-				 // Process sales per channel
-
-				 foreach ($test as $sale) {
-			
-					$channelCode = $sale->channel_code;
-		 
-					if (!isset($googleChartData[$channelCode])) {
-						$googleChartData[$channelCode] = [];
-					}
-		 
-					$googleChartData[$channelCode][$sale->year] = $sale->net_sales;
-				 }
-
-	
-				$data = [ 
-					'multipleChannel' => true,
-					'chartData' => $googleChartData,
-					'years' => $years,
-				];
-
-				return response()->json($data);
-
-			} else {
-				$test = StoreSalesDashboardReport::generateChartData($args);
-
-				if ($test->isEmpty()) {
-					// Return a response indicating no data
-					return response()->json([
-						'chartData' => false,
-					]);
-				}
-	
-				// dd($test);
-	
-				\Log::info(json_encode($test, JSON_PRETTY_PRINT));
-		
-	
-				$years = self::getYearsInRange($request->yearFrom, $request->yearTo);
-	
-	
-				// $test = StoreSalesDashboardReport::forTestData();
-	
-				// dump($test);
-	
-				$googleChartData = [];
-				$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
-	
-				foreach($monthOrder	 as $month) {
-					$googleChartData[$month] = [];
-				}
-	
-				foreach ($test as $row) {
-					// Initialize the month if it doesn't exist
-					if (!isset($googleChartData[$row->month])) {
-						$googleChartData[$row->month] = [];
-					}
-				
-					// Add or update the net sales for the year
-					$googleChartData[$row->month][$row->year] = $row->net_sales;
-				}
-	
-				$data = [
-					'multipleChannel' => false,
-					'chartData' => $googleChartData,
-					'years' => $years,
-				];
-	
-	
-				return response()->json($data);
+			if ($generatedData->isEmpty()) {
+				return response()->json([
+					'chartData' => false,
+				]);
 			}
 
+			foreach($monthOrder	 as $month) {
+				$googleChartData[$month] = [];
+			}
+
+			foreach ($generatedData as $row) {
+				// Initialize the month if it doesn't exist
+				if (!isset($googleChartData[$row->month])) {
+					$googleChartData[$row->month] = [];
+				}
+			
+				// Add or update the net sales for the year
+				$googleChartData[$row->month][$row->year] = $row->net_sales;
+			}
+
+			$data = [
+				'multipleChannel' => false,
+				'chartData' => $googleChartData,
+				'years' => $years,
+			];
+
+			return response()->json($data);
 		}
 
 		private function getYearsInRange($start, $end)
@@ -624,21 +580,6 @@
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard ';
 
-			// $reloadData = request()->has('reload_data');
-
-
-			// if($reloadData){
-			// 	$generatedData = $this->dashboardService->generateSalesReport();
-			// } else {
-			// 	$generatedData = $this->dashboardService->getData();
-
-			// 	if(empty($generatedData)){
-			// 		$generatedData = $this->dashboardService->generateSalesReport();
-			// 	}
-			// }
-
-			// $data = array_merge($data, $generatedData);
-
 			$data['channels'] = Channel::get(['id','channel_name as name'] );
 			$data['concepts'] = Concept::get(['id','concept_name as name'] );
 			$data['customers'] = Customer::get(['id','customer_name as name'] );
@@ -646,19 +587,56 @@
 			$data['malls'] = Customer::select('mall as name')->whereNotNull('mall')->distinct()->get();
 			$data['categories'] = AllItem::select('category_description as name')->whereNotNull('category_description')->distinct()->get();
 
-
-			// dd($data['channel_codes']);
-
-			// dd($data);
-
-
-
-			\Log::info(json_encode($data, JSON_PRETTY_PRINT));
+			// \Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.dashboard-test', $data);
 		}
 
-	
+		public function saveChart(Request $request)
+		{
+			// dd($request);
+			$images = $request->input('images'); // Get the array of images
 
+			$data = [];
+
+			// Prepare an array for base64 images
+			$pdfData = [];
+
+			foreach ($images as $image) {
+				// Remove the data URL prefix
+				$data = str_replace('data:image/png;base64,', '', $image);
+				$data = str_replace(' ', '+', $data);
+				
+				// Prepare the image data URL
+				$imageData = 'data:image/png;base64,' . $data;
+				$pdfData[] = $imageData; // Add to pdfData array
+			}
+
+			$data['chartImages'] = $pdfData;
+			$data['data'] = $request->input('data');
+
+			try {
+				// Load the view and generate the PDF with all images
+				$pdf = SnappyPdf::loadView('dashboard-report.store-sales.test-pdf2', $data)
+					->setPaper('A4', 'landscape')
+					->setOptions(['margin-top' => 10, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
+
+				// Return the PDF as a download
+				return response()->stream(
+					function () use ($pdf) {
+						echo $pdf->output();
+					},
+					200,
+					[
+						'Content-Type' => 'application/pdf',
+						'Content-Disposition' => 'attachment; filename="document.pdf"',
+					]
+				);
+			} catch (\Exception $e) {
+				// Handle exceptions and log errors
+				Log::error('PDF Generation Error: ' . $e->getMessage());
+				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+			}
+		}
 
 	}

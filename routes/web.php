@@ -233,4 +233,5 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::get('/charts_test', [AdminDashboardStoreSalesController::class, 'getIndex2'] );
 
+
 });

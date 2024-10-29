@@ -46,7 +46,7 @@
         border-radius: 5px;
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.4);
+        background: rgba(0, 0, 0, 0.6);
 
     }
 
@@ -74,8 +74,9 @@
     }
 
     .custom-modal {
-        max-width: 70%; /* Adjust this value as needed */
+        max-width: 70%;
         width: 100%;
+        margin: 0 auto;
     }
 
     #formSelectedValues{
@@ -151,11 +152,7 @@
                                 <div class="form-group">
                                     <label for="type">Chart Type:</label>
                                     <select class="form-control select2" id="type" name="types[]" multiple='multiple' required>
-                                        <option value="all" selected>ALL</option>
-                                        <option value="line" >LINE GRAPH </option>
-                                        <option value="bar" >BAR GRAPH</option>
-                                        <option value="pie" >PIE CHART</option>
-
+                                        <option value="pie" selected >PIE CHART</option>
                                     </select>
                                 </div>
 
@@ -448,6 +445,27 @@ $(function() {
         });
     }
 
+    $('#channel').on('change', function() {
+        const channelValue = $(this).val();
+
+        if(channelValue){
+            const condition = channelValue[0];
+            const $select = $('#type');
+            $select.empty();
+
+            if (condition === 'all') {
+                $select.append(new Option('PIE CHART', 'pie'));
+            } else {
+                $select.append(new Option('ALL', 'all'));
+                $select.append(new Option('LINE GRAPH', 'line'));
+                $select.append(new Option('BAR GRAPH', 'bar'));
+            }
+
+            $select.val($select.find('option:first').val()).trigger('change');
+        }
+
+    });
+
     $('#saveChartBtn').click(saveChart);
 
     $('#chartForm').on('submit', function(e) {
@@ -469,9 +487,8 @@ $(function() {
             group: $('#group').val(),
         }
 
-        console.log(formData);
-        debugger;
 
+        // console.log(formData);
 
         $('#charts_container').empty();
         $('#formSelectedValues').hide();
@@ -499,29 +516,21 @@ $(function() {
 
                     } else {
 
-                        if(types.length === 0){
+                    console.log(formData.types);
+
+                        if(formData.types[0] === 'all'){
                             chartTypes.forEach(type => {
 
-                                if(type == 'pie'){
-                                    drawChartWithDynamicMonthsInPie(data.chartData, data.years);
-                            
-                                } else {
-                                    drawChart(data.chartData, data.years, type);
+                                if(type !== 'pie'){
                                     drawChartWithDynamicMonths(data.chartData, data.years, type);
-                                }
+                                } 
                             });
 
                         } else {
-                            types.forEach(type => {
-
-                                if(type == 'pie'){
-                                    drawChartWithDynamicMonthsInPie(data.chartData, data.years);
-                            
-                                } else {
-                                    drawChart(data.chartData, data.years, type);
+                            formData?.types.forEach(type => {
+                                if(type !== 'pie'){
                                     drawChartWithDynamicMonths(data.chartData, data.years, type);
-                                }
-                        
+                                } 
                             });
                         }
 
@@ -585,7 +594,7 @@ $(function() {
             return $('#channel option[value="' + value + '"]').text();
         }).join(', ');
 
-        let chartType = channelValues.length === 0 ? 'PIE CHART' : $('#type').val().map(function(value) {
+        let chartType = channelValues == "ALL" ? 'PIE CHART' : $('#type').val().map(function(value) {
             return $('#type option[value="' + value + '"]').text();
         }).join(', ');
         
@@ -608,6 +617,9 @@ $(function() {
             "Square Meters": $('#sqm').val() ?? 'N/A',
             "Group": $('#group').val() ?? 'N/A'
         };
+        
+        localStorage.setItem('formData', JSON.stringify(values));
+
         
         // Populate the table
         $.each(values, function(field, value) {
@@ -974,9 +986,14 @@ $(function() {
     // Save chart function
     function saveChart() {
 
+        // Retrieve form data from local storage
+        const storedData = localStorage.getItem('formData');
+        const formData = storedData ? JSON.parse(storedData) : {};
+
+
         fetch('/admin/save_chart', {
             method: 'POST',
-            body: JSON.stringify({ images: chartImagesToDownload }), 
+            body: JSON.stringify({ images: chartImagesToDownload, data: formData }), 
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
