@@ -270,7 +270,6 @@ class StoreInventory extends Model
         if(!empty($oldData)){
             $subInv = [];
             $newDatasKeys =[];
-
             $uniqueItems = [];
 
             foreach ($newEntries as $item) {
@@ -362,11 +361,11 @@ class StoreInventory extends Model
 
             foreach ($oldData as $entry) {
                 $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $entry['quantity_inv'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
-    
+
                 if (!isset($newDatasKeys[$key])) {
                     $idsToUpdate[] = $entry['id'];
                 }
-    
+                
             }
     
             if (!empty($idsToUpdate)) {
@@ -389,12 +388,16 @@ class StoreInventory extends Model
         {
             if (CRUDBooster::myId()) {
                 $model->created_by = CRUDBooster::myId();
+            }else{
+                $model->created_by = 136;
             }
         });
         static::updating(function($model)
         {
             if (CRUDBooster::myId()) {
                 $model->updated_by = CRUDBooster::myId();
+            }else{
+                $model->created_by = 136;
             }
         });
     }
