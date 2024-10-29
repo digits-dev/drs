@@ -520,7 +520,7 @@ class StoreInventoryController extends Controller
 
         $inv_type = $item->inventory_type_description;
 
-        if ($inv_type === 'ANY' && $pos_sub === SUB_INVENTORY_RMA) {
+        if ($pos_sub === SUB_INVENTORY_RMA) {
             return 'DEFECTIVE';
         }
 
@@ -545,71 +545,6 @@ class StoreInventoryController extends Controller
             'inventory_type_id' => $item->inventory_types_id
         ];
     }
-    
-    // function fetchItemDataInBatch($itemNumbers)
-    // {
-    //     $results = [];
-    //     $itemNumberSet = collect($itemNumbers)->unique();
-
-    //     // Define a cache key based on the unique item numbers
-    //     $cacheKey = 'item_data_' . md5(implode(',', $itemNumberSet->toArray()));
-
-    //     // Check if the data is already cached
-    //     $cachedResults = Cache::get($cacheKey);
-
-    //     if ($cachedResults) {
-    //         return $cachedResults;
-    //     }
-
-    //     $itemMasterRecords = DB::connection('imfs')
-    //     ->table('item_masters') 
-    //     ->whereIn('digits_code', $itemNumberSet)
-    //     ->get()
-    //     ->keyBy('digits_code');
-
-    //     foreach ($itemMasterRecords as $record) {
-    //         $results[$record->digits_code] = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
-    //     }
-
-    //     $foundItemNumbers = collect(array_keys($results));
-    //     $missingItemNumbers = $itemNumberSet->diff($foundItemNumbers); 
-
-    //     if ($missingItemNumbers->isEmpty()) {
-    //         Cache::put($cacheKey, $results, now()->addMinutes(60)); 
-    //         return $results;
-    //     }
-
-    //     // Check the second database
-    //     $rmaItemMasterRecords = DB::connection('imfs')
-    //     ->table('rma_item_masters')
-    //     ->whereIn('digits_code', $missingItemNumbers)
-    //     ->get()
-    //     ->keyBy('digits_code');
-
-    //     foreach ($rmaItemMasterRecords as $record) {
-    //         $results[$record->digits_code] = $this->prepareItemData($record, 'RMA');
-    //     }
-
-    //     // Check for missing item numbers again
-    //     $foundItemNumbersAfterRMA = collect(array_keys($results));
-    //     $missingItemNumbersAfterRMA = $missingItemNumbers->diff($foundItemNumbersAfterRMA); 
-
-    //     if ($missingItemNumbersAfterRMA->isNotEmpty()) {
-    //         $aimfsItemMasterRecords = DB::connection('aimfs')
-    //             ->table('digits_imfs')
-    //             ->whereIn('digits_code', $missingItemNumbersAfterRMA)
-    //             ->get()
-    //             ->keyBy('digits_code');
-
-    //         foreach ($aimfsItemMasterRecords as $record) {
-    //             $results[$record->digits_code] = $this->prepareItemData($record, 'ADMIN');
-    //         }
-    //     }
-
-    //     Cache::put($cacheKey, $results, now()->addMinutes(60)); 
-
-    //     return $results;
-    // }
 
     function fetchItemDataInBatch($itemNumbers)
     {
