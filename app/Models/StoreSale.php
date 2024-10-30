@@ -59,6 +59,7 @@ class StoreSale extends Model
         'qtysold_ecom',
         'item_serial',
         'sales_person',
+        'pos_transaction_type',
         'created_by',
         'updated_by',
     ];
@@ -174,7 +175,8 @@ class StoreSale extends Model
             'store_sales.dtp_ecom AS dtp_ecom',
             'store_sales.qtysold_ecom AS qtysold_ecom',
             'store_sales.item_serial AS item_serial',
-            'store_sales.sales_person AS sales_person'
+            'store_sales.sales_person AS sales_person',
+            'store_sales.pos_transaction_type AS pos_transaction_type'
         )
         ->leftJoin('systems', 'store_sales.systems_id', '=', 'systems.id')
         ->leftJoin('organizations', 'store_sales.organizations_id', '=', 'organizations.id')

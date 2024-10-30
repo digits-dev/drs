@@ -46,7 +46,8 @@ class StoreSalesExcel implements FromCollection, WithHeadings
             'LANDED COST',
             'SALE MEMO REF',
             'ITEM SERIAL',
-            'SALES PERSON'
+            'SALES PERSON',
+            'POS TRANSACTION TYPE'
         ];
     }
 }

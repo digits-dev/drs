@@ -109,7 +109,8 @@ class StoreSalesImportPull implements ToModel,
             'sale_memo_reference'	=> $row['sale_memo_ref'],
             'batch_number'			=> $this->batch_number,
             'item_serial'           => $row['item_serial'],
-            'sales_person'          => $row['sales_person']
+            'sales_person'          => $row['sales_person'],
+            'pos_transaction_type'  => $row['pos_transaction_type']
             // 'apple_yr_qtr_wk'       => $v_apple_cutoff->apple_yr_qtr_wk,
             // 'apple_week_cutoff'     => $v_apple_cutoff->apple_week_cutoff,
             // 'non_apple_yr_mon_wk'   => $v_non_apple_cutoff->non_apple_yr_mon_wk,

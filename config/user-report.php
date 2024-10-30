@@ -46,7 +46,8 @@ return [
         "non_apple_week_cutoff" =>"NON-APPLE (WEEKS CUTOFF)",
         "digits_code_rr_ref"    =>"DIGITS CODE (RR REF)",
         "item_serial"           => "ITEM SERIAL",
-        "sales_person"          => "SALES PERSON"
+        "sales_person"          => "SALES PERSON",
+        "pos_transaction_type"  => "POS TRANSACTION TYPE"
     ],
 
     'gashapon_store_sales' => [

@@ -21,7 +21,8 @@ return [
         'LANDED COST',
         'SALE MEMO REF',
         'ITEM SERIAL',
-        'SALES PERSON'
+        'SALES PERSON',
+        'POS TRANSACTION TYPE'
     ],
 
     'gashapon-store-sales' => [

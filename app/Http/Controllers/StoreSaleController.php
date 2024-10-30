@@ -333,6 +333,8 @@ class StoreSaleController extends Controller
                     $toExcel['sales_memo_ref'] = $excel['PromotionID_32'] ?? $excel['PromotionID_35'];
                     $toExcel['item_serial'] = $item_serial;
                     $toExcel['sales_person'] = $excel['SALES_PERSON'];
+                    $toExcel['pos_transaction_type'] = $excel['Tran_Type'];
+                    
                     $toExcelContent[] = $toExcel;
                     // Increment the counter for the next iteration
                     Counter::where('id', 1)->increment('reference_code');

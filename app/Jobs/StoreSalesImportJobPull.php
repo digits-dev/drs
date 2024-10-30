@@ -106,7 +106,8 @@ class StoreSalesImportJobPull implements ShouldQueue
                 'sale_memo_reference'	=> $row->sale_memo_ref,
                 'created_by'            => $chunk->created_by,
                 'item_serial'           => $row->item_serial,
-                'sales_person'          => $row->sales_person
+                'sales_person'          => $row->sales_person,
+                'pos_transaction_type'  => $row->pos_transaction_type
             ];
         }
         $columns = array_keys($insertable[0]);
