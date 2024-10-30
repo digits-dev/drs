@@ -315,10 +315,11 @@ class StoreInventoryController extends Controller
         $secondQueryResult = StoreInventory::scopeGetInTransitInventoryFromPosEtp($datefrom, $dateto);
 
         $mergedResults  = collect($firstQueryResult)->merge($secondQueryResult);
-
+        
         $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
             return clone $item; 
         });
+
         
         StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResultsCopy);
 
@@ -375,7 +376,6 @@ class StoreInventoryController extends Controller
 
         foreach($groupedByStoreId as $itemKey => $item){
 
-
             foreach ($item as $storeId => $storeData) { 
                 $time = microtime(true);
                 $batch_number = str_replace('.', '', $time);;
@@ -419,7 +419,6 @@ class StoreInventoryController extends Controller
                                 "item" => $excel
                             ];
 
-
                             $counter = Counter::where('id', 2)->value('reference_code');
                             $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
                             $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
@@ -441,17 +440,13 @@ class StoreInventoryController extends Controller
                             $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
                             $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
                             $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-                            if (substr($excel->ItemNumber, 0, 3) === 'Q1_') {
-                                $toExcel['from_warehouse'] = null;
-                            } else {
-                                $toExcel['from_warehouse'] = $fromWareHouse;
-                            }
+                            $toExcel['from_warehouse'] = $fromWareHouse;
+                            
                             $toExcel['to_warehouse'] = $toWareHouse;
                             
                             $toExcelContent[] = $toExcel;
                             Counter::where('id',2)->increment('reference_code');
                         }
-                        
                         
                     }
 
