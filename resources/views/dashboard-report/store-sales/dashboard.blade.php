@@ -471,6 +471,11 @@ $(function() {
     $('#chartForm').on('submit', function(e) {
         e.preventDefault(); 
 
+        $('#chartModal').modal('hide');
+        $('#charts_container').empty();
+        $('#formSelectedValues').hide();
+        $('#loading').show();
+
         const formData = {
             types: $('#type').val(),
             yearFrom: $('#yearFrom').val(),
@@ -487,13 +492,7 @@ $(function() {
             group: $('#group').val(),
         }
 
-
         // console.log(formData);
-
-        $('#charts_container').empty();
-        $('#formSelectedValues').hide();
-        $('#chartModal').modal('hide');
-        $('#loading').show();
 
 
         $.ajax({
@@ -536,6 +535,7 @@ $(function() {
 
                     }
 
+
                 } else {
 
                     $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
@@ -550,14 +550,13 @@ $(function() {
 
             },
             error: function(xhr) {
-                $('#chartModal').modal('show');
                 $('#loading').hide();
 
                 console.error('Error fetching data:', xhr);
 
                 // Check if the response contains validation errors
-                if (xhr.status === 422) { 
-                    const errors = xhr.responseJSON.errors;
+                if (xhr?.status === 422) { 
+                    const errors = xhr?.responseJSON?.errors;
 
                     // Clear previous error messages
                     $('.form-group .text-danger').remove();
@@ -570,20 +569,28 @@ $(function() {
                     });
 
                     // Populate fields with submitted values to retain user input
-                    $('#type').val(types);
-                    $('#yearFrom').val(yearFrom);
-                    $('#yearTo').val(yearTo);
-                    $('#monthFrom').val(monthFrom);
-                    $('#monthTo').val(monthTo);
-                    $('#store').val(stores).trigger('change'); 
-                    $('#channel').val(channels).trigger('change');
-                    $('#brand').val(brands).trigger('change');
-                    $('#category').val(categories).trigger('change');
-                    $('#storeConcept').val(concepts).trigger('change');
-                    $('#mall').val(mall).trigger('change');
-                    $('#sqm').val(sqm);
-                    $('#group').val(group);
+                    $('#type').val(formData.types);
+                    $('#yearFrom').val(formData.yearFrom);
+                    $('#yearTo').val(formData.yearTo);
+                    $('#monthFrom').val(formData.monthFrom);
+                    $('#monthTo').val(formData.monthTo);
+                    $('#store').val(formData.stores).trigger('change'); 
+                    $('#channel').val(formData.channels).trigger('change');
+                    $('#brand').val(formData.brands).trigger('change');
+                    $('#category').val(formData.categories).trigger('change');
+                    $('#storeConcept').val(formData.concepts).trigger('change');
+                    $('#mall').val(formData.mall).trigger('change');
+                    $('#sqm').val(formData.sqm);
+                    $('#group').val(formData.group);
                 } 
+
+                //add delay so the modal doesn't break
+                setTimeout(() => {
+                    $('#chartModal').modal('show');
+                }, 300);
+
+            
+
             }
         });
 
@@ -637,6 +644,8 @@ $(function() {
 
         // Show the table
         $('#selectedValues').show();
+
+        
     });
 
     $('#clearForm').on('click', function() {
@@ -644,6 +653,7 @@ $(function() {
     });
 
     function resetForm(){
+
         // Reset the form to its initial state
         $('#chartForm')[0].reset(); 
 
@@ -654,6 +664,9 @@ $(function() {
         $('#category').val('all').trigger('change');
         $('#storeConcept').val('all').trigger('change');
         $('#mall').val('all').trigger('change');
+
+        $('.form-group .text-danger').remove();
+
     }
 
     function drawChart(months, years, type) {
@@ -730,17 +743,18 @@ $(function() {
         // Find the latest year from the years array
         const latestYear = Math.max(...years.map(year => parseInt(year)));
 
-        // Filter months for the latest year
-        const monthsForLatestYear = Object.entries(months).filter(([monthKey, monthData]) => {
-            const yearKey = monthData[`Y${latestYear}`] !== undefined; // Check if data exists for the latest year
-            return yearKey; // Include only those months which have data for the latest year
+        // Gather months that have data for any of the years
+        const relevantMonths = Object.entries(months).filter(([monthKey, monthData]) => {
+            return years.some(year => monthData[`Y${year}`] !== undefined);
         });
-        
-        // Determine the last month available in the latest year
-        const lastMonthKey = Math.max(...monthsForLatestYear.map(([monthKey]) => parseInt(monthKey.replace('M', ''))));
 
-        // Filter to only include months up to the last month of the latest year
-        const filteredMonths = monthsForLatestYear.filter(([monthKey]) => {
+        // Determine the last month available in any year
+        const lastMonthKey = Math.max(
+            ...relevantMonths.map(([monthKey]) => parseInt(monthKey.replace('M', '')))
+        );
+
+        // Filter to only include months up to the last month of the available years
+        const filteredMonths = relevantMonths.filter(([monthKey]) => {
             const monthIndex = parseInt(monthKey.replace('M', ''));
             return monthIndex <= lastMonthKey;
         });
@@ -822,17 +836,18 @@ $(function() {
         // Find the latest year from the years array
         const latestYear = Math.max(...years.map(year => parseInt(year)));
 
-        // Filter months for the latest year
-        const monthsForLatestYear = Object.entries(months).filter(([monthKey, monthData]) => {
-            const yearKey = monthData[`Y${latestYear}`] !== undefined; // Check if data exists for the latest year
-            return yearKey; // Include only those months which have data for the latest year
+        // Gather months that have data for any of the years
+        const relevantMonths = Object.entries(months).filter(([monthKey, monthData]) => {
+            return years.some(year => monthData[`Y${year}`] !== undefined);
         });
         
-        // Determine the last month available in the latest year
-        const lastMonthKey = Math.max(...monthsForLatestYear.map(([monthKey]) => parseInt(monthKey.replace('M', ''))));
+        // Determine the last month available in any year
+        const lastMonthKey = Math.max(
+            ...relevantMonths.map(([monthKey]) => parseInt(monthKey.replace('M', '')))
+        );
 
-        // Filter to only include months up to the last month of the latest year
-        const filteredMonths = monthsForLatestYear.filter(([monthKey]) => {
+        // Filter to only include months up to the last month of the available years
+        const filteredMonths = relevantMonths.filter(([monthKey]) => {
             const monthIndex = parseInt(monthKey.replace('M', ''));
             return monthIndex <= lastMonthKey;
         });

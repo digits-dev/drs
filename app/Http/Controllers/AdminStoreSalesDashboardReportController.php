@@ -709,7 +709,7 @@
 				return count(array_filter(array_map('trim', explode(',', $string)))) > $minCount;
 			}
 
-			function hasManyCharacters($string, $minLength = 200) {
+			function hasManyCharacters($string, $minLength = 160) {
 				// Trim the string and check its length
 				return strlen(trim($string)) > $minLength;
 			}

@@ -19,6 +19,10 @@
             /* Custom margin for the next page */
         }
 
+        .page-break {
+            page-break-after: always;
+        }
+
 
         .content {
             height: 100%;
@@ -27,9 +31,7 @@
         * {
             font-size: 10px;
         }
-        .page-break {
-            page-break-after: always;
-        }
+     
         img {
             width: 50%;
             height: auto;

@@ -12,6 +12,7 @@
 	use DB;
 	use CRUDBooster;
 	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
+	use Validator;
 
 
 	class AdminDashboardStoreSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
@@ -466,10 +467,10 @@
 				//   'group' => ['required'],
 				], [],
 				[
-				  'yearFrom' => 'year from',
-				  'yearTo'   => 'year to',
-				  'monthFrom' => 'month from',
-				  'monthTo'   => 'month to',
+				  'yearFrom' => 'Year From',
+				  'yearTo'   => 'Year To',
+				  'monthFrom' => 'Month From',
+				  'monthTo'   => 'Month To',
 				]
 			);
 
@@ -590,6 +591,24 @@
 			// \Log::info(json_encode($data, JSON_PRETTY_PRINT));
 
 			return view('dashboard-report.store-sales.dashboard-test', $data);
+		}
+
+		public function generateCharts2(Request $request)
+		{
+			// Validate the request
+			$validator = Validator::make($request->all(), [
+				'types' => 'required|string',
+				'yearFrom' => 'required|date_format:Y|before_or_equal:yearTo',
+				'yearTo' => 'required|date_format:Y|after_or_equal:yearFrom',
+			]);
+
+			if ($validator->fails()) {
+				return response()->json(['errors' => $validator->errors()], 422);
+			}
+
+			// Process the valid data here (e.g., generate charts)
+
+			return response()->json(['success' => true]);
 		}
 
 		public function saveChart(Request $request)
