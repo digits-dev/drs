@@ -12,6 +12,15 @@
         display: flex; 
         flex-wrap: wrap; 
     }
+    #charts_container_img {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        visibility: hidden;
+        position: fixed;
+        z-index: -1;
+        bottom: 0;
+    }
     /* .chart {
         flex: 1 1 auto;
         width: 100%;
@@ -379,6 +388,7 @@
     <br>
 
     <div id="charts_container"></div>
+    <div id="charts_container_img"></div>
     
 </div>
 
@@ -747,7 +757,7 @@ $(function() {
         const relevantMonths = Object.entries(months).filter(([monthKey, monthData]) => {
             return years.some(year => monthData[`Y${year}`] !== undefined);
         });
-
+    
         // Determine the last month available in any year
         const lastMonthKey = Math.max(
             ...relevantMonths.map(([monthKey]) => parseInt(monthKey.replace('M', '')))
@@ -772,6 +782,16 @@ $(function() {
             // Push the row data to the array
             dataArray.push(rowData);
         });
+
+        // Check if dataArray has enough data to draw the chart
+        if (dataArray.length <= 1) {
+            // Check if the error message already exists
+            if (!document.getElementById('chartErrorMessage')) {
+                $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
+                $('#noDataMessage').show();
+            }
+            return;
+        }
 
         console.log(dataArray);
 
@@ -799,6 +819,7 @@ $(function() {
             }
         };
 
+
         // Create a new div for each chart
         const chartDiv = document.createElement('div');
         chartDiv.className = 'chart';
@@ -817,7 +838,7 @@ $(function() {
                 channelChart = new google.visualization.PieChart(chartDiv);
             break;
         }
-         
+        
         channelChart.draw(data, options);
         
         // Add resize event listener
@@ -828,6 +849,7 @@ $(function() {
         // Get the chart as an image and store it
         const imgUri = channelChart.getImageURI();
         chartImagesToDownload.push(imgUri);
+
     }
 
     function drawChartWithDynamicMonthsInPie(months, years) {
@@ -862,6 +884,16 @@ $(function() {
             });
   
         });
+
+        // Check if dataArray has enough data to draw the chart
+        if (dataArray.length <= 1) {
+            // Check if the error message already exists
+            if (!document.getElementById('chartErrorMessage')) {
+                $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
+                $('#noDataMessage').show();
+            }
+            return;
+        }
 
         const data = google.visualization.arrayToDataTable(dataArray);
 
@@ -911,6 +943,16 @@ $(function() {
 
         });
 
+        // Check if dataArray has enough data to draw the chart
+        if (dataArray.length <= 1) {
+            // Check if the error message already exists
+            if (!document.getElementById('chartErrorMessage')) {
+                $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
+                $('#noDataMessage').show();
+            }
+            return;
+        }
+
         const data = google.visualization.arrayToDataTable(dataArray);
 
         const monthFrom = $('#monthFrom option:selected').text();
@@ -937,8 +979,8 @@ $(function() {
         chartDiv.className = 'chart';
         document.getElementById('charts_container').appendChild(chartDiv);
 
+
         const channelChart = new google.visualization.PieChart(chartDiv);
-         
         channelChart.draw(data, options);
         
         // Add resize event listener
@@ -949,6 +991,9 @@ $(function() {
         // Get the chart as an image and store it
         const imgUri = channelChart.getImageURI();
         chartImagesToDownload.push(imgUri);
+       
+
+        
     }
 
     function drawChartMultipleChannelByYear(channelCodes, year) {
@@ -958,6 +1003,16 @@ $(function() {
         Object.keys(channelCodes).forEach(channel => {
             dataArray.push([`${channel}`, channelCodes[channel][`Y${year}`]|| 0]); 
         });
+
+        // Check if dataArray has enough data to draw the chart
+        if (dataArray.length <= 1) {
+            // Check if the error message already exists
+            if (!document.getElementById('chartErrorMessage')) {
+                $('#noDataMessage p').text('No data was found based on the current inputs. Please ensure all fields are filled out correctly and click "Generate Chart" to try again.');
+                $('#noDataMessage').show();
+            }
+            return;
+        }
 
         const data = google.visualization.arrayToDataTable(dataArray);
 
@@ -994,8 +1049,40 @@ $(function() {
             channelChart.draw(data, options);
         });
 
+
+        // test 
+
+        const options2 = {
+            width: 1200,
+            height:600,
+             title: `Sales Report from ${monthFrom} to ${monthTo} ${year}`,
+             is3D: true,
+             pieSliceText: 'value',
+             chartArea: {
+                 width:'50%',
+                 height:'50%',
+                 top: 100, 
+                 left: 250, 
+                 right:0,
+                 bottom:0,
+             },
+             legend:{position: 'right', textStyle: { fontSize: 13}, alignment:'center'},
+         };
+
+        // Create a new div for each chart
+        const chartDiv2 = document.createElement('div');
+        // chartDiv.id = `2024-chart`;
+        chartDiv.className = 'chart';
+        document.getElementById('charts_container_img').appendChild(chartDiv2);
+
+        const channelChart2 = new google.visualization.PieChart(chartDiv2);
+         
+        channelChart2.draw(data, options2);
+
+        // end of test 
+
         // Get the chart as an image and store it
-        const imgUri = channelChart.getImageURI();
+        const imgUri = channelChart2.getImageURI();
         chartImagesToDownload.push(imgUri);
     }
     // Save chart function

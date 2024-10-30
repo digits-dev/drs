@@ -25,6 +25,7 @@
         .chart-container img {
             display: block;
             margin: 20px auto;
+            object-fit: contain;
         }
         /* .table-container{
             height: 200px;
