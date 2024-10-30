@@ -266,6 +266,7 @@ class StoreInventory extends Model
 
     public static function syncOldEntriesFromNewEntries($dateFrom, $dateTo, $newEntries) {
         $oldData = self::fetchNewInventoryData($dateFrom, $dateTo);
+        
 
         if(!empty($oldData)){
             $subInv = [];
@@ -351,31 +352,50 @@ class StoreInventory extends Model
                     }
                 }   
     
-                $key = $customerName . '-' . $date . '-' . $itemNumber . '-' . intval($entry->TotalQty) . '-' . $subInventory;
+                // $key = $customerName . '-' . $date . '-' . $itemNumber . '-' . intval($entry->TotalQty) . '-' . $subInventory;
                 
+                // $newDatasKeys[$key] = $entry;
+                
+                //-----------------------------
+                // $entryArray = (array)$entry;
+
+                // $newDatasKeys[$key] = $entryArray;
+
+                // if (isset($newDatasKeys[$key])) {
+                //     $newDatasKeys[$key][] = $entryArray;
+                // } else {
+                //     $newDatasKeys[$key] = $entryArray;
+                // }
+
+                $key = $customerName . '-' . $date . '-' . $itemNumber . '-' . $subInventory;
+
                 $newDatasKeys[$key] = $entry;
-            }
-            
-    
+
+            }  
+                
             $idsToUpdate = [];
 
             foreach ($oldData as $entry) {
-                $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $entry['quantity_inv'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
+                // $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $entry['quantity_inv'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
+                $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
 
                 if (!isset($newDatasKeys[$key])) {
-                    \Log::info("SIZO[ID: " . $entry['id'] . ", QTY: " . $entry['quantity_inv'] . "]");
                     $idsToUpdate[] = $entry['id'];
+                }else{
+                    if($entry['quantity_inv'] !== intval($newDatasKeys[$key]->TotalQty)){
+                        // dump("change qty for id no: " .  $entry['id']. " from: " . $entry['quantity_inv'] . " to: " . $newDatasKeys[$key]->TotalQty);
+                        self::where('id', $entry['id'])->update(['quantity_inv' => $newDatasKeys[$key]->TotalQty]);
+                    }
                 }
-                
             }
-    
+
+            // dump('ids need to zero out: ' . implode(', ', $idsToUpdate));
             if (!empty($idsToUpdate)) {
                 self::whereIn('id', $idsToUpdate)->update(['quantity_inv' => 0]);
             }
 
         }
 
-        
     }
 
     private static function fetchNewInventoryData($dateFrom, $dateTo) {
