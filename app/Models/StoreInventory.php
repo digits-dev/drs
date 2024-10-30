@@ -232,6 +232,7 @@ class StoreInventory extends Model
             P.Location 'SubInventory'
             From ProductLocationBalance P (Nolock)
             where P.Company= 100
+            AND (P.Location = 'GOOD' OR P.Location = 'DEMO')
             AND P.LastIssueDate between '$dateFrom' and '$dateTo'
         "));
 
