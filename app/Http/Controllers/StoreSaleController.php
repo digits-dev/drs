@@ -250,9 +250,8 @@ class StoreSaleController extends Controller
         $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
       
         $result = StoreSale::getStoresSalesFromPosEtp($datefrom,$dateto);
-        // dd($result);
         // Group sales data by store ID
-        $groupedSalesData = collect($result)->groupBy('STOREID');
+        $groupedSalesData = collect($result)->groupBy('STORE ID');
         foreach ($groupedSalesData as $storeId => $storeData) {
             $time = microtime(true);
             $batch_number = str_replace('.', '', $time);
@@ -269,7 +268,7 @@ class StoreSaleController extends Controller
             $masterfileCache = [];
 
             foreach($storeData as $item){
-                $itemNumbers[] = $item->ITEMNUMBER;
+                $itemNumbers[] = $item->{'ITEM NUMBER'};
             }
 
             $itemDetails = self::fetchItemDataInBatch($itemNumbers);
@@ -283,10 +282,10 @@ class StoreSaleController extends Controller
                     $modified[$newKey] = $value;
                 }
                 $excel = $modified;
-                $itemNumber = $excel['ITEMNUMBER'];
+                $itemNumber = $excel['ITEM_NUMBER'];
       
                 // MASTERFILE CACHING
-                $cusCode = "CUS-" . $excel['STOREID'];
+                $cusCode = "CUS-" . $excel['STORE_ID'];
                 if (isset($masterfileCache[$cusCode])) {
                     // Retrieve from cache if exists
                     $masterfile = $masterfileCache[$cusCode];
@@ -295,19 +294,22 @@ class StoreSaleController extends Controller
                     $masterfile = DB::connection('masterfile')->table('customer')->where('customer_code', $cusCode)->first();
                     $masterfileCache[$cusCode] = $masterfile;
                 }
-                $sales_date = Carbon::createFromFormat('Ymd', $excel['SOLDDATE'])->format('Y-m-d');
+                $sales_date = Carbon::createFromFormat('Ymd', $excel['SOLD_DATE'])->format('Y-m-d');
                 $v_customer = $this->customer->where('customer_name',$masterfile->cutomer_name)->first();
-                
+                $receipt_number = $excel['RECEIPT_#'];
+                $item_serial = $excel['ITEM_SERIAL'];
+                $qty_sold = $excel['QTY_SOLD'];
+                $sold_price = $excel['SOLD_PRICE'];
                 $isExistInStoreSales = StoreSale::where('customers_id', $v_customer->id ?? null)
-                                                 ->where('receipt_number', $excel['RECEIPT#'])
-                                                 ->where('item_code', $excel['ITEMNUMBER'])
+                                                 ->where('receipt_number', $receipt_number)
+                                                 ->where('item_code', $itemNumber)
                                                  ->where('sales_date', $sales_date)
-                                                 ->orWhere('item_serial', $excel['ITEMSERIAL'])
+                                                 ->orWhere('item_serial', $item_serial)
                                                  ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
                                                  ->keyBy(function ($item) {
                                                      return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
                                                  });
-                $key = "{$v_customer->id}-{$excel['RECEIPT#']}-{$excel['ITEMNUMBER']}-{$sales_date}-{$excel['ITEMSERIAL']}";
+                $key = "{$v_customer->id}-{$receipt_number}-{$itemNumber}-{$sales_date}-{$item_serial}";
                 if (!isset($isExistInStoreSales[$key])) {
                     // Prepare data for output
                     $toExcel = [];
@@ -317,20 +319,20 @@ class StoreSaleController extends Controller
                     $toExcel['report_type'] = 'STORE SALES';
                     $toExcel['channel_code'] = $masterfile->channel_code_id;
                     $toExcel['customer_location'] = $masterfile->cutomer_name;
-                    $toExcel['receipt_number'] = $excel['RECEIPT#'];
+                    $toExcel['receipt_number'] = $receipt_number;
                     $toExcel['sold_date'] = $sales_date;
-                    $toExcel['item_number'] = $excel['ITEMNUMBER'];
+                    $toExcel['item_number'] = $itemNumber;
                     $toExcel['rr_ref'] = $itemDetails[$itemNumber]['rr_ref'];
                     $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                    $toExcel['qty_sold'] = $excel['QTYSOLD'];
-                    $toExcel['sold_price'] = $excel['SOLDPRICE'] - ($excel['Discount_32'] + $excel['Discount_35']);
-                    $toExcel['net_sales'] = $excel['QTYSOLD'] * $excel['SOLDPRICE'];
+                    $toExcel['qty_sold'] = $qty_sold;
+                    $toExcel['sold_price'] = $sold_price - ($excel['Discount_32'] + $excel['Discount_35']);
+                    $toExcel['net_sales'] = $qty_sold * $sold_price;
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                     $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
                     $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                    $toExcel['sales_memo_ref'] = $excel['PramotionID_32'] ?? $excel['PramotionID_35'];
-                    $toExcel['item_serial'] = $excel['ITEMSERIAL'];
-                    $toExcel['sales_person'] = $excel['SALESPERSON'];
+                    $toExcel['sales_memo_ref'] = $excel['PromotionID_32'] ?? $excel['PromotionID_35'];
+                    $toExcel['item_serial'] = $item_serial;
+                    $toExcel['sales_person'] = $excel['SALES_PERSON'];
                     $toExcelContent[] = $toExcel;
                     // Increment the counter for the next iteration
                     Counter::where('id', 1)->increment('reference_code');
