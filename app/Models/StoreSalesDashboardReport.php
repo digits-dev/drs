@@ -60,20 +60,20 @@ class StoreSalesDashboardReport extends Model
            
         }
 
-        Log::info("Year $this->year");
-        Log::info("RAW Month $this->rawMonth");
-        Log::info("Previous Month $this->previousMonth");
-        Log::info("Month $this->month");
-        Log::info("Day $this->day");
+        // Log::debug("Year $this->year");
+        // Log::debug("RAW Month $this->rawMonth");
+        // Log::debug("Previous Month $this->previousMonth");
+        // Log::debug("Month $this->month");
+        // Log::debug("Day $this->day");
 
-        Log::info("Current Day as Date $this->currentDayAsDate");
-        Log::info("YearMonth $this->yearMonth");
-        Log::info("StartDate $this->startDate");
-        Log::info("EndDate $this->endDate");
+        // Log::debug("Current Day as Date $this->currentDayAsDate");
+        // Log::debug("YearMonth $this->yearMonth");
+        // Log::debug("StartDate $this->startDate");
+        // Log::debug("EndDate $this->endDate");
 
     }
 
-    //FIRST APPROACH
+    //FIRST APPROACH - POSTFIX WITH "BackUp"
     public function createTempTableBackUp(){
 
         DB::statement("
@@ -431,16 +431,13 @@ class StoreSalesDashboardReport extends Model
     }
 
 
-     //SECOND APPROACH
+     //SECOND APPROACH - Utilizes Laravel collection methods to retrieve the appropriate data.
 
      public function getStoreSalesData() {
         
         $cacheKey = $this->getCacheKey();
 
         Cache::forget($cacheKey); 
-
-        // dump('stores', $this->year);
-        // dump('stores', $this->month);
 
         // Cache the results of the query
         $storeSalesData = Cache::remember($cacheKey, $this->getCacheExpiration(), function() {
@@ -468,6 +465,8 @@ class StoreSalesDashboardReport extends Model
                     AND store_sales.channels_id != 12 
             ");
         });
+
+        // channels id "12" = EEE or Employee channel 
     
         return $storeSalesData;
     }
