@@ -227,9 +227,6 @@
                                     <label for="group">Group:</label>
                                     <select class="form-control" id="group" name="group" >
                                         <option value="" disabled selected>Select Group</option>
-                                        <option value="group1">Group 1</option>
-                                        <option value="group2">Group 2</option>
-                                        <option value="group3">Group 3</option>
                                     </select>
                                 </div> 
                             </div>
@@ -308,9 +305,6 @@
                                     <label for="sqm">Square Meters (sqm):</label>
                                     <select class="form-control" id="sqm" name="sqm" >
                                         <option value="" disabled selected>Select SQM</option>
-                                        <option value="50">50 sqm</option>
-                                        <option value="100">100 sqm</option>
-                                        <option value="150">150 sqm</option>
                                     </select>
                                 </div>
                             </div>
@@ -506,7 +500,7 @@ $(function() {
             brands: $('#brand').val(),
             categories: $('#category').val(),
             concepts: $('#storeConcept').val(),
-            mall: $('#mall').val(),
+            malls: $('#mall').val(),
             sqm: $('#sqm').val(),
             group: $('#group').val(),
         };
@@ -582,7 +576,7 @@ $(function() {
         $('#brand').val(formData.brands).trigger('change');
         $('#category').val(formData.categories).trigger('change');
         $('#storeConcept').val(formData.concepts).trigger('change');
-        $('#mall').val(formData.mall).trigger('change');
+        $('#mall').val(formData.malls).trigger('change');
         $('#sqm').val(formData.sqm);
         $('#group').val(formData.group);
     }

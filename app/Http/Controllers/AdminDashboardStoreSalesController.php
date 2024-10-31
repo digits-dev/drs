@@ -462,7 +462,7 @@
 				  'brands' => ['required'],
 				  'categories' => ['required'],
 				  'concepts' => ['required'],
-				  'mall' => ['required'],
+				  'malls' => ['required'],
 				//   'sqm' => ['required'],
 				//   'group' => ['required'],
 				], [],

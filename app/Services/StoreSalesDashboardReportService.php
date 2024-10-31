@@ -15,19 +15,6 @@ class StoreSalesDashboardReportService {
         return $this->cacheKeyBase . date('Y-m-d');
     }
 
-    private function getCacheExpiration()
-    {
-        // Get the current time
-        $now = time();
-
-        // Get the timestamp for the end of the day (midnight)
-        $endOfDay = strtotime('tomorrow') - 1; 
-
-        // Calculate the difference
-        return $endOfDay - $now;
-    }
-
-
     public function getData()
     {
         try {
@@ -48,12 +35,10 @@ class StoreSalesDashboardReportService {
         }
     }
    
-    // Method to clear the cache (if needed)
     public function clearCache()
     {
         Cache::forget($this->getCacheKey()); 
     }
-
 
     public function generateSalesReport(){
 
@@ -70,26 +55,13 @@ class StoreSalesDashboardReportService {
             // $currentYear = 2020; 
             // $currentDay = 29;
 
-            // $currentMonth = 2;
-            // $previousYear = 2023;
-            // $currentYear = 2024; 
-            // $currentDay = 29;
-
-            // $currentMonth = 2;
-            // $previousYear = 2018;
-            // $currentYear = 2019; 
-            // $currentDay = 23;
-
-            //bug
-			// $currentMonth = 8;
-			// $previousYear = 2021;
-			// $currentYear = 2022; 
-			// $currentDay = 7;
-
-			// $currentMonth = 9;
-			// $previousYear = 2021;
-			// $currentYear = 2022; 
-			// $currentDay = 21;
+            /* Logic:
+                If today is January, three years of data will be available: the current year 
+                will be used for daily and weekly sales, while the previous two years 
+                will be used for monthly, quarterly, and year-to-date calculations.
+                
+                This is for scoping data in the getStoreSales method.
+            */
 
             if($currentMonth == 1){
                 // $nextPreviousYear = 2020;
@@ -137,14 +109,14 @@ class StoreSalesDashboardReportService {
             // dd($data);
 
             // Store the data in cache
-            Cache::put($this->getCacheKey(), $data, $this->getCacheExpiration());
+            Cache::put($this->getCacheKey(), $data, now()->endOfDay());
 
             return $data;
 
         });
 
         if (is_null($data)) {
-            Log::warning('Could not acquire lock for daily sales report generation.');
+            Log::warning('Could not acquire lock for sales report generation.');
             
             return Cache::get($this->getCacheKey(), []); 
         }
@@ -321,11 +293,7 @@ class StoreSalesDashboardReportService {
     private function processSalesData($year, $month, $day, &$data) {
         $storeSalesDR = new StoreSalesDashboardReport(['year' => $year, 'month' => $month, 'day' => $day]);
 
-        $test = $storeSalesDR->getStoreSalesData();
-
-        // $count = count($test);
-        // dump("year $year", $count);
-        // dump(array_slice($test, 0, 10));
+        $storeSalesDR->getStoreSalesData();
 
         self::processDailySalesData($year, $month, $day, $data, $storeSalesDR);
 
@@ -344,6 +312,6 @@ class StoreSalesDashboardReportService {
         $data['channel_codes']['TOTAL'][$updateData['currYear']]['ytd'] = $updateData['currData'];
 
         // Update the data in cache
-        Cache::put($this->getCacheKey(), $data, $this->getCacheExpiration());
+        Cache::put($this->getCacheKey(), $data, now()->endOfDay());
     }
 }

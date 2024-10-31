@@ -38,15 +38,24 @@ class StoreSalesDashboardReport extends Model
 
 
             if($month == '01') {
-                // $currentYear = date("Y");
-                $currentYear = 2022;
+                $currentYear = date("Y");
+                // $currentYear = 2022;
 
+                /* Logic:
+                    If today is January of the current year and the current iteration year matches,
+                    then the month is January; otherwise, it is December.
+                    This is used for scoping data in the getStoreSales method.
+                */
+                
                 if($currentYear == $attributes['year']){
+                    //Use For Daily & Weekly Sales Report
                     $this->month = $month;
                 } else {
+                    //Use For Other Reports, Monthly, Quarterly, YTD  
                     $this->month = 12;
                     $this->previousMonth = 12;
                 }
+
             } else {
                 $this->month = $month;
                 $previousMonthRaw = $attributes['month'] - 1;
@@ -73,7 +82,7 @@ class StoreSalesDashboardReport extends Model
 
     }
 
-    //FIRST APPROACH - POSTFIX WITH "BackUp"
+    //FIRST APPROACH - POSTFIX WITH "BackUp" - NOT BEING USE RIGHT NOW
     public function createTempTableBackUp(){
 
         DB::statement("
@@ -440,7 +449,7 @@ class StoreSalesDashboardReport extends Model
         Cache::forget($cacheKey); 
 
         // Cache the results of the query
-        $storeSalesData = Cache::remember($cacheKey, $this->getCacheExpiration(), function() {
+        $storeSalesData = Cache::remember($cacheKey, now()->endOfDay(), function() {
             return DB::select("
                 SELECT 
                     store_sales.sales_date,
@@ -474,32 +483,17 @@ class StoreSalesDashboardReport extends Model
     public function getSalesSummary()
     {
 
-        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
-        $lastDay = end($lastThreeDays);
-
+        $lastDay = $this->getLastDay();
         $dataCollection = $this->getDataCollection();
 
         // Group the data by week cutoff
         $salesSummary = $dataCollection->filter(function($row) use($lastDay) {
 
-            if($lastDay <= $this->endDate) {
-                return $row->sales_date >= $this->startDate && $row->sales_date <= $lastDay;
-            } else {
-                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
-            }
+            return $this->filterSalesByDateRange($row->sales_date, $lastDay);
 
         })->map(function($row) {
-            $weekCutoff = null;
-
-            if ($row->sales_date >= $this->startDate && $row->sales_date <= "{$this->yearMonth}-07") {
-                $weekCutoff = 'WK01';
-            } elseif ($row->sales_date >= "{$this->yearMonth}-08" && $row->sales_date <= "{$this->yearMonth}-14") {
-                $weekCutoff = 'WK02';
-            } elseif ($row->sales_date >= "{$this->yearMonth}-15" && $row->sales_date <= "{$this->yearMonth}-21") {
-                $weekCutoff = 'WK03';
-            } elseif ($row->sales_date >= "{$this->yearMonth}-22" && $row->sales_date <= $this->endDate) {
-                $weekCutoff = 'WK04';
-            }
+            // Determine week cutoff
+            $weekCutoff = $this->getWeekCutOff($row->sales_date);
 
             return [
                 'week_cutoff' => $weekCutoff,
@@ -523,60 +517,21 @@ class StoreSalesDashboardReport extends Model
 
     public function getSalesWeeklyPerChannel()
     {
-        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
-        $lastDay = end($lastThreeDays);
 
+        $lastDay = $this->getLastDay();
         $dataCollection = $this->getDataCollection();
 
         // Group the data by week and channel classification
         $salesSummary = $dataCollection->filter(function($row) use($lastDay) {
 
-            if($lastDay <= $this->endDate) {
-                return $row->sales_date >= $this->startDate && $row->sales_date <= $lastDay;
-            } else {
-                return $row->sales_date >= $this->startDate && $row->sales_date <= $this->endDate;
-            }
+            return $this->filterSalesByDateRange($row->sales_date, $lastDay);
 
         })->map(function($row) {
             // Determine week cutoff
-            $weekCutoff = null;
-
-            if ($row->sales_date >= $this->startDate && $row->sales_date <= "{$this->yearMonth}-07") {
-                $weekCutoff = 'WK01';
-            } elseif ($row->sales_date >= "{$this->yearMonth}-08" && $row->sales_date <= "{$this->yearMonth}-14") {
-                $weekCutoff = 'WK02';
-            } elseif ($row->sales_date >= "{$this->yearMonth}-15" && $row->sales_date <= "{$this->yearMonth}-21") {
-                $weekCutoff = 'WK03';
-            } elseif ($row->sales_date >= "{$this->yearMonth}-22" && $row->sales_date <= $this->endDate) {
-                $weekCutoff = 'WK04';
-            }
+            $weekCutoff = $this->getWeekCutOff($row->sales_date);
 
             // Determine channel classification
-            switch ($row->channel_code) {
-                case 'ONL':
-                    $channelClassification = 'ECOMM';
-                    break;
-                case 'DLR':
-                case 'CRP':
-                case 'OUT':
-                    $channelClassification = 'DLR/CRP';
-                    break;
-                case 'RTL':
-                    $channelClassification = 'TOTAL-RTL';
-                    break;
-                case 'FRA':
-                    $channelClassification = 'FRA-DR';
-                    break;
-                case 'SVC':
-                    $channelClassification = 'SC';
-                    break;
-                case 'CON':
-                    $channelClassification = 'CON';
-                    break;
-                default:
-                    $channelClassification = 'OTHER';
-                    break;
-            }
+            $channelClassification = $this->getSwitchChannel($row->channel_code);
 
             return [
                 'week_cutoff' => $weekCutoff,
@@ -660,31 +615,9 @@ class StoreSalesDashboardReport extends Model
         $salesSummary = $dataCollection->filter(function ($row) use ($lastThreeDays) {
             return in_array($row->sales_date, $lastThreeDays);
         })->map(function ($row) {
-                switch ($row->channel_code) {
-                    case 'ONL':
-                        $channelClassification = 'ECOMM';
-                        break;
-                    case 'DLR':
-                    case 'CRP':
-                    case 'OUT':
-                        $channelClassification = 'DLR/CRP';
-                        break;
-                    case 'RTL':
-                        $channelClassification = 'TOTAL-RTL';
-                        break;
-                    case 'FRA':
-                        $channelClassification = 'FRA-DR';
-                        break;
-                    case 'SVC':
-                        $channelClassification = 'SC';
-                        break;
-                    case 'CON':
-                        $channelClassification = 'CON';
-                        break;
-                    default:
-                        $channelClassification = 'OTHER';
-                        break;
-                }
+               
+            // Determine channel classification
+            $channelClassification = $this->getSwitchChannel($row->channel_code);
 
             return [
                 'date_of_the_day' => $row->sales_date,
@@ -748,31 +681,8 @@ class StoreSalesDashboardReport extends Model
         $salesSummary = $dataCollection->filter(function ($row) {
             return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
         })->map(function ($row) {
-                switch ($row->channel_code) {
-                    case 'ONL':
-                        $channelClassification = 'ECOMM';
-                        break;
-                    case 'DLR':
-                    case 'CRP':
-                    case 'OUT':
-                        $channelClassification = 'DLR/CRP';
-                        break;
-                    case 'RTL':
-                        $channelClassification = 'TOTAL-RTL';
-                        break;
-                    case 'FRA':
-                        $channelClassification = 'FRA-DR';
-                        break;
-                    case 'SVC':
-                        $channelClassification = 'SC';
-                        break;
-                    case 'CON':
-                        $channelClassification = 'CON';
-                        break;
-                    default:
-                        $channelClassification = 'OTHER';
-                        break;
-                }
+            // Determine channel classification
+            $channelClassification = $this->getSwitchChannel($row->channel_code);
 
             return [
                 'month_cutoff' => 'M' . str_pad(date('m', strtotime($row->sales_date)), 2, '0', STR_PAD_LEFT),
@@ -857,31 +767,8 @@ class StoreSalesDashboardReport extends Model
         $salesSummary = $dataCollection->filter(function ($row) {
             return $row->sales_date >= "{$this->year}-01-01" && $row->sales_date <= "{$this->year}-{$this->previousMonth}-31";
         })->map(function ($row) {
-                switch ($row->channel_code) {
-                    case 'ONL':
-                        $channelClassification = 'ECOMM';
-                        break;
-                    case 'DLR':
-                    case 'CRP':
-                    case 'OUT':
-                        $channelClassification = 'DLR/CRP';
-                        break;
-                    case 'RTL':
-                        $channelClassification = 'TOTAL-RTL';
-                        break;
-                    case 'FRA':
-                        $channelClassification = 'FRA-DR';
-                        break;
-                    case 'SVC':
-                        $channelClassification = 'SC';
-                        break;
-                    case 'CON':
-                        $channelClassification = 'CON';
-                        break;
-                    default:
-                        $channelClassification = 'OTHER';
-                        break;
-                }
+            // Determine channel classification
+            $channelClassification = $this->getSwitchChannel($row->channel_code);
 
             return [
                 'quarter_cutoff' => 'Q' . ceil(date('n', strtotime($row->sales_date)) / 3),
@@ -1048,113 +935,97 @@ class StoreSalesDashboardReport extends Model
         return $cacheKey;
     }
 
-    private function getCacheExpiration()
-    {
-        // Get the current time
-        $now = time();
-
-        // Get the timestamp for the end of the day (midnight)
-        $endOfDay = strtotime('tomorrow') - 1; 
-
-        // Calculate the difference
-        return $endOfDay - $now;
-    }
-
-    // DATE_FORMAT(store_sales.sales_date, '%Y-%m') AS yearMonth,
-
     public static function generateChartData($params)
     {
-        extract($params); 
-
-        $params = [
-            $yearFrom,
-            $yearTo,
-            $monthFrom,
-            $monthTo,
-            implode('|', (array)$stores),
-            implode('|', (array)$concepts),
-            implode('|', (array)$channels),
-            implode('|', (array)$malls),
-            implode('|', (array)$brands),
-            implode('|', (array)$categories),
-        ];
-
-        \Log::info('start params');
-        \Log::info($yearFrom);
-        \Log::info($yearTo);
-        \Log::info($monthFrom);
-        \Log::info($monthTo);
-        \Log::info($stores);
-        \Log::info($concepts);
-        \Log::info($channels);
-        \Log::info($malls);
-        \Log::info($brands);
-        \Log::info($categories);
-        \Log::info('end params');
-
-
-        $cacheKey = 'chartData_' . md5(implode('|', $params));
-        \Log::info($cacheKey);
-
-
-        return Cache::remember($cacheKey, 50000, 
-            function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories) {
-            $query = DB::table('store_sales', 'ss')
-                ->select(
-                    DB::raw("CONCAT('M', MONTH(sales_date)) AS month"),
-                    DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
-                    DB::raw("SUM(net_sales) AS net_sales")
-                )
-                ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
-                ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
-                ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
-                ->leftJoin('concepts as con', 'cu.concepts_id', 'con.id')
-                ->where('ss.is_final', 1)
-                ->whereBetween(DB::raw('YEAR(ss.sales_date)'), [$yearFrom, $yearTo])
-                ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [$monthFrom, $monthTo])
-                ->where('ss.quantity_sold', '>', 0)
-                ->whereNotNull('ss.net_sales')
-                ->where('ss.sold_price', '>', 0)
-                ->where('ss.channels_id', '!=', 12);
-
-                // Conditional parameters
-                if (!empty($stores) && $stores[0] !== 'all') {
-                    $query->whereIn('cu.id', (array)$stores);
-                }
-
-                if (!empty($concepts) && $concepts[0] !== 'all') {
-                    $query->whereIn('con.id', (array)$concepts);
-                }
-
-                if (!empty($channels) && $channels[0] !== 'all') {
-                    $query->whereIn('ch.id', (array)$channels);
-                }
-
-                if (!empty($malls) && $malls[0] !== 'all') {
-                    $query->whereIn('cu.mall', $malls);
-                }
-
-                if (!empty($brands) && $brands[0] !== 'all') {
-                    $query->whereIn('ai.brand_description', (array)$brands);
-                }
-
-                if (!empty($categories) && $categories[0] !== 'all') {
-                    $query->whereIn('ai.category_description', (array)$categories);
-                }
-
-                $query->groupBy(DB::raw("year, month"));
-
-                QueryLogger::logQuery($query);
-
-                return $query->get();
-               
-        });
+        return self::generateChartDataByParams($params, 'chartData_');
     }
+
     public static function generateChartDataForMultipleChannel($params)
     {
-        extract($params); 
+        return self::generateChartDataByParams($params, 'chartDataMultiple_', true);
+    }
 
-        $params = [
+    private function getLastDay(){
+        $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
+        $lastDay = end($lastThreeDays);
+
+        return $lastDay;
+    }
+
+    private function filterSalesByDateRange($sales_date, $lastDay){
+        if($lastDay <= $this->endDate) {
+            return $sales_date >= $this->startDate && $sales_date <= $lastDay;
+        } else {
+            return $sales_date >= $this->startDate && $sales_date <= $this->endDate;
+        }
+    }
+
+    private function getWeekCutOff($sales_date){
+        $weekCutoff = null;
+
+        if ($sales_date >= $this->startDate && $sales_date <= "{$this->yearMonth}-07") {
+            $weekCutoff = 'WK01';
+        } elseif ($sales_date >= "{$this->yearMonth}-08" && $sales_date <= "{$this->yearMonth}-14") {
+            $weekCutoff = 'WK02';
+        } elseif ($sales_date >= "{$this->yearMonth}-15" && $sales_date <= "{$this->yearMonth}-21") {
+            $weekCutoff = 'WK03';
+        } elseif ($sales_date >= "{$this->yearMonth}-22" && $sales_date <= $this->endDate) {
+            $weekCutoff = 'WK04';
+        }
+
+        return $weekCutoff;
+    }
+
+    private function getSwitchChannel($channelCode){
+        $channelClassification = null;
+
+        switch ($channelCode) {
+            case 'ONL':
+                $channelClassification = 'ECOMM';
+                break;
+            case 'DLR':
+            case 'CRP':
+            case 'OUT':
+                $channelClassification = 'DLR/CRP';
+                break;
+            case 'RTL':
+                $channelClassification = 'TOTAL-RTL';
+                break;
+            case 'FRA':
+                $channelClassification = 'FRA-DR';
+                break;
+            case 'SVC':
+                $channelClassification = 'SC';
+                break;
+            case 'CON':
+                $channelClassification = 'CON';
+                break;
+            default:
+                $channelClassification = 'OTHER';
+                break;
+        }
+
+        return $channelClassification;
+    }
+
+    private static function generateChartDataByParams($params, $cachePrefix, $includeChannelCode = false)
+    {
+        \Log::debug("Params For $cachePrefix");
+        foreach ($params as $key => $value) {
+            // Check if the value is an array
+            if (is_array($value)) {
+                // Log the array values
+                \Log::debug("$key => " . json_encode($value));
+            } else {
+                // Log the simple value
+                \Log::debug("$key => $value");
+            }
+        }
+
+        extract($params);
+
+        // Prepare parameters for caching
+        $paramsForKey = [
             $yearFrom,
             $yearTo,
             $monthFrom,
@@ -1167,111 +1038,74 @@ class StoreSalesDashboardReport extends Model
             implode('|', (array)$categories),
         ];
 
-        \Log::info('multiple start params');
-        \Log::info($yearFrom);
-        \Log::info($yearTo);
-        \Log::info($monthFrom);
-        \Log::info($monthTo);
-        \Log::info($stores);
-        \Log::info($concepts);
-        \Log::info($channels);
-        \Log::info($malls);
-        \Log::info($brands);
-        \Log::info($categories);
-        \Log::info('end params');
+        $cacheKey = $cachePrefix . md5(implode('|', $paramsForKey));
+        // \Log::debug($cacheKey);
 
-
-        $cacheKey = 'chartDataMultiple_' . md5(implode('|', $params));
-        \Log::info($cacheKey);
-
-
-        return Cache::remember($cacheKey, 50000, 
-            function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories) {
-            $query = DB::table('store_sales', 'ss')
-                ->select(
-                    DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
-                    'ch.channel_code',
-                    DB::raw("SUM(net_sales) AS net_sales")
-                )
-                ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
-                ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
-                ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
-                ->leftJoin('concepts as con', 'cu.concepts_id', 'con.id')
-                ->where('ss.is_final', 1)
-                ->whereBetween(DB::raw('YEAR(ss.sales_date)'), [$yearFrom, $yearTo])
-                ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [$monthFrom, $monthTo])
-                ->where('ss.quantity_sold', '>', 0)
-                ->whereNotNull('ss.net_sales')
-                ->where('ss.sold_price', '>', 0)
-                ->where('ss.channels_id', '!=', 12);
-
-                // Conditional parameters
-                if (!empty($stores) && $stores[0] !== 'all') {
-                    $query->whereIn('cu.id', (array)$stores);
-                }
-
-                if (!empty($concepts) && $concepts[0] !== 'all') {
-                    $query->whereIn('con.id', (array)$concepts);
-                }
-
-                if (!empty($channels) && $channels[0] !== 'all') {
-                    $query->whereIn('ch.id', (array)$channels);
-                }
-
-                if (!empty($malls) && $malls[0] !== 'all') {
-                    $query->whereIn('cu.mall', $malls);
-                }
-
-                if (!empty($brands) && $brands[0] !== 'all') {
-                    $query->whereIn('ai.brand_description', (array)$brands);
-                }
-
-                if (!empty($categories) && $categories[0] !== 'all') {
-                    $query->whereIn('ai.category_description', (array)$categories);
-                }
-
-                $query->groupBy(DB::raw("year, channel_code"));
-
-                QueryLogger::logQuery($query);
-
-                return $query->get();
-               
+        return Cache::remember($cacheKey, now()->endOfDay(), function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $includeChannelCode) {
+            return self::buildChartQuery($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $includeChannelCode)
+                ->get();
         });
     }
 
+    private static function buildChartQuery($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $includeChannelCode)
+    {
+        $query = DB::table('store_sales', 'ss')
+            ->select(
+                DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
+                DB::raw("SUM(net_sales) AS net_sales")
+            )
+            ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
+            ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
+            ->leftJoin('all_items as ai', 'ss.item_code', 'ai.item_code')
+            ->leftJoin('concepts as con', 'cu.concepts_id', 'con.id')
+            ->where('ss.is_final', 1)
+            ->whereBetween(DB::raw('YEAR(ss.sales_date)'), [$yearFrom, $yearTo])
+            ->whereBetween(DB::raw('MONTH(ss.sales_date)'), [$monthFrom, $monthTo])
+            ->where('ss.quantity_sold', '>', 0)
+            ->whereNotNull('ss.net_sales')
+            ->where('ss.sold_price', '>', 0)
+            ->where('ss.channels_id', '!=', 12);
 
+        // Apply conditional parameters
+        self::applyConditionalFilters($query, $stores, $concepts, $channels, $malls, $brands, $categories);
 
+        if ($includeChannelCode) {
+            $query->addSelect('ch.channel_code');
+            $query->groupBy(DB::raw("year, ch.channel_code")); // Group by channel code if included
+        } else {
+            $query->addSelect( DB::raw("CONCAT('M', MONTH(sales_date)) AS month"));
+            $query->groupBy(DB::raw("year, month")); // Only group by year and month sif not
+        }
 
-    public static function forTestData() {
+        QueryLogger::logQuery($query);
 
-       return Cache::remember('today12', 50000, function(){
-            return DB::select(DB::raw("
-            SELECT 
-                CONCAT('M', MONTH(store_sales.sales_date)) AS month,
-                CONCAT('Y', YEAR(store_sales.sales_date)) AS year,
-    
-        SUM(store_sales.net_sales) AS net_sales
-    FROM store_sales 
-    LEFT JOIN channels ON store_sales.channels_id = channels.id
-    LEFT JOIN customers ON store_sales.customers_id = customers.id
-    LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
-    LEFT JOIN concepts ON customers.concepts_id = concepts.id
-    WHERE store_sales.is_final = 1 
-        AND store_sales.sales_date BETWEEN '2022-01-01' AND '2024-09-30'
-        AND store_sales.quantity_sold > 0
-        AND store_sales.net_sales IS NOT NULL
-        AND store_sales.sold_price > 0
-        AND store_sales.channels_id != 12 
-        AND customers.id = 807
-        AND concepts.id = 324
-        AND channels.id = 6
-        AND customers.mall = 'CENTURY CITY'
-        AND all_items.brand_description = 'APPLE'
-        AND all_items.category_description = 'UNITS'
-    GROUP BY year, month;
+        return $query;
+    }
 
-    "));
-        });
-        
+    private static function applyConditionalFilters($query, $stores, $concepts, $channels, $malls, $brands, $categories)
+    {
+        if (!empty($stores) && $stores[0] !== 'all') {
+            $query->whereIn('cu.id', (array)$stores);
+        }
+
+        if (!empty($concepts) && $concepts[0] !== 'all') {
+            $query->whereIn('con.id', (array)$concepts);
+        }
+
+        if (!empty($channels) && $channels[0] !== 'all') {
+            $query->whereIn('ch.id', (array)$channels);
+        }
+
+        if (!empty($malls) && $malls[0] !== 'all') {
+            $query->whereIn('cu.mall', $malls);
+        }
+
+        if (!empty($brands) && $brands[0] !== 'all') {
+            $query->whereIn('ai.brand_description', (array)$brands);
+        }
+
+        if (!empty($categories) && $categories[0] !== 'all') {
+            $query->whereIn('ai.category_description', (array)$categories);
+        }
     }
 }
