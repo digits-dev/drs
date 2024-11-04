@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\AdminDashboardStoreSalesController;
 use App\Http\Controllers\AdminStoreSalesDashboardReportController;
+use App\Services\SalesDashboardReportService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminCmsUsersController;
 use App\Http\Controllers\AdminReportPrivilegesController;
@@ -217,22 +218,16 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('check-waive', [AdminCmsUsersController::class, 'checkWaive'])->name('check-waive-count');
     Route::get('show-change-pass', [RequestController::class, 'showChangePassword'])->name('change-password');
 
+    //DASHBOARD STORE AND DIGITS SALES REPORT SERVICE
+    Route::get('/fetch_sales_report/{salesTable}', [SalesDashboardReportService::class, 'fetchData'] )->name('fetch_sales_report');
+    Route::get('/export_sales_report_pdf/{salesTable}', [SalesDashboardReportService::class, 'exportPDF'] )->name('export_sales_report_pdf');
+    Route::get('/export_sales_report_excel/{salesTable}', [SalesDashboardReportService::class, 'exportExcel'] )->name('export_sales_report_excel');
+    Route::post('/ytd_update/{salesTable}', [SalesDashboardReportService::class, 'updateYtdSalesReport'] )->name('ytd_update');
 
-    //DASHBOARD REPORT
-    Route::get('/export_sales_report_pdf', [AdminStoreSalesDashboardReportController::class, 'exportPDF'] )->name('export_sales_report_pdf');
-    Route::get('/export_sales_report_excel', [AdminStoreSalesDashboardReportController::class, 'exportExcel'] )->name('export_sales_report_excel');
-    Route::get('/fetch_sales_report_data', [AdminStoreSalesDashboardReportController::class, 'fetchData'] )->name('fetch_store_sales');
-    Route::post('/ytd_update', [AdminStoreSalesDashboardReportController::class, 'updateYtdSalesReport'] )->name('ytd_update');
-
-
-    Route::get('/pdf_show', [AdminStoreSalesDashboardReportController::class, 'showPDF'] );
     Route::post('/save_chart', [AdminStoreSalesDashboardReportController::class, 'saveChart'] );
-
 
     Route::post('/generate_charts', [AdminDashboardStoreSalesController::class, 'generateCharts'])->name('charts');
     Route::post('/generate_charts2', [AdminDashboardStoreSalesController::class, 'generateCharts2'])->name('charts2');
-
-    Route::get('/charts_test', [AdminDashboardStoreSalesController::class, 'getIndex2'] );
 
 
 });

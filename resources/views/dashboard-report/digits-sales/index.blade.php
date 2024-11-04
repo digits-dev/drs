@@ -160,10 +160,10 @@
         </div>
 
         <div class="export">
-            <a href="{{ route('export_sales_report_excel', ['salesTable' => 'store_sales']) }}" class="btn btn-primary btn-sm pull-right">
+            <a href="{{ route('export_sales_report_excel', ['salesTable' => 'digits_sales']) }}" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download" aria-hidden="true"></i> Export to Excel
             </a>
-            <a id="exportPDF" href="{{ route('export_sales_report_pdf', ['salesTable' => 'store_sales']) }}?perChannel=false&category=total" class="btn btn-primary btn-sm pull-right">
+            <a id="exportPDF" href="{{ route('export_sales_report_pdf', ['salesTable' => 'digits_sales']) }}?perChannel=false&category=total" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download" aria-hidden="true"></i> Export to PDF
             </a>
 
@@ -211,7 +211,7 @@
 
         // Fetch data after the page has loaded
         $.ajax({
-            url: '{{ route("fetch_sales_report", ["salesTable" => "store_sales"]) }}' + `${reloadData ? '?reload_data' : '' }`, 
+            url: '{{ route("fetch_sales_report", ["salesTable" => "digits_sales"]) }}' + `${reloadData ? '?reload_data' : '' }`, 
             method: 'GET',
             success: function(data) {
                 $('#loading').hide(); 

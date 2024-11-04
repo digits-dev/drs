@@ -1,27 +1,13 @@
 <?php namespace App\Http\Controllers;
 
-	
 	use App\Models\Channel;
 	use App\Models\Concept;
-	use App\Models\SalesDashboardReport;
-	use App\Services\SalesDashboardReportService as SSDashboardReportService;
-	use Barryvdh\DomPDF\Facade as DomPDF;
-	use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
-	use Illuminate\Support\Facades\Log;
-	use Maatwebsite\Excel\Facades\Excel;
+	use Session;
+	use Request;
 	use DB;
 	use CRUDBooster;
-	use Exception;
-	use Illuminate\Http\Request;
 
-	class AdminStoreSalesDashboardReportController extends \crocodicstudio\crudbooster\controllers\CBController {
-		
-
-		protected $dashboardService;
-
-		public function __construct(SSDashboardReportService $dashboardService){
-			$this->dashboardService = $dashboardService;
-		}
+	class AdminReportDigitsSalesController extends \crocodicstudio\crudbooster\controllers\CBController {
 
 	    public function cbInit() {
 
@@ -41,7 +27,7 @@
 			$this->button_filter = false;
 			$this->button_import = false;
 			$this->button_export = false;
-			$this->table = "store_sales";
+			$this->table = "digits_sales";
 			# END CONFIGURATION DO NOT REMOVE THIS LINE
 
 			# START COLUMNS DO NOT REMOVE THIS LINE
@@ -90,8 +76,6 @@
 			$this->form[] = ['label'=>'Receipt Number','name'=>'receipt_number','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Reference Number','name'=>'reference_number','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Report Types Id','name'=>'report_types_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'report_types,id'];
-			$this->form[] = ['label'=>'Rr Flag','name'=>'rr_flag','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'Rr Flag Temp','name'=>'rr_flag_temp','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Sale Memo Reference','name'=>'sale_memo_reference','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Sales Date','name'=>'sales_date','type'=>'date','validation'=>'required|date','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Sales Date Yr Mo','name'=>'sales_date_yr_mo','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
@@ -106,51 +90,49 @@
 
 			# OLD START FORM
 			//$this->form = [];
-			//$this->form[] = ['label'=>'Apple Week Cutoff','name'=>'apple_week_cutoff','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Apple Yr Qtr Wk','name'=>'apple_yr_qtr_wk','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Batch Date','name'=>'batch_date','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Batch Number','name'=>'batch_number','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Channels Id','name'=>'channels_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'channels,channel_name'];
-			//$this->form[] = ['label'=>'Created By','name'=>'created_by','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Current Srp','name'=>'current_srp','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Customer Location','name'=>'customer_location','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Customers Id','name'=>'customers_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'customers,customer_name'];
-			//$this->form[] = ['label'=>'Digits Code','name'=>'digits_code','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Digits Code Rr Ref','name'=>'digits_code_rr_ref','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Dtp Ecom','name'=>'dtp_ecom','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Dtp Rf','name'=>'dtp_rf','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Employees Id','name'=>'employees_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'employees,employee_name'];
-			//$this->form[] = ['label'=>'Is Final','name'=>'is_final','type'=>'radio','validation'=>'required|integer','width'=>'col-sm-10','dataenum'=>'Array'];
-			//$this->form[] = ['label'=>'Is Valid','name'=>'is_valid','type'=>'radio','validation'=>'required|integer','width'=>'col-sm-10','dataenum'=>'Array'];
-			//$this->form[] = ['label'=>'Item Code','name'=>'item_code','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Item Description','name'=>'item_description','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Landed Cost','name'=>'landed_cost','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Net Sales','name'=>'net_sales','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Non Apple Week Cutoff','name'=>'non_apple_week_cutoff','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Non Apple Yr Mon Wk','name'=>'non_apple_yr_mon_wk','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Organizations Id','name'=>'organizations_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'organizations,organization_name'];
-			//$this->form[] = ['label'=>'Qtysold Csrp','name'=>'qtysold_csrp','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Qtysold Ecom','name'=>'qtysold_ecom','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Qtysold Lc','name'=>'qtysold_lc','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Qtysold Price','name'=>'qtysold_price','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Qtysold Rf','name'=>'qtysold_rf','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Qtysold Sc','name'=>'qtysold_sc','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Quantity Sold','name'=>'quantity_sold','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Receipt Number','name'=>'receipt_number','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Reference Number','name'=>'reference_number','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Report Types Id','name'=>'report_types_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'report_types,id'];
-			//$this->form[] = ['label'=>'Rr Flag','name'=>'rr_flag','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Rr Flag Temp','name'=>'rr_flag_temp','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Sale Memo Reference','name'=>'sale_memo_reference','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Sales Date','name'=>'sales_date','type'=>'date','validation'=>'required|date','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Sales Date Yr Mo','name'=>'sales_date_yr_mo','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Sales Month','name'=>'sales_month','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Sales Transaction Types Id','name'=>'sales_transaction_types_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'sales_transaction_types,id'];
-			//$this->form[] = ['label'=>'Sales Year','name'=>'sales_year','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Sold Price','name'=>'sold_price','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Store Cost','name'=>'store_cost','type'=>'money','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			//$this->form[] = ['label'=>'Systems Id','name'=>'systems_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'systems,system_name'];
-			//$this->form[] = ['label'=>'Updated By','name'=>'updated_by','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
+			//$this->form[] = ["label"=>"Apple Week Cutoff","name"=>"apple_week_cutoff","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Apple Yr Qtr Wk","name"=>"apple_yr_qtr_wk","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Batch Date","name"=>"batch_date","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Batch Number","name"=>"batch_number","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Channels Id","name"=>"channels_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"channels,channel_name"];
+			//$this->form[] = ["label"=>"Created By","name"=>"created_by","type"=>"number","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Current Srp","name"=>"current_srp","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Customer Location","name"=>"customer_location","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Customers Id","name"=>"customers_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"customers,customer_name"];
+			//$this->form[] = ["label"=>"Digits Code","name"=>"digits_code","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Digits Code Rr Ref","name"=>"digits_code_rr_ref","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Dtp Ecom","name"=>"dtp_ecom","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Dtp Rf","name"=>"dtp_rf","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Employees Id","name"=>"employees_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"employees,employee_name"];
+			//$this->form[] = ["label"=>"Is Final","name"=>"is_final","type"=>"radio","required"=>TRUE,"validation"=>"required|integer","dataenum"=>"Array"];
+			//$this->form[] = ["label"=>"Is Valid","name"=>"is_valid","type"=>"radio","required"=>TRUE,"validation"=>"required|integer","dataenum"=>"Array"];
+			//$this->form[] = ["label"=>"Item Code","name"=>"item_code","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Item Description","name"=>"item_description","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Landed Cost","name"=>"landed_cost","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Net Sales","name"=>"net_sales","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Non Apple Week Cutoff","name"=>"non_apple_week_cutoff","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Non Apple Yr Mon Wk","name"=>"non_apple_yr_mon_wk","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Organizations Id","name"=>"organizations_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"organizations,organization_name"];
+			//$this->form[] = ["label"=>"Qtysold Csrp","name"=>"qtysold_csrp","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Qtysold Ecom","name"=>"qtysold_ecom","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Qtysold Lc","name"=>"qtysold_lc","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Qtysold Price","name"=>"qtysold_price","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Qtysold Rf","name"=>"qtysold_rf","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Qtysold Sc","name"=>"qtysold_sc","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Quantity Sold","name"=>"quantity_sold","type"=>"number","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Receipt Number","name"=>"receipt_number","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Reference Number","name"=>"reference_number","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Report Types Id","name"=>"report_types_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"report_types,id"];
+			//$this->form[] = ["label"=>"Sale Memo Reference","name"=>"sale_memo_reference","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Sales Date","name"=>"sales_date","type"=>"date","required"=>TRUE,"validation"=>"required|date"];
+			//$this->form[] = ["label"=>"Sales Date Yr Mo","name"=>"sales_date_yr_mo","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+			//$this->form[] = ["label"=>"Sales Month","name"=>"sales_month","type"=>"number","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Sales Transaction Types Id","name"=>"sales_transaction_types_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"sales_transaction_types,id"];
+			//$this->form[] = ["label"=>"Sales Year","name"=>"sales_year","type"=>"number","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Sold Price","name"=>"sold_price","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Store Cost","name"=>"store_cost","type"=>"money","required"=>TRUE,"validation"=>"required|integer|min:0"];
+			//$this->form[] = ["label"=>"Systems Id","name"=>"systems_id","type"=>"select2","required"=>TRUE,"validation"=>"required|integer|min:0","datatable"=>"systems,system_name"];
+			//$this->form[] = ["label"=>"Updated By","name"=>"updated_by","type"=>"number","required"=>TRUE,"validation"=>"required|integer|min:0"];
 			# OLD END FORM
 
 			/* 
@@ -424,6 +406,8 @@
 
 	    }
 
+
+
 	    //By the way, you can still create your own method in here... :) 
 
 		public function getIndex()
@@ -433,186 +417,12 @@
 			}
 
 			$data = [];
-			$data['page_title'] = 'Store Sales Dashboard Report';
-			$data['loading'] = true; 
+			$data['page_title'] = 'Digits Sales Dashboard Report';
+			$data['loading'] = true; // Add a loading state
 
-			return view('dashboard-report.store-sales.index', $data);
+
+			return view('dashboard-report.digits-sales.index', $data);
 		}
 
-		// New method to fetch the data asynchronously
-		public function fetchData()
-		{
-
-			$reloadData = request()->has('reload_data');
-
-			// dd($reloadData);
-
-			$generatedData = $reloadData ? $this->dashboardService->generateSalesReport('store_sales') : $this->dashboardService->getData('store_sales');
-			$month = $generatedData['yearData']['month'];
-
-			if($month == 1){
-
-				$prevYear = $generatedData['yearData']['nextPreviousYear'];
-				$currYear = $generatedData['yearData']['previousYear'];
-
-				$currYearForDaily = $generatedData['yearData']['currentYear'];
-
-			} else {
-				$prevYear = $generatedData['yearData']['previousYear'];
-				$currYear = $generatedData['yearData']['currentYear'];
-			}
-
-			$channel_codes = $generatedData['channel_codes'];
-			$lastThreeDaysDates = $generatedData['lastThreeDaysDates'];
-			$channels = Channel::get(['id', 'channel_name']);
-			$concepts = Concept::get(['id', 'concept_name']);
-
-
-			$data = [
-				'channel_codes' => $channel_codes,
-				'prevYear' => $prevYear,
-				'currYear' => $currYear,
-				'lastThreeDaysDates' => $lastThreeDaysDates,
-			];
-			
-			// Generate HTML for each tab using partial views
-			$tab1Html = view('dashboard-report.partials.daily', [
-				'channel_codes' => $channel_codes,
-				'prevYear' => $month == 1 ? $currYear : $prevYear,
-				'currYear' => $month == 1 ? $currYearForDaily : $currYear,
-				'lastThreeDaysDates' => $lastThreeDaysDates,
-			])->render();
-			
-			$tab2Html = view('dashboard-report.partials.monthly',
-			 $data)->render();
-			 
-			$tab3Html = view('dashboard-report.partials.quarterly',
-			 $data)->render();
-
-			$tab4Html = view('dashboard-report.partials.ytd', [
-				'channel_codes' => $channel_codes,
-				'prevYear' => $prevYear,
-				'currYear' => $currYear,
-				'lastThreeDaysDates' => $lastThreeDaysDates,
-				'month' => $month, 
-				'channels' => $channels, 
-				'concepts' => $concepts,
-			])->render();
-		
-			return response()->json([
-				'tab1Html' => $tab1Html,
-				'tab2Html' => $tab2Html,
-				'tab3Html' => $tab3Html,
-				'tab4Html' => $tab4Html,
-			]);
-		}
-
-		public function saveChart2(Request $request)
-		{
-			$data = $request->input('image');
-
-			// Remove the data URL prefix
-			$data = str_replace('data:image/png;base64,', '', $data);
-			$data = str_replace(' ', '+', $data);
-
-			// Prepare the image data URL
-			$imageData = 'data:image/png;base64,' . $data;
-
-			try {
-				// Prepare additional data for the PDF view
-				$pdfData = [
-					'chartImage' => $imageData, // Pass the base64 image data directly
-					// Add any other data you want to include in the PDF view
-				];
-
-				// Load the view and generate the PDF
-				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf2', $pdfData)
-					->setPaper('A4', 'landscape')
-					->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
-
-				// Return the PDF as a download
-				return response()->stream(
-					function () use ($pdf) {
-						echo $pdf->output();
-					},
-					200,
-					[
-						'Content-Type' => 'application/pdf',
-						'Content-Disposition' => 'attachment; filename="document.pdf"',
-					]
-				);
-			} catch (\Exception $e) {
-				// Handle exceptions and log errors
-				Log::error('PDF Generation Error: ' . $e->getMessage());
-				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
-			}
-		}
-	
-
-		public function saveChart(Request $request)
-		{
-			$images = $request->input('images'); 
-			$data = $request->input('data'); 
-
-			function hasManyItems($string, $minCount = 5) {
-				return count(array_filter(array_map('trim', explode(',', $string)))) > $minCount;
-			}
-
-			function hasManyCharacters($string, $minLength = 160) {
-				// Trim the string and check its length
-				return strlen(trim($string)) > $minLength;
-			}
-
-			$hasManyStore = hasManyCharacters($data['Store']);
-			$hasManyChannel = hasManyCharacters($data['Channel']);
-			$hasManyBrand = hasManyCharacters($data['Brand']);
-			$hasManyCategory = hasManyCharacters($data['Category']);
-			$hasManyStoreConcept = hasManyCharacters($data['Store Concept']);
-			$hasManyStoreMall = hasManyCharacters($data['Mall']);
-
-			$hasManyValues = $hasManyStore || $hasManyChannel || $hasManyBrand || $hasManyCategory || $hasManyStoreConcept || $hasManyStoreMall;
-
-			// Prepare an array for base64 images
-			$pdfData = [];
-
-			foreach ($images as $image) {
-				// Remove the data URL prefix
-				$data = str_replace('data:image/png;base64,', '', $image);
-				$data = str_replace(' ', '+', $data);
-				
-				// Prepare the image data URL
-				$imageData = 'data:image/png;base64,' . $data;
-				$pdfData[] = $imageData; // Add to pdfData array
-			}
-
-			try {
-				// Load the view and generate the PDF with all images
-				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.test-pdf2', [
-					'chartImages' => $pdfData, 
-					'data' => $request->input('data'),
-					'hasManyValues' => $hasManyValues,
-					])
-					->setPaper('A4', 'landscape')
-					->setOptions(['margin-top' => 10, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
-
-				// Return the PDF as a download
-				return response()->stream(
-					function () use ($pdf) {
-						echo $pdf->output();
-					},
-					200,
-					[
-						'Content-Type' => 'application/pdf',
-						'Content-Disposition' => 'attachment; filename="document.pdf"',
-					]
-				);
-			} catch (\Exception $e) {
-				// Handle exceptions and log errors
-				Log::error('PDF Generation Error: ' . $e->getMessage());
-				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
-			}
-		}
-
-		
 
 	}

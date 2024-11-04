@@ -19,6 +19,7 @@
 <body>
 
     @php
+        $hasDTC = isset($channel_codes['DTC']) && $channel_codes['DTC'];
         $prevYear = $yearData['previousYear'];
         $currYear = $yearData['currentYear'];
         $month = $yearData['month'];
@@ -30,12 +31,16 @@
         <table>
             @foreach ($channel_codes as $channel => $channelData)
 
-                @if ($channel == 'OTHER' || $channel == '')
+                @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                    @continue
+                @endif
+
+                @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
                     @continue
                 @endif
                 
                 <x-excel.daily-sales-report 
-                    :isTopOpen="$loop->first"
+                    :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
                     :channel="$channel" 
                     :data="$channelData"
                     :prevYear="$yearData['previousYear']" 
@@ -53,12 +58,16 @@
         <table>
             @foreach ($channel_codes as $channel => $channelData)
 
-                @if ($channel == 'OTHER' || $channel == '')
+                @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                    @continue
+                @endif
+
+                @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
                     @continue
                 @endif
                 
                 <x-excel.monthly-sales-report 
-                    :isTopOpen="$loop->first"
+                    :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
                     :channel="$channel" 
                     :data="$channelData"
                     :prevYear="$yearData['previousYear']" 
@@ -73,12 +82,17 @@
     <div class="dashboard">
         <table>
             @foreach ($channel_codes as $channel => $channelData)
-                @if ($channel == 'OTHER' || $channel == '')
+            
+                @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                    @continue
+                @endif
+
+                @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
                     @continue
                 @endif
                 
                 <x-excel.quarterly-sales-report 
-                    :isTopOpen="$loop->first"
+                    :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
                     :channel="$channel" 
                     :data="$channelData"
                     :prevYear="$yearData['previousYear']" 

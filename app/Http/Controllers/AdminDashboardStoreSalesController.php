@@ -4,14 +4,14 @@
 	use App\Models\Channel;
 	use App\Models\Concept;
 	use App\Models\Customer;
-	use App\Models\StoreSalesDashboardReport;
+	use App\Models\SalesDashboardReport;
 	use Barryvdh\Snappy\Facades\SnappyPdf;
 	use Illuminate\Http\Request;
 	use Illuminate\Support\Facades\Log;
 	use Session;
 	use DB;
 	use CRUDBooster;
-	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
+	use App\Services\SalesDashboardReportService as SSDashboardReportService;
 	use Validator;
 
 
@@ -488,7 +488,7 @@
 
 			$years = self::getYearsInRange($requestData['yearFrom'], $requestData['yearTo']);
 
-			$generatedData = StoreSalesDashboardReport::generateChartDataForMultipleChannel($requestData);
+			$generatedData = SalesDashboardReport::generateChartDataForMultipleChannel($requestData);
 			\Log::info(json_encode($generatedData, JSON_PRETTY_PRINT));
 
 			if ($generatedData->isEmpty()) {
@@ -524,7 +524,7 @@
 			$years = self::getYearsInRange($requestData['yearFrom'], $requestData['yearTo']);
 			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
 
-			$generatedData = StoreSalesDashboardReport::generateChartData($requestData);
+			$generatedData = SalesDashboardReport::generateChartData($requestData);
 			\Log::info(json_encode($generatedData, JSON_PRETTY_PRINT));
 
 			if ($generatedData->isEmpty()) {
@@ -573,25 +573,6 @@
 			return $years;
 		}
 
-
-		public function getIndex2() {
-
-			if(!CRUDBooster::isView()) CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-			
-			$data = [];
-			$data['page_title'] = 'Store Sales Dashboard ';
-
-			$data['channels'] = Channel::get(['id','channel_name as name'] );
-			$data['concepts'] = Concept::get(['id','concept_name as name'] );
-			$data['customers'] = Customer::get(['id','customer_name as name'] );
-			$data['brands'] = AllItem::select('brand_description as name')->whereNotNull('brand_description')->distinct()->get();
-			$data['malls'] = Customer::select('mall as name')->whereNotNull('mall')->distinct()->get();
-			$data['categories'] = AllItem::select('category_description as name')->whereNotNull('category_description')->distinct()->get();
-
-			// \Log::info(json_encode($data, JSON_PRETTY_PRINT));
-
-			return view('dashboard-report.store-sales.dashboard-test', $data);
-		}
 
 		public function generateCharts2(Request $request)
 		{
