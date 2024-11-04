@@ -443,7 +443,7 @@ class StoreSalesDashboardReport extends Model
      //SECOND APPROACH - Utilizes Laravel collection methods to retrieve the appropriate data.
 
      public function getStoreSalesData() {
-        
+
         $cacheKey = $this->getCacheKey();
 
         Cache::forget($cacheKey); 
@@ -475,6 +475,50 @@ class StoreSalesDashboardReport extends Model
             ");
         });
 
+        // channels id "12" = EEE or Employee channel 
+    
+        return $storeSalesData;
+    }
+
+    public function getSalesDataFrom($salesTable = 'store_sales') {
+        $allowedTables = ['store_sales', 'digits_sales']; 
+
+        if (!in_array($salesTable, $allowedTables)) {
+            throw new \InvalidArgumentException("Invalid table name.");
+        }
+    
+        $cacheKey = $this->getCacheKey();
+    
+        // Clear previous cache
+        Cache::forget($cacheKey);
+    
+        // Cache the results of the query
+        $storeSalesData = Cache::remember($cacheKey, now()->endOfDay(), function() use ($salesTable) {
+            return DB::table($salesTable)
+                ->select([
+                    "{$salesTable}.sales_date",
+                    "{$salesTable}.net_sales",
+                    "{$salesTable}.reference_number",
+                    'channels.channel_code',
+                    "{$salesTable}.channels_id",
+                    'customers.concepts_id',
+                    'all_items.brand_description',
+                    'concepts.concept_name'
+                ])
+                ->leftJoin('channels', "{$salesTable}.channels_id", '=', 'channels.id')
+                ->leftJoin('customers', "{$salesTable}.customers_id", '=', 'customers.id')
+                ->leftJoin('all_items', "{$salesTable}.item_code", '=', 'all_items.item_code')
+                ->leftJoin('concepts', 'customers.concepts_id', '=', 'concepts.id')
+                ->where("{$salesTable}.is_final", 1)
+                ->whereYear("{$salesTable}.sales_date", $this->year)
+                ->whereBetween(DB::raw('MONTH(' . "{$salesTable}.sales_date" . ')'), [1, $this->month])
+                ->where("{$salesTable}.quantity_sold", '>', 0)
+                ->whereNotNull("{$salesTable}.net_sales")
+                ->where("{$salesTable}.sold_price", '>', 0)
+                ->where("{$salesTable}.channels_id", '!=', 12)
+                ->get();
+        });
+    
         // channels id "12" = EEE or Employee channel 
     
         return $storeSalesData;
@@ -928,10 +972,17 @@ class StoreSalesDashboardReport extends Model
         return collect($storeSalesData);
     }
 
-    private function getCacheKey(){
-        $today = date('Y-m-d');
-        $cacheKey = "store_sales_table_data_{$today}_{$this->year}";
+    // private function getCacheKey(){
+    //     $today = date('Y-m-d');
+    //     $cacheKey = "store_sales_table_data_{$today}_{$this->year}";
  
+    //     return $cacheKey;
+    // }
+
+    private function getCacheKey($salesTable = 'store_sales') {
+        $today = Carbon::today()->toDateString(); 
+        $cacheKey = "{$salesTable}_table_data_{$today}_{$this->year}";
+    
         return $cacheKey;
     }
 
