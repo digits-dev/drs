@@ -53,107 +53,126 @@
 
 </head>
 <body>
+    
 
     @php
         $hasDTC = isset($channel_codes['DTC']) && $channel_codes['DTC'];
         $prevYear = $yearData['previousYear'];
         $currYear = $yearData['currentYear'];
         $month = $yearData['month'];
+
+        // dd($reportType);
     @endphp
 
-    {{-- DAILY SALES REPORT  --}}
-    <div class="dashboard ">
-        @foreach ($channel_codes as $channel => $channelData)
-            @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
-                @continue
+    @switch($reportType)
+        @case('daily')
+            {{-- DAILY SALES REPORT  --}}
+            <div class="dashboard ">
+                @foreach ($channel_codes as $channel => $channelData)
+                    @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                        @continue
+                    @endif
+
+                    @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
+                        @continue
+                    @endif
+                    
+                    <x-pdf.daily-sales-report 
+                        :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
+                        :channel="$channel" 
+                        :data="$channelData"
+                        :prevYear="$yearData['previousYear']" 
+                        :currYear="$yearData['currentYear']"
+                        :lastThreeDaysDates="$lastThreeDaysDates"
+                    />
+                @endforeach
+            </div>
+        @break
+
+        @case('monthly')
+            {{-- MONTHLY SALES REPORT  --}}
+            @if(!$hasDTC)
+                <div class="page-break"></div>
             @endif
 
-            @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
-                @continue
-            @endif
+            <div class="dashboard ">
+                @foreach ($channel_codes as $channel => $channelData)
+                    @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                        @continue
+                    @endif
+
+                    @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
+                        @continue
+                    @endif
+                    
+                    <x-pdf.monthly-sales-report
+                        :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
+                        :channel="$channel" 
+                        :data="$channelData"
+                        :prevYear="$yearData['previousYear']" 
+                        :currYear="$yearData['currentYear']"
+                    />
+                @endforeach
+            </div>
             
-            <x-pdf.daily-sales-report 
-                :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
-                :channel="$channel" 
-                :data="$channelData"
-                :prevYear="$yearData['previousYear']" 
-                :currYear="$yearData['currentYear']"
-                :lastThreeDaysDates="$lastThreeDaysDates"
-            />
-        @endforeach
-    </div>
+        @break
 
-    {{-- MONTHLY SALES REPORT  --}}
-    @if(!$hasDTC)
-        <div class="page-break"></div>
-    @endif
+        @case('quarterly')
 
-    <div class="dashboard ">
-        @foreach ($channel_codes as $channel => $channelData)
-            @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
-                @continue
+            {{-- QUARTERLY SALES REPORT  --}}
+            @if(!$hasDTC)
+                <div class="page-break"></div>
             @endif
 
-            @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
-                @continue
+            <div class="dashboard ">
+                @foreach ($channel_codes as $channel => $channelData)
+                    @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                        @continue
+                    @endif
+
+                    @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
+                        @continue
+                    @endif
+                    
+                    <x-quarterly-sales-report 
+                        :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
+                        :channel="$channel" 
+                        :data="$channelData"
+                        :prevYear="$yearData['previousYear']" 
+                        :currYear="$yearData['currentYear']"
+                    />
+                @endforeach
+            </div>
+        
+        @break
+
+        @case('ytd')
+
+            {{-- YTD SALES REPORT  --}}
+            @if(!$hasDTC)
+                <div class="page-break"></div>
             @endif
-            
-            <x-pdf.monthly-sales-report
-                :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
-                :channel="$channel" 
-                :data="$channelData"
-                :prevYear="$yearData['previousYear']" 
-                :currYear="$yearData['currentYear']"
-            />
-        @endforeach
-    </div>
 
-    {{-- QUARTERLY SALES REPORT  --}}
-    @if(!$hasDTC)
-        <div class="page-break"></div>
-    @endif
+            <div class="dashboard ">
+                @php
+                    $channelName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['channel_name'];
+                    $conceptName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['concept_name'];
+                @endphp
 
-    <div class="dashboard ">
-        @foreach ($channel_codes as $channel => $channelData)
-            @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
-                @continue
-            @endif
+                <x-pdf.ytd-sales-report
+                    :channelName="$channelName ? $channelName : 'ALL'"
+                    :storeConcept="$conceptName ? $conceptName : 'ALL'"
+                    :prevYear="$yearData['previousYear']" 
+                    :currYear="$yearData['currentYear']"
+                    :month="$yearData['month']"
+                    :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
+                    :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
+                />
+            </div>
+        @break
+    @endswitch
 
-            @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
-                @continue
-            @endif
-            
-            <x-quarterly-sales-report 
-                :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
-                :channel="$channel" 
-                :data="$channelData"
-                :prevYear="$yearData['previousYear']" 
-                :currYear="$yearData['currentYear']"
-            />
-        @endforeach
-    </div>
 
-    {{-- YTD SALES REPORT  --}}
-    @if(!$hasDTC)
-        <div class="page-break"></div>
-    @endif
-
-    <div class="dashboard ">
-        @php
-            $channelName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['channel_name'];
-            $conceptName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['concept_name'];
-        @endphp
-
-        <x-pdf.ytd-sales-report
-            :channelName="$channelName ? $channelName : 'ALL'"
-            :storeConcept="$conceptName ? $conceptName : 'ALL'"
-            :prevYear="$yearData['previousYear']" 
-            :currYear="$yearData['currentYear']"
-            :month="$yearData['month']"
-            :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
-            :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
-        />
-    </div>
 
     {{-- CHARTS  --}}
 

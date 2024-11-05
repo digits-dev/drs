@@ -293,6 +293,8 @@ class SalesDashboardReportService {
                 'sum_of_net_sales' => $sale['sum_of_net_sales'],
             ];
         }
+
+        // dd($data);
     }
 
     private function processSalesData($salesTable, $year, $month, $day, &$data) {
@@ -401,7 +403,10 @@ class SalesDashboardReportService {
     public function exportPDF($salesTable)
     {
 
+        $reportType = request()->query('reportType') ?? 'daily';
+
         $data = [];
+        $data['reportType'] = $reportType;
         $generatedData = self::getData($salesTable);
 
         if(empty($generatedData)){
@@ -410,6 +415,8 @@ class SalesDashboardReportService {
         
         // Merge the generated data into the data array
         $data = array_merge($data, $generatedData);
+
+        // dd($data);
 
         try {	
             // Load the view and generate the PDF
@@ -423,7 +430,7 @@ class SalesDashboardReportService {
 
 
             $dateTime = date('Y-m-d_H-i-s');
-            $fileName = "{$salesTable}-report_{$dateTime}.pdf";
+            $fileName = "{$reportType}_{$salesTable}_report_{$dateTime}.pdf";
 
             return $pdf->download($fileName);
         } catch (\Exception $e) {
@@ -436,8 +443,7 @@ class SalesDashboardReportService {
 
     public function showPDF(Request $request){
         $data = [];
-        $data['page_title'] = 'Store Sales Dashboard Report';
-
+        $data['reportType'] = request()->query('reportType') ?? 'daily';
         $generatedData = self::getData('digits_sales');
 
         if(empty($generatedData)){
@@ -451,10 +457,21 @@ class SalesDashboardReportService {
 
     public function exportExcel($salesTable){
 
-        $dateTime = date('Y-m-d_H-i-s');
-        $fileName = "{$salesTable}-report_{$dateTime}.xlsx";
+        $reportType = request()->query('reportType') ?? 'daily';
 
-        $data = self::getData($salesTable);
+        $dateTime = date('Y-m-d_H-i-s');
+        $fileName = "{$reportType}_{$salesTable}_report_{$dateTime}.xlsx";
+
+        $data = [];
+        $data['reportType'] = $reportType;
+        $generatedData = self::getData($salesTable);
+
+        if(empty($generatedData)){
+            $generatedData = self::generateSalesReport($salesTable);
+        }
+        
+        // Merge the generated data into the data array
+        $data = array_merge($data, $generatedData);
 
         return Excel::download(new SalesDashboardReportExport($data), $fileName);
     }

@@ -436,6 +436,7 @@
 			$data['page_title'] = 'Store Sales Dashboard Report';
 			$data['loading'] = true; 
 
+			
 			return view('dashboard-report.store-sales.index', $data);
 		}
 

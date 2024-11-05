@@ -148,9 +148,14 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="type">Chart Type:</label>
-                                    <select class="form-control select2" id="type" name="types[]" multiple='multiple' required>
-                                        <option value="pie" selected >PIE CHART</option>
+                                    <label for="channel">Channel:</label>
+                                    <select class="form-control select2" id="channel" name="channels[]"  multiple='multiple' required>
+                                        <option value="all" selected>ALL</option>
+            
+                                        @foreach ($channels as $channel)
+                                            <option value="{{$channel->id}}">{{$channel->name}}</option>
+                                        @endforeach
+                            
                                     </select>
                                 </div>
 
@@ -159,7 +164,7 @@
                                     <select class="form-control" id="yearFrom" name="year_from" required>
                                         <option value="" disabled selected>Select Year</option>
                                         @php
-                                            $startYear = 2019;
+                                            $startYear = 2020;
                                             $currentYear = date('Y');
                                         @endphp
                                         @for ($year = $startYear; $year <= $currentYear; $year++)
@@ -226,21 +231,22 @@
                                 <div class="form-group">
                                     <label for="group">Group:</label>
                                     <select class="form-control" id="group" name="group" >
-                                        <option value="" disabled selected>Select Group</option>
+                                        <option value="all" selected>ALL</option>
+                                        <option value="apple" >APPLE</option>
+                                        <option value="non-apple" >NON APPLE</option>
+
                                     </select>
                                 </div> 
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="channel">Channel:</label>
-                                    <select class="form-control select2" id="channel" name="channels[]"  multiple='multiple' required>
-                                        <option value="all" selected>ALL</option>
-            
-                                        @foreach ($channels as $channel)
-                                            <option value="{{$channel->id}}">{{$channel->name}}</option>
-                                        @endforeach
-                            
+                                    <label for="type">Chart Type:</label>
+                                    <select class="form-control select2" id="type" name="types[]" multiple='multiple' required>
+                                        <option value="all">ALL</option>
+                                        <option value="pie" selected >PIE CHART</option>
+                                        <option value="line">LINE CHART</option>
+                                        <option value="bar">BAR CHART</option>
                                     </select>
                                 </div>
 
@@ -249,7 +255,7 @@
                                     <select class="form-control" id="yearTo" name="year_to" required>
                                         <option value="" disabled selected>Select Year</option>
                                         @php
-                                            $startYear = 2019;
+                                            $startYear = 2020;
                                             $currentYear = date('Y');
                                         @endphp
                                         @for ($year = $startYear; $year <= $currentYear; $year++)
@@ -402,7 +408,9 @@ $(function() {
     // Handle the "ALL" option
     const selectors = ['#store', '#channel', '#brand', '#category', '#storeConcept', '#mall', '#type'];
     selectors.forEach(selector => {
-        $(selector + ' option:not(:first-child)').prop('disabled', true);
+        if(selector != '#type'){
+            $(selector + ' option:not(:first-child)').prop('disabled', true);
+        }
         handleSelect2Event(selector);
     });
 
@@ -411,19 +419,23 @@ $(function() {
         const channelValue = $(this).val();
 
         if(channelValue){
-            const condition = channelValue[0];
+            const hasAll = channelValue.includes('all');
+            // const condition = channelValue[0];
             const $select = $('#type');
             $select.empty();
 
-            if (condition === 'all') {
+            if (channelValue.length > 1 || hasAll) {
+                $select.append(new Option('ALL', 'all'));
                 $select.append(new Option('PIE CHART', 'pie'));
+                $select.append(new Option('LINE GRAPH', 'line'));
+                $select.append(new Option('BAR GRAPH', 'bar'));
             } else {
                 $select.append(new Option('ALL', 'all'));
                 $select.append(new Option('LINE GRAPH', 'line'));
                 $select.append(new Option('BAR GRAPH', 'bar'));
             }
 
-            $select.val($select.find('option:first').val()).trigger('change');
+            $select.val($select.find('option:eq(1)').val()).trigger('change');
         }
     });
 
@@ -509,6 +521,11 @@ $(function() {
     function handleSuccessResponse(data) {
         $('#noDataMessage').hide();
 
+        //empty storage so it doesn't stack the charts
+        chartImagesToDownload.length = 0;
+
+        console.log(data);
+
         if (data.chartData) {
             processChartData(data);
         } else {
@@ -522,16 +539,19 @@ $(function() {
     function processChartData(data) {
         const types = $('#type').val();
 
-
-        if (data.multipleChannel) {
-            drawChartMultipleChannel(data.chartData, data.years);
-            data.years.forEach(year => drawChartMultipleChannelByYear(data.chartData, year));
-        } else {
+        if (data.chartData?.pieData) {
+            // drawChartMultipleChannel(data.chartData, data.years);
+            data.years.forEach(year => drawChartMultipleChannelByYear(data.chartData?.pieData, year));
+        } 
+        
+        if (data.chartData?.lineBarData) {
             const chartTypes = ['line', 'bar'];
             const selectedTypes = types[0] === 'all' ? chartTypes : types;
 
             selectedTypes.forEach(type => {
-                drawChartWithDynamicMonths(data.chartData, data.years, type);
+                if(type != 'pie'){
+                    drawChartWithDynamicMonths(data.chartData?.lineBarData, data?.years, type);
+                }
             });
         }
     }
@@ -586,17 +606,17 @@ $(function() {
     }
 
     function populateDivForSelectedInputsInForm(formData) {
-        let channelValues = $('#channel').val().map(value => $('#channel option[value="' + value + '"]').text()).join(', ');
-        let chartType = channelValues === "ALL" ? 'PIE CHART' : $('#type').val().map(value => $('#type option[value="' + value + '"]').text()).join(', ');
+        // let channelValues = $('#channel').val().map(value => $('#channel option[value="' + value + '"]').text()).join(', ');
+        // let chartType = channelValues === "ALL" ? 'PIE CHART' : $('#type').val().map(value => $('#type option[value="' + value + '"]').text()).join(', ');
 
         let values = {
-            "Chart Type:": chartType,
+            "Chart Type:": $('#type').val().map(value => $('#type option[value="' + value + '"]').text()).join(', '),
             "Year From": $('#yearFrom option:selected').text(),
             "Year To": $('#yearTo option:selected').text(),
             "Month From": $('#monthFrom option:selected').text(),
             "Month To": $('#monthTo option:selected').text(),
             "Store": $('#store').val().map(value => $('#store option[value="' + value + '"]').text()).join(', '),  
-            "Channel": channelValues,
+            "Channel": $('#channel').val().map(value => $('#channel option[value="' + value + '"]').text()).join(', '),
             "Brand": $('#brand').val().join(', '), 
             "Category": $('#category').val().join(', '), 
             "Store Concept": $('#storeConcept').val().map(value => $('#storeConcept option[value="' + value + '"]').text()).join(', '), 
@@ -634,6 +654,7 @@ $(function() {
         $('#category').val('all').trigger('change');
         $('#storeConcept').val('all').trigger('change');
         $('#mall').val('all').trigger('change');
+        $('#group').val('all').trigger('change');
 
         //Clear the error texts
         $('.form-group .text-danger').remove();
@@ -719,7 +740,7 @@ $(function() {
         Object.keys(channelCodes).forEach(channel => {
             // const convertedChannel = getSwitchChannel(channel);
             
-            dataArray.push([`${channel}`, channelCodes[channel][`Y${year}`]|| 0]); 
+            dataArray.push([`${channel}`, channelCodes[channel][year]|| 0]); 
         });
 
         // Check if dataArray has enough data to draw the chart
@@ -748,7 +769,7 @@ $(function() {
         
         switch(channel){
             case 'RTL':
-                channel = 'TOTAL-RTL';
+                channel = 'RTL';
                 break;
             case 'ONL':
                 channel = 'ECOMM';
@@ -810,7 +831,7 @@ $(function() {
         return {
             title: `Sales Report from ${monthFrom} to ${monthTo} ${year}`,
             is3D: true,
-            pieSliceText: 'value',
+            // pieSliceText: 'value',
             chartArea: {
                 width: '50%',
                 height: '50%',
@@ -897,7 +918,7 @@ $(function() {
 
     function getRelevantMonths(months, years) {
         return Object.entries(months).filter(([_, monthData]) => {
-            return years.some(year => monthData[`Y${year}`] !== undefined);
+            return years.some(year => monthData[year] !== undefined);
         });
     }
 
@@ -913,7 +934,7 @@ $(function() {
             const rowData = [`${monthNames[monthIndex]}`]; // Start row with month name
 
             years.forEach(year => {
-                rowData.push(monthData[`Y${year}`] || 0); 
+                rowData.push(monthData[year] || 0); 
             });
 
             dataArray.push(rowData);

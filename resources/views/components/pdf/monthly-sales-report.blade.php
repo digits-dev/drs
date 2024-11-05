@@ -56,7 +56,7 @@
 
                 @php
                     switch ($channel) {
-                        case 'TOTAL-RTL':
+                        case 'RTL':
                             $channelCode = 'RETAIL';
                             break;
                         case 'DLR/CRP':

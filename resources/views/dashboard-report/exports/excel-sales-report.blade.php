@@ -25,104 +25,112 @@
         $month = $yearData['month'];
     @endphp
 
+    @switch($reportType)
+        @case('daily')
+            {{-- DAILY SALES REPORT  --}}
+            <div class="dashboard">
+                <table>
+                    @foreach ($channel_codes as $channel => $channelData)
 
-    {{-- DAILY SALES REPORT  --}}
-    <div class="dashboard">
-        <table>
-            @foreach ($channel_codes as $channel => $channelData)
+                        @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                            @continue
+                        @endif
 
-                @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
-                    @continue
-                @endif
+                        @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
+                            @continue
+                        @endif
+                        
+                        <x-excel.daily-sales-report 
+                            :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
+                            :channel="$channel" 
+                            :data="$channelData"
+                            :prevYear="$yearData['previousYear']" 
+                            :currYear="$yearData['currentYear']"
+                            :lastThreeDaysDates="$lastThreeDaysDates"
 
-                @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
-                    @continue
-                @endif
-                
-                <x-excel.daily-sales-report 
-                    :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
-                    :channel="$channel" 
-                    :data="$channelData"
-                    :prevYear="$yearData['previousYear']" 
-                    :currYear="$yearData['currentYear']"
-                    :lastThreeDaysDates="$lastThreeDaysDates"
+                        />
+                    @endforeach
+                </table>
+            </div>
+        @break
 
-                />
-            @endforeach
-        </table>
-    </div>
+        @case('monthly')
+            {{-- MONTHLY SALES REPORT  --}}
+            <div class="dashboard">
+                <table>
+                    @foreach ($channel_codes as $channel => $channelData)
 
+                        @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                            @continue
+                        @endif
 
-    {{-- MONTHLY SALES REPORT  --}}
-    <div class="dashboard">
-        <table>
-            @foreach ($channel_codes as $channel => $channelData)
+                        @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
+                            @continue
+                        @endif
+                        
+                        <x-excel.monthly-sales-report 
+                            :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
+                            :channel="$channel" 
+                            :data="$channelData"
+                            :prevYear="$yearData['previousYear']" 
+                            :currYear="$yearData['currentYear']"
 
-                @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
-                    @continue
-                @endif
+                        />
+                    @endforeach
+                </table>
+            </div>
+        @break
 
-                @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
-                    @continue
-                @endif
-                
-                <x-excel.monthly-sales-report 
-                    :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
-                    :channel="$channel" 
-                    :data="$channelData"
-                    :prevYear="$yearData['previousYear']" 
-                    :currYear="$yearData['currentYear']"
+        @case('quarterly')
+            {{-- QUARTERLY SALES REPORT  --}}
+            <div class="dashboard">
+                <table>
+                    @foreach ($channel_codes as $channel => $channelData)
+                    
+                        @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
+                            @continue
+                        @endif
 
-                />
-            @endforeach
-        </table>
-    </div>
+                        @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
+                            @continue
+                        @endif
+                        
+                        <x-excel.quarterly-sales-report 
+                            :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
+                            :channel="$channel" 
+                            :data="$channelData"
+                            :prevYear="$yearData['previousYear']" 
+                            :currYear="$yearData['currentYear']"
 
-    {{-- QUARTERLY SALES REPORT  --}}
-    <div class="dashboard">
-        <table>
-            @foreach ($channel_codes as $channel => $channelData)
-            
-                @if ($hasDTC && ($channel == 'OTHER' || $channel == '' || $channel == 'TOTAL'))
-                    @continue
-                @endif
+                        />
+                    @endforeach
+                </table>
+            </div>
+        @break
 
-                @if (!$hasDTC && ($channel == 'OTHER' || $channel == ''))
-                    @continue
-                @endif
-                
-                <x-excel.quarterly-sales-report 
-                    :isTopOpen="$channel == 'TOTAL' || $channel == 'DTC'"
-                    :channel="$channel" 
-                    :data="$channelData"
-                    :prevYear="$yearData['previousYear']" 
-                    :currYear="$yearData['currentYear']"
+        @case('ytd')
+            {{-- YTD SALES REPORT  --}}
+            <div class="dashboard">
+                @php
+                    $channelName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['channel_name'];
+                    $conceptName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['concept_name'];
+                @endphp
+                <table>
+                    <x-excel.ytd-sales-report 
+                        :channelName="$channelName ? $channelName : 'ALL'"
+                        :storeConcept="$conceptName ? $conceptName : 'ALL'"
+                        :prevYear="$yearData['previousYear']" 
+                        :currYear="$yearData['currentYear']"
+                        :month="$yearData['month']"
+                        :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
+                        :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
 
-                />
-            @endforeach
-        </table>
-    </div>
-
-
-    {{-- YTD SALES REPORT  --}}
-    <div class="dashboard">
-        @php
-            $channelName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['channel_name'];
-            $conceptName = $channel_codes['TOTAL'][$currYear]['ytd']['SELECTED']['concept_name'];
-        @endphp
-        <table>
-            <x-excel.ytd-sales-report 
-                :channelName="$channelName ? $channelName : 'ALL'"
-                :storeConcept="$conceptName ? $conceptName : 'ALL'"
-                :prevYear="$yearData['previousYear']" 
-                :currYear="$yearData['currentYear']"
-                :month="$yearData['month']"
-                :prevYearYTDData="$channel_codes['TOTAL'][$prevYear]['ytd']"
-                :currYearYTDData="$channel_codes['TOTAL'][$currYear]['ytd']"
-
-            />
-        </table>
-    </div>
+                    />
+                </table>
+            </div>
+        @break
+    @endswitch
+   
 </body>
 </html>
 

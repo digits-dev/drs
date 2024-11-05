@@ -153,7 +153,7 @@ class SalesDashboardReport extends Model
             CASE 
                 WHEN channel_code = 'ONL' THEN 'ECOMM'
                 WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'RTL' THEN 'RTL'
                 WHEN channel_code = 'FRA' THEN 'FRA-DR'
                 WHEN channel_code = 'SVC' THEN 'SC'
                 WHEN channel_code = 'CON' THEN 'CON'
@@ -165,7 +165,7 @@ class SalesDashboardReport extends Model
         "))
         ->whereBetween('sales_date', [$this->startDate, $this->endDate])
         ->groupBy('channel_classification', DB::raw('week_cutoff WITH ROLLUP'))
-        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
         ->get()->map(function($item){
             if(is_null($item->week_cutoff)){
                 $item->week_cutoff = 'TOTAL';
@@ -228,7 +228,7 @@ class SalesDashboardReport extends Model
             CASE 
                 WHEN channel_code = 'ONL' THEN 'ECOMM'
                 WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP' -- Include 'OUT' if needed, or else it become others
-                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'RTL' THEN 'RTL'
                 WHEN channel_code = 'FRA' THEN 'FRA-DR'
                 WHEN channel_code = 'SVC' THEN 'SC'
                 WHEN channel_code = 'CON' THEN 'CON'
@@ -267,7 +267,7 @@ class SalesDashboardReport extends Model
             CASE 
                 WHEN channel_code = 'ONL' THEN 'ECOMM'
                 WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'RTL' THEN 'RTL'
                 WHEN channel_code = 'FRA' THEN 'FRA-DR'
                 WHEN channel_code = 'SVC' THEN 'SC'
                 WHEN channel_code = 'CON' THEN 'CON'
@@ -278,7 +278,7 @@ class SalesDashboardReport extends Model
         "))
         ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
         ->groupBy('channel_classification', DB::raw('month_cutoff WITH ROLLUP'))
-        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
         ->get()->map(function($item){
             if(is_null($item->month_cutoff)){
                 $item->month_cutoff = 'TOTAL';
@@ -310,7 +310,7 @@ class SalesDashboardReport extends Model
             CASE 
                 WHEN channel_code = 'ONL' THEN 'ECOMM'
                 WHEN channel_code IN ('DLR', 'CRP', 'OUT') THEN 'DLR/CRP'
-                WHEN channel_code = 'RTL' THEN 'TOTAL-RTL'
+                WHEN channel_code = 'RTL' THEN 'RTL'
                 WHEN channel_code = 'FRA' THEN 'FRA-DR'
                 WHEN channel_code = 'SVC' THEN 'SC'
                 WHEN channel_code = 'CON' THEN 'CON'
@@ -321,7 +321,7 @@ class SalesDashboardReport extends Model
         "))
         ->whereBetween(DB::raw('MONTH(sales_date)'),[1, $this->previousMonth])
         ->groupBy('channel_classification', DB::raw('quarter_cutoff WITH ROLLUP'))
-        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'TOTAL-RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
+        ->orderByRaw("FIELD(channel_classification, 'ECOMM', 'RTL', 'SC', 'DLR/CRP', 'CON', 'FRA-DR', 'OTHER')")
         ->get()->map(function($item){
             if(is_null($item->quarter_cutoff)){
                 $item->quarter_cutoff = 'TOTAL';
@@ -504,6 +504,7 @@ class SalesDashboardReport extends Model
                     'customers.concepts_id',
                     'all_items.brand_description',
                     'concepts.concept_name'
+                    // 'customers.customer_name'
                 ])
                 ->leftJoin('channels', "{$salesTable}.channels_id", '=', 'channels.id')
                 ->leftJoin('customers', "{$salesTable}.customers_id", '=', 'customers.id')
@@ -775,7 +776,7 @@ class SalesDashboardReport extends Model
     }
 
 
-    public function getSalesPerQuarter($salesTable)
+    public function getSalesPerQuarter2($salesTable)
     {
 
         $dataCollection = $this->getDataCollection($salesTable);
@@ -800,10 +801,65 @@ class SalesDashboardReport extends Model
             'sum_of_net_sales' => $totalSales,
         ];
 
+        // dump($finalResult);
+
+
         return collect($finalResult);
     }
 
-    public function getSalesPerQuarterByChannel($salesTable)
+    public function getSalesPerQuarter($salesTable)
+    {
+        $dataCollection = $this->getDataCollection($salesTable);
+        $previousMonth = (int)$this->previousMonth; // Current month as a number
+
+        // Determine the current quarter and its start and end months
+        $currentQuarter = ceil($previousMonth / 3);
+        $quarters = [
+            1 => ['start' => '01-01', 'end' => '03-31'],
+            2 => ['start' => '04-01', 'end' => '06-30'],
+            3 => ['start' => '07-01', 'end' => '09-30'],
+            4 => ['start' => '10-01', 'end' => '12-31'],
+        ];
+
+        // Filter out only fully completed quarters
+        $completedQuarters = [];
+        for ($i = 1; $i < $currentQuarter; $i++) {
+            $completedQuarters[$i] = $quarters[$i];
+        }
+
+        // Filter and group by quarter only for completed quarters
+        $salesSummary = $dataCollection->filter(function ($row) use ($completedQuarters) {
+            foreach ($completedQuarters as $quarter) {
+                if ($row->sales_date >= "{$this->year}-{$quarter['start']}" && $row->sales_date <= "{$this->year}-{$quarter['end']}") {
+                    return true;
+                }
+            }
+            return false;
+        })->groupBy(function ($row) {
+            return 'Q' . ceil(date('n', strtotime($row->sales_date)) / 3);
+        })->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('net_sales'),
+            ];
+        });
+
+        // Prepare final result with ROLLUP equivalent
+        $finalResult = $salesSummary->toArray();
+        $totalSales = array_sum(array_column($finalResult, 'sum_of_net_sales'));
+
+        // Add total row
+        $finalResult['TOTAL'] = [
+            'sum_of_net_sales' => $totalSales,
+        ];
+
+
+        // dd($finalResult);
+
+        return collect($finalResult);
+    }
+
+
+    public function getSalesPerQuarterByChannel2($salesTable)
     {
         $dataCollection = $this->getDataCollection($salesTable);
 
@@ -857,8 +913,91 @@ class SalesDashboardReport extends Model
             ]));
         }
 
+        // dd($finalResult);
+
+
         return $finalResult->values(); // Reset keys and return
     }
+
+    public function getSalesPerQuarterByChannel($salesTable)
+    {
+        $dataCollection = $this->getDataCollection($salesTable);
+        $previousMonth = (int)$this->previousMonth; // Current month as a number
+
+        // Determine the current quarter and its start and end months
+        $currentQuarter = ceil($previousMonth / 3);
+        $quarters = [
+            1 => ['start' => '01-01', 'end' => '03-31'],
+            2 => ['start' => '04-01', 'end' => '06-30'],
+            3 => ['start' => '07-01', 'end' => '09-30'],
+            4 => ['start' => '10-01', 'end' => '12-31'],
+        ];
+
+        // Filter out only fully completed quarters
+        $completedQuarters = [];
+        for ($i = 1; $i < $currentQuarter; $i++) {
+            $completedQuarters[$i] = $quarters[$i];
+        }
+
+        // Group by quarter and channel classification
+        $salesSummary = $dataCollection->filter(function ($row) use ($completedQuarters) {
+            foreach ($completedQuarters as $quarter) {
+                if ($row->sales_date >= "{$this->year}-{$quarter['start']}" && $row->sales_date <= "{$this->year}-{$quarter['end']}") {
+                    return true;
+                }
+            }
+            return false;
+        })->map(function ($row) {
+            // Determine channel classification
+            $channelClassification = $this->getSwitchChannel($row->channel_code);
+            $quarterCutoff = 'Q' . ceil(date('n', strtotime($row->sales_date)) / 3);
+
+            return [
+                'quarter_cutoff' => $quarterCutoff,
+                'channel_classification' => $channelClassification,
+                'net_sales' => $row->net_sales,
+                'reference_number' => $row->reference_number,
+            ];
+        })->groupBy(function ($item) {
+            return "{$item['quarter_cutoff']}_{$item['channel_classification']}";
+        })->map(function ($group) {
+            return [
+                'quarter_cutoff' => $group->first()['quarter_cutoff'],
+                'channel_classification' => $group->first()['channel_classification'],
+                'sum_of_net_sales' => $group->sum('net_sales'),
+                'min_reference_number' => $group->min('reference_number'),
+            ];
+        });
+
+        // Prepare final result with ROLLUP equivalent
+        $finalResult = collect();
+        foreach ($salesSummary as $key => $summary) {
+            [$quarterCutoff, $channelClassification] = explode('_', $key);
+            $finalResult->push(array_merge($summary, [
+                'quarter_cutoff' => $quarterCutoff,
+                'channel_classification' => $channelClassification,
+            ]));
+        }
+
+        // Add totals for each classification
+        $totalSummary = $finalResult->groupBy('channel_classification')->map(function ($group) {
+            return [
+                'sum_of_net_sales' => $group->sum('sum_of_net_sales'),
+                'min_reference_number' => $group->min('min_reference_number'),
+            ];
+        })->toArray();
+
+        // Append total summary to the final result
+        foreach ($totalSummary as $classification => $totals) {
+            $finalResult->push(array_merge($totals, [
+                'quarter_cutoff' => 'TOTAL',
+                'channel_classification' => $classification,
+            ]));
+        }
+
+        return $finalResult->values(); // Reset keys and return
+    }
+
 
 
     public function getYearToDate($salesTable)
@@ -985,15 +1124,6 @@ class SalesDashboardReport extends Model
         return $cacheKey;
     }
 
-    public static function generateChartData($params)
-    {
-        return self::generateChartDataByParams($params, 'chartData_');
-    }
-
-    public static function generateChartDataForMultipleChannel($params)
-    {
-        return self::generateChartDataByParams($params, 'chartDataMultiple_', true);
-    }
 
     private function getLastDay(){
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
@@ -1039,7 +1169,7 @@ class SalesDashboardReport extends Model
                 $channelClassification = 'DLR/CRP';
                 break;
             case 'RTL':
-                $channelClassification = 'TOTAL-RTL';
+                $channelClassification = 'RTL';
                 break;
             case 'FRA':
                 $channelClassification = 'FRA-DR';
@@ -1061,8 +1191,20 @@ class SalesDashboardReport extends Model
         return $channelClassification;
     }
 
+
+    
+    public static function generateChartData($params)
+    {
+        return self::generateChartDataByParams($params, 'chartData_');
+    }
+
+    public static function generateChartDataForMultipleChannel($params)
+    {
+        return self::generateChartDataByParams($params, 'chartData_', true);
+    }
     private static function generateChartDataByParams($params, $cachePrefix, $includeChannelCode = false)
     {
+
         \Log::debug("Params For $cachePrefix");
         foreach ($params as $key => $value) {
             // Check if the value is an array
@@ -1089,23 +1231,31 @@ class SalesDashboardReport extends Model
             implode('|', (array)$malls),
             implode('|', (array)$brands),
             implode('|', (array)$categories),
+            $group,
         ];
 
         $cacheKey = $cachePrefix . md5(implode('|', $paramsForKey));
         // \Log::debug($cacheKey);
 
-        return Cache::remember($cacheKey, now()->endOfDay(), function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $includeChannelCode) {
-            return self::buildChartQuery($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $includeChannelCode)
+        $rawData = Cache::remember($cacheKey, now()->endOfDay(), function() use ($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $group) {
+            return self::buildRawDataQuery($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $group)
                 ->get();
         });
+
+        // Now, process the cached raw data as needed
+        return self::groupChartData($rawData, $includeChannelCode);
+   
+
     }
 
-    private static function buildChartQuery($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $includeChannelCode)
+    private static function buildRawDataQuery($yearFrom, $yearTo, $monthFrom, $monthTo, $stores, $concepts, $channels, $malls, $brands, $categories, $group)
     {
         $query = DB::table('store_sales', 'ss')
             ->select(
-                DB::raw("CONCAT('Y', YEAR(sales_date)) AS year"),
-                DB::raw("SUM(net_sales) AS net_sales")
+                'ss.sales_date',
+                'ss.net_sales',
+                'ch.channel_code',
+                'ai.brand_description'
             )
             ->leftJoin('channels as ch', 'ss.channels_id', 'ch.id')
             ->leftJoin('customers as cu', 'ss.customers_id', 'cu.id')
@@ -1120,23 +1270,33 @@ class SalesDashboardReport extends Model
             ->where('ss.channels_id', '!=', 12);
 
         // Apply conditional parameters
-        self::applyConditionalFilters($query, $stores, $concepts, $channels, $malls, $brands, $categories);
+        self::applyConditionalFilters($query, $stores, $concepts, $channels, $malls, $brands, $categories, $group);
 
-        if ($includeChannelCode) {
-            $query->addSelect('ch.channel_code');
-            $query->groupBy(DB::raw("year, ch.channel_code")); // Group by channel code if included
-        } else {
-            $query->addSelect( DB::raw("CONCAT('M', MONTH(sales_date)) AS month"));
-            $query->groupBy(DB::raw("year, month")); // Only group by year and month sif not
-        }
-
-        QueryLogger::logQuery($query);
+        \Log::info('RawData Query:');
+        QueryLogger::logQuery( $query);
 
         return $query;
+
+        // if ($includeChannelCode) {
+        //     $query->addSelect('ch.channel_code');
+        //     $query->groupBy(DB::raw("year, ch.channel_code")); // Group by channel code if included
+        // } else {
+        //     $query->addSelect( DB::raw("CONCAT('M', MONTH(sales_date)) AS month"));
+        //     $query->groupBy(DB::raw("year, month")); // Only group by year and month sif not
+        // }
     }
 
-    private static function applyConditionalFilters($query, $stores, $concepts, $channels, $malls, $brands, $categories)
+    private static function applyConditionalFilters($query, $stores, $concepts, $channels, $malls, $brands, $categories, $group)
     {
+        if ($group && $group !== 'all') {
+            if($group == 'apple'){
+                $query->whereIn('ai.brand_description', ['APPLE', 'BEATS']);
+            } else {
+                $query->whereNotIn('ai.brand_description', ['APPLE', 'BEATS']);
+
+            }
+        }
+
         if (!empty($stores) && $stores[0] !== 'all') {
             $query->whereIn('cu.id', (array)$stores);
         }
@@ -1160,5 +1320,42 @@ class SalesDashboardReport extends Model
         if (!empty($categories) && $categories[0] !== 'all') {
             $query->whereIn('ai.category_description', (array)$categories);
         }
+    }
+
+    private static function groupChartData($rawData, $includeChannelCode)
+    {
+        // Convert the raw data to a collection for easier manipulation
+        $collection = collect($rawData);
+
+
+
+        if ($includeChannelCode) {
+            return $collection->groupBy(function ($item) {
+                $channelCode = $item->channel_code;
+                $year = Carbon::parse($item->sales_date)->format('Y');
+                return $channelCode . '-' . $year;  // Combine channel_code and year as the key
+            })->map(function ($group, $key) {
+                // Extract channel_code and year from the composite key
+                list($channelCode, $year) = explode('-', $key);
+            
+                return [
+                    'year' => $year,
+                    'net_sales' => $group->sum('net_sales'),
+                    'channel_code' => $channelCode,
+                ];
+            });
+            
+        } else {
+            return $collection->groupBy(function ($item) {
+                return Carbon::parse($item->sales_date)->format('Y-m'); // Group by year and month
+            })->map(function ($group) {
+                return [
+                    'year' => Carbon::parse($group->first()->sales_date)->format('Y'),
+                    'month' => 'M' . Carbon::parse($group->first()->sales_date)->format('n'),
+                    'net_sales' => $group->sum('net_sales'),
+                ];
+            });
+        }
+
     }
 }

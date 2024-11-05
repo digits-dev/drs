@@ -153,17 +153,17 @@
 
     <div class="dashboard-nav-tabs">
         <div class="tabs">
-            <div class="tab active" data-tab="tab1">Daily Sales Report</div>
-            <div class="tab " data-tab="tab2">Monthly Sales Report</div>
-            <div class="tab" data-tab="tab3">Quarterly Sales Report</div>    
-            <div class="tab" data-tab="tab4">YTD Sales Report</div>
+            <div class="tab active" data-tab="daily">Daily Sales Report</div>
+            <div class="tab " data-tab="monthly">Monthly Sales Report</div>
+            <div class="tab" data-tab="quarterly">Quarterly Sales Report</div>    
+            <div class="tab" data-tab="ytd">YTD Sales Report</div>
         </div>
 
         <div class="export">
-            <a href="{{ route('export_sales_report_excel', ['salesTable' => 'store_sales']) }}" class="btn btn-primary btn-sm pull-right">
+            <a id="exportExcel" href="{{ route('export_sales_report_excel', ['salesTable' => 'store_sales']) }}" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download" aria-hidden="true"></i> Export to Excel
             </a>
-            <a id="exportPDF" href="{{ route('export_sales_report_pdf', ['salesTable' => 'store_sales']) }}?perChannel=false&category=total" class="btn btn-primary btn-sm pull-right">
+            <a id="exportPDF" href="{{ route('export_sales_report_pdf', ['salesTable' => 'store_sales']) }}" class="btn btn-primary btn-sm pull-right">
                 <i class="fa fa-download" aria-hidden="true"></i> Export to PDF
             </a>
 
@@ -182,10 +182,10 @@
     </div>
 
     <div class="tab-content-container">
-        <div id="tab1" class="tab-content active"></div>
-        <div id="tab2" class="tab-content"></div>
-        <div id="tab3" class="tab-content"></div>
-        <div id="tab4" class="tab-content"></div>
+        <div id="daily" class="tab-content active"></div>
+        <div id="monthly" class="tab-content"></div>
+        <div id="quarterly" class="tab-content"></div>
+        <div id="ytd" class="tab-content"></div>
     </div>
 
 </div>
@@ -219,10 +219,10 @@
                 $('.export').show();
 
                 // Populate each tab with data
-                $('#tab1').html(data.tab1Html);
-                $('#tab2').html(data.tab2Html);
-                $('#tab3').html(data.tab3Html);
-                $('#tab4').html(data.tab4Html);
+                $('#daily').html(data.tab1Html);
+                $('#monthly').html(data.tab2Html);
+                $('#quarterly').html(data.tab3Html);
+                $('#ytd').html(data.tab4Html);
 
                 // Initialize Select2
                 $('#channelSelector').select2();
@@ -242,7 +242,21 @@
     });
 
     $('.tab').click(function() {
-        var tabId = $(this).data('tab');
+        const tabId = $(this).data('tab');
+
+        console.log(tabId);
+
+        const reportType = tabId; 
+
+        let exportPDFLink = "{{ route('export_sales_report_pdf', ['salesTable' => 'store_sales']) }}"; 
+        exportPDFLink += "?reportType=" + reportType; // Ensure the correct parameter name
+        $('#exportPDF').attr('href', exportPDFLink); 
+
+        let exportExcelLink = "{{ route('export_sales_report_excel', ['salesTable' => 'store_sales']) }}"; 
+        exportExcelLink += "?reportType=" + reportType; // Ensure the correct parameter name
+        $('#exportExcel').attr('href', exportExcelLink); 
+
+        
 
         // Fade out the currently active tab content
         $('.tab-content.active').removeClass('active').addClass('fade-out');
@@ -255,6 +269,7 @@
             $('.tab').removeClass('active');
             $(this).addClass('active');
             $('#' + tabId).css('display', 'block').addClass('active').css('opacity', '0').animate({ opacity: 1 }, 500); // Fade in
+            
         }, 150); 
     });
 

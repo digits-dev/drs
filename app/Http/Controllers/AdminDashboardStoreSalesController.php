@@ -448,11 +448,11 @@
 			return view('dashboard-report.store-sales.dashboard', $data);
 		}
 
-		public function generateCharts(Request $request){
+		public function generateCharts2(Request $request){
 
 			$validatedData = $request->validate(
 				[  
-				'types' => ['required'],
+				  'types' => ['required'],
 				  'yearFrom' => ['required', 'date_format:Y', 'before_or_equal:yearTo'],
 				  'yearTo'   => ['required', 'date_format:Y', 'after_or_equal:yearFrom'],
 				  'monthFrom' => ['required', 'date_format:m', 'before_or_equal:monthTo'],
@@ -463,8 +463,8 @@
 				  'categories' => ['required'],
 				  'concepts' => ['required'],
 				  'malls' => ['required'],
+				  'group' => ['required'],
 				//   'sqm' => ['required'],
-				//   'group' => ['required'],
 				], [],
 				[
 				  'yearFrom' => 'Year From',
@@ -475,86 +475,232 @@
 			);
 
 
-			if($validatedData['channels'][0] === 'all'){
-				return self::processAllChannels($validatedData);
+			$googleChartData = [];
+			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
+			$years = self::getYearsInRange($validatedData['yearFrom'], $validatedData['yearTo']);
+
+
+			if (in_array('all', $validatedData['channels']) || count($validatedData['channels']) > 1) {
+				$allowedChartTypes = ['pie', 'line', 'bar'];
 			} else {
-				return self::processSelectedChannels($validatedData);
+				$allowedChartTypes = ['line', 'bar'];
 			}
 
-		}
+			foreach($validatedData['types'] as $type){
+				if(in_array($type, $allowedChartTypes)){
+					if($type == 'pie'){
+						$generatedDataForPie = SalesDashboardReport::generateChartDataForMultipleChannel($validatedData);
+					}else {
+						$generatedDataForLineAndBar = SalesDashboardReport::generateChartData($validatedData);
+					}
+				}
+			}
 
-		private function processAllChannels($requestData){
-			$googleChartData = [];
+			\Log::info(json_encode($generatedDataForPie, JSON_PRETTY_PRINT));
+			\Log::info(json_encode($generatedDataForLineAndBar, JSON_PRETTY_PRINT));
 
-			$years = self::getYearsInRange($requestData['yearFrom'], $requestData['yearTo']);
+			
+			if ($generatedDataForPie && $generatedDataForPie->isEmpty()) {
+				return response()->json([
+					'chartData' => false,
+				]);
+			}
 
-			$generatedData = SalesDashboardReport::generateChartDataForMultipleChannel($requestData);
-			\Log::info(json_encode($generatedData, JSON_PRETTY_PRINT));
-
-			if ($generatedData->isEmpty()) {
+			if ($generatedDataForLineAndBar && $generatedDataForLineAndBar->isEmpty()) {
 				return response()->json([
 					'chartData' => false,
 				]);
 			}
 
 			// Process sales per channel
-			foreach ($generatedData as $sale) {
-				$channelCode = $sale->channel_code;
 
-				if (!isset($googleChartData[$channelCode])) {
-					$googleChartData[$channelCode] = [];
+			if($generatedDataForPie){
+				foreach ($generatedDataForPie as $sale) {
+					// dump($sale);
+					$channelCode = $sale['channel_code'];
+	
+					if (!isset($googleChartData['pieData'])) {
+						$googleChartData['pieData'] = [];
+					}
+					
+					$googleChartData['pieData'][$channelCode][$sale['year']] = $sale['net_sales'];
 				}
-				
-				$googleChartData[$channelCode][$sale->year] = $sale->net_sales;
 			}
-
-
-			$data = [ 
-				'multipleChannel' => true,
-				'chartData' => $googleChartData,
-				'years' => $years,
-			];
-
-
-			return response()->json($data);
-		}
-
-		private function processSelectedChannels($requestData){
-			$googleChartData = [];
-			$years = self::getYearsInRange($requestData['yearFrom'], $requestData['yearTo']);
-			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
-
-			$generatedData = SalesDashboardReport::generateChartData($requestData);
-			\Log::info(json_encode($generatedData, JSON_PRETTY_PRINT));
-
-			if ($generatedData->isEmpty()) {
-				return response()->json([
-					'chartData' => false,
-				]);
-			}
-
-			foreach($monthOrder	 as $month) {
-				$googleChartData[$month] = [];
-			}
-
-			foreach ($generatedData as $row) {
-				// Initialize the month if it doesn't exist
-				if (!isset($googleChartData[$row->month])) {
-					$googleChartData[$row->month] = [];
-				}
 			
-				// Add or update the net sales for the year
-				$googleChartData[$row->month][$row->year] = $row->net_sales;
-			}
+			if($generatedDataForLineAndBar){
 
+				$googleChartData['lineBarData'] = [];
+
+				foreach($monthOrder	 as $month) {
+					$googleChartData['lineBarData'][$month] = [];
+				}
+	
+				foreach ($generatedDataForLineAndBar as $row) {
+					// Initialize the month if it doesn't exist
+					if (!isset($googleChartData['lineBarData'][$row['month']])) {
+						$googleChartData['lineBarData'][$row['month']] = [];
+					}
+				
+					// Add or update the net sales for the year
+					$googleChartData['lineBarData'][$row['month']][$row['year']] = $row['net_sales'];
+				}
+	
+			}
+		
 			$data = [
-				'multipleChannel' => false,
 				'chartData' => $googleChartData,
 				'years' => $years,
 			];
 
+
 			return response()->json($data);
+
 		}
+
+		public function generateCharts(Request $request)
+		{
+			// Validate the incoming request
+			$validatedData = $this->validateChartRequest($request);
+
+			$googleChartData = [];
+			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
+			$years = self::getYearsInRange($validatedData['yearFrom'], $validatedData['yearTo']);
+			
+			// Determine allowed chart types based on selected channels
+			$allowedChartTypes = $this->getAllowedChartTypes($validatedData['channels']);
+
+			// Initialize chart data arrays
+			$generatedDataForPie = null;
+			$generatedDataForLineAndBar = null;
+			$chartTypes = ['pie', 'line', 'bar'];
+
+			$typesToProcess = in_array('all', $validatedData['types']) ? $chartTypes : $validatedData['types'];
+
+			// Process each chart type
+			foreach ($typesToProcess as $type) {
+
+				if (in_array($type, $allowedChartTypes)) {
+					if ($type === 'pie') {
+						$generatedDataForPie = SalesDashboardReport::generateChartDataForMultipleChannel($validatedData);
+					}
+					else {
+						$generatedDataForLineAndBar = SalesDashboardReport::generateChartData($validatedData);
+					}
+				}
+			}
+
+			// Log the generated data
+			\Log::info(json_encode($generatedDataForPie, JSON_PRETTY_PRINT));
+			\Log::info(json_encode($generatedDataForLineAndBar, JSON_PRETTY_PRINT));
+
+			// Return early if no data is generated
+			if ($this->isEmptyData($generatedDataForPie, $generatedDataForLineAndBar)) {
+				return response()->json(['chartData' => false]);
+			}
+
+			// Process and format data for the charts
+			if ($generatedDataForPie) {
+				$googleChartData['pieData'] = $this->processPieData($generatedDataForPie);
+			}
+
+			if ($generatedDataForLineAndBar) {
+				$googleChartData['lineBarData'] = $this->processLineBarData($generatedDataForLineAndBar, $monthOrder);
+			}
+
+			\Log::info(json_encode($googleChartData, JSON_PRETTY_PRINT));
+
+			// Return the chart data
+			return response()->json([
+				'chartData' => $googleChartData,
+				'years' => $years,
+			]);
+		}
+
+		// Validation logic
+		private function validateChartRequest(Request $request)
+		{
+			return $request->validate(
+				[
+					'types' => ['required'],
+					'yearFrom' => ['required', 'date_format:Y', 'before_or_equal:yearTo'],
+					'yearTo' => ['required', 'date_format:Y', 'after_or_equal:yearFrom'],
+					'monthFrom' => ['required', 'date_format:m', 'before_or_equal:monthTo'],
+					'monthTo' => ['required', 'date_format:m', 'after_or_equal:monthFrom'],
+					'stores' => ['required'],
+					'channels' => ['required'],
+					'brands' => ['required'],
+					'categories' => ['required'],
+					'concepts' => ['required'],
+					'malls' => ['required'],
+					'group' => ['required'],
+				],
+				[],
+				[
+					'yearFrom' => 'Year From',
+					'yearTo' => 'Year To',
+					'monthFrom' => 'Month From',
+					'monthTo' => 'Month To',
+				]
+			);
+		}
+
+		// Determines which chart types are allowed based on the channels selected
+		private function getAllowedChartTypes(array $channels)
+		{
+			return (in_array('all', $channels) || count($channels) > 1) ? ['pie', 'line', 'bar'] : ['line', 'bar'];
+		}
+
+		// Check if the generated data is empty
+		private function isEmptyData($pieData, $lineBarData)
+		{
+			return ($pieData && $pieData->isEmpty()) || ($lineBarData && $lineBarData->isEmpty());
+		}
+
+		// Processes data for the pie chart
+		private function processPieData($generatedDataForPie)
+		{
+			$pieData = [];
+
+			foreach ($generatedDataForPie as $sale) {
+				$channelCode = $sale['channel_code'];
+				$year = $sale['year'];
+				$netSales = $sale['net_sales'];
+
+				if (!isset($pieData[$channelCode])) {
+					$pieData[$channelCode] = [];
+				}
+
+				$pieData[$channelCode][$year] = $netSales;
+			}
+
+			return $pieData;
+		}
+
+		// Processes data for line and bar charts
+		private function processLineBarData($generatedDataForLineAndBar, $monthOrder)
+		{
+			$lineBarData = [];
+
+			// Initialize months in the chart data
+			foreach ($monthOrder as $month) {
+				$lineBarData[$month] = [];
+			}
+
+			foreach ($generatedDataForLineAndBar as $row) {
+				$month = $row['month'];
+				$year = $row['year'];
+				$netSales = $row['net_sales'];
+
+				if (!isset($lineBarData[$month])) {
+					$lineBarData[$month] = [];
+				}
+
+				$lineBarData[$month][$year] = $netSales;
+			}
+
+			return $lineBarData;
+		}
+
 
 		private function getYearsInRange($start, $end)
 		{
@@ -574,23 +720,7 @@
 		}
 
 
-		public function generateCharts2(Request $request)
-		{
-			// Validate the request
-			$validator = Validator::make($request->all(), [
-				'types' => 'required|string',
-				'yearFrom' => 'required|date_format:Y|before_or_equal:yearTo',
-				'yearTo' => 'required|date_format:Y|after_or_equal:yearFrom',
-			]);
-
-			if ($validator->fails()) {
-				return response()->json(['errors' => $validator->errors()], 422);
-			}
-
-			// Process the valid data here (e.g., generate charts)
-
-			return response()->json(['success' => true]);
-		}
+		
 
 		public function saveChart(Request $request)
 		{
