@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Log;
 
-class StoreSalesDashboardReport extends Model
+class SalesDashboardReport extends Model
 {
     use HasFactory;
 
@@ -382,6 +382,44 @@ class StoreSalesDashboardReport extends Model
             return $item;
         })->keyBy('category');
     }
+
+    public function getStoreSalesDataBackUp() {
+
+        $cacheKey = $this->getCacheKey();
+
+        Cache::forget($cacheKey); 
+
+        // Cache the results of the query
+        $storeSalesData = Cache::remember($cacheKey, now()->endOfDay(), function() {
+            return DB::select("
+                SELECT 
+                    store_sales.sales_date,
+                    store_sales.net_sales,
+                    store_sales.reference_number,
+                    channels.channel_code,
+                    store_sales.channels_id,
+                    customers.concepts_id,
+                    all_items.brand_description,
+                    concepts.concept_name
+                FROM store_sales 
+                LEFT JOIN channels ON store_sales.channels_id = channels.id
+                LEFT JOIN customers ON store_sales.customers_id = customers.id
+                LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
+                LEFT JOIN concepts ON customers.concepts_id = concepts.id
+                WHERE store_sales.is_final = 1 
+                    AND YEAR(store_sales.sales_date) = {$this->year}
+                    AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->month}
+                    AND store_sales.quantity_sold > 0
+                    AND store_sales.net_sales IS NOT NULL
+                    AND store_sales.sold_price > 0
+                    AND store_sales.channels_id != 12 
+            ");
+        });
+
+        // channels id "12" = EEE or Employee channel 
+    
+        return $storeSalesData;
+    }
     
     public function getLastThreeDaysDates($date = null)
     {
@@ -440,54 +478,16 @@ class StoreSalesDashboardReport extends Model
     }
 
 
-     //SECOND APPROACH - Utilizes Laravel collection methods to retrieve the appropriate data.
-
-     public function getStoreSalesData() {
-
-        $cacheKey = $this->getCacheKey();
-
-        Cache::forget($cacheKey); 
-
-        // Cache the results of the query
-        $storeSalesData = Cache::remember($cacheKey, now()->endOfDay(), function() {
-            return DB::select("
-                SELECT 
-                    store_sales.sales_date,
-                    store_sales.net_sales,
-                    store_sales.reference_number,
-                    channels.channel_code,
-                    store_sales.channels_id,
-                    customers.concepts_id,
-                    all_items.brand_description,
-                    concepts.concept_name
-                FROM store_sales 
-                LEFT JOIN channels ON store_sales.channels_id = channels.id
-                LEFT JOIN customers ON store_sales.customers_id = customers.id
-                LEFT JOIN all_items ON store_sales.item_code = all_items.item_code
-                LEFT JOIN concepts ON customers.concepts_id = concepts.id
-                WHERE store_sales.is_final = 1 
-                    AND YEAR(store_sales.sales_date) = {$this->year}
-                    AND MONTH(store_sales.sales_date) BETWEEN 1 AND {$this->month}
-                    AND store_sales.quantity_sold > 0
-                    AND store_sales.net_sales IS NOT NULL
-                    AND store_sales.sold_price > 0
-                    AND store_sales.channels_id != 12 
-            ");
-        });
-
-        // channels id "12" = EEE or Employee channel 
     
-        return $storeSalesData;
-    }
-
-    public function getSalesDataFrom($salesTable = 'store_sales') {
+    //SECOND APPROACH - Utilizes Laravel collection methods to retrieve the appropriate data.
+    public function getSalesDataFrom($salesTable) {
         $allowedTables = ['store_sales', 'digits_sales']; 
 
         if (!in_array($salesTable, $allowedTables)) {
             throw new \InvalidArgumentException("Invalid table name.");
         }
     
-        $cacheKey = $this->getCacheKey();
+        $cacheKey = $this->getCacheKey($salesTable);
     
         // Clear previous cache
         Cache::forget($cacheKey);
@@ -520,15 +520,15 @@ class StoreSalesDashboardReport extends Model
         });
     
         // channels id "12" = EEE or Employee channel 
-    
+
         return $storeSalesData;
     }
 
-    public function getSalesSummary()
+    public function getSalesSummary($salesTable)
     {
 
         $lastDay = $this->getLastDay();
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Group the data by week cutoff
         $salesSummary = $dataCollection->filter(function($row) use($lastDay) {
@@ -559,11 +559,11 @@ class StoreSalesDashboardReport extends Model
         return $salesSummary;
     }   
 
-    public function getSalesWeeklyPerChannel()
+    public function getSalesWeeklyPerChannel($salesTable)
     {
 
         $lastDay = $this->getLastDay();
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Group the data by week and channel classification
         $salesSummary = $dataCollection->filter(function($row) use($lastDay) {
@@ -621,11 +621,11 @@ class StoreSalesDashboardReport extends Model
         return $finalResult->values(); // Reset keys and return
     }
 
-    public function getSalesSummaryForLastThreeDays()
+    public function getSalesSummaryForLastThreeDays($salesTable)
     {
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
 
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Prepare the sales summary
         $salesSummary = [];
@@ -648,11 +648,11 @@ class StoreSalesDashboardReport extends Model
         return $salesSummary;
     }
 
-    public function getSalesSummaryForLastThreeDaysPerChannel()
+    public function getSalesSummaryForLastThreeDaysPerChannel($salesTable)
     {
         $lastThreeDays = $this->getLastThreeDaysDates($this->currentDayAsDate);
 
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
 
         // Prepare the sales summary
@@ -688,9 +688,9 @@ class StoreSalesDashboardReport extends Model
         return $groupedSummary->values(); // Reset keys and return
     }
 
-    public function getSalesPerMonth()
+    public function getSalesPerMonth($salesTable)
     {
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Group by month and calculate sums
         $salesSummary = $dataCollection->filter(function ($row) {
@@ -715,10 +715,10 @@ class StoreSalesDashboardReport extends Model
         return collect($finalResult);
     }
 
-    public function getSalesPerMonthByChannel()
+    public function getSalesPerMonthByChannel($salesTable)
     {
 
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
 
         // Group by month and channel classification
@@ -775,10 +775,10 @@ class StoreSalesDashboardReport extends Model
     }
 
 
-    public function getSalesPerQuarter()
+    public function getSalesPerQuarter($salesTable)
     {
 
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Filter and group by quarter
         $salesSummary = $dataCollection->filter(function ($row) {
@@ -803,9 +803,9 @@ class StoreSalesDashboardReport extends Model
         return collect($finalResult);
     }
 
-    public function getSalesPerQuarterByChannel()
+    public function getSalesPerQuarterByChannel($salesTable)
     {
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Group by quarter and channel classification
         $salesSummary = $dataCollection->filter(function ($row) {
@@ -861,10 +861,10 @@ class StoreSalesDashboardReport extends Model
     }
 
 
-    public function getYearToDate()
+    public function getYearToDate($salesTable)
     {
     
-        $dataCollection = $this->getDataCollection();
+        $dataCollection = $this->getDataCollection($salesTable);
 
         // Group by category (APPLE vs NON-APPLE)
         $yearToDateSummary = $dataCollection->filter(function ($row) {
@@ -889,13 +889,12 @@ class StoreSalesDashboardReport extends Model
         return collect($yearToDateSummary);
     }
 
-    public function getYearToDateWithSelection($channel = null, $concept = null)
+    public function getYearToDateWithSelection($salesTable, $channel = null, $concept = null)
     {
-
 
         $today = date('Y-m-d');
 
-        $cacheKey = "store_sales_table_data_{$today}_{$this->year}";
+        $cacheKey = "{$salesTable}_table_data_{$today}_{$this->year}";
 
         // Retrieve the cached data
         $storeSalesData = Cache::get($cacheKey);
@@ -957,9 +956,9 @@ class StoreSalesDashboardReport extends Model
     }
     
 
-    private function getDataCollection(){
+    private function getDataCollection($salesTable){
 
-        $cacheKey = $this->getCacheKey();
+        $cacheKey = $this->getCacheKey($salesTable);
     
         // Retrieve the cached data
         $storeSalesData = Cache::get($cacheKey);
@@ -1050,6 +1049,9 @@ class StoreSalesDashboardReport extends Model
                 break;
             case 'CON':
                 $channelClassification = 'CON';
+                break;
+            case 'DTC':
+                $channelClassification = 'DTC';
                 break;
             default:
                 $channelClassification = 'OTHER';

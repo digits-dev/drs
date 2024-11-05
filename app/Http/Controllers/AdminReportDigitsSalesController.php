@@ -420,9 +420,6 @@
 			$data['page_title'] = 'Digits Sales Dashboard Report';
 			$data['loading'] = true; // Add a loading state
 
-			// Load the basic channels and concepts data immediately for rendering
-			$data['channels'] = Channel::get(['id', 'channel_name']);
-			$data['concepts'] = Concept::get(['id', 'concept_name']);
 
 			return view('dashboard-report.digits-sales.index', $data);
 		}

@@ -1,10 +1,10 @@
 <?php namespace App\Http\Controllers;
 
-	use App\Exports\StoreSalesReportExport;
+	
 	use App\Models\Channel;
 	use App\Models\Concept;
-	use App\Models\StoreSalesDashboardReport;
-	use App\Services\StoreSalesDashboardReportService as SSDashboardReportService;
+	use App\Models\SalesDashboardReport;
+	use App\Services\SalesDashboardReportService as SSDashboardReportService;
 	use Barryvdh\DomPDF\Facade as DomPDF;
 	use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
 	use Illuminate\Support\Facades\Log;
@@ -434,11 +434,7 @@
 
 			$data = [];
 			$data['page_title'] = 'Store Sales Dashboard Report';
-			$data['loading'] = true; // Add a loading state
-
-			// Load the basic channels and concepts data immediately for rendering
-			$data['channels'] = Channel::get(['id', 'channel_name']);
-			$data['concepts'] = Concept::get(['id', 'concept_name']);
+			$data['loading'] = true; 
 
 			return view('dashboard-report.store-sales.index', $data);
 		}
@@ -451,7 +447,7 @@
 
 			// dd($reloadData);
 
-			$generatedData = $reloadData ? $this->dashboardService->generateSalesReport() : $this->dashboardService->getData();
+			$generatedData = $reloadData ? $this->dashboardService->generateSalesReport('store_sales') : $this->dashboardService->getData('store_sales');
 			$month = $generatedData['yearData']['month'];
 
 			if($month == 1){
@@ -480,20 +476,20 @@
 			];
 			
 			// Generate HTML for each tab using partial views
-			$tab1Html = view('dashboard-report.store-sales.partials.daily', [
+			$tab1Html = view('dashboard-report.partials.daily', [
 				'channel_codes' => $channel_codes,
 				'prevYear' => $month == 1 ? $currYear : $prevYear,
 				'currYear' => $month == 1 ? $currYearForDaily : $currYear,
 				'lastThreeDaysDates' => $lastThreeDaysDates,
 			])->render();
 			
-			$tab2Html = view('dashboard-report.store-sales.partials.monthly',
+			$tab2Html = view('dashboard-report.partials.monthly',
 			 $data)->render();
 			 
-			$tab3Html = view('dashboard-report.store-sales.partials.quarterly',
+			$tab3Html = view('dashboard-report.partials.quarterly',
 			 $data)->render();
 
-			$tab4Html = view('dashboard-report.store-sales.partials.ytd', [
+			$tab4Html = view('dashboard-report.partials.ytd', [
 				'channel_codes' => $channel_codes,
 				'prevYear' => $prevYear,
 				'currYear' => $currYear,
@@ -509,152 +505,6 @@
 				'tab3Html' => $tab3Html,
 				'tab4Html' => $tab4Html,
 			]);
-		}
-
-		public function exportPDF(Request $request)
-		{
-
-			$data = [];
-			$generatedData = $this->dashboardService->getData();
-
-			if(empty($generatedData)){
-				$generatedData = $this->dashboardService->generateSalesReport();
-			}
-
-			$dataCategory = $request->query('category') ?? 'total';
-			$isPerChannel = $request->boolean('perChannel', false);
-			
-			// Merge the generated data into the data array
-			$data = array_merge($data, $generatedData);
-
-			
-			try {	
-				// Load the view and generate the PDF
-				$pdf = SnappyPDF::loadView('dashboard-report.store-sales.exports.pdf-sales-report', $data)
-						->setPaper('A4', 'landscape')
-						->setOptions(['margin-top' => 35, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
-					
-				// Return the PDF as a download
-				Log::info('Data for PDF: ');
-				Log::info(json_encode($data, JSON_PRETTY_PRINT));
-
-
-				$dateTime = date('Y-m-d_H-i-s');
-				$fileName = "sales-report_{$dateTime}.pdf";
-
-				return $pdf->download($fileName);
-			} catch (\Exception $e) {
-				// Handle exceptions and log errors
-				Log::error('PDF Generation Error: ' . $e->getMessage());
-				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
-			}
-		}
-
-	
-		public function showPDF(Request $request){
-			$data = [];
-			$data['page_title'] = 'Store Sales Dashboard Report';
-
-			$generatedData = $this->dashboardService->getData();
-
-			if(empty($generatedData)){
-				$generatedData = $this->dashboardService->generateSalesReport();
-			}
-
-			$dataCategory = $request->query('category') ?? 'total';
-			$isPerChannel = $request->boolean('perChannel', false);
-
-			$data = array_merge($data, $generatedData);
-
-			return view('dashboard-report.store-sales.test-pdf', $data);
-		}
-
-		public function exportExcel(){
-
-			$dateTime = date('Y-m-d_H-i-s');
-			$fileName = "sales-report_{$dateTime}.xlsx";
-
-			$data = $this->dashboardService->getData();
-	
-			return Excel::download(new StoreSalesReportExport($data), $fileName);
-		}
-
-		public function updateYtdSalesReport(Request $request)
-		{
-			// Validate incoming request
-			$request->validate([
-				'channel' => 'required|string',
-				'concept' => 'required|string',
-			]);
-
-			// Fetch data based on selected channel and concept
-			$channelId = $request->input('channel');
-			$conceptId = $request->input('concept');
-
-			// $currentMonth = 4;
-            // $previousYear = 2021;
-            // $currentYear = 2022; 
-            // $currentDay = 23;
-
-			// $currentMonth = 9;
-			// $previousYear = 2021;
-			// $currentYear = 2022; 
-			// $currentDay = 7;
-
-			
-			$currentDay = date('d');
-            $currentMonth = date('m');
-            $previousYear = date('Y', strtotime('-1 year'));
-            $currentYear = date('Y'); 
- 
-
-			// $currentMonth = 1;
-			// $previousYear = 2021;
-			// $currentYear = 2022; 
-			// $currentDay = 7;
-
-			// $currentMonth = 9;
-			// $previousYear = 2021;
-			// $currentYear = 2022; 
-			// $currentDay = 21;
-			
-
-            if($currentMonth == 1){
-                // $previousYear = 2020;
-                // $currentYear = 2021;
-                $previousYear =  date('Y', strtotime('-2 years'));
-                $currentYear = date('Y', strtotime('-1 year'));
-
-            } 
-
-			$prevInstance = new StoreSalesDashboardReport(['year' => $previousYear, 'month' => $currentMonth, 'day' => $currentDay]);
-			$currInstance = new StoreSalesDashboardReport(['year' => $currentYear, 'month' => $currentMonth, 'day' => $currentDay]);
-
-			$prevData = $prevInstance->getYearToDateWithSelection($channelId, $conceptId);
-			$currData = $currInstance->getYearToDateWithSelection($channelId, $conceptId);
-
-			$updateCacheData = [
-				'prevYear' => $previousYear,
-				'currYear' => $currentYear,
-				'prevData' => $prevData,
-				'currData' => $currData,
-			];
-			
-			$this->dashboardService->updateYTDReport($updateCacheData);
-
-			$data = [
-				'currApple' => $currData['APPLE']['sum_of_net_sales'],
-				'currNonApple' => $currData['NON-APPLE']['sum_of_net_sales'],
-				'currTotalApple' => $currData['TOTAL']['sum_of_net_sales'],
-
-				'prevApple' => $prevData['APPLE']['sum_of_net_sales'],
-				'prevNonApple' => $prevData['NON-APPLE']['sum_of_net_sales'],
-				'prevTotalApple' => $prevData['TOTAL']['sum_of_net_sales'],
-
-			];
-
-		
-			return response()->json($data);
 		}
 
 		public function saveChart2(Request $request)
@@ -697,7 +547,6 @@
 				return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
 			}
 		}
-
 	
 
 		public function saveChart(Request $request)

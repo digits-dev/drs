@@ -8,11 +8,13 @@
         <div class="form-group" >
             <label class="control-label" for="channelSelector" >Channel:</label>
             
-            <select id="channelSelector" class="form-control" style="width:150px;">
-                <option value="all">ALL</option>
+            <select id="channelSelector" class="form-control" style="width:150px;" {{ $channels->count() <= 1 ? 'disabled' : '' }}>
+                @if ($channels->count() > 1) 
+                    <option value="all" {{ $selectedChannel === 'all' ? 'selected' : '' }}>ALL</option>
+                @endif
 
                 @foreach ($channels as $channel)
-                    <option value="{{$channel->id}}">{{$channel->channel_name}}</option>
+                    <option value="{{$channel->id}}" {{ $selectedChannel == $channel->id ? 'selected' : '' }}>{{$channel->channel_name}}</option>
                 @endforeach
             </select>
         </div>
@@ -20,10 +22,10 @@
         <div class="form-group" >
             <label class="control-label" for="conceptSelector" >Store Concept:</label>
             <select id="conceptSelector" class="form-control" style="width:250px;">
-                <option value="all">ALL</option>
+                <option value="all" {{ $selectedConcept === 'all' ? 'selected' : '' }}>ALL</option>
 
                 @foreach ($concepts as $concept)
-                    <option value="{{$concept->id}}">{{$concept->concept_name}}</option>
+                    <option value="{{$concept->id}}" {{ $selectedConcept == $concept->id ? 'selected' : '' }}>{{$concept->concept_name}}</option>
                 @endforeach
             </select>
         </div>
@@ -62,9 +64,10 @@
         
         const selectedChannel = $('#channelSelector').val();
         const selectedConcept = $('#conceptSelector').val();
+        const salesTable = @json($salesTable);
 
         $.ajax({
-            url: '/admin/ytd_update',
+            url: '/admin/ytd_update/' + salesTable,
             type: 'POST',
             data: {
                 channel: selectedChannel,

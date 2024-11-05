@@ -38,15 +38,19 @@
             <thead>
 
                 @if ($isTopOpen)
+                
+                    <tr>
+                        <th  class="none" style="text-align: left; font-size:14px; height:50px;" colspan="3" rowspan="3"><b>DAILY SALES REPORT</b></th>
+                    </tr>
                
                     <tr>
-                        <th  class="none" style="text-align: left; font-size:14px;" colspan="3" rowspan="2"><b>DAILY SALES REPORT</b></th>
+                        {{-- <th  class="none" style="text-align: left; font-size:14px;" colspan="3" rowspan="2"><b>DAILY SALES REPORT</b></th> --}}
 
                         <th class="none" >&nbsp;</th>
 
                         
                         @foreach (range(0,3) as $item)
-                            <th class="bg-light-blue" style="text-decoration: underline;">CUT OFF</th>
+                            <th class="bg-light-blue" style="text-decoration: underline; padding-top: 10px;">CUT OFF</th>
                         @endforeach
 
                         <th class="none" colspan="3">&nbsp;</th>
