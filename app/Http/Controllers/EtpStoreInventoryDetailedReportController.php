@@ -28,7 +28,7 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 			$currentDate = Carbon::parse(now())->format('Ymd');
 
 
-			$inventory_report = Cache::remember("{$allCustomer}{$currentDate}", 900, function() use($allCustomer , $currentDate, $lastThirtydays){
+			$inventory_report = Cache::remember("{$allCustomer}{$currentDate}", now()->addMinutes(1), function() use($allCustomer , $currentDate, $lastThirtydays){
 
 				return DB::connection('sqlsrv')->select(DB::raw("
 				SELECT 
@@ -42,8 +42,10 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 					ProductLocationBalance P WITH (NOLOCK)
 				WHERE 
 					P.Company = 100
+					AND P.BalanceApproved != 0
 					AND P.WareHouse IN ($allCustomer)
 					AND P.LastIssueDate BETWEEN $lastThirtydays AND $currentDate;
+				
 				"));
 
 			});
