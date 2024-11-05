@@ -90,7 +90,7 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 		foreach ($data['store_sync_data'] as $row) {
 			$row->store_last_sync =  Carbon::parse($storesMap[$row->Warehouse] ?? ' ')->format('Y-m-d');
 			$row->inventory_last_sync =  Carbon::parse($inventoryMap[$row->Warehouse] ?? ' ')->format('Y-m-d');
-			$row->Warehouse = $customerMap[$row->Warehouse] ?? ' ';
+			$row->Warehouse = $customerMap[$row->Warehouse] ?? 'Null';
 			$row->Date = Carbon::parse($row->Date)->format('Y-m-d');
 			$row->Time = Carbon::createFromFormat('His', $row->Time)->format('h:i:s A');
 		}

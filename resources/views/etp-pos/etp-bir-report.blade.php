@@ -516,7 +516,7 @@
                         className: 'btn custom-button'
                     }
                 ],
-                "order": [[0, "desc"], [1, "desc"]], 
+                "order": [[0, "desc"], [1, "asc"]], 
                 columnDefs: [
                     { "targets": [1, 4, 5, 6, 7, 8, 9, 10, 11, 13 ], "width": "100px" },  // Set 100px width for multiple columns
                     { "targets": [2, 3], "width": "180px" },
@@ -823,11 +823,11 @@
                             '<td>' + row['CreateDate'] + '</td>' +              // Date
                             '<td>' + row['DocRangeFrom'] + '</td>' +            // Beginning Invoice Number 
                             '<td>' + row['DocRangeTo'] + '</td>' +              // Ending Invoice Number
-                            '<td>' + row['NetTotalAmt'] + '</td>' +             // Net Amount
-                            '<td>' + '</td>' +                                  // Discount 
-                            '<td>' + '</td>' +                                  // Returns
-                            '<td>' + '</td>' +                                  // Voids
-                            '<td>' + '</td>' +                                  // Deductions
+                            '<td>' + row['NetAmount'] + '</td>' +             // Net Amount
+                            '<td>' + row['Discount'] + '</td>' +                                  // Discount 
+                            '<td>' + row['Returns'] +'</td>' +                                  // Returns
+                            '<td>' + row['Voids'] +'</td>' +                                  // Voids
+                            '<td>' + row['Deductions'] +'</td>' +                                  // Deductions
                             '<td>' + row['GrossTotalAmt'] + '</td>' +           // Gross Amount 
                             '<td>' + row['VatableTotalAmt'] + '</td>' +         // VATable Sales
                             '<td>' + row['VatTotalAmt'] + '</td>' +             // VAT

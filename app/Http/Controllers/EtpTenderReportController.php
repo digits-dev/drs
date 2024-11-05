@@ -26,23 +26,21 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 
 		if (request()->ajax()) {
 			
-			$storeCustomer = request()->customer;
-			$dateFrom = Carbon::parse(request()->dateFrom)->format('Ymd');
-			$dateTo = Carbon::parse(request()->dateTo)->format('Ymd');
-			$store = "'" . implode("','", $storeCustomer) . "'";
+		$storeCustomer = request()->customer;
+		$dateFrom = Carbon::parse(request()->dateFrom)->format('Ymd');
+		$dateTo = Carbon::parse(request()->dateTo)->format('Ymd');
+		$store = implode(',', array_map(fn($s) => "'$s'", $storeCustomer)); 
 
-			$tender_data = Cache::remember("{$store}{$dateFrom}{$dateTo}", 900, function() use($store, $dateFrom, $dateTo){
-			
-			return DB::connection('sqlsrv')->select(DB::raw("
+		$tender_data = Cache::remember("{$store}{$dateFrom}{$dateTo}", 900, function () use ($store, $dateFrom, $dateTo) {
+			$query = "
 				SELECT 
 					P.CreateDate AS 'DATE',
-					P.CreateTime As 'TIME',
 					P.WareHouse AS 'STORE ID',
 					P.InvoiceNumber AS 'RECEIPT#',
 					CM.CustomerName AS 'Name of Customer',
 					SUM(P.LocalAmount) AS AMOUNT,
 					CASE 
-					WHEN P.PaymentType IN (0, 1) THEN PM.Description 
+						WHEN P.PaymentType IN (0, 1) THEN PM.Description 
 						ELSE 'Other Payment' 
 					END AS TENDER,
 					ISNULL(C.CustomerName, '') AS 'Credit Card Name',
@@ -74,29 +72,130 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 					AND CT.InvoiceType = 30
 				LEFT JOIN Customer CM (NOLOCK)
 					ON CT.CustomerNumber = CM.CustomerNumber
-					WHERE
+				WHERE
 					P.Company = 100
 					AND P.Division = 100
-					AND P.WareHouse in ($store)
-					AND P.TransactionType = 1
-					AND P.CreateDate BETWEEN $dateFrom AND $dateTo
+					AND P.WareHouse IN ($store)
+					AND P.TransactionType IN (1, 3)
+					AND P.CreateDate BETWEEN '$dateFrom' AND '$dateTo'
 				GROUP BY 
-					P.CreateDate,
-					P.CreateTime,
-					P.WareHouse,
-					P.InvoiceNumber,
-					P.PaymentType,
-					PM.Description,
-					P.ChangedBy,
-					C.CustomerName,
-					C.CreditCardNumber,
-					C.CommPer,
-					C.CreditCardType,
-					C.EDCName,
-					C.ExpiryDate,
-					C.AuthorisationNumber,
-					CM.CustomerName"));
-				});
+					P.CreateDate, P.WareHouse, P.InvoiceNumber, 
+					P.PaymentType, PM.Description, P.ChangedBy, 
+					C.CustomerName, C.CreditCardType, C.EDCName, 
+					C.ExpiryDate, C.AuthorisationNumber, 
+					CM.CustomerName, C.CreditCardNumber, C.CommPer
+				
+				UNION
+				
+				SELECT 
+					P.CreateDate AS 'DATE',
+					P.WareHouse AS 'STORE ID',
+					P.InvoiceNumber AS 'RECEIPT#',
+					CM.CustomerName AS 'Name of Customer',
+					SUM(P.LocalAmount) AS AMOUNT,
+					CASE 
+						WHEN P.PaymentType IN (0, 1) THEN PM.Description 
+						ELSE 'Other Payment' 
+					END AS TENDER,
+					ISNULL(C.CustomerName, '') AS 'Credit Card Name',
+					ISNULL(C.CreditCardNumber, '') AS 'Credit Card Number',
+					ISNULL(C.CreditCardType, '') AS 'CARD TYPE',
+					ISNULL(C.EDCName, '') AS EDC,
+					ISNULL(C.ExpiryDate, '') AS EXPIRY,
+					ISNULL(C.AuthorisationNumber, '') AS 'AP NO',
+					PM.Description AS 'OP ID',
+					P.ChangedBy AS [User],
+					ISNULL(C.CommPer, '0') AS 'Commission %'
+				FROM PaymentTrn P (NOLOCK)
+				LEFT JOIN CreditCardInfo C (NOLOCK)
+					ON P.Company = C.Company
+					AND P.Division = C.Division
+					AND P.WareHouse = C.WareHouse
+					AND P.InvoiceNumber = C.InvoiceNumber
+					AND P.InvoiceYear = C.InvoiceYear
+				INNER JOIN PaymentMode PM (NOLOCK)
+					ON P.Company = PM.Company
+					AND P.WareHouse = PM.WareHouse
+					AND P.PaymentType = PM.PaymentModeType
+				INNER JOIN SalesReturnTrn CT (NOLOCK)
+					ON P.Company = CT.Company
+					AND P.Division = CT.Division
+					AND P.WareHouse = CT.WareHouse
+					AND P.InvoiceNumber = CT.InvoiceNumber
+					AND P.InvoiceYear = CT.InvoiceYear
+					AND CT.InvoiceType = 30
+				LEFT JOIN Customer CM (NOLOCK)
+					ON CT.CustomerNumber = CM.CustomerNumber
+				WHERE
+					P.Company = 100
+					AND P.Division = 100
+					AND P.WareHouse IN ($store)
+					AND P.TransactionType = 5
+					AND P.CreateDate BETWEEN '$dateFrom' AND '$dateTo'
+				GROUP BY 
+					P.CreateDate, P.WareHouse, P.InvoiceNumber, 
+					P.PaymentType, PM.Description, P.ChangedBy, 
+					C.CustomerName, C.CreditCardType, C.EDCName, 
+					C.ExpiryDate, C.AuthorisationNumber, 
+					CM.CustomerName, C.CreditCardNumber, C.CommPer
+				
+				UNION
+				
+				SELECT 
+					P.CreateDate AS 'DATE',
+					P.WareHouse AS 'STORE ID',
+					P.InvoiceNumber AS 'RECEIPT#',
+					CM.CustomerName AS 'Name of Customer',
+					SUM(P.LocalAmount) AS AMOUNT,
+					CASE 
+						WHEN P.PaymentType IN (0, 1) THEN PM.Description 
+						ELSE 'Other Payment' 
+					END AS TENDER,
+					ISNULL(C.CustomerName, '') AS 'Credit Card Name',
+					ISNULL(C.CreditCardNumber, '') AS 'Credit Card Number',
+					ISNULL(C.CreditCardType, '') AS 'CARD TYPE',
+					ISNULL(C.EDCName, '') AS EDC,
+					ISNULL(C.ExpiryDate, '') AS EXPIRY,
+					ISNULL(C.AuthorisationNumber, '') AS 'AP NO',
+					PM.Description AS 'OP ID',
+					P.ChangedBy AS [User],
+					ISNULL(C.CommPer, '0') AS 'Commission %'
+				FROM PaymentTrn P (NOLOCK)
+				LEFT JOIN CreditCardInfo C (NOLOCK)
+					ON P.Company = C.Company
+					AND P.Division = C.Division
+					AND P.WareHouse = C.WareHouse
+					AND P.InvoiceNumber = C.InvoiceNumber
+					AND P.InvoiceYear = C.InvoiceYear
+				INNER JOIN PaymentMode PM (NOLOCK)
+					ON P.Company = PM.Company
+					AND P.WareHouse = PM.WareHouse
+					AND P.PaymentType = PM.PaymentModeType
+				INNER JOIN CashOrderTrn CT (NOLOCK)
+					ON P.Company = CT.Company
+					AND P.Division = CT.Division
+					AND P.WareHouse = CT.WareHouse
+					AND P.InvoiceNumber = CT.InvoiceNumber
+					AND P.InvoiceYear = CT.InvoiceYear
+					AND CT.InvoiceType = 30
+				LEFT JOIN Customer CM (NOLOCK)
+					ON CT.CustomerNumber = CM.CustomerNumber
+				WHERE
+					P.Company = 100
+					AND P.Division = 100
+					AND P.WareHouse IN ($store)
+					AND P.TransactionType = 6
+					AND P.CreateDate BETWEEN '$dateFrom' AND '$dateTo'
+				GROUP BY 
+					P.CreateDate, P.WareHouse, P.InvoiceNumber, 
+					P.PaymentType, PM.Description, P.ChangedBy, 
+					C.CustomerName, C.CreditCardType, C.EDCName, 
+					C.ExpiryDate, C.AuthorisationNumber, 
+					CM.CustomerName, C.CreditCardNumber, C.CommPer
+			";
+			
+			return DB::connection('sqlsrv')->select(DB::raw($query));
+		});
 
 				$customerMap = [];
 
