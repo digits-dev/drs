@@ -392,7 +392,8 @@
                         <th>Time</th>
                         <th>Store ID</th>
                         <th>Branch</th>
-                        <th>Invoice Ref#</th>
+                        <th>Document #</th>
+                        <th>Invoice Ref #</th>
                         <th>Name</th>
                         <th>Amount</th>
                         <th>Tender</th>
@@ -703,7 +704,8 @@
                             '<td>' + row.TIME + '</td>' +
                             '<td>' + row['STORE ID'] + '</td>' +
                             '<td>' + row.customerName + '</td>' +
-                            '<td>' + row['RECEIPT#'] + '</td>' +
+                            '<td>' + row['Document#'] + '</td>' +
+                            '<td>' + row['Invoice Ref No'] + '</td>' +
                             '<td>' + row['Name of Customer'] + '</td>' +
                             '<td>' + row.AMOUNT + '</td>' +
                             '<td>' + row.TENDER + '</td>' +
