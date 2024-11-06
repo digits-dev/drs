@@ -15,6 +15,7 @@ class EtpStoreSyncReportController extends \crocodicstudio\crudbooster\controlle
 
 		$data = [];
 		$data['page_title'] = 'Store Sync';
+		$data['page_icon'] = 'fa fa-file-text-o';
 
 		return view('etp-pos.etp-storesync-page', $data);
 	}

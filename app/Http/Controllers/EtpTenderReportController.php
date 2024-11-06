@@ -225,6 +225,7 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 
 		$data = [];
 		$data['page_title'] = 'Tender Report';
+		$data['page_icon'] = 'fa fa-file-text-o';
 		$data['tender_data'] = [];
 		$data['customers'] = $Customers;
 		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();

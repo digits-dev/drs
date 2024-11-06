@@ -66,6 +66,7 @@ class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBC
 
 		$data = [];
 		$data['page_title'] = 'BIR Report';
+		$data['page_icon'] = 'fa fa-file-text-o';
 		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();
 		$data['concepts'] = Concept::whereIn('concept_name', $concepts)->active();
 		$data['all_customers'] = Cache::remember('CustomerMasterfileCache', 3600 , function(){

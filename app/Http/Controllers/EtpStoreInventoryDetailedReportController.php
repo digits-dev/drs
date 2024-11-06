@@ -94,6 +94,7 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 
 		$data = [];
 		$data['page_title'] = 'Store Inventory (Detailed)';
+		$data['page_icon'] = 'fa fa-file-text-o';
 		$data['inventory_report'] = [];
 		$data['channels'] = Channel::whereIn('channel_name', ['RETAIL', 'FRANCHISE'])->active();
 		$data['concepts'] = Concept::whereIn('concept_name', $concepts)->active();
