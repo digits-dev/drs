@@ -387,7 +387,9 @@ $(function() {
     // Load the Visualization API and the corechart package.
     google.charts.load('current', {'packages': ['corechart']});
 
-    const chartImagesToDownload = [];
+    const chartsDataForPDF = [];
+    let paramsDataKey;
+    const chartsDataCacheKey = {};
 
     const monthNames = [
         'January', 'February', 'March', 'April',
@@ -521,10 +523,8 @@ $(function() {
     function handleSuccessResponse(data) {
         $('#noDataMessage').hide();
 
-        //empty storage so it doesn't stack the charts
-        chartImagesToDownload.length = 0;
-
-        console.log(data);
+        //empty storage so it doesn't stack the charts in pdf
+        chartsDataForPDF.length = 0;
 
         if (data.chartData) {
             processChartData(data);
@@ -539,12 +539,16 @@ $(function() {
     function processChartData(data) {
         const types = $('#type').val();
 
+        // console.log(data);
+
         if (data.chartData?.pieData) {
+            chartsDataCacheKey.pie = data.cacheKey?.pie;
             // drawChartMultipleChannel(data.chartData, data.years);
             data.years.forEach(year => drawChartMultipleChannelByYear(data.chartData?.pieData, year));
         } 
         
         if (data.chartData?.lineBarData) {
+            chartsDataCacheKey.lineAndBar = data.cacheKey?.lineAndBar;
             const chartTypes = ['line', 'bar'];
             const selectedTypes = types[0] === 'all' ? chartTypes : types;
 
@@ -554,6 +558,7 @@ $(function() {
                 }
             });
         }
+
     }
 
     function showNoDataMessage() {
@@ -606,8 +611,6 @@ $(function() {
     }
 
     function populateDivForSelectedInputsInForm(formData) {
-        // let channelValues = $('#channel').val().map(value => $('#channel option[value="' + value + '"]').text()).join(', ');
-        // let chartType = channelValues === "ALL" ? 'PIE CHART' : $('#type').val().map(value => $('#type option[value="' + value + '"]').text()).join(', ');
 
         let values = {
             "Chart Type:": $('#type').val().map(value => $('#type option[value="' + value + '"]').text()).join(', '),
@@ -626,7 +629,8 @@ $(function() {
         };
         
         //use for download charts, this is where it will get the table data.
-        localStorage.setItem('formData', JSON.stringify(values));
+        paramsDataKey = generateRandomKey(); 
+        setCookie(paramsDataKey, JSON.stringify(values));
         
         $.each(values, function(field, value) {
             $('#selectedValues tbody').append(`
@@ -693,7 +697,7 @@ $(function() {
         const channelChart2 = drawBarLineChart(type, chartDiv2, data, options2);
       
         // Get the chart as an image and store it
-        storeChartImage(channelChart2);
+        storeChartData(channelChart2, type);
     }
 
 
@@ -729,7 +733,7 @@ $(function() {
         const channelChart2 = drawPieChart(chartDiv2, data, options2);
 
         // Get the chart as an image and store it
-        storeChartImage(channelChart2);
+        storeChartData(channelChart2, 'pie');
         
     }
 
@@ -739,9 +743,14 @@ $(function() {
 
         Object.keys(channelCodes).forEach(channel => {
             // const convertedChannel = getSwitchChannel(channel);
+            const data = channelCodes[channel][year]; 
+
+            if(data){
+                dataArray.push([`${channel}`, data]); 
+            }
             
-            dataArray.push([`${channel}`, channelCodes[channel][year]|| 0]); 
         });
+
 
         // Check if dataArray has enough data to draw the chart
         if (!hasValidData(dataArray)) return;
@@ -762,7 +771,7 @@ $(function() {
         const channelChart2 = drawPieChart(chartDiv2, data, options2);
 
         // Get the chart as an image and store it
-        storeChartImage(channelChart2);
+        storeChartData(channelChart2, 'pie', year);
     }
 
     function getSwitchChannel(channel){
@@ -795,14 +804,13 @@ $(function() {
     // Save chart function
     function downloadCharts() {
 
-        // Retrieve form data from local storage, the setter is in populateDivForSelectedInputsInForm
-        const storedData = localStorage.getItem('formData');
+        // Retrieve form data from cookie, the setter is in populateDivForSelectedInputsInForm
+        const storedData = getCookie(paramsDataKey);
         const formData = storedData ? JSON.parse(storedData) : {};
-
 
         fetch('/admin/save_chart', {
             method: 'POST',
-            body: JSON.stringify({ images: chartImagesToDownload, data: formData }), 
+            body: JSON.stringify({ chartsData: chartsDataForPDF, formData, chartsDataCacheKey }), 
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -845,8 +853,18 @@ $(function() {
     }
 
     function createBarLineChartOptions() {
+        const channels = $('#channel').val().map(value => $('#channel option[value="' + value + '"]').text()).join(', ');
+
+        // lineBarTitle = `${capitalizeCommaSeparatedString(channels)} Sales Report`;
+
+        if(channels.split(", ").length == 1){
+            lineBarTitle = `${capitalizeWord(channels)} - Sales Report`;
+        } else {
+            lineBarTitle = 'Sales Report';
+        }
+
         return {
-            title: 'Sales Report',
+            title: lineBarTitle,
             hAxis: { title: 'Months' },
             vAxis: { title: 'Sales' },
             isStacked: false,
@@ -868,6 +886,19 @@ $(function() {
         };
     }
 
+    function capitalizeWord(word) {
+        if (typeof word !== 'string') return ''; 
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+
+    function capitalizeCommaSeparatedString(str) {
+        if (typeof str !== 'string') return ''; 
+        return str
+            .split(', ') 
+            .map(word => capitalizeWord(word)) 
+            .join(', '); 
+    }
+
     function drawPieChart(chartDiv, data, options) {
         const chart = new google.visualization.PieChart(chartDiv);
         chart.draw(data, options);
@@ -882,7 +913,7 @@ $(function() {
 
     function drawBarLineChart(type, chartDiv, data, options) {
         let chart 
-        console.log(type);
+        // console.log(type);
         switch (type) {
             case 'bar':
                 chart = new google.visualization.ColumnChart(chartDiv);
@@ -911,9 +942,13 @@ $(function() {
         return chartDiv;
     }
 
-    function storeChartImage(chart) {
+    function storeChartData(chart, type, year = null) {
         const imgUri = chart.getImageURI();
-        chartImagesToDownload.push(imgUri);
+        chartsDataForPDF.push({
+            imgUri,
+            type,
+            year
+        });
     }
 
     function getRelevantMonths(months, years) {
@@ -951,6 +986,40 @@ $(function() {
         }
         return true;
     }
+
+    function setCookie(name, value) {
+        document.cookie = `${name}=${value}; path=/; SameSite=Lax`;
+    }
+
+    function getCookie(name) {
+        const nameEq = name + "=";
+        const cookies = document.cookie.split(';');  // Split the cookies string into an array of individual cookies
+
+        // Loop through all cookies and look for the one that matches the provided name
+        for (let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].trim();  // Remove any leading/trailing whitespace
+
+            // Check if the cookie starts with the desired name
+            if (cookie.indexOf(nameEq) === 0) {
+                return cookie.substring(nameEq.length, cookie.length);  // Return the value of the cookie
+            }
+        }
+        return null;  
+    }
+
+    function generateRandomKey(length = 32) {
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        const array = new Uint8Array(length);
+        window.crypto.getRandomValues(array); 
+        
+        array.forEach(byte => {
+            result += charset[byte % charset.length];
+        });
+
+        return result;
+    }
+
     
 });
 

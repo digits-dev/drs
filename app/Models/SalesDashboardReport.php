@@ -1195,12 +1195,60 @@ class SalesDashboardReport extends Model
     
     public static function generateChartData($params)
     {
-        return self::generateChartDataByParams($params, 'chartData_');
+        extract($params);
+
+        // Prepare parameters for caching
+        $paramsForKey = [
+            $yearFrom,
+            $yearTo,
+            $monthFrom,
+            $monthTo,
+            implode('|', (array)$stores),
+            implode('|', (array)$concepts),
+            implode('|', (array)$channels),
+            implode('|', (array)$malls),
+            implode('|', (array)$brands),
+            implode('|', (array)$categories),
+            $group,
+        ];
+
+        $cacheKey = 'generated_chartData_' . md5(implode('|', $paramsForKey));
+
+        $data = Cache::remember($cacheKey, now()->endOfDay(), function() use ($params) {
+            return self::generateChartDataByParams($params, 'chartData_');
+        });
+
+        return ['data' => $data, 'cacheKey' => $cacheKey];
+        
     }
 
     public static function generateChartDataForMultipleChannel($params)
     {
-        return self::generateChartDataByParams($params, 'chartData_', true);
+
+        extract($params);
+
+        // Prepare parameters for caching
+        $paramsForKey = [
+            $yearFrom,
+            $yearTo,
+            $monthFrom,
+            $monthTo,
+            implode('|', (array)$stores),
+            implode('|', (array)$concepts),
+            implode('|', (array)$channels),
+            implode('|', (array)$malls),
+            implode('|', (array)$brands),
+            implode('|', (array)$categories),
+            $group,
+        ];
+
+        $cacheKey = 'generated_chartData_multiple_' . md5(implode('|', $paramsForKey));
+        
+        $data = Cache::remember($cacheKey, now()->endOfDay(), function() use ($params) {
+            return self::generateChartDataByParams($params, 'chartData_', true);
+        });
+
+        return ['data' => $data, 'cacheKey' => $cacheKey];
     }
     private static function generateChartDataByParams($params, $cachePrefix, $includeChannelCode = false)
     {

@@ -7,6 +7,7 @@
 	use App\Models\SalesDashboardReport;
 	use Barryvdh\Snappy\Facades\SnappyPdf;
 	use Illuminate\Http\Request;
+	use Illuminate\Support\Facades\Cache;
 	use Illuminate\Support\Facades\Log;
 	use Session;
 	use DB;
@@ -500,13 +501,13 @@
 			\Log::info(json_encode($generatedDataForLineAndBar, JSON_PRETTY_PRINT));
 
 			
-			if ($generatedDataForPie && $generatedDataForPie->isEmpty()) {
+			if ($generatedDataForPie && $generatedDataForPie['data']->isEmpty()) {
 				return response()->json([
 					'chartData' => false,
 				]);
 			}
 
-			if ($generatedDataForLineAndBar && $generatedDataForLineAndBar->isEmpty()) {
+			if ($generatedDataForLineAndBar && $generatedDataForLineAndBar['data']->isEmpty()) {
 				return response()->json([
 					'chartData' => false,
 				]);
@@ -554,7 +555,6 @@
 
 
 			return response()->json($data);
-
 		}
 
 		public function generateCharts(Request $request)
@@ -589,22 +589,23 @@
 				}
 			}
 
+
 			// Log the generated data
 			\Log::info(json_encode($generatedDataForPie, JSON_PRETTY_PRINT));
 			\Log::info(json_encode($generatedDataForLineAndBar, JSON_PRETTY_PRINT));
 
 			// Return early if no data is generated
-			if ($this->isEmptyData($generatedDataForPie, $generatedDataForLineAndBar)) {
+			if ($this->isEmptyData($generatedDataForPie['data'], $generatedDataForLineAndBar['data'])) {
 				return response()->json(['chartData' => false]);
 			}
 
 			// Process and format data for the charts
-			if ($generatedDataForPie) {
-				$googleChartData['pieData'] = $this->processPieData($generatedDataForPie);
+			if ($generatedDataForPie['data']) {
+				$googleChartData['pieData'] = $this->structurePieData($generatedDataForPie['data']);
 			}
 
-			if ($generatedDataForLineAndBar) {
-				$googleChartData['lineBarData'] = $this->processLineBarData($generatedDataForLineAndBar, $monthOrder);
+			if ($generatedDataForLineAndBar['data']) {
+				$googleChartData['lineBarData'] = $this->structureLineBarData($generatedDataForLineAndBar['data'], $monthOrder);
 			}
 
 			\Log::info(json_encode($googleChartData, JSON_PRETTY_PRINT));
@@ -613,6 +614,10 @@
 			return response()->json([
 				'chartData' => $googleChartData,
 				'years' => $years,
+				'cacheKey' => [
+					'pie' => $generatedDataForPie['cacheKey'],
+					'lineAndBar' => $generatedDataForLineAndBar['cacheKey'],
+				]
 			]);
 		}
 
@@ -657,7 +662,7 @@
 		}
 
 		// Processes data for the pie chart
-		private function processPieData($generatedDataForPie)
+		private function structurePieData($generatedDataForPie)
 		{
 			$pieData = [];
 
@@ -677,7 +682,7 @@
 		}
 
 		// Processes data for line and bar charts
-		private function processLineBarData($generatedDataForLineAndBar, $monthOrder)
+		private function structureLineBarData($generatedDataForLineAndBar, $monthOrder)
 		{
 			$lineBarData = [];
 
@@ -724,30 +729,50 @@
 
 		public function saveChart(Request $request)
 		{
-			// dd($request);
-			$images = $request->input('images'); // Get the array of images
-
 			$data = [];
+
+			$data['chartsData'] = $request->input('chartsData'); 
+			$data['formData'] = $request->input('formData'); 
+			$data['chartsDataCacheKey'] = $request->input('chartsDataCacheKey'); 
+
+			$pieCacheData = Cache::get($data['chartsDataCacheKey']['pie']);
+			$lineAndBarCacheData = Cache::get($data['chartsDataCacheKey']['lineAndBar']);
+
+			$monthOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
+			$data['years'] = self::getYearsInRange($data['formData']['Year From'], $data['formData']['Year To']);
+
+			// Process and format data for the charts
+			if ($pieCacheData) {
+				$data['chartsDataTable']['pieData'] = $this->structurePieData($pieCacheData);
+			}
+
+			if ($lineAndBarCacheData) {
+				$data['chartsDataTable']['lineBarData'] = $this->structureLineBarData($lineAndBarCacheData, $monthOrder);
+			}
 
 			// Prepare an array for base64 images
 			$pdfData = [];
 
-			foreach ($images as $image) {
+			foreach ($data["chartsData"] as $chart) {
 				// Remove the data URL prefix
-				$data = str_replace('data:image/png;base64,', '', $image);
-				$data = str_replace(' ', '+', $data);
+				$imgUri = str_replace('data:image/png;base64,', '', $chart['imgUri']);
+				$imgUri = str_replace(' ', '+', $imgUri);
 				
 				// Prepare the image data URL
-				$imageData = 'data:image/png;base64,' . $data;
-				$pdfData[] = $imageData; // Add to pdfData array
+				$imageData = 'data:image/png;base64,' . $imgUri;
+				$pdfData[] = [
+					'img' => $imageData,
+					'type' => $chart['type'],
+					'year' => $chart['year'] ?? null
+				];
 			}
 
-			$data['chartImages'] = $pdfData;
-			$data['data'] = $request->input('data');
+			$data["chartsData"] = $pdfData;
+		
 
 			try {
 				// Load the view and generate the PDF with all images
-				$pdf = SnappyPdf::loadView('dashboard-report.store-sales.test-pdf2', $data)
+				$pdf = SnappyPDF::loadView('dashboard-report.exports.pdf-store-sales-charts', $data)
 					->setPaper('A4', 'landscape')
 					->setOptions(['margin-top' => 10, 'margin-right' => 5, 'margin-bottom' => 10, 'margin-left' => 5]);
 

@@ -7,6 +7,7 @@
 	use App\Services\SalesDashboardReportService as SSDashboardReportService;
 	use Barryvdh\DomPDF\Facade as DomPDF;
 	use Barryvdh\Snappy\Facades\SnappyPdf as SnappyPDF;
+	use Illuminate\Support\Facades\Cache;
 	use Illuminate\Support\Facades\Log;
 	use Maatwebsite\Excel\Facades\Excel;
 	use DB;
@@ -554,6 +555,13 @@
 		{
 			$images = $request->input('images'); 
 			$data = $request->input('data'); 
+			$chartsKey = $request->input('chartsKey');
+
+			$piedat = Cache::get($chartsKey['pie']);
+
+			// dd($piedat);
+
+			// dd($request->input('chartTypesOrder'));
 
 			function hasManyItems($string, $minCount = 5) {
 				return count(array_filter(array_map('trim', explode(',', $string)))) > $minCount;

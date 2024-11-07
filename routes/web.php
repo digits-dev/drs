@@ -224,7 +224,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::get('/export_sales_report_excel/{salesTable}', [SalesDashboardReportService::class, 'exportExcel'] )->name('export_sales_report_excel');
     Route::post('/ytd_update/{salesTable}', [SalesDashboardReportService::class, 'updateYtdSalesReport'] )->name('ytd_update');
 
-    Route::post('/save_chart', [AdminStoreSalesDashboardReportController::class, 'saveChart'] );
+    Route::post('/save_chart', [AdminDashboardStoreSalesController::class, 'saveChart'] );
 
     Route::post('/generate_charts', [AdminDashboardStoreSalesController::class, 'generateCharts'])->name('charts');
     Route::post('/generate_charts2', [AdminDashboardStoreSalesController::class, 'generateCharts2'])->name('charts2');
