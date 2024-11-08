@@ -395,6 +395,8 @@
                         <th>Document #</th>
                         <th>Invoice Ref #</th>
                         <th>Name</th>
+                        <th>Tin #</th>
+                        <th>Address</th>
                         <th>Amount</th>
                         <th>Tender</th>
                         <th>Credit Card Name</th>
@@ -707,6 +709,8 @@
                             '<td>' + row['Document#'] + '</td>' +
                             '<td>' + row['Invoice Ref No'] + '</td>' +
                             '<td>' + row['Name of Customer'] + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
                             '<td>' + row.AMOUNT + '</td>' +
                             '<td>' + row.TENDER + '</td>' +
                             '<td>' + row['Credit Card Name'] + '</td>' +
