@@ -52,10 +52,21 @@ class EtpTenderReportController extends \crocodicstudio\crudbooster\controllers\
 				$mdr_charge = ($mdr * 0.01 * $ammount);
 				$net_amount = ($ammount - $mdr_charge);
 
+				// Truncate to 2 decimal places without rounding
+				$mdr_charge = floor($mdr_charge * 100) / 100;
+				$net_amount = floor($net_amount * 100) / 100;
+				$ammount = floor($ammount * 100) / 100; 
+				
+				// Format the values to 2 decimal points only
+				$mdr_charge = number_format($mdr_charge, 2, '.', '');
+				$net_amount = number_format($net_amount, 2, '.', '');
+				$formattedAmount = number_format($ammount, 2, '.', ''); 
+
 				$customerCode = str_replace('CUS-', '', $row->{'STORE ID'});
 				$row->customerName = $customerMap[$customerCode] ?? 'Unknown';
 				$row->mdrCharge = $mdr_charge ?? 'Undefined';
 				$row->netAmount = $net_amount ?? 'Undefined';
+				$row->formattedAmount = $formattedAmount;
 				$row->{'DATE'} = Carbon::parse($row->{'DATE'})->format('Y-m-d');
 				$row->{'TIME'} = Carbon::parse($row->{'TIME'})->format('H:i:s');
 			}

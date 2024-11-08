@@ -428,7 +428,7 @@
                                 <td>{{ $row->customerName }}</td>
                                 <td>{{ $row->{'RECEIPT#'} }}</td>
                                 <td>{{ $row->{'Name of Customer'} }}</td>
-                                <td>{{ $row->AMOUNT }}</td>
+                                <td>{{ $row->formattedAmount }}</td>
                                 <td>{{ $row->TENDER }}</td>
                                 <td>{{ $row->{'Credit Card Name'} }}</td>
                                 <td>{{ $row->{'Credit Card Number'} }}</td>
@@ -711,7 +711,7 @@
                             '<td>' + row['Name of Customer'] + '</td>' +
                             '<td>' + '' + '</td>' +
                             '<td>' + '' + '</td>' +
-                            '<td>' + row.AMOUNT + '</td>' +
+                            '<td>' + row.formattedAmount + '</td>' +
                             '<td>' + row.TENDER + '</td>' +
                             '<td>' + row['Credit Card Name'] + '</td>' +
                             '<td>' + row['Credit Card Number'] + '</td>' +

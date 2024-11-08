@@ -56,6 +56,41 @@ class EtpBirReportController extends \crocodicstudio\crudbooster\controllers\CBC
 			foreach ($final_bir as &$row) {
 				$row['CustomerName'] = $customerMap[$row['Warehouse']] ?? ' ';
 				$row['CreateDate'] = Carbon::parse($row['CreateDate'])->format('Y-m-d');
+
+				// Truncate to 2 decimal points without rounding
+				$netAmount = floor($row['NetAmount'] * 100) / 100;
+				$discount = floor($row['Discount'] * 100) / 100;
+				$returns = floor($row['Returns'] * 100) / 100;
+				$voids = floor($row['Voids'] * 100) / 100;
+				$deductions = floor($row['Deductions'] * 100) / 100;
+				$grossTotalAmt = floor($row['GrossTotalAmt'] * 100) / 100;
+				$vatableTotalAmt = floor($row['VatableTotalAmt'] * 100) / 100;
+				$vatTotalAmt = floor($row['VatTotalAmt'] * 100) / 100;
+				$salesVatExmptAmt = floor($row['SalesVatExmptAmt'] * 100) / 100;
+				$zeroRatedSalesAmt = floor($row['ZeroRatedSalesAmt'] * 100) / 100;
+
+				// Format the values to 2 decimal points only
+				$netAmount = number_format($netAmount, 2, '.', '');
+				$discount = number_format($discount, 2, '.', '');
+				$returns = number_format($returns, 2, '.', '');
+				$voids = number_format($voids, 2, '.', '');
+				$deductions = number_format($deductions, 2, '.', '');
+				$grossTotalAmt = number_format($grossTotalAmt, 2, '.', '');
+				$vatableTotalAmt = number_format($vatableTotalAmt, 2, '.', '');
+				$vatTotalAmt = number_format($vatTotalAmt, 2, '.', '');
+				$salesVatExmptAmt = number_format($salesVatExmptAmt, 2, '.', '');
+				$zeroRatedSalesAmt = number_format($zeroRatedSalesAmt, 2, '.', '');
+
+				$row['NetAmount'] = $netAmount;
+				$row['Discount'] = $discount;
+				$row['Returns'] = $returns;
+				$row['Voids'] = $voids;
+				$row['Deductions'] = $deductions;
+				$row['GrossTotalAmt'] = $grossTotalAmt;
+				$row['VatableTotalAmt'] = $vatableTotalAmt;
+				$row['VatTotalAmt'] = $vatTotalAmt;
+				$row['SalesVatExmptAmt'] = $salesVatExmptAmt;
+				$row['ZeroRatedSalesAmt'] = $zeroRatedSalesAmt;
 			}
 			
 			return response()->json($final_bir);
