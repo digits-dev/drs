@@ -494,6 +494,7 @@ $(function() {
     function hideModalAndShowLoading() {
         $('#chartModal').modal('hide');
         $('#loading').show();
+        $('#saveChartBtn').hide();
     }
 
     function clearChartContainer() {
@@ -534,6 +535,7 @@ $(function() {
 
         resetForm();
         $('#loading').hide();
+        $('#saveChartBtn').show();
     }
 
     function processChartData(data) {
@@ -855,9 +857,11 @@ $(function() {
     function createBarLineChartOptions() {
         const channels = $('#channel').val().map(value => $('#channel option[value="' + value + '"]').text()).join(', ');
 
-        // lineBarTitle = `${capitalizeCommaSeparatedString(channels)} Sales Report`;
+        // lineBarTitle = `${capitalizeCommaSeparatedString(channels)} Sales Report`;'
+        
+        // console.log(channels);
 
-        if(channels.split(", ").length == 1){
+        if(channels.split(", ").length == 1 && !channels.includes("ALL")){
             lineBarTitle = `${capitalizeWord(channels)} - Sales Report`;
         } else {
             lineBarTitle = 'Sales Report';
