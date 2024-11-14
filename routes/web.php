@@ -232,7 +232,7 @@ Route::group(['prefix'=>'admin'], function(){
     Route::post('/generate_charts2', [AdminDashboardStoreSalesController::class, 'generateCharts2'])->name('charts2');
     
     // BREAKEVEN SALES
-    Route::get('/breakeven_sales/breakeven-import-view', [AdminBreakevenSalesController::class, 'importBreakvenView']);
+    Route::get('/breakeven_sales/breakeven-import-view', [AdminBreakevenSalesController::class, 'importBreakevenView']);
     Route::get('/breakeven_sales/import-breakeven-template', [AdminBreakevenSalesController::class, 'importBreakevenTemplate'])->name('upload-breakeven-template');
     Route::post('/breakeven_sales/import-breakeven-sales', [AdminBreakevenSalesController::class, 'importBreakevenSales'])->name('import-breakeven-sales');
     
