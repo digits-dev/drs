@@ -423,6 +423,7 @@
         <table class="table" id="bir_report">
             <thead>
                 <tr>
+                    <th>Company Name</th>
                     <th>Store Name</th>
                     <th>Date</th>
                     <th>Beginning Invoice Number</th>
@@ -442,6 +443,7 @@
             </thead>
             <tbody>
                     <tr>
+                        <th>Company Name</th>
                         <td>Store Name</td>
                         <td>Date</td>
                         <td>Beginning Balance</td>
@@ -819,6 +821,7 @@
 
                     response.forEach(function(row) {
                         const tr = '<tr>' +
+                            '<td>' + row['CompanyName'] + '</td>' +   
                             '<td>' + row['CustomerName'] + '</td>' +               // Store Name
                             '<td>' + row['CreateDate'] + '</td>' +              // Date
                             '<td>' + row['DocRangeFrom'] + '</td>' +            // Beginning Invoice Number 
