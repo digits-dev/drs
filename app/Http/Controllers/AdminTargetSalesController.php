@@ -35,7 +35,7 @@
 
 			# START COLUMNS DO NOT REMOVE THIS LINE
 			$this->col = [];
-			$this->col[] = ["label"=>"Stores Id","name"=>"stores_id", 'join'=>'customers,customer_name'];
+			$this->col[] = ["label"=>"Customer Name","name"=>"stores_id", 'join'=>'customers,customer_name'];
 			$this->col[] = ["label"=>"Year","name"=>"year"];
 			$this->col[] = ["label"=>"Month","name"=>"month"];
 			$this->col[] = ["label"=>"Target Sales","name"=>"target_sales"];
@@ -43,7 +43,7 @@
 
 			# START FORM DO NOT REMOVE THIS LINE
 			$this->form = [];
-			$this->form[] = ['label'=>'Stores Id','name'=>'stores_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'stores,id'];
+			$this->form[] = ['label'=>'Customer Name','name'=>'stores_id','type'=>'select2','validation'=>'required|integer|min:0','width'=>'col-sm-10','datatable'=>'stores,id'];
 			$this->form[] = ['label'=>'Year','name'=>'year','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Month','name'=>'month','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'Target Sales','name'=>'target_sales','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
