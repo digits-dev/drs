@@ -38,6 +38,8 @@ use App\Http\Controllers\AdminGashaponStoreSalesController;
 use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
 use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
 use App\Http\Controllers\SupplierIntransitInventoryController;
+use App\Http\Controllers\AdminBreakevenSalesController;
+use App\Http\Controllers\AdminTargetSalesController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -228,6 +230,14 @@ Route::group(['prefix'=>'admin'], function(){
 
     Route::post('/generate_charts', [AdminDashboardStoreSalesController::class, 'generateCharts'])->name('charts');
     Route::post('/generate_charts2', [AdminDashboardStoreSalesController::class, 'generateCharts2'])->name('charts2');
-
-
+    
+    // BREAKEVEN SALES
+    Route::get('/breakeven_sales/breakeven-import-view', [AdminBreakevenSalesController::class, 'importBreakvenView']);
+    Route::get('/breakeven_sales/import-breakeven-template', [AdminBreakevenSalesController::class, 'importBreakevenTemplate'])->name('upload-breakeven-template');
+    Route::post('/breakeven_sales/import-breakeven-sales', [AdminBreakevenSalesController::class, 'importBreakevenSales'])->name('import-breakeven-sales');
+    
+    // TARGET SALES
+    Route::get('/target_sales/target-import-view', [AdminTargetSalesController::class, 'importTargetSalesView']);
+    Route::get('/target_sales/import-target-template', [AdminTargetSalesController::class, 'importTargetSalesTemplate'])->name('upload-target-template');
+    Route::post('/target_sales/import-target-sales', [AdminTargetSalesController::class, 'importTargetSales'])->name('import-target-sales');
 });
