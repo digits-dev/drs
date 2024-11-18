@@ -265,18 +265,21 @@ class StoreInventory extends Model
             ->exists();
     }
 
-    public static function syncOldEntriesFromNewEntries($dateFrom, $dateTo, $newEntries) {
+    public static function syncOldEntriesFromNewEntries($dateFrom, $dateTo, $newEntries)
+    {
+        // Fetch existing data for the date range
         $oldData = self::fetchNewInventoryData($dateFrom, $dateTo);
-        
 
-        if(!empty($oldData)){
-            $subInv = [];
-            $newDatasKeys =[];
+        if (!empty($oldData)) {
+            $subInvCache = [];
+            $cusNameCache = [];
+            $newDataMap = [];
+
+            // Consolidate unique items in new entries to avoid duplication
             $uniqueItems = [];
-
             foreach ($newEntries as $item) {
-                $key = $item->StoreId . '-' . $item->Date . '-' . $item->ItemNumber . '-' . $item->SubInventory;
-                
+                $key = "{$item->StoreId}-{$item->Date}-{$item->ItemNumber}-{$item->SubInventory}";
+
                 if (isset($uniqueItems[$key])) {
                     $uniqueItems[$key]->TotalQty += $item->TotalQty;
                 } else {
@@ -284,120 +287,137 @@ class StoreInventory extends Model
                 }
             }
 
-            $uniqueItems = array_values($uniqueItems);
+            // Cache sub-inventory and customer names to minimize DB calls
+            $uniqueOldSubInventoryIds = collect($oldData)->pluck('inventory_transaction_types_id')->filter()->unique();
+            $subInventoryRecords = InventoryTransactionType::whereIn('id', $uniqueOldSubInventoryIds)->get();
+            
+            foreach ($subInventoryRecords as $sub) {
+                $subInvCache[$sub->id] = $sub->inventory_transaction_type;
+            }
 
-            $uniqueOldSubInventoryId = collect($oldData)
-            ->pluck('inventory_transaction_types_id') 
-            ->filter(function ($value) {
-                return !is_null($value); 
-            })
-            ->unique();
-    
-    
-            $subInventory = InventoryTransactionType::whereIn('id', $uniqueOldSubInventoryId)->get();
-    
-            if ($subInventory->isNotEmpty()) {
-                foreach ($subInventory as $sub) {
-                    $subInv[$sub->id] = [
-                        'name' => $sub->inventory_transaction_type,
-                    ];
-                }   
-            }
-    
             $uniqueOldCustomerIds = collect($oldData)->pluck('customers_id')->unique();
-            $cusNames = [];
-    
-            $customers = Customer::whereIn('id', $uniqueOldCustomerIds)->get();
-    
-            if ($customers->isNotEmpty()) {
-                foreach ($customers as $customer) {
-                    $cusNames[$customer->id] = [
-                        'name' => $customer->customer_name,
-                    ];
-                }
-                
+            $customerRecords = Customer::whereIn('id', $uniqueOldCustomerIds)->get();
+
+            foreach ($customerRecords as $customer) {
+                $cusNameCache[$customer->id] = $customer->customer_name;
             }
-    
+
+            // Prepare new entries keyed by a unique identifier
             $customerNameCache = [];
-    
             foreach ($uniqueItems as $entry) {
-                $subInventory = '';
-                $date = Carbon::createFromFormat('Ymd', $entry->Date)->format('Y-m-d');
-    
-                if(isset($customerNameCache[$entry->StoreId])){
-                    $customerName = $customerNameCache[$entry->StoreId];
-                }else{
-                    $customerName = DB::connection('masterfile')->table('customer')
-                    ->where('customer_code', "CUS-" . $entry->StoreId)
-                    ->pluck('cutomer_name')
-                    ->first();
-    
-                    $customerNameCache[$entry->StoreId] = $customerName;
-                }
-                
+                $dateFormatted = Carbon::createFromFormat('Ymd', $entry->Date)->format('Y-m-d');
                 $itemNumber = str_replace(['Q1_', 'Q2_'], '', $entry->ItemNumber);
-                
                 $prefix = substr($entry->ItemNumber, 0, 3);
-        
+
+                // Determine sub-inventory type
+                // Determine sub-inventory type
                 if ($prefix === 'Q1_') {
-                    if($entry->SubInventory === "GOOD" || $entry->SubInventory === "DEMO"){
-                        $subInventory = "POS - " . $entry->SubInventory;
-                    }else{
+                    if ($entry->SubInventory === "GOOD" || $entry->SubInventory === "DEMO") {
+                        $subInventory = "POS - {$entry->SubInventory}";
+                    } else {
                         $subInventory = '';
                     }
                 } elseif ($prefix === 'Q2_') {
-                    if($entry->ToWarehouse === '0312'){
-                        $subInventory = "POS - RMA";
-                    }else{
-                        $subInventory = "POS - TRANSIT";
+                    if ($entry->ToWarehouse === '0312') {
+                        $subInventory = 'POS - RMA';
+                    } else {
+                        $subInventory = 'POS - TRANSIT';
                     }
-                }   
-    
-                // $key = $customerName . '-' . $date . '-' . $itemNumber . '-' . intval($entry->TotalQty) . '-' . $subInventory;
-                
-                // $newDatasKeys[$key] = $entry;
-                
-                //-----------------------------
-                // $entryArray = (array)$entry;
+                } else {
+                    $subInventory = '';
+                }
 
-                // $newDatasKeys[$key] = $entryArray;
 
-                // if (isset($newDatasKeys[$key])) {
-                //     $newDatasKeys[$key][] = $entryArray;
-                // } else {
-                //     $newDatasKeys[$key] = $entryArray;
-                // }
+                // Cache customer name if not already cached
+                if (!isset($customerNameCache[$entry->StoreId])) {
+                    $customerName = DB::connection('masterfile')->table('customer')
+                        ->where('customer_code', "CUS-{$entry->StoreId}")
+                        ->value('cutomer_name');
+                    $customerNameCache[$entry->StoreId] = $customerName;
+                } else {
+                    $customerName = $customerNameCache[$entry->StoreId];
+                }
 
-                $key = $customerName . '-' . $date . '-' . $itemNumber . '-' . $subInventory;
+                // Generate a key for unique identification
+                $key = "{$customerName}-{$dateFormatted}-{$itemNumber}-{$subInventory}";
+                $newDataMap[$key] = $entry;
+            }
 
-                $newDatasKeys[$key] = $entry;
-
-            }  
-                
+            // Prepare for batch updates
             $idsToUpdate = [];
+            $updates = [];
 
+            // Compare old data to new data map for updates
             foreach ($oldData as $entry) {
-                // $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $entry['quantity_inv'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
-                $key = $cusNames[$entry['customers_id']]['name'] . '-' . $entry['inventory_date'] . '-' . $entry['item_code'] . '-' . $subInv[$entry['inventory_transaction_types_id']]['name'];
+                $customerName = $cusNameCache[$entry['customers_id']] ?? null;
+                $subInventoryName = $subInvCache[$entry['inventory_transaction_types_id']] ?? null;
+                $key = "{$customerName}-{$entry['inventory_date']}-{$entry['item_code']}-{$subInventoryName}";
 
-                if (!isset($newDatasKeys[$key])) {
+                if (!isset($newDataMap[$key])) {
                     $idsToUpdate[] = $entry['id'];
-                }else{
-                    if($entry['quantity_inv'] !== intval($newDatasKeys[$key]->TotalQty)){
-                        // dump("change qty for id no: " .  $entry['id']. " from: " . $entry['quantity_inv'] . " to: " . $newDatasKeys[$key]->TotalQty);
-                        self::where('id', $entry['id'])->update(['quantity_inv' => $newDatasKeys[$key]->TotalQty]);
+                } else {
+                    $newQty = intval($newDataMap[$key]->TotalQty);
+                    if ($entry['quantity_inv'] !== $newQty) {
+                        $updates[] = ['id' => $entry['id'], 'quantity_inv' => $newQty];
                     }
                 }
             }
 
-            // dump('ids need to zero out: ' . implode(', ', $idsToUpdate));
+            // Batch update quantity for changed entries
+            foreach ($updates as $update) {
+                self::where('id', $update['id'])->update(['quantity_inv' => $update['quantity_inv']]);
+            }
+
+            // Set quantity to zero for entries no longer in the new data
             if (!empty($idsToUpdate)) {
                 self::whereIn('id', $idsToUpdate)->update(['quantity_inv' => 0]);
             }
-
         }
-
     }
+
+    public function createAndUpsertInventoryData(array $data, array $inventoryData)
+    {
+        $uniqueKeys = ['batch_number', 'reference_number'];
+        $updateColumns = [
+            'batch_number',
+            'batch_date',
+            'systems_id',
+            'organizations_id',
+            'report_types_id',
+            'channels_id',
+            'inventory_transaction_types_id',
+            'employees_id',
+            'customers_id',
+            'inventory_date',
+            'item_description',
+            'quantity_inv',
+            'store_cost',
+            'dtp_ecom',
+            'qtyinv_sc',
+            'qtyinv_ecom',
+            'landed_cost',
+            'product_quality',
+            'to_warehouse',
+            'from_warehouse',
+            'qtyinv_lc',
+            'created_by'
+        ];
+
+        StoreInventoryUpload::create([
+            'batch' => $inventoryData['batch_number'],
+            'folder_name' => $inventoryData['folder_name'],
+            'file_name' => $inventoryData['file_name'],
+            'file_path' => $inventoryData['excel_path'],
+            'created_by' => $inventoryData['created_by'],
+            'from_date' => $inventoryData['from_date'],
+            'row_count' => $inventoryData['row_count'],
+            'headings' => json_encode($updateColumns),
+            'status' => 'IMPORT FINISHED'
+        ]);
+
+        self::upsert($data, $uniqueKeys, $updateColumns);
+    }
+
 
     private static function fetchNewInventoryData($dateFrom, $dateTo) {
         return self::whereBetween('inventory_date', [$dateFrom, $dateTo])->get()->toArray();
