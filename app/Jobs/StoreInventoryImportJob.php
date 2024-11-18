@@ -2,25 +2,26 @@
 
 namespace App\Jobs;
 
+use Exception;
+use Carbon\Carbon;
+use App\Models\System;
 use App\Models\Channel;
+use App\Models\Counter;
 use App\Models\Customer;
 use App\Models\Employee;
-use App\Models\InventoryTransactionType;
-use App\Models\Organization;
 use App\Models\ReportType;
-use App\Models\StoreInventory;
-use App\Models\StoreInventoryUpload;
-use App\Models\StoreInventoryUploadLine;
-use App\Models\System;
-use Carbon\Carbon;
-use Exception;
+use App\Models\Organization;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use App\Models\StoreInventory;
+use App\Models\StoreInventoryUpload;
+use Illuminate\Queue\SerializesModels;
+use App\Models\InventoryTransactionType;
+use App\Models\StoreInventoryUploadLine;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 
 class StoreInventoryImportJob implements ShouldQueue
 {
@@ -83,7 +84,7 @@ class StoreInventoryImportJob implements ShouldQueue
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
-                'reference_number'		=> $row->reference_number,
+                'reference_number'		=> Counter::where('id', 2)->value('reference_code'),
                 'systems_id'			=> $v_system->id,
                 'organizations_id'	    => $v_organization->id,
                 'report_types_id'		=> $v_report_type->id,
@@ -104,6 +105,9 @@ class StoreInventoryImportJob implements ShouldQueue
                 'qtyinv_lc'			    => ($row->inventory_qty)*($row->landed_cost),
                 'created_by'            => $chunk->created_by,
             ];
+
+            Counter::where('id', 2)->increment('reference_code');
+
         }
 
         $columns = array_keys($insertable[0]);
