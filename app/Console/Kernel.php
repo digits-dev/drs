@@ -4,7 +4,11 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-
+use App\Http\Controllers\StoreInventoryController;
+use App\Http\Controllers\StoreSaleController;
+use App\Http\Controllers\AdminItemsController;
+use App\Http\Controllers\AdminGachaItemsController;
+use App\Http\Controllers\AdminRmaItemsController;
 class Kernel extends ConsoleKernel
 {
     protected $commands = [
@@ -19,9 +23,22 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->call('\App\Http\Controllers\AdminItemsController@getDimfsData')->hourly();
-        $schedule->call('\App\Http\Controllers\AdminGachaItemsController@getDimfsGachaItemsData')->hourly();
-        $schedule->call('\App\Http\Controllers\AdminRmaItemsController@getDimfsRmaItemsData')->hourly();
+        $schedule->call(function(){
+            $itemMaster = new AdminItemsController();
+            $itemMaster->getDimfsData();
+            $gashapon = new AdminGachaItemsController();
+            $gashapon->getDimfsGachaItemsData();
+            $rmaItemMaster = new AdminRmaItemsController();
+            $rmaItemMaster->getDimfsRmaItemsData();
+        })->hourly();
+
+        $schedule->call(function(){
+            $storeInventory = new StoreInventoryController();
+            $storeInventory->StoresInventoryFromPosEtp();
+            $storeSale = new StoreSaleController();
+            $storeSale->StoresSalesFromPosEtp();
+            
+        })->dailyAt('23:00:00');
         $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
         
     }
