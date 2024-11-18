@@ -25,6 +25,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use PhpParser\Node\Stmt\TryCatch;
+use App\Models\Counter;
 
 class StoreSalesImportJob implements ShouldQueue
 {
@@ -79,11 +80,12 @@ class StoreSalesImportJob implements ShouldQueue
             if ($sales_date < $chunk->from_date || $sales_date > $chunk->to_date) {
                 throw new Exception("SALES DATE OUT OF RANGE FOR REF #$row->reference_number.");
             }
-            
+        
             $insertable[] = [
                 'batch_number'			=> $chunk->batch,
                 'batch_date'			=> Carbon::now()->format('Ym'),
-                'reference_number'		=> $row->reference_number,
+                // 'reference_number'		=> $row->reference_number,
+                'reference_number'		=> Counter::where('id',1)->value('reference_code'),
                 'systems_id'			=> $v_system->id,
                 'organizations_id'	    => $v_organization->id,
                 'report_types_id'		=> $v_report_type->id,
@@ -109,6 +111,7 @@ class StoreSalesImportJob implements ShouldQueue
                 'sale_memo_reference'	=> $row->sale_memo_ref,
                 'created_by'            => $chunk->created_by,
             ];
+            Counter::where('id',1)->increment('reference_code');
         }
         $columns = array_keys($insertable[0]);
         StoreSale::upsert($insertable, ['batch_number', 'reference_number'], $columns);

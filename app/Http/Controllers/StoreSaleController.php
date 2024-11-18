@@ -154,13 +154,14 @@ class StoreSaleController extends Controller
         $excel_path = storage_path('app') . '/' . $excel_relative_path;
         HeadingRowFormatter::default('none');
         $headings = (new HeadingRowImport)->toArray($excel_path)[0][0];
-        // Count rows in the Excel file
-        $excelDataCount = Excel::toArray(null, $excel_path);
-        $row_count = count($excelDataCount[0]); // Assuming the first sheet is used
-        $row_count_without_header = $row_count - 1;
-        $counter = Counter::find(1);
-        $counter->reference_code += $row_count_without_header;
-        $counter->save();
+        // // Count rows in the Excel file
+        // $excelDataCount = Excel::toArray(null, $excel_path);
+        // $row_count = count($excelDataCount[0]); // Assuming the first sheet is used
+        // $row_count_without_header = $row_count - 1;
+
+        // $counter = Counter::find(1);
+        // $counter->reference_code += $row_count_without_header;
+        // $counter->save();
 
         //check headings
         $header = config('excel-template-headers.store-sales');
