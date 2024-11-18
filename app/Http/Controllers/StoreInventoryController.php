@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use DB;
 use CRUDBooster;
 use Carbon\Carbon;
+use App\Models\System;
+use App\Models\Channel;
 use App\Models\Counter;
+use App\Models\Customer;
+use App\Models\Employee;
 use Illuminate\Bus\Batch;
+use App\Models\ReportType;
 use Illuminate\Support\Str;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use App\Exports\ExcelTemplate;
 use App\Models\StoreInventory;
@@ -27,6 +33,7 @@ use App\Rules\ExcelFileValidationRule;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use App\Models\InventoryTransactionType;
+use App\Models\StoreInventoryUploadLine;
 use Illuminate\Support\Facades\Response;
 use App\Jobs\AppendMoreStoreInventoryJob;
 use App\Jobs\ProcessStoreInventoryUploadJob;
@@ -308,70 +315,59 @@ class StoreInventoryController extends Controller
     }
 
     public function StoresInventoryFromPosEtp(Request $request){
+
         $datefrom = $request->datefrom ? date("Ymd", strtotime($request->datefrom)) : date("Ymd", strtotime("-5 hour"));
         $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
+
+        // $firstQueryResult = StoreInventory::generateDummyData();
 
         $firstQueryResult  = StoreInventory::scopeGetStoresInventoryFromPosEtp($datefrom, $dateto);
         $secondQueryResult = StoreInventory::scopeGetInTransitInventoryFromPosEtp($datefrom, $dateto);
 
-        $mergedResults  = collect($firstQueryResult)->merge($secondQueryResult);
-        
+        $mergedResults = collect($firstQueryResult)->merge($secondQueryResult);
+
         $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
             return clone $item; 
         });
-
         
         StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResultsCopy);
-
-        $uniqueInventory = [];
 
         $groupedSalesData = $mergedResults->groupBy(function ($item) {
             return $item->SubInventory === 'DEMO' ? 'DEMO' : 'NOT DEMO';
         });
 
-        $demoItemNumbers = $groupedSalesData->get('DEMO', collect())
-        ->pluck('ItemNumber')
-        ->map(function ($itemNumber) {
-            return str_replace(['Q1_', 'Q2_'], '', $itemNumber);
+        $itemNumbers = $groupedSalesData->flatMap(function ($items) {
+            return $items->pluck('ItemNumber')
+                ->map(function ($itemNumber) {
+                    return str_replace(['Q1_', 'Q2_'], '', $itemNumber);
+                });
         })
-        ->toArray();
-
-        $notDemoItemNumbers = $groupedSalesData->get('NOT DEMO', collect())
-        ->pluck('ItemNumber')
-        ->map(function ($itemNumber) {
-            return str_replace(['Q1_', 'Q2_'], '', $itemNumber);
-        })
-        ->toArray();
-        
-        $itemNumbers = collect($demoItemNumbers)
-        ->merge($notDemoItemNumbers)
         ->unique()
         ->values()
         ->toArray();
-
+        
         $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
 
-        $warehouseCodes = collect($firstQueryResult)
-        ->merge($secondQueryResult) // Merge results from both queries
-        ->flatMap(function($storeData) {
-            $warehouseCode = !empty($storeData->StoreId) ? "CUS-" . $storeData->StoreId : '';
-            $toWarehouseCode = !empty($storeData->ToWarehouse) ? "CUS-" . $storeData->ToWarehouse : '';
+        // dd($itemDetails);
 
-            return [$warehouseCode, $toWarehouseCode];
-        })
-        ->filter()
-        ->unique()
-        ->toArray();
+        $warehouseCodes = $mergedResults->flatMap(function($storeData) {
+            return [
+                !empty($storeData->StoreId) ? "CUS-" . $storeData->StoreId : null,
+                !empty($storeData->ToWarehouse) ? "CUS-" . $storeData->ToWarehouse : null
+            ];
+        })->filter()->unique()->toArray();
 
         $masterfile = DB::connection('masterfile')->table('customer')
+            ->select(['cutomer_name', 'channel_code_id', 'warehouse_name', 'customer_code'])
             ->whereIn('customer_code', $warehouseCodes)
             ->get()
             ->keyBy('customer_code');
-        
 
         $groupedByStoreId = $groupedSalesData->map(function ($items) {
             return $items->groupBy('StoreId');
         });
+
+        // dd($groupedByStoreId);
 
 
         foreach($groupedByStoreId as $itemKey => $item){
@@ -390,71 +386,12 @@ class StoreInventoryController extends Controller
                 $toExcelContent = []; 
                 $uniqueInventory =  [];
 
-                $index = -1;
-
-
                 // Create Excel Data
-                foreach($storeData as &$excel){
+                $excelData = $this->prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batch_number);
 
-                    $itemNumber = str_replace(['Q1_', 'Q2_'], '', $excel->ItemNumber);
-                    $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel->ToWarehouse, $itemKey, $excel->SubInventory);
-                    $cusCode = "CUS-" . $excel->StoreId;
-
-                    if (StoreInventory::isNotExist($excel->Date, $excel->TotalQty, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
-                        
-                        $key = $excel->StoreId . $excel->Date . $excel->ItemNumber . ($excel->SubInventory ?? $sub_inventory);
-
-                        if(isset($uniqueInventory[$key])){
-                            $index = $uniqueInventory[$key]['index'];
-                            $currQty = $uniqueInventory[$key]['totalQty'];
-                            $toExcelContent[$index]['total_qty'] = $currQty + $excel->TotalQty;
-                            $uniqueInventory[$key]['totalQty'] = $toExcelContent[$index]['total_qty'];
-
-                        }else{
-                            
-                            $uniqueInventory[$key] = [
-                                "index" => ++$index,
-                                "totalQty" => $excel->TotalQty,
-                                "itemKey" => $itemKey,
-                                "item" => $excel
-                            ];
-
-                            $counter = Counter::where('id', 2)->value('reference_code');
-                            $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
-                            $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
-                            $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
-    
-                            $toExcel = [];
-                            $toExcel['reference_number'] = $counter;
-                            $toExcel['system'] = 'POS';
-                            $toExcel['org'] = $itemDetails[$itemNumber]['org'];
-                            $toExcel['report_type'] = 'STORE INVENTORY';
-                            $toExcel['channel_code'] = $masterfile[$cusCode]->channel_code_id;
-                            $toExcel['sub_inventory'] = $sub_inventory;
-                            $toExcel['customer_location'] = $masterfile[$cusCode]->cutomer_name;
-                            $toExcel['inventory_as_of_date'] = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
-                            $toExcel['item_number'] = $itemNumber;
-                            $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
-                            $toExcel['total_qty'] = $excel->TotalQty;
-                            $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
-                            $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
-                            $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                            $toExcel['product_quality'] = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-                            $toExcel['from_warehouse'] = $fromWareHouse;
-                            
-                            $toExcel['to_warehouse'] = $toWareHouse;
-                            
-                            $toExcelContent[] = $toExcel;
-                            Counter::where('id',2)->increment('reference_code');
-                        }
-                        
-                    }
-
-                }
-
+                // dd($excelData);
                 foreach($uniqueInventory as $item)
                 {
-                    $excel = $item['item'];
                     $cusCode = "CUS-" . $item['item']->StoreId;
                     $toWarehouse = $item['item']->ToWarehouse;
                     $itemKey = $item['itemKey'];
@@ -469,8 +406,9 @@ class StoreInventoryController extends Controller
                     }
                 }
 
-                if(!empty($toExcelContent)){
-                    Excel::store(new StoreInventoryExcel($toExcelContent), $excel_path, 'local');
+
+                if(!empty($excelData)){
+                    Excel::store(new StoreInventoryExcel($excelData), $excel_path, 'local');
     
                     // ExportStoreInventoryJob::dispatch($toExcelContent, $excel_path);
         
@@ -497,6 +435,83 @@ class StoreInventoryController extends Controller
         }
 
     }
+
+
+    private function prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batchNumber)
+    {
+        $toExcelContent = [];
+        $uniqueInventory = [];
+
+        foreach ($storeData as $excel) {
+            $itemNumber = str_replace(['Q1_', 'Q2_'], '', $excel->ItemNumber);
+            $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel->ToWarehouse, $itemKey, $excel->SubInventory);
+            $cusCode = "CUS-" . $excel->StoreId;
+            $key = "{$excel->StoreId}{$excel->Date}{$excel->ItemNumber}" . ($excel->SubInventory ?? $sub_inventory);
+            
+            if (StoreInventory::isNotExist($excel->Date, $excel->TotalQty, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
+                if (isset($uniqueInventory[$key])) {
+                    $index = $uniqueInventory[$key]['index'];
+                    $currQty = $uniqueInventory[$key]['totalQty'];
+                    $toExcelContent[$index]['total_qty'] = $currQty + $excel->TotalQty;
+                    $uniqueInventory[$key]['totalQty'] = $toExcelContent[$index]['total_qty'];
+
+                } else {
+                    // If key does not exist, create a new unique entry
+                    $uniqueInventory[$key] = [
+                        "index" => count($toExcelContent),
+                        "totalQty" => $excel->TotalQty,
+                        "itemKey" => $itemKey,
+                        "item" => $excel
+                    ];
+
+                    $refCounter = Counter::where('id', 2)->value('reference_code');
+
+
+                    $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
+                    $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
+                    $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
+                    $org = $itemDetails[$itemNumber]['org'];
+                    $reportType = 'STORE INVENTORY';
+                    $channelCode = $masterfile[$cusCode]->channel_code_id;
+                    $customerLoc = $masterfile[$cusCode]->cutomer_name;
+                    $itemDescription = $itemDetails[$itemNumber]['item_description'];
+                    $inventoryAsOfDate = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
+                    $storeCost = $itemDetails[$itemNumber]['store_cost'];
+
+                    $productQuality = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
+
+                    // Add entry to Excel data array
+                    $toExcelContent[] = [
+                        'reference_number' => $refCounter,
+                        'system' => 'POS',
+                        'org' => $org,
+                        'report_type' => $reportType,
+                        'channel_code' => $channelCode,
+                        'sub_inventory' => $sub_inventory,
+                        'customer_location' => $customerLoc,
+                        'inventory_as_of_date' => $inventoryAsOfDate,
+                        'item_number' => $itemNumber,
+                        'item_description' => $itemDescription,
+                        'total_qty' => $excel->TotalQty,
+                        'store_cost' => $storeCost,
+                        'store_cost_eccom' => $itemDetails[$itemNumber]['store_cost_eccom'],
+                        'landed_cost' => $itemDetails[$itemNumber]['landed_cost'],
+                        'product_quality' => $productQuality,
+                        'from_warehouse' => $fromWareHouse,
+                        'to_warehouse' => $toWareHouse
+                    ];
+
+                    Counter::where('id', 2)->increment('reference_code');
+
+
+                }
+            }
+        }
+
+        return $toExcelContent;
+    }
+
+
 
     private function productQuality($inv_type_id, $pos_sub)
     {
@@ -576,59 +591,61 @@ class StoreInventoryController extends Controller
     {
         $cacheBatch = [];
 
-        // Fetch from the first database (item_masters)
-        $itemMasterRecords = DB::connection('imfs')
+        // Convert to collection for easier diff operations
+        $missingItemNumbers = collect($missingItemNumbers);
+
+        DB::connection('imfs')
             ->table('item_masters')
+            ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'])
             ->whereIn('digits_code', $missingItemNumbers)
-            ->get()
-            ->keyBy('digits_code');
-
-        foreach ($itemMasterRecords as $record) {
-            $itemData = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
-            $results[$record->digits_code] = $itemData;
-            $cacheBatch['item_data_' . $record->digits_code] = $itemData;
-        }
-
-        $foundItemNumbers = collect(array_keys($results));
-        $stillMissingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
-
-        // Fetch missing items from the RMA database
-        if ($stillMissingItemNumbers->isNotEmpty()) {
-            $rmaItemMasterRecords = DB::connection('imfs')
-                ->table('rma_item_masters')
-                ->whereIn('digits_code', $stillMissingItemNumbers)
-                ->where('rma_categories_id', '!=',5)
-                ->get()
-                ->keyBy('digits_code');
-
-            foreach ($rmaItemMasterRecords as $record) {
-                $itemData = $this->prepareItemData($record, 'RMA');
-                $results[$record->digits_code] = $itemData;
-                $cacheBatch['item_data_' . $record->digits_code] = $itemData;
-            }
-
-            $foundItemNumbersAfterRMA = collect(array_keys($results));
-            $missingItemNumbersAfterRMA = $stillMissingItemNumbers->diff($foundItemNumbersAfterRMA);
-
-            // Fetch from the third database (aimfs)
-            if ($missingItemNumbersAfterRMA->isNotEmpty()) {
-                $aimfsItemMasterRecords = DB::connection('aimfs')
-                    ->table('digits_imfs')
-                    ->whereIn('digits_code', $missingItemNumbersAfterRMA)
-                    ->get()
-                    ->keyBy('digits_code');
-
-                foreach ($aimfsItemMasterRecords as $record) {
-                    $itemData = $this->prepareItemData($record, 'ADMIN');
+            ->chunkById(1000, function ($itemMasterRecords) use (&$results, &$cacheBatch, &$missingItemNumbers) {
+                foreach ($itemMasterRecords as $record) {
+                    $itemData = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
                     $results[$record->digits_code] = $itemData;
                     $cacheBatch['item_data_' . $record->digits_code] = $itemData;
                 }
-            }
+                // Remove found items from the missing item numbers
+                $foundItemNumbers = collect($itemMasterRecords)->pluck('digits_code');
+                $missingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
+            });
+
+        if ($missingItemNumbers->isNotEmpty()) {
+            DB::connection('imfs')
+                ->table('rma_item_masters')
+                ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'])
+                ->whereIn('digits_code', $missingItemNumbers)
+                ->where('rma_categories_id', '!=', 5)
+                ->chunkById(1000, function ($rmaItemMasterRecords) use (&$results, &$cacheBatch, &$missingItemNumbers) {
+                    foreach ($rmaItemMasterRecords as $record) {
+                        $itemData = $this->prepareItemData($record, 'RMA');
+                        $results[$record->digits_code] = $itemData;
+                        $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+                    }
+                    // Remove found items from the missing item numbers
+                    $foundItemNumbers = collect($rmaItemMasterRecords)->pluck('digits_code');
+                    $missingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
+                });
         }
 
-        // Batch insert the missing items into the cache
+        if ($missingItemNumbers->isNotEmpty()) {
+            DB::connection('aimfs')
+                ->table('digits_imfs')
+                ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'digits_code'])
+                ->whereIn('digits_code', $missingItemNumbers)
+                ->chunkById(1000, function ($aimfsItemMasterRecords) use (&$results, &$cacheBatch) {
+                    foreach ($aimfsItemMasterRecords as $record) {
+                        $itemData = $this->prepareItemData($record, 'ADMIN');
+                        $results[$record->digits_code] = $itemData;
+                        $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+                    }
+                });
+        }
+
         if (!empty($cacheBatch)) {
-            Cache::putMany($cacheBatch, now()->addMinutes(60));
+            $cacheChunks = array_chunk($cacheBatch, 1000, true);
+            foreach ($cacheChunks as $chunk) {
+                Cache::putMany($chunk, now()->addMinutes(60));
+            }
         }
     }
 
