@@ -44,6 +44,7 @@ use App\Http\Controllers\AdminAnnouncementsController;
 use App\Http\Controllers\GashaponInventoryController;
 use App\Http\Controllers\AdminGashaponInventoryUploadsController;
 use App\Http\Controllers\AdminGashaponInventoriesController;
+use App\Http\Controllers\EtpCreditCardPaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -267,7 +268,7 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::get('etp_storesync_report', [EtpStoreSyncReportController::class, 'getIndex'])->name('etp_storesync_report');
     Route::get('etp_storesync_report/data', [EtpStoreSyncReportController::class, 'getStoreSync'])->name('etp_storesync_report_data');
     Route::get('etp_storeinventorydetailed_report', [EtpStoreInventoryDetailedReportController::class, 'getIndex'])->name('etp_storeinventorydetailed_report');
-
+    Route::get('etp_credit_card_payment', [EtpCreditCardPaymentController::class, 'getIndex'])->name('etp_credit_card_payment');
     // TENDER REPORT
     Route::post('generateTender/report', [EtpTenderReportController::class, 'getIndex']);
     
@@ -276,6 +277,7 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     
     // BIR REPORT
     Route::post('generate_bir/report', [EtpBirReportController::class, 'getIndex']);
+
    
 });
 
