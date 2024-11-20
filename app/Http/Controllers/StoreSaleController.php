@@ -334,8 +334,9 @@ class StoreSaleController extends Controller
                     $toExcel['item_number'] = $itemNumber;
                     $toExcel['rr_ref'] = $itemDetails[$itemNumber]['rr_ref'];
                     $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
+                    //$toExcel['sold_price'] = $sold_price - ($excel['Discount_32'] + $excel['Discount_35']);
                     $toExcel['qty_sold'] = $qty_sold;
-                    $toExcel['sold_price'] = $sold_price - ($excel['Discount_32'] + $excel['Discount_35']);
+                    $toExcel['sold_price'] = $sold_price;
                     $toExcel['net_sales'] = $qty_sold * $sold_price;
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                     $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
