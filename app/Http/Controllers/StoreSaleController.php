@@ -339,7 +339,11 @@ class StoreSaleController extends Controller
                     $toExcel['sold_price'] = $sold_price;
                     $toExcel['net_sales'] = $qty_sold * $sold_price;
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
-                    $toExcel['store_cost_eccom'] = $itemDetails[$itemNumber]['store_cost_eccom'];
+                    if($masterfile->channel_id == 7 || $masterfile->channel_id == 10){
+                        $toExcel['store_cost_eccom'] =  0;
+                    }else{
+                        $toExcel['store_cost_eccom'] =  $itemDetails[$itemNumber]['store_cost_eccom'];
+                    }
                     $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
                     $toExcel['sales_memo_ref'] = $excel['PromotionID_32'] ?? $excel['PromotionID_35'];
                     $toExcel['item_serial'] = $item_serial;
