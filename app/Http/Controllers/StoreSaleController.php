@@ -314,6 +314,7 @@ class StoreSaleController extends Controller
                                                  ->where('item_code', $itemNumber)
                                                  ->where('sales_date', $sales_date)
                                                  ->orWhere('item_serial', $item_serial)
+                                                 ->where('is_final',1)
                                                  ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
                                                  ->keyBy(function ($item) {
                                                      return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
