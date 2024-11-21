@@ -388,10 +388,10 @@ class StoreSaleController extends Controller
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
-            'store_cost' => $item->dtp_rf,
-            'store_cost_eccom' => $ecomStoreMargin,
-            'landed_cost' => $item->landed_cost,
-            'inventory_type_id' => $item->inventory_types_id,
+            'store_cost' => $item->dtp_rf ?? 0,
+            'store_cost_eccom' => $ecomStoreMargin ?? 0,
+            'landed_cost' => $item->landed_cost ?? 0,
+            'inventory_type_id' => $item->inventory_types_id ?? NULL,
             'rr_ref' => $item->current_srp == 0 ? 'GWP' : $item->digits_code
         ];
     }
@@ -400,7 +400,8 @@ class StoreSaleController extends Controller
     {
         $results = [];
         $itemNumberSet = collect($itemNumbers)->unique();
-
+        
+        // Check in item_masters
         $itemMasterRecords = DB::connection('imfs')
         ->table('item_masters') 
         ->whereIn('digits_code', $itemNumberSet)
@@ -417,7 +418,24 @@ class StoreSaleController extends Controller
             return $results;
         }
 
-        // Check the second database
+        //Acounting item master
+        $accountingItemMasterRecords = DB::connection('imfs')
+        ->table('accounting_items') 
+        ->whereIn('digits_code', $itemNumberSet)
+        ->get();
+
+        foreach ($accountingItemMasterRecords as $record) {
+            $results[$record->digits_code] = self::prepareItemData($record, 'DIGITS');
+        }
+
+        $foundItemNumbersAccounting = collect(array_keys($results));
+        $missingItemNumbersAccounting = $itemNumberSet->diff($foundItemNumbersAccounting); 
+
+        if ($missingItemNumbersAccounting->isEmpty()) {
+            return $results;
+        }
+
+        // Check in rma_item_masters
         $rmaItemMasterRecords = DB::connection('imfs')
         ->table('rma_item_masters')
         ->whereIn('digits_code', $missingItemNumbers)
@@ -429,9 +447,10 @@ class StoreSaleController extends Controller
 
         // Check for missing item numbers again
         $foundItemNumbersAfterRMA = collect(array_keys($results));
-        $missingItemNumbersAfterRMA = $missingItemNumbers->diff($foundItemNumbersAfterRMA); 
+        $missingItemNumbersAfterRMA = $missingItemNumbersAccounting->diff($foundItemNumbersAfterRMA);
 
         if ($missingItemNumbersAfterRMA->isNotEmpty()) {
+            // Check in aimfs database
             $aimfsItemMasterRecords = DB::connection('aimfs')
                 ->table('digits_imfs')
                 ->whereIn('digits_code', $missingItemNumbersAfterRMA)

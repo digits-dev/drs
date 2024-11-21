@@ -521,7 +521,7 @@ use Maatwebsite\Excel\Facades\Excel;
 					->where($column_name, '<=', $cutoff)
 					->orderBy($column_name, 'desc')
 					->distinct($column_name)
-					->limit(12)
+					->limit(13)
 					->pluck($column_name)
 					->toArray();
 				$initial_wrr = array_map(function($value){
@@ -537,7 +537,7 @@ use Maatwebsite\Excel\Facades\Excel;
 			
 				$date->modify('+1 month');
 				
-				for ($i = 1; $i <= 12; $i++) {
+				for ($i = 1; $i <= 13; $i++) {
 					$date->modify('-1 month');
 					$last_12[] = $date->format('Y_m');
 					$date_string = $date->format('Y-m');
