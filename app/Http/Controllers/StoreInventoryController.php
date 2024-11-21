@@ -325,7 +325,7 @@ class StoreInventoryController extends Controller
         $secondQueryResult = StoreInventory::scopeGetInTransitInventoryFromPosEtp($datefrom, $dateto);
 
         $mergedResults = collect($firstQueryResult)->merge($secondQueryResult);
-
+        
         $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
             return clone $item; 
         });
@@ -549,10 +549,10 @@ class StoreInventoryController extends Controller
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
-            'store_cost' => $item->dtp_rf,
-            'store_cost_eccom' => $ecomStoreMargin,
-            'landed_cost' => $item->landed_cost,
-            'inventory_type_id' => $item->inventory_types_id
+            'store_cost' => $item->dtp_rf ?? 0,
+            'store_cost_eccom' => $ecomStoreMargin ?? 0,
+            'landed_cost' => $item->landed_cost ?? 0,
+            'inventory_type_id' => $item->inventory_types_id ?? NULL
         ];
     }
 
@@ -590,57 +590,66 @@ class StoreInventoryController extends Controller
     protected function fetchAndCacheMissingItems($missingItemNumbers, &$results)
     {
         $cacheBatch = [];
-
-        // Convert to collection for easier diff operations
         $missingItemNumbers = collect($missingItemNumbers);
 
-        DB::connection('imfs')
-            ->table('item_masters')
-            ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'])
-            ->whereIn('digits_code', $missingItemNumbers)
-            ->chunkById(1000, function ($itemMasterRecords) use (&$results, &$cacheBatch, &$missingItemNumbers) {
-                foreach ($itemMasterRecords as $record) {
-                    $itemData = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
-                    $results[$record->digits_code] = $itemData;
-                    $cacheBatch['item_data_' . $record->digits_code] = $itemData;
-                }
-                // Remove found items from the missing item numbers
-                $foundItemNumbers = collect($itemMasterRecords)->pluck('digits_code');
-                $missingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
-            });
+        $tables = [
+            [
+                'connection' => 'imfs',
+                'table' => 'item_masters',
+                'columns' => ['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'],
+                'extra_conditions' => [],
+                'type' => 'DIGITS'
+            ],
+            [
+                'connection' => 'imfs',
+                'table' => 'accounting_items',
+                'columns' => ['id', 'item_description', 'digits_code'],
+                'extra_conditions' => [],
+                'type' => 'DIGITS'
+            ],
+            [
+                'connection' => 'imfs',
+                'table' => 'rma_item_masters',
+                'columns' => ['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'],
+                'extra_conditions' => ['rma_categories_id', '!=', 5],
+                'type' => 'RMA'
+            ],
+            [
+                'connection' => 'aimfs',
+                'table' => 'digits_imfs',
+                'columns' => ['id', 'item_description', 'dtp_rf', 'landed_cost', 'digits_code'],
+                'extra_conditions' => [],
+                'type' => 'ADMIN'
+            ]
+        ];
 
-        if ($missingItemNumbers->isNotEmpty()) {
-            DB::connection('imfs')
-                ->table('rma_item_masters')
-                ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'])
+        foreach ($tables as $table) {
+            if ($missingItemNumbers->isEmpty()) {
+                break;
+            }
+
+            DB::connection($table['connection'])
+                ->table($table['table'])
+                ->select($table['columns'])
                 ->whereIn('digits_code', $missingItemNumbers)
-                ->where('rma_categories_id', '!=', 5)
-                ->chunkById(1000, function ($rmaItemMasterRecords) use (&$results, &$cacheBatch, &$missingItemNumbers) {
-                    foreach ($rmaItemMasterRecords as $record) {
-                        $itemData = $this->prepareItemData($record, 'RMA');
+                ->when(!empty($table['extra_conditions']), function ($query) use ($table) {
+                    [$field, $operator, $value] = $table['extra_conditions'];
+                    return $query->where($field, $operator, $value);
+                })
+                ->chunkById(1000, function ($records) use (&$results, &$cacheBatch, &$missingItemNumbers, $table) {
+                    foreach ($records as $record) {
+                        $itemData = $this->prepareItemData($record, $table['type']);
                         $results[$record->digits_code] = $itemData;
                         $cacheBatch['item_data_' . $record->digits_code] = $itemData;
                     }
+
                     // Remove found items from the missing item numbers
-                    $foundItemNumbers = collect($rmaItemMasterRecords)->pluck('digits_code');
+                    $foundItemNumbers = collect($records)->pluck('digits_code');
                     $missingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
                 });
         }
 
-        if ($missingItemNumbers->isNotEmpty()) {
-            DB::connection('aimfs')
-                ->table('digits_imfs')
-                ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'digits_code'])
-                ->whereIn('digits_code', $missingItemNumbers)
-                ->chunkById(1000, function ($aimfsItemMasterRecords) use (&$results, &$cacheBatch) {
-                    foreach ($aimfsItemMasterRecords as $record) {
-                        $itemData = $this->prepareItemData($record, 'ADMIN');
-                        $results[$record->digits_code] = $itemData;
-                        $cacheBatch['item_data_' . $record->digits_code] = $itemData;
-                    }
-                });
-        }
-
+        // Cache the results in chunks of 1000
         if (!empty($cacheBatch)) {
             $cacheChunks = array_chunk($cacheBatch, 1000, true);
             foreach ($cacheChunks as $chunk) {
@@ -648,6 +657,69 @@ class StoreInventoryController extends Controller
             }
         }
     }
+
+
+    // protected function fetchAndCacheMissingItems($missingItemNumbers, &$results)
+    // {
+    //     $cacheBatch = [];
+
+    //     // Convert to collection for easier diff operations
+    //     $missingItemNumbers = collect($missingItemNumbers);
+
+    //     DB::connection('imfs')
+    //         ->table('item_masters')
+    //         ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'])
+    //         ->whereIn('digits_code', $missingItemNumbers)
+    //         ->chunkById(1000, function ($itemMasterRecords) use (&$results, &$cacheBatch, &$missingItemNumbers) {
+    //             foreach ($itemMasterRecords as $record) {
+    //                 $itemData = $this->prepareItemData($record, 'DIGITS', $record->ecom_store_margin);
+    //                 $results[$record->digits_code] = $itemData;
+    //                 $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+    //             }
+    //             // Remove found items from the missing item numbers
+    //             $foundItemNumbers = collect($itemMasterRecords)->pluck('digits_code');
+    //             $missingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
+    //         });
+
+    //     if ($missingItemNumbers->isNotEmpty()) {
+    //         DB::connection('imfs')
+    //             ->table('rma_item_masters')
+    //             ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'])
+    //             ->whereIn('digits_code', $missingItemNumbers)
+    //             ->where('rma_categories_id', '!=', 5)
+    //             ->chunkById(1000, function ($rmaItemMasterRecords) use (&$results, &$cacheBatch, &$missingItemNumbers) {
+    //                 foreach ($rmaItemMasterRecords as $record) {
+    //                     $itemData = $this->prepareItemData($record, 'RMA');
+    //                     $results[$record->digits_code] = $itemData;
+    //                     $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+    //                 }
+    //                 // Remove found items from the missing item numbers
+    //                 $foundItemNumbers = collect($rmaItemMasterRecords)->pluck('digits_code');
+    //                 $missingItemNumbers = $missingItemNumbers->diff($foundItemNumbers);
+    //             });
+    //     }
+
+    //     if ($missingItemNumbers->isNotEmpty()) {
+    //         DB::connection('aimfs')
+    //             ->table('digits_imfs')
+    //             ->select(['id', 'item_description', 'dtp_rf', 'landed_cost', 'digits_code'])
+    //             ->whereIn('digits_code', $missingItemNumbers)
+    //             ->chunkById(1000, function ($aimfsItemMasterRecords) use (&$results, &$cacheBatch) {
+    //                 foreach ($aimfsItemMasterRecords as $record) {
+    //                     $itemData = $this->prepareItemData($record, 'ADMIN');
+    //                     $results[$record->digits_code] = $itemData;
+    //                     $cacheBatch['item_data_' . $record->digits_code] = $itemData;
+    //                 }
+    //             });
+    //     }
+
+    //     if (!empty($cacheBatch)) {
+    //         $cacheChunks = array_chunk($cacheBatch, 1000, true);
+    //         foreach ($cacheChunks as $chunk) {
+    //             Cache::putMany($chunk, now()->addMinutes(60));
+    //         }
+    //     }
+    // }
 
     function getSubInventory($itemNumber, $toWarehouse, $itemKey, $subInventory)
     {
