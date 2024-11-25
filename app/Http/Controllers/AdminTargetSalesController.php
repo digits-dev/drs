@@ -135,6 +135,7 @@
 						array_push($errors, "Line $line_item : $nullColumns is blank!");
 					}
 
+					$value['customer_name'] = trim($value['customer_name']);
 					$itemExists = Customer::where('customer_name', $value['customer_name'])->first();
 
 					// validate customer name
