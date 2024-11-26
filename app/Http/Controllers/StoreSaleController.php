@@ -333,8 +333,8 @@ class StoreSaleController extends Controller
                     $toExcel['receipt_number'] = $receipt_number;
                     $toExcel['sold_date'] = $sales_date;
                     $toExcel['item_number'] = $itemNumber;
-                    if (substr($itemNumber, 0, 1) !== '100') {
-                        $toExcel['rr_ref'] = ($net_sales == 0 || $net_sales == '') ? 'GWP' : $itemNumber;
+                    if ($itemDetails[$itemNumber]['org'] == 'DIGITS' && ($net_sales == 0 || $net_sales == '')) {
+                        $toExcel['rr_ref'] = 'GWP';
                     }else{
                         $toExcel['rr_ref'] = $itemNumber;
                     }
