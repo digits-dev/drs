@@ -401,9 +401,9 @@ class StoreSaleController extends Controller
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
-            'store_cost' => $item->promo_srp ? ($item->working_dtp_rf ?? $item->dtp_rf)  : $item->dtp_rf,
+            'store_cost' => $orgName != 'PURCHASING' ? ($item->promo_srp ? ($item->working_dtp_rf ?? $item->dtp_rf)  : $item->dtp_rf) : $item->dtp_rf,
             'store_cost_eccom' => $ecomStoreMargin ?? 0,
-            'landed_cost' => $item->promo_srp ? ($item->working_landed_cost ?? $item->landed_cost) : $item->landed_cost,
+            'landed_cost' => $orgName != 'PURCHASING' ? ($item->promo_srp ? ($item->working_landed_cost ?? $item->landed_cost) : $item->landed_cost) : $item->landed_cost,
             'inventory_type_id' => $item->inventory_types_id ?? NULL,
             'rr_ref' => $item->current_srp == 0 ? 'GWP' : $item->digits_code,
             'current_srp' => $item->current_srp,
