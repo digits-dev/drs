@@ -309,6 +309,7 @@ class StoreSaleController extends Controller
                 $item_serial = $excel['ITEM_SERIAL'];
                 $qty_sold = $excel['QTY_SOLD'];
                 $sold_price = $excel['SOLD_PRICE'];
+                $net_sales = $qty_sold * $sold_price;
                 $isExistInStoreSales = StoreSale::where('customers_id', $v_customer->id ?? null)
                                                  ->where('receipt_number', $receipt_number)
                                                  ->where('item_code', $itemNumber)
@@ -332,16 +333,16 @@ class StoreSaleController extends Controller
                     $toExcel['receipt_number'] = $receipt_number;
                     $toExcel['sold_date'] = $sales_date;
                     $toExcel['item_number'] = $itemNumber;
+                    if (substr($itemNumber, 0, 1) !== '100') {
+                        $toExcel['rr_ref'] = ($net_sales == 0 || $net_sales == '') ? 'GWP' : $itemNumber;
+                    }else{
+                        $toExcel['rr_ref'] = $itemNumber;
+                    }
                     $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
                     //$toExcel['sold_price'] = $sold_price - ($excel['Discount_32'] + $excel['Discount_35']);
                     $toExcel['qty_sold'] = $qty_sold;
                     $toExcel['sold_price'] = abs($sold_price);
-                    $toExcel['net_sales'] = $qty_sold * $sold_price;
-                    if (substr($itemNumber, 0, 3) !== '100') {
-                        $toExcel['rr_ref'] = ($toExcel['net_sales'] == 0 || $toExcel['net_sales'] == '') ? 'GWP' : $itemNumber;
-                    }else{
-                        $toExcel['rr_ref'] = $itemNumber;
-                    }
+                    $toExcel['net_sales'] = $net_sales;
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                     if($masterfile->channel_id == 7 || $masterfile->channel_id == 10){
                         $toExcel['store_cost_eccom'] =  0;
@@ -349,7 +350,15 @@ class StoreSaleController extends Controller
                         $toExcel['store_cost_eccom'] =  $itemDetails[$itemNumber]['store_cost_eccom'];
                     }
                     $toExcel['landed_cost'] = $itemDetails[$itemNumber]['landed_cost'];
-                    $toExcel['sales_memo_ref'] = $excel['PromotionID_32'] ?? $excel['PromotionID_35'];
+                    if($sold_price == $itemDetails[$itemNumber]['current_srp']){
+                        $toExcel['sales_memo_ref'] = 'REGULAR SRP';
+                    }else if($sold_price == $itemDetails[$itemNumber]['promo_srp']){
+                        $toExcel['sales_memo_ref'] = 'DG SRP';
+                    }else if($net_sales == 0 || $net_sales == ''){
+                        $toExcel['sales_memo_ref'] = 'PACKAGING BAG';
+                    }else{
+                        $toExcel['sales_memo_ref'] = $excel['PromotionID_32'].'_'.$excel['PromotionName_32'] ?? $excel['PromotionID_35'].'_'.$excel['PromotionName_35'];
+                    }
                     $toExcel['item_serial'] = $item_serial;
                     $toExcel['sales_person'] = $excel['SALES_PERSON'];
                     $toExcel['pos_transaction_type'] = $excel['Tran_Type'];
@@ -392,11 +401,13 @@ class StoreSaleController extends Controller
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
-            'store_cost' => $item->dtp_rf ?? 0,
+            'store_cost' => $item->promo_srp ? ($item->working_dtp_rf ?? $item->dtp_rf)  : $item->dtp_rf,
             'store_cost_eccom' => $ecomStoreMargin ?? 0,
-            'landed_cost' => $item->landed_cost ?? 0,
+            'landed_cost' => $item->promo_srp ? ($item->working_landed_cost ?? $item->landed_cost) : $item->landed_cost,
             'inventory_type_id' => $item->inventory_types_id ?? NULL,
-            'rr_ref' => $item->current_srp == 0 ? 'GWP' : $item->digits_code
+            'rr_ref' => $item->current_srp == 0 ? 'GWP' : $item->digits_code,
+            'current_srp' => $item->current_srp,
+            'promo_srp' => $item->promo_srp
         ];
     }
     
@@ -429,7 +440,7 @@ class StoreSaleController extends Controller
         ->get();
 
         foreach ($accountingItemMasterRecords as $record) {
-            $results[$record->digits_code] = self::prepareItemData($record, 'DIGITS');
+            $results[$record->digits_code] = self::prepareItemData($record, 'ACCOUNTING');
         }
 
         $foundItemNumbersAccounting = collect(array_keys($results));
@@ -461,7 +472,7 @@ class StoreSaleController extends Controller
                 ->get();
 
             foreach ($aimfsItemMasterRecords as $record) {
-                $results[$record->digits_code] = self::prepareItemData($record, 'ADMIN');
+                $results[$record->digits_code] = self::prepareItemData($record, 'PURCHASING');
             }
         }
 
