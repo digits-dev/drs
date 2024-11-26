@@ -332,12 +332,16 @@ class StoreSaleController extends Controller
                     $toExcel['receipt_number'] = $receipt_number;
                     $toExcel['sold_date'] = $sales_date;
                     $toExcel['item_number'] = $itemNumber;
-                    $toExcel['rr_ref'] = $itemDetails[$itemNumber]['rr_ref'];
                     $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
                     //$toExcel['sold_price'] = $sold_price - ($excel['Discount_32'] + $excel['Discount_35']);
                     $toExcel['qty_sold'] = $qty_sold;
                     $toExcel['sold_price'] = abs($sold_price);
                     $toExcel['net_sales'] = $qty_sold * $sold_price;
+                    if (substr($itemNumber, 0, 3) !== '100') {
+                        $toExcel['rr_ref'] = ($toExcel['net_sales'] == 0 || $toExcel['net_sales'] == '') ? 'GWP' : $itemNumber;
+                    }else{
+                        $toExcel['rr_ref'] = $itemNumber;
+                    }
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                     if($masterfile->channel_id == 7 || $masterfile->channel_id == 10){
                         $toExcel['store_cost_eccom'] =  0;
