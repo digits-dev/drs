@@ -370,7 +370,7 @@ class StoreSaleController extends Controller
                         $toExcel['sales_memo_ref'] = $excel['PromotionID_32'].'_'.$excel['PromotionName_32'] ?? $excel['PromotionID_35'].'_'.$excel['PromotionName_35'];
                     }
                     $toExcel['item_serial'] = $item_serial;
-                    $toExcel['sales_person'] = $excel['SALES_PERSON'];
+                    $toExcel['sales_person'] = $excel['Sales_Person_Name'];
                     $toExcel['pos_transaction_type'] = $excel['Tran_Type'];
                     
                     $toExcelContent[] = $toExcel;
