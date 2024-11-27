@@ -37,19 +37,22 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 					P.ItemNumber AS 'ITEM NUMBER',
 					P.LotNumber AS 'SERIAL NUMBER',
 					P.BalanceApproved AS 'TOTAL QTY',
-					P.Location AS 'LOCATION'
+					P.Location AS 'LOCATION',
+					ProductRSF.Description AS 'DESCRIPTION'
 				FROM 
 					ProductLocationBalance P WITH (NOLOCK)
+				LEFT JOIN ProductRSF ON
+					ProductRSF.ItemNumber  = P.ItemNumber 
 				WHERE 
 					P.Company = 100
 					AND P.BalanceApproved != 0
 					AND P.WareHouse IN ($allCustomer)
 					AND P.LastIssueDate BETWEEN $lastThirtydays AND $currentDate;
-				
-				"));
+				"
+			));
 
 			});
-	
+			// dd($inventory_report);
 			$customerMap = [];
 			$customerConcept = [];
 
@@ -71,16 +74,16 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 
 				$itemData = Cache::remember($row->{'ITEM NUMBER'}, 3600, function() use($row){
 
-					return DB::connection('imfs')
-					->table('item_masters')
-					->leftJoin('brands', 'item_masters.brands_id', '=', 'brands.id')
-					->where('item_masters.digits_code', $row->{'ITEM NUMBER'})
-					->select('item_masters.item_description', 'brands.brand_description')
-					->first();
+					// return DB::connection('imfs')
+					// ->table('item_masters')
+					// ->leftJoin('brands', 'item_masters.brands_id', '=', 'brands.id')
+					// ->where('item_masters.digits_code', $row->{'ITEM NUMBER'})
+					// ->select('item_masters.item_description', 'brands.brand_description')
+					// ->first();
 
 				});
 
-				$row->item_description = $itemData->item_description ?? ' ';
+				$row->item_description = $row->{'DESCRIPTION'} ?? ' ';
 				$row->brand = $itemData->brand_description ?? ' ';
 
 			}
