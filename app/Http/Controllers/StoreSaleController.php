@@ -310,18 +310,27 @@ class StoreSaleController extends Controller
                 $qty_sold = $excel['QTY_SOLD'];
                 $sold_price = $excel['SOLD_PRICE'];
                 $net_sales = $qty_sold * $sold_price;
-                $isExistInStoreSales = StoreSale::where('customers_id', $v_customer->id ?? null)
-                                                 ->where('receipt_number', $receipt_number)
-                                                 ->where('item_code', $itemNumber)
-                                                 ->where('sales_date', $sales_date)
-                                                 ->whereNotNull('pos_transaction_type')
-                                                //  ->where('is_final',1)
-                                                 ->orWhere('item_serial', $item_serial)
-                                                 ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
-                                                 ->keyBy(function ($item) {
-                                                     return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
-                                                 });
-                $key = "{$v_customer->id}-{$receipt_number}-{$itemNumber}-{$sales_date}-{$item_serial}";
+                $isExistInStoreSales = StoreSale::where(function ($query) use ($v_customer, $receipt_number, $itemNumber, $sales_date) {
+                    $query->where('customers_id', $v_customer->id ?? null)
+                        ->where('receipt_number', $receipt_number)
+                        ->where('item_code', $itemNumber)
+                        ->where('sales_date', $sales_date)
+                        ->whereNotNull('pos_transaction_type');
+                })
+                ->orWhere('item_serial', $item_serial)
+                ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
+                ->keyBy(function ($item) {
+                    return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
+                });
+                $key = sprintf(
+                    '%s-%s-%s-%s-%s',
+                    $v_customer->id ?? '',
+                    $receipt_number,
+                    $itemNumber,
+                    $sales_date,
+                    $item_serial
+                );
+             
                 if (!isset($isExistInStoreSales[$key])) {
                     // Prepare data for output
                     $toExcel = [];
