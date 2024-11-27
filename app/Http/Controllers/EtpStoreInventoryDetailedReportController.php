@@ -38,11 +38,12 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 					P.LotNumber AS 'SERIAL NUMBER',
 					P.BalanceApproved AS 'TOTAL QTY',
 					P.Location AS 'LOCATION',
-					ProductRSF.Description AS 'DESCRIPTION'
+					ERP_ItemMaster.item_short_description AS 'DESCRIPTION',
+					ERP_ItemMaster.brand AS 'BRAND'
 				FROM 
 					ProductLocationBalance P WITH (NOLOCK)
-				LEFT JOIN ProductRSF ON
-					ProductRSF.ItemNumber  = P.ItemNumber 
+				LEFT JOIN ERP_ItemMaster ON
+					ERP_ItemMaster.digits_code = P.ItemNumber 
 				WHERE 
 					P.Company = 100
 					AND P.BalanceApproved != 0
@@ -84,7 +85,7 @@ class EtpStoreInventoryDetailedReportController extends \crocodicstudio\crudboos
 				});
 
 				$row->item_description = $row->{'DESCRIPTION'} ?? ' ';
-				$row->brand = $itemData->brand_description ?? ' ';
+				$row->brand = $row->{'BRAND'} ?? ' ';
 
 			}
 
