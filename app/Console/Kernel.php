@@ -35,23 +35,23 @@ class Kernel extends ConsoleKernel
             $rmaItemMaster->getDimfsRmaItemsData();
         })->hourly();
 
-        // $schedule->call(function(){
+        $schedule->call(function(){
 
-        //     $datefrom = Carbon::now()->subHours(5)->format('Ymd'); 
-        //     $dateto = Carbon::now()->subHours(1)->format('Ymd');
+            $datefrom = Carbon::now()->subHours(5)->format('Ymd'); 
+            $dateto = Carbon::now()->subHours(1)->format('Ymd');
 
-        //     $request = new Request([
-        //         'datefrom' => $datefrom,
-        //         'dateto' => $dateto,
-        //     ]);
+            $request = new Request([
+                'datefrom' => $datefrom,
+                'dateto' => $dateto,
+            ]);
 
         //     $storeInventory = new StoreInventoryController();
         //     $storeInventory->StoresInventoryFromPosEtp($request);
 
-        //     $storeSale = new StoreSaleController();
-        //     $storeSale->StoresSalesFromPosEtp($request);
+            $storeSale = new StoreSaleController();
+            $storeSale->StoresSalesFromPosEtp($request);
             
-        // })->dailyAt('23:00:00');
+        })->dailyAt('23:00:00');
         $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
         
     }
