@@ -66,7 +66,7 @@ Route::get('/get-store-sales', [StoreSaleController::class, 'StoresSalesFromPosE
 Route::get('/test-store-inventory-etp/{datefrom?}/{dateto?}', [StoreInventoryController::class, 'StoresInventoryFromPosEtp']);
 
 Route::get('/run-process-stores-inventory-job/{datefrom}/{dateto}', function ($datefrom, $dateto) {
-    ProcessStoresInventoryJob::dispatch('20241115', '20241130');
+    ProcessStoresInventoryJob::dispatch($datefrom, $dateto);
     return response()->json([
         'message' => 'Job dispatched successfully',
         'datefrom' => $datefrom,
