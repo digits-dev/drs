@@ -1,50 +1,51 @@
 <?php
 
 
+use App\Http\Controllers\CBHook;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminCmsUsersController;
-use App\Http\Controllers\AdminReportPrivilegesController;
-use App\Http\Controllers\AdminDigitsSalesUploadsController;
-use App\Http\Controllers\AdminStoreSalesController;
-use App\Http\Controllers\AdminStoreSalesUploadsController;
-use App\Http\Controllers\AdminDigitsSalesController;
-use App\Http\Controllers\AdminRunRateController;
-use App\Http\Controllers\AdminStoreInventoriesController;
-use App\Http\Controllers\AdminStoreInventoryUploadsController;
-use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
-use App\Http\Controllers\AdminWarehouseInventoriesController;
-use App\Http\Controllers\DigitsSaleController;
-use App\Http\Controllers\StoreSaleController;
-use App\Http\Controllers\StoreInventoryController;
-use App\Http\Controllers\WarehouseInventoryController;
+use App\Jobs\ProcessStoresInventoryJob;
+use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RunRateController;
-use App\Http\Controllers\AdminAdminItemMasterController;
-use App\Http\Controllers\AdminServiceItemsController;
+use App\Http\Controllers\StoreSaleController;
+use App\Http\Controllers\AdminItemsController;
+use App\Http\Controllers\DigitsSaleController;
+use App\Http\Controllers\AdminRunRateController;
+use App\Http\Controllers\EtpBirReportController;
+use App\Http\Controllers\AdminCmsUsersController;
+use App\Http\Controllers\AdminRmaItemsController;
 use App\Http\Controllers\AdminCustomersController;
 use App\Http\Controllers\AdminEmployeesController;
-use crocodicstudio\crudbooster\helpers\CRUDBooster;
+use App\Http\Controllers\StoreInventoryController;
 use App\Http\Controllers\AdminGachaItemsController;
-use App\Http\Controllers\AdminRmaItemsController;
-use App\Http\Controllers\AdminItemsController;
-use App\Http\Controllers\RequestController;
-use App\Http\Controllers\AdminAppleCutoffsController;
-use App\Http\Controllers\AdminNonAppleCutoffsController;
-use App\Http\Controllers\AdminGashaponStoreSalesUploadsController;
-use App\Http\Controllers\GashaponStoreSalesController;
-use App\Http\Controllers\AdminGashaponStoreSalesController;
-use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
-use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
-use App\Http\Controllers\SupplierIntransitInventoryController;
-use App\Http\Controllers\CBHook;
-use App\Http\Controllers\EtpBirReportController;
-use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
-use App\Http\Controllers\EtpStoreSyncReportController;
+use App\Http\Controllers\AdminStoreSalesController;
 use App\Http\Controllers\EtpTenderReportController;
-use App\Http\Controllers\AdminAnnouncementsController;
+use crocodicstudio\crudbooster\helpers\CRUDBooster;
+use App\Http\Controllers\AdminDigitsSalesController;
+use App\Http\Controllers\AdminAppleCutoffsController;
+use App\Http\Controllers\AdminServiceItemsController;
 use App\Http\Controllers\GashaponInventoryController;
-use App\Http\Controllers\AdminGashaponInventoryUploadsController;
-use App\Http\Controllers\AdminGashaponInventoriesController;
+use App\Http\Controllers\AdminAnnouncementsController;
+use App\Http\Controllers\EtpStoreSyncReportController;
+use App\Http\Controllers\GashaponStoreSalesController;
+use App\Http\Controllers\WarehouseInventoryController;
+use App\Http\Controllers\AdminAdminItemMasterController;
+use App\Http\Controllers\AdminNonAppleCutoffsController;
 use App\Http\Controllers\EtpCreditCardPaymentController;
+use App\Http\Controllers\AdminReportPrivilegesController;
+use App\Http\Controllers\AdminStoreInventoriesController;
+use App\Http\Controllers\AdminStoreSalesUploadsController;
+use App\Http\Controllers\AdminDigitsSalesUploadsController;
+use App\Http\Controllers\AdminGashaponStoreSalesController;
+use App\Http\Controllers\AdminGashaponInventoriesController;
+use App\Http\Controllers\AdminWarehouseInventoriesController;
+use App\Http\Controllers\AdminStoreInventoryUploadsController;
+use App\Http\Controllers\SupplierIntransitInventoryController;
+use App\Http\Controllers\AdminGashaponInventoryUploadsController;
+use App\Http\Controllers\AdminGashaponStoreSalesUploadsController;
+use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
+use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
+use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
+use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,6 +64,15 @@ Route::get('/', function () {
 
 Route::get('/get-store-sales', [StoreSaleController::class, 'StoresSalesFromPosEtp']);
 Route::get('/test-store-inventory-etp/{datefrom?}/{dateto?}', [StoreInventoryController::class, 'StoresInventoryFromPosEtp']);
+
+Route::get('/run-process-stores-inventory-job/{datefrom}/{dateto}', function ($datefrom, $dateto) {
+    ProcessStoresInventoryJob::dispatch('20241115', '20241130');
+    return response()->json([
+        'message' => 'Job dispatched successfully',
+        'datefrom' => $datefrom,
+        'dateto' => $dateto
+    ]);
+});
 
 Route::group(['middleware' => ['web'], 'prefix' => config('crudbooster.ADMIN_PATH')], function () {
     Route::post('login', [CBHook::class, 'postLogin'])->name('postLogin');
