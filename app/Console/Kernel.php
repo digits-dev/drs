@@ -45,8 +45,8 @@ class Kernel extends ConsoleKernel
                 'dateto' => $dateto,
             ]);
 
-            // $storeInventory = new StoreInventoryController();
-            // $storeInventory->StoresInventoryFromPosEtp($request);
+            $storeInventory = new StoreInventoryController();
+            $storeInventory->StoresInventoryFromPosEtp($request);
 
             $storeSale = new StoreSaleController();
             $storeSale->StoresSalesFromPosEtp($request);
