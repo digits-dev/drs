@@ -281,7 +281,7 @@ class StoreSaleController extends Controller
             }
 
             $itemDetails = self::fetchItemDataInBatch($itemNumbers);
-    
+            
             foreach ($storeData as &$excel) {
                 $counter = Counter::where('id', 1)->value('reference_code');
                 $modified = [];
@@ -310,18 +310,33 @@ class StoreSaleController extends Controller
                 $qty_sold = $excel['QTY_SOLD'];
                 $sold_price = $excel['SOLD_PRICE'];
                 $net_sales = $qty_sold * $sold_price;
-                $isExistInStoreSales = StoreSale::where('customers_id', $v_customer->id ?? null)
-                                                 ->where('receipt_number', $receipt_number)
-                                                 ->where('item_code', $itemNumber)
-                                                 ->where('sales_date', $sales_date)
-                                                 ->whereNotNull('pos_transaction_type')
-                                                //  ->where('is_final',1)
-                                                 ->orWhere('item_serial', $item_serial)
-                                                 ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
-                                                 ->keyBy(function ($item) {
-                                                     return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
-                                                 });
-                $key = "{$v_customer->id}-{$receipt_number}-{$itemNumber}-{$sales_date}-{$item_serial}";
+                if((!empty($excel['PromotionID_32']) || $excel['PromotionID_32'] === '')){
+                    $promo32 = ($excel['Comments'] === '' || empty($excel['Comments'])) ? $excel['PromotionID_32'].'_'.$excel['PromotionName_32'] : $excel['PromotionID_32'].'_'.$excel['Comments'].'_'.$excel['PromotionName_32'];
+                }else{
+                    $promo32 = $excel['PromotionID_35'].'_'.$excel['PromotionName_35'];
+                }
+               
+                $isExistInStoreSales = StoreSale::where(function ($query) use ($v_customer, $receipt_number, $itemNumber, $sales_date) {
+                    $query->where('customers_id', $v_customer->id ?? null)
+                        ->where('receipt_number', $receipt_number)
+                        ->where('item_code', $itemNumber)
+                        ->where('sales_date', $sales_date)
+                        ->whereNotNull('pos_transaction_type');
+                })
+                ->orWhere('item_serial', $item_serial)
+                ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
+                ->keyBy(function ($item) {
+                    return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
+                });
+                $key = sprintf(
+                    '%s-%s-%s-%s-%s',
+                    $v_customer->id ?? '',
+                    $receipt_number,
+                    $itemNumber,
+                    $sales_date,
+                    $item_serial
+                );
+             
                 if (!isset($isExistInStoreSales[$key])) {
                     // Prepare data for output
                     $toExcel = [];
@@ -358,10 +373,10 @@ class StoreSaleController extends Controller
                     }else if($net_sales == 0 || $net_sales == ''){
                         $toExcel['sales_memo_ref'] = 'PACKAGING BAG';
                     }else{
-                        $toExcel['sales_memo_ref'] = $excel['PromotionID_32'].'_'.$excel['PromotionName_32'] ?? $excel['PromotionID_35'].'_'.$excel['PromotionName_35'];
+                        $toExcel['sales_memo_ref'] = $promo32;
                     }
                     $toExcel['item_serial'] = $item_serial;
-                    $toExcel['sales_person'] = $excel['SALES_PERSON'];
+                    $toExcel['sales_person'] = $excel['Sales_Person_Name'];
                     $toExcel['pos_transaction_type'] = $excel['Tran_Type'];
                     
                     $toExcelContent[] = $toExcel;
