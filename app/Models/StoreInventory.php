@@ -201,6 +201,9 @@ class StoreInventory extends Model
 
     //FROM ETP
     public function scopeGetInTransitInventoryFromPosEtp($dateFrom, $dateTo){
+
+        // $dateFrom = self::scopeGetLastReceiptDate($dateTo);
+
         $data = DB::connection('sqlsrv')->select(DB::raw("
             SELECT d.Company, d.Warehouse AS 'StoreId', d.ToWarehouse, d.TransactionDate As 'Date',
                 CONCAT('Q2_', l.ItemNumber) AS 'ItemNumber', l.ItemDescription, l.LotNumber, 
@@ -217,13 +220,16 @@ class StoreInventory extends Model
             AND d.Company = 100
             AND d.Division = '100'
             AND (d.ToWarehouse = '0312' OR d.ToWarehouse = '0311')
-            AND d.TransactionDate between '$dateFrom' and '$dateTo'
+            AND d.TransactionDate between '20241101' and '$dateTo'
         "));
         
         return $data;
     }
 
     public function scopeGetStoresInventoryFromPosEtp($dateFrom, $dateTo){
+
+        // $dateFrom = self::scopeGetLastReceiptDate($dateTo);
+
         $data = DB::connection('sqlsrv')->select(DB::raw("
             select P.WareHouse 'StoreId',
             P.LastIssueDate 'Date',
@@ -233,11 +239,27 @@ class StoreInventory extends Model
             From ProductLocationBalance P (Nolock)
             where P.Company= 100
             AND (P.Location = 'GOOD' OR P.Location = 'DEMO')
-            AND P.LastIssueDate between '$dateFrom' and '$dateTo'
+            AND P.LastIssueDate between '20241101' and '$dateTo'
         "));
 
         return $data;
     }
+
+    private function scopeGetLastReceiptDate($dateTo){
+        $result = DB::connection('sqlsrv')->select(DB::raw("
+            SELECT TOP 1 P.LastReceiptDate
+            FROM ProductLocationBalance P
+            WHERE P.LastIssueDate = :dateTo
+            ORDER BY P.LastReceiptDate ASC;
+        "), ['dateTo' => $dateTo]);
+    
+        if (count($result) > 0) {
+            return (string) $result[0]->LastReceiptDate;
+        }
+    
+        return null;
+    }
+    
 
     public static function isNotExist($date, $totalQty, $customerLocation, $itemNumber, $subInventory){
 
