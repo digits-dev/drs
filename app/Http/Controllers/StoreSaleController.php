@@ -308,7 +308,7 @@ class StoreSaleController extends Controller
                 $receipt_number = $excel['RECEIPT_#'];
                 $item_serial = $excel['ITEM_SERIAL'];
                 $qty_sold = $excel['QTY_SOLD'];
-                $sold_price = $excel['SOLD_PRICE'];
+                $sold_price = abs($excel['SOLD_PRICE']);
                 $net_sales = $qty_sold * $sold_price;
                 if((!empty($excel['PromotionID_32']) || $excel['PromotionID_32'] === '')){
                     $promo32 = ($excel['Comments'] === '' || empty($excel['Comments'])) ? $excel['PromotionID_32'].'_'.$excel['PromotionName_32'] : $excel['PromotionID_32'].'_'.$excel['Comments'].'_'.$excel['PromotionName_32'];
@@ -357,7 +357,7 @@ class StoreSaleController extends Controller
                     $toExcel['item_description'] = $itemDetails[$itemNumber]['item_description'];
                     //$toExcel['sold_price'] = $sold_price - ($excel['Discount_32'] + $excel['Discount_35']);
                     $toExcel['qty_sold'] = $qty_sold;
-                    $toExcel['sold_price'] = abs($sold_price);
+                    $toExcel['sold_price'] = $sold_price;
                     $toExcel['net_sales'] = $net_sales;
                     $toExcel['store_cost'] = $itemDetails[$itemNumber]['store_cost'];
                     if($masterfile->channel_id == 7 || $masterfile->channel_id == 10){
