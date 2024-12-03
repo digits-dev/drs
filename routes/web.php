@@ -46,6 +46,9 @@ use App\Http\Controllers\AdminWarehouseInventoryUploadsController;
 use App\Http\Controllers\EtpStoreInventoryDetailedReportController;
 use App\Http\Controllers\AdminSupplierIntransitInventoriesController;
 use App\Http\Controllers\AdminSupplierIntransitInventoryUploadsController;
+use App\Http\Controllers\EtpESalesReport;
+use App\Http\Controllers\EtpSlspReportController;
+use App\Http\Controllers\EtpVatReport;
 
 /*
 |--------------------------------------------------------------------------
@@ -279,6 +282,10 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::get('etp_storesync_report/data', [EtpStoreSyncReportController::class, 'getStoreSync'])->name('etp_storesync_report_data');
     Route::get('etp_storeinventorydetailed_report', [EtpStoreInventoryDetailedReportController::class, 'getIndex'])->name('etp_storeinventorydetailed_report');
     Route::get('etp_credit_card_payment', [EtpCreditCardPaymentController::class, 'getIndex'])->name('etp_credit_card_payment');
+    Route::get('etp_slsp_report', [EtpSlspReportController::class, 'getIndex'])->name('etp_slsp_report');
+    Route::get('etp_esales_report', [EtpESalesReport::class, 'getIndex'])->name('etp_esales_report');
+    Route::get('etp_vat_report', [EtpVatReport::class, 'getIndex'])->name('etp_vat_report');
+    
     // TENDER REPORT
     Route::post('generateTender/report', [EtpTenderReportController::class, 'getIndex']);
     
