@@ -295,8 +295,14 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     // BIR REPORT
     Route::post('generate_bir/report', [EtpBirReportController::class, 'getIndex']);
 
+    // SLSP REPORT
+    Route::post('generate_slsp/report', [EtpBirReportController::class, 'getIndex']);
+
     // ESALES REPORT
     Route::post('generate_esales/report', [EtpESalesReport::class, 'getIndex']);
+
+    // VAT REPORT
+    Route::post('generate_vat/report', [EtpESalesReport::class, 'getIndex']);
 
    
 });
