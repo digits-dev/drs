@@ -817,8 +817,6 @@
                     const tbody = $('#bir_report tbody');
                     tbody.empty(); 
 
-                    console.log(response);
-
                     response.forEach(function(row) {
                         const tr = '<tr>' +
                             '<td>' + row['CompanyName'] + '</td>' +   
