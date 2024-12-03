@@ -325,12 +325,12 @@ class StoreInventoryController extends Controller
         $secondQueryResult = StoreInventory::scopeGetInTransitInventoryFromPosEtp($datefrom, $dateto);
 
         $mergedResults = collect($firstQueryResult)->merge($secondQueryResult);
+
+        // $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
+        //     return clone $item; 
+        // });
         
-        $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
-            return clone $item; 
-        });
-        
-        StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResultsCopy);
+        // StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResultsCopy);
 
         $groupedSalesData = $mergedResults->groupBy(function ($item) {
             return $item->SubInventory === 'DEMO' ? 'DEMO' : 'NOT DEMO';
@@ -450,7 +450,6 @@ class StoreInventoryController extends Controller
                 $cusCode = "CUS-" . $excel->StoreId;
                 $key = "{$excel->StoreId}{$excel->Date}{$excel->ItemNumber}" . ($excel->SubInventory ?? $sub_inventory);
                 
-                if (StoreInventory::isNotExist($excel->Date, $excel->TotalQty, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
                     if (isset($uniqueInventory[$key])) {
                         $index = $uniqueInventory[$key]['index'];
                         $currQty = $uniqueInventory[$key]['totalQty'];
@@ -495,19 +494,17 @@ class StoreInventoryController extends Controller
                             'item_number' => $itemNumber,
                             'item_description' => $itemDescription,
                             'total_qty' => $excel->TotalQty,
-                            'store_cost' => $storeCost,
-                            'store_cost_eccom' => $itemDetails[$itemNumber]['store_cost_eccom'],
-                            'landed_cost' => $itemDetails[$itemNumber]['landed_cost'],
+                            'store_cost' => !empty($storeCost) ? $storeCost : "0",
+                            'store_cost_eccom' => !empty($itemDetails[$itemNumber]['store_cost_eccom']) ? $itemDetails[$itemNumber]['store_cost_eccom'] : "0",
+                            'landed_cost' => !empty($itemDetails[$itemNumber]['landed_cost']) ? $itemDetails[$itemNumber]['landed_cost'] : "0",
                             'product_quality' => $productQuality,
                             'from_warehouse' => $fromWareHouse,
                             'to_warehouse' => $toWareHouse
                         ];
     
                         Counter::where('id', 2)->increment('reference_code');
-    
-    
                     }
-                }
+                
             }
 
         }

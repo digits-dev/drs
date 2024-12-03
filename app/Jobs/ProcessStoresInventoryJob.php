@@ -32,7 +32,6 @@ class ProcessStoresInventoryJob implements ShouldQueue
     private $inventoryTypeCache = [];
     private $report_type;
 
-
     /**
      * Create a new job instance.
      *
@@ -42,7 +41,7 @@ class ProcessStoresInventoryJob implements ShouldQueue
     {
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
-        $this->report_type = ['STORE INVENTORY','STORE INTRANSIT'];
+        $this->report_type = ['STORE INVENTORY', 'STORE INTRANSIT'];
     }
 
     /**
@@ -55,13 +54,13 @@ class ProcessStoresInventoryJob implements ShouldQueue
         $datefrom = $this->dateFrom;
         $dateto = $this->dateTo;
 
-        $firstQueryResult  = StoreInventory::scopeGetStoresInventoryFromPosEtp($datefrom, $dateto);
+        $firstQueryResult = StoreInventory::scopeGetStoresInventoryFromPosEtp($datefrom, $dateto);
         $secondQueryResult = StoreInventory::scopeGetInTransitInventoryFromPosEtp($datefrom, $dateto);
 
         $mergedResults = collect($firstQueryResult)->merge($secondQueryResult);
 
         $mergedResultsCopy = collect($mergedResults->all())->map(function ($item) {
-            return clone $item; 
+            return clone $item;
         });
 
         StoreInventory::syncOldEntriesFromNewEntries($datefrom, $dateto, $mergedResultsCopy);
@@ -70,28 +69,30 @@ class ProcessStoresInventoryJob implements ShouldQueue
             return $item->SubInventory === 'DEMO' ? 'DEMO' : 'NOT DEMO';
         });
 
-        $itemNumbers = $groupedSalesData->flatMap(function ($items) {
-            return $items->pluck('ItemNumber')
-                ->map(function ($itemNumber) {
+        $itemNumbers = $groupedSalesData
+            ->flatMap(function ($items) {
+                return $items->pluck('ItemNumber')->map(function ($itemNumber) {
                     return str_replace(['Q1_', 'Q2_'], '', $itemNumber);
                 });
-        })
-        ->unique()
-        ->values()
-        ->toArray();
-        
+            })
+            ->unique()
+            ->values()
+            ->toArray();
+
         $itemDetails = $this->fetchItemDataInBatch($itemNumbers);
 
         // dd($itemDetails);
 
-        $warehouseCodes = $mergedResults->flatMap(function($storeData) {
-            return [
-                !empty($storeData->StoreId) ? "CUS-" . $storeData->StoreId : null,
-                !empty($storeData->ToWarehouse) ? "CUS-" . $storeData->ToWarehouse : null
-            ];
-        })->filter()->unique()->toArray();
+        $warehouseCodes = $mergedResults
+            ->flatMap(function ($storeData) {
+                return [!empty($storeData->StoreId) ? 'CUS-' . $storeData->StoreId : null, !empty($storeData->ToWarehouse) ? 'CUS-' . $storeData->ToWarehouse : null];
+            })
+            ->filter()
+            ->unique()
+            ->toArray();
 
-        $masterfile = DB::connection('masterfile')->table('customer')
+        $masterfile = DB::connection('masterfile')
+            ->table('customer')
             ->select(['cutomer_name', 'channel_code_id', 'warehouse_name', 'customer_code'])
             ->whereIn('customer_code', $warehouseCodes)
             ->get()
@@ -103,30 +104,27 @@ class ProcessStoresInventoryJob implements ShouldQueue
 
         // dd($groupedByStoreId);
 
-
-        foreach($groupedByStoreId as $itemKey => $item){
-
-            foreach ($item as $storeId => $storeData) { 
+        foreach ($groupedByStoreId as $itemKey => $item) {
+            foreach ($item as $storeId => $storeData) {
                 $time = microtime(true);
-                $batch_number = str_replace('.', '', $time);;
+                $batch_number = str_replace('.', '', $time);
                 $folder_name = "$batch_number-" . Str::random(5);
                 $dateNow = Carbon::now()->format('Ymd');
                 $excel_file_name = "stores-inventory-$batch_number-$dateNow.xlsx";
                 $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
-        
+
                 if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
                     mkdir(storage_path("app/store-inventory-upload/$folder_name"), 0777, true);
                 }
-                $toExcelContent = []; 
-                $uniqueInventory =  [];
+                $toExcelContent = [];
+                $uniqueInventory = [];
 
                 // Create Excel Data
                 $excelData = $this->prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batch_number);
 
                 // dd($excelData);
-                foreach($uniqueInventory as $item)
-                {
-                    $cusCode = "CUS-" . $item['item']->StoreId;
+                foreach ($uniqueInventory as $item) {
+                    $cusCode = 'CUS-' . $item['item']->StoreId;
                     $toWarehouse = $item['item']->ToWarehouse;
                     $itemKey = $item['itemKey'];
                     $subInv = $item['item']->SubInventory;
@@ -135,20 +133,19 @@ class ProcessStoresInventoryJob implements ShouldQueue
 
                     $sub_inventory = $this->getSubInventory($item['item']->ItemNumber, $toWarehouse, $itemKey, $subInv);
 
-                    if (!StoreInventory::isNotExist($item['item']->Date,$item['totalQty'], $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)){
-                        unset($toExcelContent[$index]);
-                    }
+                    // if (!StoreInventory::isNotExist($item['item']->Date, $item['totalQty'], $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
+                    //     unset($toExcelContent[$index]);
+                    // }
                 }
 
-
-                if(!empty($excelData)){
+                if (!empty($excelData)) {
                     Excel::store(new StoreInventoryExcel($excelData), $excel_path, 'local');
-    
+
                     // ExportStoreInventoryJob::dispatch($toExcelContent, $excel_path);
-        
+
                     // Full path of the stored Excel file
                     $full_excel_path = storage_path('app') . '/' . $excel_path;
-        
+
                     // Prepare arguments for the job
                     $args = [
                         'batch_number' => $batch_number,
@@ -158,13 +155,12 @@ class ProcessStoresInventoryJob implements ShouldQueue
                         'file_name' => $excel_file_name,
                         'created_by' => null,
                         'from_date' => null,
-                        'data_type' => 'PULL'
+                        'data_type' => 'PULL',
                     ];
-        
+
                     // Dispatch the processing job for each store
                     ProcessStoreInventoryUploadJob::dispatch($args);
                 }
-                
             }
         }
     }
@@ -173,74 +169,66 @@ class ProcessStoresInventoryJob implements ShouldQueue
     {
         $toExcelContent = [];
         $uniqueInventory = [];
-        
 
         foreach ($storeData as $excel) {
-
             $itemNumber = str_replace(['Q1_', 'Q2_'], '', $excel->ItemNumber);
 
-            if($itemDetails[$itemNumber]['org'] !== 'RMA' && $itemDetails[$itemNumber]['org'] !== 'ACCOUNTING'){
+            if ($itemDetails[$itemNumber]['org'] !== 'RMA' && $itemDetails[$itemNumber]['org'] !== 'ACCOUNTING') {
                 $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel->ToWarehouse, $itemKey, $excel->SubInventory);
-                $cusCode = "CUS-" . $excel->StoreId;
+                $cusCode = 'CUS-' . $excel->StoreId;
                 $key = "{$excel->StoreId}{$excel->Date}{$excel->ItemNumber}" . ($excel->SubInventory ?? $sub_inventory);
-                
-                if (StoreInventory::isNotExist($excel->Date, $excel->TotalQty, $masterfile[$cusCode]->cutomer_name, $itemNumber, $sub_inventory)) {
-                    if (isset($uniqueInventory[$key])) {
-                        $index = $uniqueInventory[$key]['index'];
-                        $currQty = $uniqueInventory[$key]['totalQty'];
-                        $toExcelContent[$index]['total_qty'] = $currQty + $excel->TotalQty;
-                        $uniqueInventory[$key]['totalQty'] = $toExcelContent[$index]['total_qty'];
-    
-                    } else {
-                        // If key does not exist, create a new unique entry
-                        $uniqueInventory[$key] = [
-                            "index" => count($toExcelContent),
-                            "totalQty" => $excel->TotalQty,
-                            "itemKey" => $itemKey,
-                            "item" => $excel
-                        ];
-    
-                        $refCounter = Counter::where('id', 2)->value('reference_code');
-    
-    
-                        $toWarehouseCode = "CUS-" . $excel->ToWarehouse;
-                        $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
-                        $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
-                        $org = $itemDetails[$itemNumber]['org'];
-                        $reportType = 'STORE INVENTORY';
-                        $channelCode = $masterfile[$cusCode]->channel_code_id;
-                        $customerLoc = $masterfile[$cusCode]->cutomer_name;
-                        $itemDescription = $itemDetails[$itemNumber]['item_description'];
-                        $inventoryAsOfDate = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
-                        $storeCost = $itemDetails[$itemNumber]['store_cost'];
-    
-                        $productQuality = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-    
-                        // Add entry to Excel data array
-                        $toExcelContent[] = [
-                            'reference_number' => $refCounter,
-                            'system' => 'POS',
-                            'org' => $org,
-                            'report_type' => $reportType,
-                            'channel_code' => $channelCode,
-                            'sub_inventory' => $sub_inventory,
-                            'customer_location' => $customerLoc,
-                            'inventory_as_of_date' => $inventoryAsOfDate,
-                            'item_number' => $itemNumber,
-                            'item_description' => $itemDescription,
-                            'total_qty' => $excel->TotalQty,
-                            'store_cost' => $storeCost,
-                            'store_cost_eccom' => $itemDetails[$itemNumber]['store_cost_eccom'],
-                            'landed_cost' => $itemDetails[$itemNumber]['landed_cost'],
-                            'product_quality' => $productQuality,
-                            'from_warehouse' => $fromWareHouse,
-                            'to_warehouse' => $toWareHouse
-                        ];
-    
-                        Counter::where('id', 2)->increment('reference_code');
-    
-    
-                    }
+
+                if (isset($uniqueInventory[$key])) {
+                    $index = $uniqueInventory[$key]['index'];
+                    $currQty = $uniqueInventory[$key]['totalQty'];
+                    $toExcelContent[$index]['total_qty'] = $currQty + $excel->TotalQty;
+                    $uniqueInventory[$key]['totalQty'] = $toExcelContent[$index]['total_qty'];
+                } else {
+                    // If key does not exist, create a new unique entry
+                    $uniqueInventory[$key] = [
+                        'index' => count($toExcelContent),
+                        'totalQty' => $excel->TotalQty,
+                        'itemKey' => $itemKey,
+                        'item' => $excel,
+                    ];
+
+                    $refCounter = Counter::where('id', 2)->value('reference_code');
+
+                    $toWarehouseCode = 'CUS-' . $excel->ToWarehouse;
+                    $toWareHouse = $masterfile[$toWarehouseCode]->warehouse_name ?? null;
+                    $fromWareHouse = $masterfile[$cusCode]->warehouse_name ?? null;
+                    $org = $itemDetails[$itemNumber]['org'];
+                    $reportType = 'STORE INVENTORY';
+                    $channelCode = $masterfile[$cusCode]->channel_code_id;
+                    $customerLoc = $masterfile[$cusCode]->cutomer_name;
+                    $itemDescription = $itemDetails[$itemNumber]['item_description'];
+                    $inventoryAsOfDate = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
+                    $storeCost = $itemDetails[$itemNumber]['store_cost'];
+
+                    $productQuality = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
+
+                    // Add entry to Excel data array
+                    $toExcelContent[] = [
+                        'reference_number' => $refCounter,
+                        'system' => 'POS',
+                        'org' => $org,
+                        'report_type' => $reportType,
+                        'channel_code' => $channelCode,
+                        'sub_inventory' => $sub_inventory,
+                        'customer_location' => $customerLoc,
+                        'inventory_as_of_date' => $inventoryAsOfDate,
+                        'item_number' => $itemNumber,
+                        'item_description' => $itemDescription,
+                        'total_qty' => $excel->TotalQty,
+                        'store_cost' => $storeCost,
+                        'store_cost_eccom' => $itemDetails[$itemNumber]['store_cost_eccom'],
+                        'landed_cost' => $itemDetails[$itemNumber]['landed_cost'],
+                        'product_quality' => $productQuality,
+                        'from_warehouse' => $fromWareHouse,
+                        'to_warehouse' => $toWareHouse,
+                    ];
+
+                    Counter::where('id', 2)->increment('reference_code');
                 }
             }
         }
@@ -248,20 +236,18 @@ class ProcessStoresInventoryJob implements ShouldQueue
         return $toExcelContent;
     }
 
-
-
     protected function productQuality($inv_type_id, $pos_sub)
     {
         $item = null;
 
-        if(isset($this->inventoryTypeCache[$inv_type_id])){
+        if (isset($this->inventoryTypeCache[$inv_type_id])) {
             $item = $this->inventoryTypeCache[$inv_type_id];
-        }else{
+        } else {
             $item = DB::connection('imfs')->table('inventory_types')->where('id', $inv_type_id)->first();
             $this->inventoryTypeCache[$inv_type_id] = $item;
         }
 
-        if(!$item){
+        if (!$item) {
             return null;
         }
 
@@ -282,14 +268,15 @@ class ProcessStoresInventoryJob implements ShouldQueue
         return null;
     }
 
-    protected function prepareItemData($item, $orgName, $ecomStoreMargin = 0) {
+    protected function prepareItemData($item, $orgName, $ecomStoreMargin = 0)
+    {
         return [
             'org' => $orgName,
             'item_description' => $item->item_description,
             'store_cost' => $item->dtp_rf,
             'store_cost_eccom' => $ecomStoreMargin,
             'landed_cost' => $item->landed_cost,
-            'inventory_type_id' => $item->inventory_types_id
+            'inventory_type_id' => $item->inventory_types_id,
         ];
     }
 
@@ -335,13 +322,13 @@ class ProcessStoresInventoryJob implements ShouldQueue
                 'table' => 'item_masters',
                 'columns' => ['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'],
                 'extra_conditions' => [],
-                'type' => 'DIGITS'
+                'type' => 'DIGITS',
             ],
             [
                 'connection' => 'imfs',
                 'table' => 'accounting_items',
                 'columns' => ['id', 'item_description', 'digits_code'],
-                'type' => 'ACCOUNTING'
+                'type' => 'ACCOUNTING',
             ],
             [
                 'connection' => 'imfs',
@@ -349,15 +336,15 @@ class ProcessStoresInventoryJob implements ShouldQueue
                 'columns' => ['id', 'item_description', 'dtp_rf', 'landed_cost', 'inventory_types_id', 'digits_code'],
                 // 'extra_conditions' => ['rma_categories_id', '!=', 5],
                 'extra_conditions' => [],
-                'type' => 'RMA'
+                'type' => 'RMA',
             ],
             [
                 'connection' => 'aimfs',
                 'table' => 'digits_imfs',
                 'columns' => ['id', 'item_description', 'dtp_rf', 'landed_cost', 'digits_code'],
                 'extra_conditions' => [],
-                'type' => 'PURCHASINGG'
-            ]
+                'type' => 'PURCHASINGG',
+            ],
         ];
 
         foreach ($tables as $table) {
@@ -397,21 +384,20 @@ class ProcessStoresInventoryJob implements ShouldQueue
 
     protected function getSubInventory($itemNumber, $toWarehouse, $itemKey, $subInventory)
     {
-        if($itemKey == "DEMO"){
-            return "POS - DEMO";
-        }else{
+        if ($itemKey == 'DEMO') {
+            return 'POS - DEMO';
+        } else {
             $prefix = substr($itemNumber, 0, 3);
 
-        if ($prefix === 'Q1_' && $subInventory === "GOOD") {
-            return "POS - GOOD";
-        } elseif ($prefix === 'Q2_') {
-            if($toWarehouse === '0312'){
-                return "POS - RMA";
-            }else{
-                return "POS - TRANSIT";
+            if ($prefix === 'Q1_' && $subInventory === 'GOOD') {
+                return 'POS - GOOD';
+            } elseif ($prefix === 'Q2_') {
+                if ($toWarehouse === '0312') {
+                    return 'POS - RMA';
+                } else {
+                    return 'POS - TRANSIT';
+                }
             }
         }
-        }
-        
     }
 }
