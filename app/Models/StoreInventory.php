@@ -204,8 +204,10 @@ class StoreInventory extends Model
 
         // $dateFrom = self::scopeGetLastReceiptDate($dateTo);
 
+        // d.TransactionDate As 'Date'
+
         $data = DB::connection('sqlsrv')->select(DB::raw("
-            SELECT d.Company, d.Warehouse AS 'StoreId', d.ToWarehouse, d.TransactionDate As 'Date',
+            SELECT d.Company, d.Warehouse AS 'StoreId', d.ToWarehouse, FORMAT(GETDATE(), 'yyyyMMdd') AS 'Date',
                 CONCAT('Q2_', l.ItemNumber) AS 'ItemNumber', l.ItemDescription, l.LotNumber, 
                 l.DispatchedQuantity, l.ReceivedQuantity, 
                 l.DispatchedQuantity - l.ReceivedQuantity AS TotalQty
@@ -221,6 +223,7 @@ class StoreInventory extends Model
             AND d.Division = '100'
             AND (d.ToWarehouse = '0312' OR d.ToWarehouse = '0311')
             AND d.TransactionDate between '20241101' and '$dateTo'
+            AND (l.DispatchedQuantity - l.ReceivedQuantity) <> 0
         "));
         
         return $data;
@@ -229,10 +232,11 @@ class StoreInventory extends Model
     public function scopeGetStoresInventoryFromPosEtp($dateFrom, $dateTo){
 
         // $dateFrom = self::scopeGetLastReceiptDate($dateTo);
-
+        // P.LastIssueDate 'Date'
+        
         $data = DB::connection('sqlsrv')->select(DB::raw("
             select P.WareHouse 'StoreId',
-            P.LastIssueDate 'Date',
+            FORMAT(GETDATE(), 'yyyyMMdd') AS 'Date',
             CONCAT('Q1_', P.ItemNumber) AS 'ItemNumber',
             P.BalanceApproved 'TotalQty',
             P.Location 'SubInventory'
@@ -240,6 +244,7 @@ class StoreInventory extends Model
             where P.Company= 100
             AND (P.Location = 'GOOD' OR P.Location = 'DEMO')
             AND P.LastIssueDate between '20241101' and '$dateTo'
+            AND P.BalanceApproved <> 0
         "));
 
         return $data;
