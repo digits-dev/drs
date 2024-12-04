@@ -40,8 +40,8 @@ class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     'vendor_type_code' => $row['vendor_type_code'],
                     'inventory_type_description' => $row['inventory_type_description'],
                     'sku_status_description' => $row['sku_status_description'],
-                    'brand_status' => $row['brand_status']
-                    // 'initial_wrr_date' => $row['initial_wrr_date']
+                    'brand_status' => $row['brand_status'],
+                    'initial_wrr_date' => $row['initial_wrr_date']
                 ]);
             // DB::commit();
             // } catch (\Exception $e) {
