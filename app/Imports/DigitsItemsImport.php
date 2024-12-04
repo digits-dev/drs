@@ -14,6 +14,8 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithConditionalSheets;
 use DB;
 use CRUDBooster;
+use Carbon\Carbon;
+
 class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
 {
     /**
@@ -41,7 +43,8 @@ class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     // 'inventory_type_description' => $row['inventory_type_description'],
                     // 'sku_status_description' => $row['sku_status_description'],
                     // 'brand_status' => $row['brand_status'],
-                    'initial_wrr_date' => $row['initial_wrr_date']
+                    'initial_wrr_date' => Carbon::parse($row['initial_wrr_date'])->format('Y-m-d')
+                    
                 ]);
             // DB::commit();
             // } catch (\Exception $e) {
