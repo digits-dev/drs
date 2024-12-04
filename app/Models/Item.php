@@ -27,5 +27,6 @@ class Item extends Model
         'inventory_type_description',
         'sku_status_description',
         'brand_status',
+        'initial_wrr_date'
     ];
 }
