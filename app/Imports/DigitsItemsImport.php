@@ -14,6 +14,8 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithConditionalSheets;
 use DB;
 use CRUDBooster;
+use Carbon\Carbon;
+
 class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
 {
     /**
@@ -36,12 +38,13 @@ class DigitsItemsImport implements ToCollection, SkipsEmptyRows, WithHeadingRow
                     'upc_code' => $row['upc_code'],
                     'brand_description' => $row['brand_description'],
                     'category_description' => $row['category_description'],
-                    // 'margin_category_description' => $row['margin_category_description'],
+                    'margin_category_description' => $row['margin_category_description'],
                     'vendor_type_code' => $row['vendor_type_code'],
                     'inventory_type_description' => $row['inventory_type_description'],
                     'sku_status_description' => $row['sku_status_description'],
-                    'brand_status' => $row['brand_status']
-                    // 'initial_wrr_date' => $row['initial_wrr_date']
+                    'brand_status' => $row['brand_status'],
+                    'initial_wrr_date' => Carbon::parse($row['initial_wrr_date'])->format('Y-m-d')
+                    
                 ]);
             // DB::commit();
             // } catch (\Exception $e) {

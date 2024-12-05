@@ -214,43 +214,85 @@ class StoreSaleController extends Controller
     }
 
   
+    // public function exportSales(Request $request) {
+    //     $filename = $request->input('filename').'.tsv';
+    //     $filters = $request->all();
+    //     $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+    //     $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
+    //         ->where('is_final', 1);
+
+    //     $headers = [
+    //         'Content-Type' => 'text/tab-separated-values',
+    //         'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+    //     ];
+  
+    //     // Open a stream to write the response body
+    //     $callback = function () use($userReport, $query) {
+    //         $handle = fopen('php://output', 'w');
+            
+    //         // Write headers
+    //         fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
+
+    //         // Query and stream data
+    //         $query->chunk(10000, function ($data) use ($handle, $userReport) {
+    //                 $sales = explode("`,`",$userReport->report_query);
+    //                 foreach($data as $value_data){
+    //                     $salesData = [];
+    //                     foreach ($sales as $key => $value) {
+    //                         array_push($salesData, $value_data->$value);
+    //                     }
+    //                     fputcsv($handle,$salesData, "\t");
+    //                 }
+    //         });
+            
+    //         fclose($handle);
+    //     };
+    
+    //     // Return the streamed response
+    //     return Response::stream($callback, 200, $headers);
+    
+    // }
     public function exportSales(Request $request) {
-        $filename = $request->input('filename').'.tsv';
+        $filename = $request->input('filename') . '.tsv';
         $filters = $request->all();
-        $userReport = ReportPrivilege::myReport(1,CRUDBooster::myPrivilegeId());
+        $userReport = ReportPrivilege::myReport(1, CRUDBooster::myPrivilegeId());
         $query = StoreSale::filterForReport(StoreSale::generateReport(), $filters)
             ->where('is_final', 1);
-
+    
         $headers = [
             'Content-Type' => 'text/tab-separated-values',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
-  
+    
         // Open a stream to write the response body
-        $callback = function () use($userReport, $query) {
+        $callback = function () use ($userReport, $query) {
             $handle = fopen('php://output', 'w');
-            
+    
             // Write headers
-            fputcsv($handle, explode(",",$userReport->report_header), "\t"); // Specify column names
-
+            fputcsv($handle, explode(",", $userReport->report_header), "\t"); // Specify column names
+    
             // Query and stream data
             $query->chunk(10000, function ($data) use ($handle, $userReport) {
-                    $sales = explode("`,`",$userReport->report_query);
-                    foreach($data as $value_data){
-                        $salesData = [];
-                        foreach ($sales as $key => $value) {
-                            array_push($salesData, $value_data->$value);
+                $sales = explode("`,`", $userReport->report_query);
+                foreach ($data as $value_data) {
+                    $salesData = [];
+                    foreach ($sales as $key => $value) {
+                        // Set default value for specific columns
+                        if (in_array($value, ['sold_price', 'net_sales', 'store_cost', 'dtp_ecom', 'landed_cost'])) {
+                            $salesData[] = ($value_data->$value ?? 0) == 0 ? 0 : $value_data->$value;
+                        } else {
+                            $salesData[] = $value_data->$value;
                         }
-                        fputcsv($handle,$salesData, "\t");
                     }
+                    fputcsv($handle, $salesData, "\t");
+                }
             });
-            
+    
             fclose($handle);
         };
     
         // Return the streamed response
         return Response::stream($callback, 200, $headers);
-    
     }
 
     //PULL FROM ETP
