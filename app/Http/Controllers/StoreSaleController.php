@@ -297,8 +297,8 @@ class StoreSaleController extends Controller
 
     //PULL FROM ETP
     public function StoresSalesFromPosEtp(Request $request){
-        $datefrom = $request->datefrom ? $request->datefrom : Carbon::now()->subHours(5)->format('Ymd');
-        $dateto = $request->dateto ? $request->dateto : Carbon::now()->subHours(1)->format('Ymd');
+        $datefrom = $request->datefrom ? date("Ymd", strtotime($request->datefrom)) : date("Ymd", strtotime("-5 hour"));
+        $dateto = $request->dateto ? date("Ymd", strtotime($request->dateto)) : date("Ymd", strtotime("-1 hour"));
       
         $result = StoreSale::getStoresSalesFromPosEtp($datefrom,$dateto);
         // Group sales data by store ID

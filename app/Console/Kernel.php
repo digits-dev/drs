@@ -47,11 +47,21 @@ class Kernel extends ConsoleKernel
 
             $storeInventory = new StoreInventoryController();
             $storeInventory->StoresInventoryFromPosEtp($request);
+            
+        })->dailyAt('23:00:00');
+        $schedule->call(function(){
+            $datefrom = Carbon::now()->subHours(5)->format('Ymd'); 
+            $dateto = Carbon::now()->subHours(1)->format('Ymd');
+
+            $request = new Request([
+                'datefrom' => $datefrom,
+                'dateto' => $dateto,
+            ]);
 
             $storeSale = new StoreSaleController();
             $storeSale->StoresSalesFromPosEtp($request);
-            
         })->dailyAt('23:00:00');
+
         $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
         
     }
