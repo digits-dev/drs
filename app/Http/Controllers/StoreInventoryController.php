@@ -381,8 +381,8 @@ class StoreInventoryController extends Controller
                 $time = microtime(true);
                 $batch_number = str_replace('.', '', $time);;
                 $folder_name = "$batch_number-" . Str::random(5);
-                $dateNow = Carbon::now()->format('Ymd');
-                $excel_file_name = "STORE_INVENTORY_" . $storeName . "_" . $batch_number . "_$dateNow.xlsx";
+                $previousDay = Carbon::now()->subDay()->format('Ymd');
+                $excel_file_name = $batch_number . "STORE_INVENTORY_" . $storeName . "_$previousDay.xlsx";
                 $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
         
                 if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
