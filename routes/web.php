@@ -296,7 +296,7 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::post('generate_bir/report', [EtpBirReportController::class, 'getIndex']);
 
     // SLSP REPORT
-    Route::post('generate_slsp/report', [EtpBirReportController::class, 'getIndex']);
+    Route::post('generate_slsp/report', [EtpSlspReportController::class, 'getIndex'])->name('generate_slsp');
 
     // ESALES REPORT
     Route::post('generate_esales/report', [EtpESalesReport::class, 'getIndex']);
