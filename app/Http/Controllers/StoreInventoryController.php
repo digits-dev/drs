@@ -382,7 +382,7 @@ class StoreInventoryController extends Controller
                 $batch_number = str_replace('.', '', $time);;
                 $folder_name = "$batch_number-" . Str::random(5);
                 $previousDay = Carbon::now()->subDay()->format('Ymd');
-                $excel_file_name = $batch_number . "STORE_INVENTORY_" . $storeName . "_$previousDay.xlsx";
+                $excel_file_name = $batch_number . "_STORE_INVENTORY_" . $storeName . "_$previousDay.xlsx";
                 $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
         
                 if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
