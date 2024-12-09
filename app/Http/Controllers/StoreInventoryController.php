@@ -336,6 +336,7 @@ class StoreInventoryController extends Controller
             return $item->SubInventory === 'DEMO' ? 'DEMO' : 'NOT DEMO';
         });
 
+
         $itemNumbers = $groupedSalesData->flatMap(function ($items) {
             return $items->pluck('ItemNumber')
                 ->map(function ($itemNumber) {
@@ -370,7 +371,6 @@ class StoreInventoryController extends Controller
 
         // dd($groupedByStoreId);
 
-
         foreach($groupedByStoreId as $itemKey => $item){
 
             foreach ($item as $storeId => $storeData) { 
@@ -381,8 +381,8 @@ class StoreInventoryController extends Controller
                 $time = microtime(true);
                 $batch_number = str_replace('.', '', $time);;
                 $folder_name = "$batch_number-" . Str::random(5);
-                $previousDay = Carbon::now()->subDay()->format('Ymd');
-                $excel_file_name = $batch_number . "_STORE_INVENTORY_" . $storeName . "_$previousDay.xlsx";
+                $previousDay = Carbon::now()->subDay()->format('ymd');
+                $excel_file_name = $batch_number . "_STORE_INVENTORY_" . $storeName . " @ RPRT-$previousDay.xlsx";
                 $excel_path = "store-inventory-upload/$folder_name/$excel_file_name";
         
                 if (!file_exists(storage_path("app/store-inventory-upload/$folder_name"))) {
@@ -392,7 +392,7 @@ class StoreInventoryController extends Controller
                 $uniqueInventory =  [];
 
                 // Create Excel Data
-                $excelData = $this->prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batch_number);
+                $excelData = $this->prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batch_number, $uniqueInventory);
 
                 // dd($excelData);
                 foreach($uniqueInventory as $item)
@@ -442,13 +442,13 @@ class StoreInventoryController extends Controller
     }
 
 
-    private function prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batchNumber)
+    private function prepareExcelData($storeData, $itemKey, $itemDetails, $masterfile, $batchNumber, $uniqueInventory)
     {
         $toExcelContent = [];
-        $uniqueInventory = [];
 
         foreach ($storeData as $excel) {
             $itemNumber = str_replace(['Q1_', 'Q2_'], '', $excel->ItemNumber);
+
 
             if($itemDetails[$itemNumber]['org'] !== 'RMA' && $itemDetails[$itemNumber]['org'] !== 'ACCOUNTING'){
                 $sub_inventory = $this->getSubInventory($excel->ItemNumber, $excel->ToWarehouse, $itemKey, $excel->SubInventory);
@@ -481,11 +481,12 @@ class StoreInventoryController extends Controller
                         $channelCode = $masterfile[$cusCode]->channel_code_id;
                         $customerLoc = $masterfile[$cusCode]->cutomer_name;
                         $itemDescription = $itemDetails[$itemNumber]['item_description'];
-                        $inventoryAsOfDate = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
+                        // $inventoryAsOfDate = Carbon::createFromFormat('Ymd', $excel->Date)->format('Y-m-d');
+                        $inventoryAsOfDate = Carbon::createFromFormat('Ymd', $excel->Date)->subDay()->format('Y-m-d');
                         $storeCost = $itemDetails[$itemNumber]['store_cost'];
     
-                        $productQuality = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);
-    
+                        $productQuality = $this->productQuality($itemDetails[$itemNumber]['inventory_type_id'], $sub_inventory);    
+
                         // Add entry to Excel data array
                         $toExcelContent[] = [
                             'reference_number' => $refCounter,
