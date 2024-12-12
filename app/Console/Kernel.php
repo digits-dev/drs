@@ -62,7 +62,7 @@ class Kernel extends ConsoleKernel
             $storeInventory = new StoreInventoryController();
             $storeInventory->StoresInventoryFromPosEtp($request);
             
-        })->dailyAt('00:00:00');
+        })->dailyAt('15:00:00');
 
         $schedule->command('queue:check')->everyMinute()->withoutOverlapping();
         
