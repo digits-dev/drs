@@ -302,7 +302,7 @@ Route::group(['middleware' => ['web','\crocodicstudio\crudbooster\middlewares\CB
     Route::post('generate_esales/report', [EtpESalesReport::class, 'getIndex']);
 
     // VAT REPORT
-    Route::post('generate_vat/report', [EtpESalesReport::class, 'getIndex']);
+    Route::post('generate_vat/report', [EtpVatReport::class, 'getIndex']);
 
    
 });

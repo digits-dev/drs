@@ -384,8 +384,7 @@
     </form>
     <div class="panel panel-default" style="padding: 15px; overflow:hidden; border-radius: 10px; display: none;"
         id="rawData">
-        <div>
-            <table class="table" id="vat_report">
+            <table class="table" id="vat_report" style="width: 100%">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -402,32 +401,21 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $customerMap = [];
-                        foreach ($customers as $customer) {
-                            $customerMap[str_replace('CUS-', '', $customer->customer_code)] = $customer->cutomer_name;
-                        }
-                    @endphp
-                    @if (!empty($tender_data) && is_array($tender_data))
-                        @foreach ($tender_data as $row)
-                            <tr>
-                                <td>{{ \Carbon\Carbon::parse($row->DATE)->format('Y-m-d') }}</td>
-                                <td>{{ $row->TIME }}</td>
-                                <td>{{ $row->{'STORE ID'} }}</td>
-                                <td>{{ $row->customerName }}</td>
-                                <td>{{ $row->{'RECEIPT#'} }}</td>
-                                <td>{{ $row->{'Name of Customer'} }}</td>
-                                <td>{{ $row->formattedAmount }}</td>
-                                <td>{{ $row->TENDER }}</td>
-                                <td>{{ $row->{'Credit Card Name'} }}</td>
-                                <td>{{ $row->{'Credit Card Number'} }}</td>
-                                <td>{{ $row->{'CARD TYPE'} }}</td>
-                            </tr>
-                        @endforeach
-                    @endif
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
                 </tbody>
             </table>
-        </div>
     </div>
 
     <div class="spinner-overlay" id="spinner" style="display: none;">
@@ -453,8 +441,7 @@
 
             $('#vat_report').DataTable({
                 dom: '<"top"lBf>rt<"bottom"ip><"clear">',
-                // scrollY: '400px', // Adjust the height to your needs
-                scrollX: true, // Ensure horizontal scrolling if needed
+                scrollX: true, 
                 scrollCollapse: true,
                 paging: true,
                 fixedHeader: false,
@@ -684,16 +671,16 @@
                     response.forEach(function(row) {
                         const tr = '<tr>' +
                             '<td>' + row.DATE + '</td>' +
-                            '<td>' + row.TIME + '</td>' +
-                            '<td>' + row['STORE ID'] + '</td>' +
-                            '<td>' + row.customerName + '</td>' +
-                            '<td>' + row['Document#'] + '</td>' +
-                            '<td>' + row['Invoice Ref No'] + '</td>' +
-                            '<td>' + row['Name of Customer'] + '</td>' +
                             '<td>' + '' + '</td>' +
                             '<td>' + '' + '</td>' +
-                            '<td>' + row.formattedAmount + '</td>' +
-                            '<td>' + row.TENDER + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
+                            '<td>' + '' + '</td>' +
                             '</tr>';
                         tbody.append(tr); 
                     });

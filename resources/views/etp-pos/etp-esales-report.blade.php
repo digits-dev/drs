@@ -451,6 +451,20 @@
                        
                     </tr>
             </tbody>
+            <tfoot>
+                <tr style="background:lightgreen">
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: center; font-weight:bolder;" class="text-center text-uppercase"><b>GRAND TOTALS</b></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                    <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                    <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
 
     </div>
@@ -500,12 +514,14 @@
                 buttons: [{
                         extend: 'csv',
                         text: '<i class="fa fa-download"></i> Export CSV',
-                        className: 'btn custom-button'
+                        className: 'btn custom-button',
+                        footer: true
                     },
                     {
                         extend: 'excel',
                         text: '<i class="fa fa-download"></i> Download Excel',
-                        className: 'btn custom-button'
+                        className: 'btn custom-button',
+                        footer: true
                     }
                 ],
                 "order": [[0, "desc"], [1, "asc"]], 
@@ -525,6 +541,26 @@
                     // Move buttons to the right side
                     const buttons = $('.dt-buttons').detach();
                     $('.top').append(buttons);
+                },
+                footerCallback: function(row, data, start, end, display) {
+                    let api = this.api();
+
+                    let totalVatableSales = api.column(6).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    let totalZeroRatedSales = api.column(7).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    let totalExemptSales = api.column(8).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    // Update the footer with the totals
+                    $(api.column(6).footer()).html(totalVatableSales.toFixed(2));
+                    $(api.column(7).footer()).html(totalZeroRatedSales.toFixed(2));
+                    $(api.column(8).footer()).html(totalExemptSales.toFixed(2));
                 }
             });
 
@@ -729,31 +765,25 @@
                 success: function(response) {
                     $('#rawData').show();
                     const tbody = $('#esales_report tbody');
-                    // tbody.empty(); 
+                    tbody.empty(); 
 
-                    // response.forEach(function(row) {
-                    //     const tr = '<tr>' +
-                    //         '<td>' + row['CompanyName'] + '</td>' +   
-                    //         '<td>' + row['CustomerName'] + '</td>' +               // Store Name
-                    //         '<td>' + row['CreateDate'] + '</td>' +              // Date
-                    //         '<td>' + row['DocRangeFrom'] + '</td>' +            // Beginning Invoice Number 
-                    //         '<td>' + row['DocRangeTo'] + '</td>' +              // Ending Invoice Number
-                    //         '<td>' + row['NetAmount'] + '</td>' +             // Net Amount
-                    //         '<td>' + row['Discount'] + '</td>' +                                  // Discount 
-                    //         '<td>' + row['Returns'] +'</td>' +                                  // Returns
-                    //         '<td>' + row['Voids'] +'</td>' +                                  // Voids
-                    //         '<td>' + row['Deductions'] +'</td>' +                                  // Deductions
-                    //         '<td>' + row['GrossTotalAmt'] + '</td>' +           // Gross Amount 
-                    //         '<td>' + row['VatableTotalAmt'] + '</td>' +         // VATable Sales
-                    //         '<td>' + row['VatTotalAmt'] + '</td>' +             // VAT
-                    //         '<td>' + row['SalesVatExmptAmt'] + '</td>' +        // Sales VAT-Exempt
-                    //         '<td>' + row['ZeroRatedSalesAmt'] + '</td>' +       // Zero Rated
-                    //         '</tr>';
-                    //     tbody.append(tr);
-                    // });
+                    response.forEach(function(row) {
+                        const tr = '<tr>' +
+                            '<td>' + row['TIN_#'] + '</td>' +   
+                            '<td>' + row['Formatted_BRANCH'] + '</td>' + 
+                            '<td>' + row['MONTH'] + '</td>' +  
+                            '<td>' + row['YEAR'] + '</td>' + 
+                            '<td>' + '' + '</td>' + 
+                            '<td>' + '' + '</td>' +
+                            '<td>' + row['vatable_sales'] + '</td>' +  
+                            '<td>' + row['ZERO_RATED_SALES'] +'</td>' +   
+                            '<td>' + row['EXEMPT_SALES'] +'</td>' +     
+                            '<td>' + '' +'</td>' +
+                            '</tr>';
+                        tbody.append(tr);
+                    });
 
-                    // // If you want to refresh the DataTable instance
-                    // $('#bir_report').DataTable().clear().rows.add(tbody.find('tr')).draw();
+                    $('#esales_report').DataTable().clear().rows.add(tbody.find('tr')).draw();
 
                     $('#spinner').hide();
                 },
