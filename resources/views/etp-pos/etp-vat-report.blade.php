@@ -295,6 +295,11 @@
         .wrapper {
             overflow: hidden;
         }
+
+        #vat_report {
+    width: 100% !important;
+}
+
     </style>
 @endpush
 @section('content')
@@ -384,7 +389,7 @@
     </form>
     <div class="panel panel-default" style="padding: 15px; overflow:hidden; border-radius: 10px; display: none;"
         id="rawData">
-            <table class="table" id="vat_report" style="width: 100%">
+            <table class="table" id="vat_report">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -722,13 +727,14 @@
                     $('#date_to').css('border', '1px solid #3C8DBC');
                     $('#invalidDateFrom').hide();
                     $('#rawData').show();
+
                     const tbody = $('#vat_report tbody');
                     tbody.empty();
 
                     response.forEach(function(row) {
                         const tr = '<tr>' +
                             '<td>' + row.DATE + '</td>' +
-                            '<td>' + '' + '</td>' +
+                            '<td></td>' +
                             '<td>' + row['TM_#'] + '</td>' +
                             '<td>' + row['RESET_CTR'] + '</td>' +
                             '<td>' + row['RECEIPTS'] + '</td>' +
@@ -736,15 +742,14 @@
                             '<td>' + row['PRESENT_NRGT'] + '</td>' +
                             '<td>' + row['TOTAL_SALES'] + '</td>' +
                             '<td>' + row['TAXABLE_SALES'] + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
+                            '<td></td>' +
+                            '<td></td>' +
                             '</tr>';
                         tbody.append(tr); 
                     });
 
                     //for refresh DataTable instance
                     $('#vat_report').DataTable().clear().rows.add(tbody.find('tr')).draw();
-
                     $('#spinner').hide();
                 },
                 error: function(xhr, status, error) {
@@ -773,5 +778,6 @@
             $('#date_to').removeClass('inactive');
 
         });
+
     </script>
 @endpush
