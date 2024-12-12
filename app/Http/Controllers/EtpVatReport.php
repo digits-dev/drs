@@ -67,7 +67,7 @@ class EtpVatReport extends Controller
 
             foreach ($vat_data as $row){
                 $customerCode = str_replace('CUS-', '', $row->{'STORE_ID'});
-                $row->customerName = $customerMap['0'.$customerCode] ?? 'Unknown';
+                $row->customerName = $customerMap[$customerCode] ?? 'Unknown';
                 $row->DATE = Carbon::parse($row->DATE)->format('Y-m-d');
                 $taxable_sales = $row->VAT_TOTAL_SALES - $row->VAT_TOTAL_AMT;
 
