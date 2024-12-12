@@ -296,9 +296,9 @@
             overflow: hidden;
         }
 
-        #vat_report {
-    width: 100% !important;
-}
+        /* #vat_report {
+            width: 100% !important;
+        } */
 
     </style>
 @endpush
@@ -453,6 +453,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <!-- Buttons for Excel export -->
     <script src="https://cdn.datatables.net/buttons/2.3.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
     <script>
         $(document).ready(function() {
             $('.js-example-basic-multiple').select2({
@@ -734,7 +735,7 @@
                     response.forEach(function(row) {
                         const tr = '<tr>' +
                             '<td>' + row.DATE + '</td>' +
-                            '<td></td>' +
+                            '<td>' + row['customerName']+ '</td>' +
                             '<td>' + row['TM_#'] + '</td>' +
                             '<td>' + row['RESET_CTR'] + '</td>' +
                             '<td>' + row['RECEIPTS'] + '</td>' +
@@ -750,6 +751,8 @@
 
                     //for refresh DataTable instance
                     $('#vat_report').DataTable().clear().rows.add(tbody.find('tr')).draw();
+                    $('#vat_report').DataTable().columns.adjust().responsive.recalc();  // Redraw the table layout
+
                     $('#spinner').hide();
                 },
                 error: function(xhr, status, error) {
