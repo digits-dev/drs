@@ -415,6 +415,21 @@
                         <td></td>
                     </tr>
                 </tbody>
+                <tfoot>
+                    <tr style="background:lightgreen">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td style="text-align: center; font-weight:bolder;" class="text-center text-uppercase"><b>GRAND TOTALS</b></td>
+                        <td></td>
+                        <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                        <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                        <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                        <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                        <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                        <td style="text-align: center; border: 1px solid whitesmoke; font-weight:bolder;"></td>
+                    </tr>
+                </tfoot>
             </table>
     </div>
 
@@ -448,13 +463,20 @@
                 buttons: [{
                         extend: 'csv',
                         text: '<i class="fa fa-download"></i> Export CSV',
-                        className: 'btn custom-button'
+                        className: 'btn custom-button',
+                        footer: true 
                     },
                     {
                         extend: 'excel',
                         text: '<i class="fa fa-download"></i> Download Excel',
-                        className: 'btn custom-button'
+                        className: 'btn custom-button',
+                        footer: true 
                     }
+                ],
+                order: [[0, 'desc'], [1, 'asc']],
+                columnDefs: [
+                    { targets: [0, 2, 3, 4, 5, 6, 8, 9], width: '150px' },
+                    { targets: [1, 7, 10], width: '200px' }
                 ],
                 "language": {
                     "emptyTable": 
@@ -467,6 +489,41 @@
                     // Move buttons to the right side
                     const buttons = $('.dt-buttons').detach();
                     $('.top').append(buttons);
+                },
+                footerCallback: function(row, data, start, end, display) {
+                    let api = this.api();
+
+                    let totalGrossSales = api.column(5).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    let totalExemptSales = api.column(6).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    let totalZeroRatedSales = api.column(7).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    let totalTaxableSales = api.column(8).data().reduce(function(a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                    // let totalOutputTax = api.column(9).data().reduce(function(a, b) {
+                    //     return parseFloat(a) + parseFloat(b);
+                    // }, 0);
+
+                    // let totalGrossTaxableSales = api.column(10).data().reduce(function(a, b) {
+                    //     return parseFloat(a) + parseFloat(b);
+                    // }, 0);
+
+                    // Update the footer with the totals
+                    $(api.column(5).footer()).html(totalGrossSales.toFixed(2));
+                    $(api.column(6).footer()).html(totalExemptSales.toFixed(2));
+                    $(api.column(7).footer()).html(totalZeroRatedSales.toFixed(2));
+                    $(api.column(8).footer()).html(totalTaxableSales.toFixed(2));
+                    // $(api.column(9).footer()).html(totalOutputTax.toFixed(2));
+                    // $(api.column(10).footer()).html(totalGrossTaxableSales.toFixed(2));
                 }
             });
         });
@@ -672,13 +729,13 @@
                         const tr = '<tr>' +
                             '<td>' + row.DATE + '</td>' +
                             '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
-                            '<td>' + '' + '</td>' +
+                            '<td>' + row['TM_#'] + '</td>' +
+                            '<td>' + row['RESET_CTR'] + '</td>' +
+                            '<td>' + row['RECEIPTS'] + '</td>' +
+                            '<td>' + row['PREVIOUS_NRGT'] + '</td>' +
+                            '<td>' + row['PRESENT_NRGT'] + '</td>' +
+                            '<td>' + row['TOTAL_SALES'] + '</td>' +
+                            '<td>' + row['TAXABLE_SALES'] + '</td>' +
                             '<td>' + '' + '</td>' +
                             '<td>' + '' + '</td>' +
                             '</tr>';

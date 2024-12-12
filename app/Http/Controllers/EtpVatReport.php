@@ -67,6 +67,16 @@ class EtpVatReport extends Controller
 
             foreach ($vat_data as $row){
                 $row->DATE = Carbon::parse($row->DATE)->format('Y-m-d');
+                $taxable_sales = $row->VAT_TOTAL_SALES - $row->VAT_TOTAL_AMT;
+
+                $formatted_taxable_sales = floor($taxable_sales * 100) / 100;
+                $formatted_total_sales = floor($row->TOTAL_SALES * 100) / 100;
+
+                $final_taxable_sales = number_format($formatted_taxable_sales, 2, '.', '');
+                $final_total_sales = number_format($formatted_total_sales, 2, '.', '');
+
+                $row->TAXABLE_SALES = abs($final_taxable_sales);
+                $row->TOTAL_SALES = abs($final_total_sales);
             }
 
             return response()->json($vat_data);
