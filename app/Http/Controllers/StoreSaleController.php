@@ -351,7 +351,7 @@ class StoreSaleController extends Controller
                 $item_serial = $excel['ITEM_SERIAL'];
                 $qty_sold = $excel['QTY_SOLD'];
                 $sold_price = abs($excel['SOLD_PRICE']);
-                $net_sales = $qty_sold * $sold_price;
+                $net_sales = $sold_price;
                 if((!empty($excel['PromotionID_32']) || $excel['PromotionID_32'] === '')){
                     $promo32 = ($excel['Comments'] === '' || empty($excel['Comments'])) ? $excel['PromotionID_32'].'_'.$excel['PromotionName_32'] : $excel['PromotionID_32'].'_'.$excel['Comments'].'_'.$excel['PromotionName_32'];
                 }else{
