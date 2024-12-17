@@ -325,7 +325,22 @@ class StoreSaleController extends Controller
             $itemDetails = self::fetchItemDataInBatch($itemNumbers);
             
             foreach ($storeData as &$excel) {
-                $counter = Counter::where('id', 1)->value('reference_code');
+                // $counter = Counter::where('id', 1)->value('reference_code');
+                DB::transaction(function () use (&$counter) {
+                    // Lock the row and increment the counter atomically
+                    $counterRow = DB::table('counters')
+                        ->where('id', 1)
+                        ->lockForUpdate()
+                        ->first();
+                
+                    // Increment the reference_code
+                    DB::table('counters')
+                        ->where('id', 1)
+                        ->update(['reference_code' => $counterRow->reference_code + 1]);
+                
+                    // Set the counter to the incremented value
+                    $counter = $counterRow->reference_code + 1;
+                });
                 $modified = [];
                 foreach ($excel as $key => $value) {
                     // Replace spaces with underscores in keys
@@ -370,7 +385,7 @@ class StoreSaleController extends Controller
                     return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date;
                 });
                 $key = sprintf(
-                    '%s-%s-%s-%s-%s',
+                    '%s-%s-%s-%s',
                     $v_customer->id ?? '',
                     $receipt_number,
                     $itemNumber,
@@ -421,7 +436,7 @@ class StoreSaleController extends Controller
                     
                     $toExcelContent[] = $toExcel;
                     // Increment the counter for the next iteration
-                    Counter::where('id', 1)->increment('reference_code');
+                    // Counter::where('id', 1)->increment('reference_code');
                 }
             }
             if (!empty($toExcelContent)) {
