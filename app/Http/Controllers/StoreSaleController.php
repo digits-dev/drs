@@ -365,18 +365,16 @@ class StoreSaleController extends Controller
                         ->where('sales_date', $sales_date)
                         ->whereNotNull('pos_transaction_type');
                 })
-                ->orWhere('item_serial', $item_serial)
-                ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date', 'item_serial'])
+                ->get(['customers_id', 'receipt_number', 'item_code', 'sales_date'])
                 ->keyBy(function ($item) {
-                    return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date . '-' . $item->item_serial;
+                    return $item->customers_id . '-' . $item->receipt_number . '-' . $item->item_code . '-' . $item->sales_date;
                 });
                 $key = sprintf(
                     '%s-%s-%s-%s-%s',
                     $v_customer->id ?? '',
                     $receipt_number,
                     $itemNumber,
-                    $sales_date,
-                    $item_serial
+                    $sales_date
                 );
              
                 if (!isset($isExistInStoreSales[$key])) {
