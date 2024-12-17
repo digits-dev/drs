@@ -512,6 +512,7 @@ class StoreSaleController extends Controller
         $rmaItemMasterRecords = DB::connection('imfs')
         ->table('rma_item_masters')
         ->whereIn('digits_code', $missingItemNumbers)
+        ->whereNotIn('sku_statuses_id',[2,3,4])
         ->get();
 
         foreach ($rmaItemMasterRecords as $record) {
@@ -527,6 +528,7 @@ class StoreSaleController extends Controller
             $aimfsItemMasterRecords = DB::connection('aimfs')
                 ->table('digits_imfs')
                 ->whereIn('digits_code', $missingItemNumbersAfterRMA)
+                ->where('skustatus_id',1)
                 ->get();
 
             foreach ($aimfsItemMasterRecords as $record) {
