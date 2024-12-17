@@ -478,6 +478,7 @@ class StoreSaleController extends Controller
         $itemMasterRecords = DB::connection('imfs')
         ->table('item_masters') 
         ->whereIn('digits_code', $itemNumberSet)
+        ->whereNotIn('sku_statuses_id',[2,3,4])
         ->get();
 
         foreach ($itemMasterRecords as $record) {
