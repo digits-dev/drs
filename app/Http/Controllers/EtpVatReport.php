@@ -79,6 +79,8 @@ class EtpVatReport extends Controller
 
                 $row->TAXABLE_SALES = abs($final_taxable_sales);
                 $row->TOTAL_SALES = abs($final_total_sales);
+                $row->TAX = abs($row->VAT_TOTAL_AMT);
+                $row->NON_TAX = $row->VAT_TOTAL_SALES - $row->TOTAL_SALES;
             }
 
             return response()->json($vat_data);

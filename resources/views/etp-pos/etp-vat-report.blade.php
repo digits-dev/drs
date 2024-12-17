@@ -743,8 +743,8 @@
                             '<td>' + row['PRESENT_NRGT'] + '</td>' +
                             '<td>' + row['TOTAL_SALES'] + '</td>' +
                             '<td>' + row['TAXABLE_SALES'] + '</td>' +
-                            '<td></td>' +
-                            '<td></td>' +
+                            '<td>' + row['NON_TAX']+ '</td>' +
+                            '<td>' + row['TAX']+ '</td>' +
                             '</tr>';
                         tbody.append(tr); 
                     });
