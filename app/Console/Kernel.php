@@ -47,7 +47,7 @@ class Kernel extends ConsoleKernel
 
             $storeSale = new StoreSaleController();
             $storeSale->StoresSalesFromPosEtp($request);
-        })->dailyAt('05:30:00');
+        })->dailyAt('17:30:00');
 
         $schedule->call(function(){
 
